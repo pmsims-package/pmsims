@@ -37,10 +37,10 @@ PGF = function(n = 100,  #sample size
                           lambda = cv.lasso$lambda.1se)
     y_hat = predict(lasso.model, X, type = "response")
     auc = pROC::auc(y, as.numeric(y_hat))
-    }else{
-      lasso.model = NaN
-      auc = NaN
-    }
+  }else{
+    lasso.model = NaN
+    auc = NaN
+  }
   
   # AUC test if X_test and y_test are provided 
   auc_test = NaN
@@ -68,12 +68,12 @@ PGF_validate = function(
   w = 0.5,
   base_prev = 0.3 
   #auc_target = 0.75
-  ){
+){
   if (is.null(rs)){rs = round(rnorm(1)*1000)}
-  d1 = GPF(n=n_large, rs = rs, p= p,p_noise = p_noise, prob_p = prob_p,
+  d1 = PGF(n=n_large, rs = rs, p= p,p_noise = p_noise, prob_p = prob_p,
            w=w, base_prev = base_prev, fitmodel = TRUE)
   X = d1$X; y = d1$y
-  d_test = GPF(n=n_large, rs = rs+1, p= p,p_noise = p_noise, prob_p = prob_p, 
+  d_test = PGF(n=n_large, rs = rs+1, p= p,p_noise = p_noise, prob_p = prob_p, 
                w=w, base_prev = base_prev, fitmodel = FALSE)
   X_test = d_test$X; y_test = d_test$y
   y_test_hat = predict(d1$model, X_test) 
@@ -103,7 +103,7 @@ for (w in w_net){
   for (p in n_parameters){
     j=j+1
     try({auc_p[i, j] = PGF_validate(n_large = 10000,rs = NULL,p = p,
-               p_noise = 100,prob_p = 0.1,w = w,base_prev = 0.3)})
+                                    p_noise = 100,prob_p = 0.1,w = w,base_prev = 0.3)})
   }
 }
 res = data.frame("w" = w_net, auc_p , row.names = seq(6))
@@ -137,14 +137,14 @@ cbind(res, res2)
 #AUC matrix for w (Odds ratio for a binary parameter)
 
 # --- param prev prob_p = 0.1--||------ param prev prob_p 0.2-0.5------
-#     OR  #params   #params   OR 
+#     OR#params(true)#params   OR 
 #     w        10       100   w       0.2       0.3       0.4       0.5
-# 1 0.1 0.5038888 0.5380374 0.1 0.5000000 0.5086710 0.5000000 0.5000000
-# 2 0.3 0.5640752 0.6990831 0.3 0.6017084 0.6148433 0.6264868 0.6247846
-# 3 0.5 0.6200792 0.7836084 0.5 0.6693719 0.6757703 0.6900653 0.7055298
-# 4 0.7 0.6636300 0.7940785 0.7 0.7117563 0.7421767 0.7544156 0.7536258
-# 5 0.9 0.6943719 0.6816898 0.9 0.7538350 0.7836953 0.8134192 0.8222497
-# 6 1.1 0.7259680 0.5000000 1.1 0.7887443 0.8205901 0.8508228 0.8476016
+# 1 0.1   0.5038888 0.5380374 0.1 0.5000000 0.5086710 0.5000000 0.5000000
+# 2 0.3   0.5640752 0.6990831 0.3 0.6017084 0.6148433 0.6264868 0.6247846
+# 3 0.5   0.6200792 0.7836084 0.5 0.6693719 0.6757703 0.6900653 0.7055298
+# 4 0.7   0.6636300 0.7940785 0.7 0.7117563 0.7421767 0.7544156 0.7536258
+# 5 0.9   0.6943719 0.6816898 0.9 0.7538350 0.7836953 0.8134192 0.8222497
+# 6 1.1   0.7259680 0.5000000 1.1 0.7887443 0.8205901 0.8508228 0.8476016
 
 # Manually picking params for a given AUC 
 #' AUC = 0.60 => w = 0.3, prob_p = 0.2, p = 10, p_noise = 100, base_prev = 0.3
@@ -168,19 +168,42 @@ cbind(res, res2)
 # we test all the models on the same very large test set (test_size =50 000) 
 # 
 
-#Target AUC = 0.75 => using params w = 0.7, prob_p = 0.35, p = 10, p_noise = 100, base_prev = 0.3
 
-target_auc = 0.75
+target_auc = 0.75 #Target AUC = 0.75 => using params w = 0.7, prob_p = 0.35, p = 10, p_noise = 100, base_prev = 0.3
 acceptable_auc = target_auc- 0.05
 
 train_size = c(100,200,300,400,500,600,700,1000,3000)
 test_size = 50000
-n_sims =     c(50, 50, 50, 50, 40, 30, 30, 20, 10)
+#n_sims =   c(50, 50, 50, 50, 40, 30, 30, 20, 10)
+n_sims =   c(10, 10, 10, 10, 10, 10, 5, 5, 2)
 
 # creating the large test sample 
-test_df = GPF(n=test_size, w = 0.7, prob_p = 0.35, p = 10, p_noise = 100, base_prev = 0.3, fitmodel=TRUE)
+test_df = PGF(n=test_size, w = 0.7, prob_p = 0.35, p = 10, p_noise = 100, base_prev = 0.3, fitmodel=TRUE)
 test_df$auc #0.74779 => OK
 X_test = test_df$X; y_test= test_df$y
+
+a = test_df$model
+a$lambda #0.006725145  (almost none for 50 000 sample)
+# a$beta  (coefficients are around 0.5 and only for the first 10 - worked as expected)
+# 110 x 1 sparse Matrix of class "dgCMatrix"
+# s0
+# V1   0.5812980
+# V2   0.5789159
+# V3   0.6081295
+# V4   0.5691129
+# V5   0.6097074
+# V6   0.5812207
+# V7   0.6419701
+# V8   0.6292749
+# V9   0.5796405
+# V10  0.5914079
+# V11  .        
+# V12  .        
+# V13  .        
+# V14  .        
+# V15  .        
+# V16  .        
+# V17  .        
 
 #running n_sims simulations and test them on the large test set 
 
@@ -191,13 +214,15 @@ for (i in 1:length(train_size)) {
   for (j in seq(n_sims[i])){
     #only changing random seed 
     stat =PGF(n=train_size[i], 
-        rs = 100+j, w = 0.7, prob_p = 0.35, p = 10, 
-        p_noise = 100, base_prev = 0.3, 
-        fitmodel=TRUE, X_test = X_test, y_test = y_test)
+              rs = 100+j, w = 0.7, prob_p = 0.35, p = 10, 
+              p_noise = 100, base_prev = 0.3, 
+              fitmodel=TRUE, X_test = X_test, y_test = y_test)
     auc_for_train_size[i,j] = stat$auc_test
- }
+  }
 }
 auc_for_train_size
+rownames(auc_for_train_size) = train_size
+
 mean_auc = apply(auc_for_train_size, FUN = mean, MARGIN = 1, na.rm= TRUE)
 quant_auc = apply(auc_for_train_size, FUN = quantile, MARGIN = 1, probs = 0.2, na.rm = TRUE)
 CIlow_auc = apply(auc_for_train_size, FUN = quantile, MARGIN = 1, probs = 0.05, na.rm = TRUE)
@@ -207,16 +232,32 @@ rbind(mean_auc, quant_auc)
 #min training size where 80% of AUC are > 0.70:
 # We linearly approximate values between the train sizes and get the min_n from there:
 min_size_func = approxfun(quant_auc, train_size, method = "linear")
-min_n = min_size_func(0.7)
+train_xx = min_size_func(seq(0.5, acceptable_auc, 0.05))
+
+linear_quant_auc = approxfun(train_size, quant_auc, method = "linear")
+min_n = min_size_func(acceptable_auc)
+min_n
 # 929  => we need more than 930 participants 
 
-#Plot 
+m3 = lm(quant_auc~poly(train_size,3))
+xtrain = seq(100,3000, 100)
+smoothed_quant_auc = predict(m3, data.frame(train_size = xtrain))
+
+#Plot cubic spline, linear spline and lines for n_train vs 20% quantile AUC:
+plot(train_size,quant_auc)
+lines(xtrain, smoothed_quant_auc, col = "green")
+lines(train_xx, seq(0.5, acceptable_auc, 0.05), col = "red")
+abline(h = acceptable_auc, col = "green", lty = 3)
+abline(v = min_n, col = "green", lty = 3)
+
+#Plot: 
 plot(train_size, quant_auc, type = "l" , lty = 2, col = "red", 
      main = "AUC by train size with 95% CI and 80% quantile")
 lines(train_size, mean_auc, col = "black")
 lines(train_size, CIlow_auc, col = "grey", lty = 1)
 lines(train_size, CIhigh_auc, col = "grey", lty = 1)
 #abline(h = target_auc, col = 3)
+lines(train_xx, seq(0.5, acceptable_auc, 0.05), col = "green")
 abline(h = acceptable_auc, col = "green", lty = 3)
 abline(v = min_n, col = "green", lty = 3)
 legend("bottomright", legend = c("AUC mean", "AUC 95% CI", "AUC 20% quantile", "Acceptable AUC"), 
