@@ -2,8 +2,8 @@ library(glmnet)
 library(pROC) # we use this library for calculating AUCs
 library(stats)
 
-source("calculate_sample_size.R")
-source("tune_generate_data.R")
+source("Separate_components/calculate_sample_size.R")
+source("Separate_components/tune_generate_data.R")
 
 
 # User defined functions ----
@@ -54,7 +54,7 @@ large_n = 10000
 
 # Tuning the data generating function ----
 
-
+large_sample_performance
 tune_output <- tune_generate_data(data_generating_function = generate_data,
                                   large_n = large_n,
                                   min_tune_arg = 0.5,
@@ -64,6 +64,7 @@ tune_output <- tune_generate_data(data_generating_function = generate_data,
                                   target_large_sample_performance = large_sample_performance)
 
 tune_output
+
 # Checking the tuned model
 train_data_tuned <- generate_data(large_n, tune_output)
 test_data_tuned <- generate_data(large_n, tune_output)
@@ -116,7 +117,7 @@ model2 <- fit_model2(train_data2)
 performance_logistic_tuned <- get_performance(data = test_data2, model = model2)
 performance_logistic_tuned
 
-results <- calculate_sample_size(data_generating_function = generate_data2,
+results2 <- calculate_sample_size(data_generating_function = generate_data2,
                                  performance_function = get_performance,
                                  model_function = fit_model2,
                                  tune_param = tune_output,
@@ -127,4 +128,8 @@ results <- calculate_sample_size(data_generating_function = generate_data2,
                                  n_reps = 50)
 
 
-results$min_n
+results2$min_n
+
+
+# rename 2nd result object
+# validate inputs so that they are internally c
