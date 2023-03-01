@@ -1,4 +1,3 @@
-library(pROC)
 # data generating function returns dataframe not matrix as logistic regression needs df- this is something we need to consider in error checking for the function.
 generate_data <- function(n, beta_signal) {
   p_signal <- 10    # number of predictors
