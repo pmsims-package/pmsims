@@ -22,7 +22,6 @@ calculate_sample_size <- function(data_generating_function,
   results = matrix(nrow = length(simulation_parameters$train_size), ncol = max(simulation_parameters$n_sims))
   for (i in 1:length(simulation_parameters$train_size)) {
     for (j in seq(simulation_parameters$n_sims[i])){
-
       performance <- get_performance_n(n = simulation_parameters$train_size[i],
                                        test_data = test_data,
                                        data_generating_function = data_generating_function,
@@ -48,8 +47,8 @@ calculate_sample_size <- function(data_generating_function,
 get_simulation_parameters <- function(min_sample_size, max_sample_size, n_reps, n_sample_sizes) {
   train_size = seq(from = min_sample_size,
                    to = max_sample_size,
-                   length.out = n_sample_sizes)
-  n_sims =   rep(n_reps/n_sample_sizes, n_sample_sizes)
+                   length.out = n_sample_sizes) |> as.integer(0)
+  n_sims =   rep(n_reps/n_sample_sizes, n_sample_sizes) |> as.integer(0)
   simulation_parameters <- data.frame(train_size = train_size,
                                       n_sims = n_sims)
   return(simulation_parameters)
