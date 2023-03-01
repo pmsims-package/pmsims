@@ -1,3 +1,25 @@
+
+
+#' Calcualte the minimum sample size required to develop a prediction model
+#'
+#' @param data_generating_function A function of two parameters, n and a tuning parameter, that returns data for the model function
+#' @param model_function A function which takes the object returned by the data generating function and fits the analysis model of interest.
+#' @param performance_function A function which takes a a test dataset and model object as argments and returns a performance metric
+#' @param target_performance The desired performance of the prediction model
+#' @param test_n The sample size used for testing model performance
+#' @param tune_param A tuning parameter to be passed to the data generating function
+#' @param min_sample_size The minimum sample size used in simualations
+#' @param max_sample_size The maximum sample size used in simulations
+#' @param n_reps The number of simualtion reps
+#' @param n_sample_sizes The number of different sample sizes simulations are carried out at
+#'
+#' @return A list of results form the simulation
+#' @export
+#'
+#' @examples
+#'
+
+
 calculate_sample_size <- function(data_generating_function,
                                   model_function,
                                   performance_function,
