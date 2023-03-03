@@ -56,6 +56,19 @@ test_that("get_performance_n", {
   expect_equal(performance, 0.75, tol = 0.25) # tests that performance is between 0.5 and 1
 })
 
+test_that("run_simulations", {
+  simulation_parameters <- get_simulation_parameters(100, 1000, 10, 5)
+  results <- run_simulations(simulation_parameters,
+                             data_generating_function = generate_data,
+                             model_function = fit_model,
+                             performance_function = get_performance,
+                             test_n = 10000,
+                             tune_param = 0.7)
+  expect_equal(nrow(results),5)
+  expect_equal(ncol(results),2)
+
+})
+
 test_that("calculate_sample_size", {
   set.seed(1234)
   sample_size <- calculate_sample_size(data_generating_function = generate_data,
