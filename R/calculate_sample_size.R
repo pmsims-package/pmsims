@@ -91,7 +91,7 @@ calculate_sample_size <- function(data_generating_function,
                              performance_function = performance_function,
                              tune_param = tune_param)
 
-  # processing results and plotting - functions defined below
+  # Applying surrogate modelling and plotting
   results_list <- sm_linear_extrapolation(results, simulation_parameters, target_performance)
   plot_sample_size_curve(results_list)
 
