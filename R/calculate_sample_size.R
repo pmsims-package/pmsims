@@ -76,6 +76,7 @@ calculate_sample_size <- function(data_generating_function,
                                   n_reps,
                                   n_sample_sizes = 10
                                   ) {
+
   simulation_parameters <- get_simulation_parameters(
                                       min_sample_size = min_sample_size,
                                       max_sample_size = max_sample_size,
@@ -83,27 +84,15 @@ calculate_sample_size <- function(data_generating_function,
                                       n_sample_sizes = n_sample_sizes)
 
   # Running the simulations
-  # placeholder for results across trials (columns) for each train_size(rows)
-  results <- matrix(nrow = length(simulation_parameters$train_size),
-                   ncol = max(simulation_parameters$n_sims))
-  for (i in 1:length(simulation_parameters$train_size)) {
-    for (j in seq(simulation_parameters$n_sims[i])){
-      performance <- get_performance_n(
-                        n = simulation_parameters$train_size[i],
-                        test_n = test_n,
-                        data_generating_function = data_generating_function,
-                        model_function = model_function,
-                        performance_function = performance_function,
-                        tune_param = tune_param)  # function defined below
-      results[i,j] <-  performance
-    }
-    sim_message <- paste("simulation", i*n_reps/n_sample_sizes, "of", n_reps)
-    print(sim_message)
-  }
-  rownames(results) = simulation_parameters$train_size
+  results <- run_simulations(simulation_parameters,
+                             test_n = test_n,
+                             data_generating_function = data_generating_function,
+                             model_function = model_function,
+                             performance_function = performance_function,
+                             tune_param = tune_param)
 
   # processing results and plotting - functions defined below
-  results_list <- process_results(results, simulation_parameters, target_performance)
+  results_list <- sm_linear_extrapolation(results, simulation_parameters, target_performance)
   plot_sample_size_curve(results_list)
 
   return(results_list)
@@ -136,6 +125,12 @@ get_performance_n <- function(n,
   return(performance)
 }
 
+run_simulations <- function(simulation_parameters,
+                            test_n = test_n,
+                            data_generating_function = data_generating_function,
+                            model_function = model_function,
+                            performance_function = performance_function,
+                            tune_param = tune_param) {
 
 process_results <- function(results, simulation_parameters, target_performance) {
   mean_performance  <-  apply(results, FUN = mean, MARGIN = 1, na.rm= TRUE)
@@ -160,7 +155,25 @@ process_results <- function(results, simulation_parameters, target_performance) 
                       data = results,
                       train_size = simulation_parameters$train_size)
   return(return_list)
+  results <- matrix(nrow = length(simulation_parameters$train_size),
+         ncol = max(simulation_parameters$n_sims))
+  for (i in 1:length(simulation_parameters$train_size)) {
+    for (j in seq(simulation_parameters$n_sims[i])){
+      results[i,j] <- get_performance_n(n = simulation_parameters$train_size[i],
+                                      test_n = test_n,
+                                      data_generating_function = data_generating_function,
+                                      model_function = model_function,
+                                      performance_function = performance_function,
+                                      tune_param = tune_param)  # function defined below
+    }
+  }
+  rownames(results) = simulation_parameters$train_size
+  return(results)
 }
+
+
+
+
 
 
 plot_sample_size_curve <- function(results_summaries) {
