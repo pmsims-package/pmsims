@@ -98,6 +98,23 @@ calculate_sample_size <- function(data_generating_function,
   return(results_list)
 }
 
+#' Get a data frame of sample sizes and reps at each sample size to use in simulation
+#'
+#'get_simulation_parameters returns a data frame with the first column containing
+#'different sample sizes and the second the number of reps to run at each sample size.
+#'The sample sizes are equally spaced between the min and max sample sizes. The number
+#'of reps  is the total number of simulation reps divided by the number of different
+#'sample sizes to run simulations on.
+#'
+#' @param min_sample_size The minimum sample size
+#' @param max_sample_size The maximum sample size
+#' @param n_reps The total number of simulation reps
+#' @param n_sample_sizes The number of different sample sizes to run simulations on
+#'
+#' @return
+#' @export
+#'
+#' @examples
 get_simulation_parameters <- function(min_sample_size,
                                       max_sample_size,
                                       n_reps,
