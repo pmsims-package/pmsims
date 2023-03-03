@@ -76,7 +76,6 @@ calculate_sample_size <- function(data_generating_function,
                                   n_reps,
                                   n_sample_sizes = 10
                                   ) {
-  test_data <- data_generating_function(test_n, tune_param)
   simulation_parameters <- get_simulation_parameters(
                                       min_sample_size = min_sample_size,
                                       max_sample_size = max_sample_size,
@@ -91,7 +90,7 @@ calculate_sample_size <- function(data_generating_function,
     for (j in seq(simulation_parameters$n_sims[i])){
       performance <- get_performance_n(
                         n = simulation_parameters$train_size[i],
-                        test_data = test_data,
+                        test_n = test_n,
                         data_generating_function = data_generating_function,
                         model_function = model_function,
                         performance_function = performance_function,
@@ -124,11 +123,12 @@ get_simulation_parameters <- function(min_sample_size,
 }
 
 get_performance_n <- function(n,
-                              test_data,
+                              test_n,
                               data_generating_function,
                               model_function,
                               performance_function,
                               tune_param) {
+  test_data <- data_generating_function(test_n, tune_param)
   train_data <- data_generating_function(n,
                                          tune_param)
   model <- model_function(train_data)

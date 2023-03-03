@@ -47,9 +47,8 @@ test_that("get_simulation_parameters", {
 })
 
 test_that("get_performance_n", {
-  test_data <- generate_data(10000, 0.7)
   performance <- get_performance_n(n = 10000,
-                    test_data = test_data,
+                    test_n = 10000,
                     data_generating_function = generate_data,
                     model_function = fit_model,
                     performance_function = get_performance,
