@@ -2,7 +2,7 @@
 % Please edit documentation in R/calculate_sample_size.R
 \name{calculate_sample_size}
 \alias{calculate_sample_size}
-\title{Calcualte the minimum sample size required to develop a prediction model}
+\title{Calculate the minimum sample size required to develop a prediction model}
 \usage{
 calculate_sample_size(
   data_generating_function,
@@ -42,7 +42,7 @@ calculate_sample_size(
 A list of results form the simulation
 }
 \description{
-Calcualte the minimum sample size required to develop a prediction model
+Calculate the minimum sample size required to develop a prediction model
 }
 \examples{
 

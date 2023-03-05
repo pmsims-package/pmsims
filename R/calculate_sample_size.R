@@ -76,7 +76,7 @@ calculate_sample_size <- function(data_generating_function,
                                   n_reps,
                                   n_sample_sizes = 10
                                   ) {
-  test_data <- data_generating_function(test_n, tune_param)
+
   simulation_parameters <- get_simulation_parameters(
                                       min_sample_size = min_sample_size,
                                       max_sample_size = max_sample_size,
@@ -84,32 +84,37 @@ calculate_sample_size <- function(data_generating_function,
                                       n_sample_sizes = n_sample_sizes)
 
   # Running the simulations
-  # placeholder for results across trials (columns) for each train_size(rows)
-  results <- matrix(nrow = length(simulation_parameters$train_size),
-                   ncol = max(simulation_parameters$n_sims))
-  for (i in 1:length(simulation_parameters$train_size)) {
-    for (j in seq(simulation_parameters$n_sims[i])){
-      performance <- get_performance_n(
-                        n = simulation_parameters$train_size[i],
-                        test_data = test_data,
-                        data_generating_function = data_generating_function,
-                        model_function = model_function,
-                        performance_function = performance_function,
-                        tune_param = tune_param)  # function defined below
-      results[i,j] <-  performance
-    }
-    sim_message <- paste("simulation", i*n_reps/n_sample_sizes, "of", n_reps)
-    print(sim_message)
-  }
-  rownames(results) = simulation_parameters$train_size
+  results <- run_simulations(simulation_parameters,
+                             test_n = test_n,
+                             data_generating_function = data_generating_function,
+                             model_function = model_function,
+                             performance_function = performance_function,
+                             tune_param = tune_param)
 
-  # processing results and plotting - functions defined below
-  results_list <- process_results(results, simulation_parameters, target_performance)
+  # Applying surrogate modelling and plotting
+  results_list <- sm_linear_extrapolation(results, simulation_parameters, target_performance)
   plot_sample_size_curve(results_list)
 
   return(results_list)
 }
 
+#' Get a data frame of sample sizes and reps at each sample size to use in simulation
+#'
+#'get_simulation_parameters returns a data frame with the first column containing
+#'different sample sizes and the second the number of reps to run at each sample size.
+#'The sample sizes are equally spaced between the min and max sample sizes. The number
+#'of reps  is the total number of simulation reps divided by the number of different
+#'sample sizes to run simulations on.
+#'
+#' @param min_sample_size The minimum sample size
+#' @param max_sample_size The maximum sample size
+#' @param n_reps The total number of simulation reps
+#' @param n_sample_sizes The number of different sample sizes to run simulations on
+#'
+#' @return
+#' @export
+#'
+#' @examples
 get_simulation_parameters <- function(min_sample_size,
                                       max_sample_size,
                                       n_reps,
@@ -124,11 +129,12 @@ get_simulation_parameters <- function(min_sample_size,
 }
 
 get_performance_n <- function(n,
-                              test_data,
+                              test_n,
                               data_generating_function,
                               model_function,
                               performance_function,
                               tune_param) {
+  test_data <- data_generating_function(test_n, tune_param)
   train_data <- data_generating_function(n,
                                          tune_param)
   model <- model_function(train_data)
@@ -136,50 +142,51 @@ get_performance_n <- function(n,
   return(performance)
 }
 
+run_simulations <- function(simulation_parameters,
+                            test_n = test_n,
+                            data_generating_function = data_generating_function,
+                            model_function = model_function,
+                            performance_function = performance_function,
+                            tune_param = tune_param) {
 
-process_results <- function(results, simulation_parameters, target_performance) {
-  mean_performance  <-  apply(results, FUN = mean, MARGIN = 1, na.rm= TRUE)
-  quant20_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.2, na.rm = TRUE)
-  quant5_performance  <-  apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.05, na.rm = TRUE)
-  quant95_performance  <-  apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.95, na.rm = TRUE)
-
-  # min training size where 80% of AUC are > 0.70:
-  # We linearly approximate values between the train sizes and get the min_n from there:
-  min_size_func = stats::approxfun(quant20_performance,
-                                   simulation_parameters$train_size,
-                                   method = "linear")
-  min_n = min_size_func(target_performance)
-
-  return_list <- list(min_n = min_n,
-                      target = target_performance,
-                      summaries = data.frame(
-                                    mean_performance = mean_performance,
-                                    quant20_performance = quant20_performance,
-                                    quant5_performance = quant5_performance,
-                                    quant95_performance = quant95_performance),
-                      data = results,
-                      train_size = simulation_parameters$train_size)
-  return(return_list)
+  results <- matrix(nrow = length(simulation_parameters$train_size),
+         ncol = max(simulation_parameters$n_sims))
+  for (i in 1:length(simulation_parameters$train_size)) {
+    for (j in seq(simulation_parameters$n_sims[i])){
+      results[i,j] <- get_performance_n(n = simulation_parameters$train_size[i],
+                                      test_n = test_n,
+                                      data_generating_function = data_generating_function,
+                                      model_function = model_function,
+                                      performance_function = performance_function,
+                                      tune_param = tune_param)  # function defined below
+    }
+  }
+  rownames(results) = simulation_parameters$train_size
+  return(results)
 }
+
+
+
+
 
 
 plot_sample_size_curve <- function(results_summaries) {
   train_size <- results_summaries$train_size
   performance <- results_summaries$summaries
   quant_performance <- performance$quant20_performance
-  mean_performance <- performance$mean_performance
+  median_performance <- performance$median_performance
   quant5_performance <- performance$quant5_performance
   quant95_performance <- performance$quant95_performance
 
   # Plot
   plot(train_size, quant_performance, type = "l" , lty = 2, col = "red",
        main = "AUC by train size with  20th percintile, 5th percentile, & 95th percentile")
-  graphics::lines(train_size, mean_performance, col = "black")
+  graphics::lines(train_size, median_performance, col = "black")
   graphics::lines(train_size, quant5_performance, col = "grey", lty = 1)
   graphics::lines(train_size, quant95_performance, col = "grey", lty = 1)
   #abline(h = target_auc, col = 3)
   graphics::abline(h = results_summaries$target, col = "green", lty = 3)
   graphics::abline(v = results_summaries$min_n, col = "green", lty = 3)
-  graphics::legend("bottomright", legend = c("AUC mean", "AUC 5th to 95th percentile", "AUC 20th percentile", "Acceptable AUC"),
+  graphics::legend("bottomright", legend = c("AUC median", "AUC 5th to 95th percentile", "AUC 20th percentile", "Acceptable AUC"),
          col = c("black", "grey", "red", "green"), lty = c(1,1,2,3))
 }
