@@ -19,4 +19,5 @@ Imports:
     stats
 Suggests: 
     testthat,
-    pROC
+    pROC,
+    covr
