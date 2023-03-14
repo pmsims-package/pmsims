@@ -5,19 +5,19 @@ tune_generate_data <- function(data_generating_function,
                                model_function,
                                performance_function,
                                target_large_sample_performance,
-                               tolerance = target_large_sample_performance/100) {
-
-  #Optimise
+                               tolerance = target_large_sample_performance / 100) {
+  # Optimise
   optimal_param <- stats::optimise(optimise_me, # function defined below
-                            lower = min_tune_arg,
-                            upper = max_tune_arg,
-                            maximum = FALSE,
-                            tol = tolerance,
-                            n = large_n,
-                            data_generating_function = data_generating_function,
-                            model_function = model_function,
-                            performance_function = performance_function,
-                            target_large_sample_performance = target_large_sample_performance)
+    lower = min_tune_arg,
+    upper = max_tune_arg,
+    maximum = FALSE,
+    tol = tolerance,
+    n = large_n,
+    data_generating_function = data_generating_function,
+    model_function = model_function,
+    performance_function = performance_function,
+    target_large_sample_performance = target_large_sample_performance
+  )
   return(optimal_param$minimum)
 }
 
