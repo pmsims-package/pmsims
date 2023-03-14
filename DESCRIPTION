@@ -19,4 +19,7 @@ Imports:
     stats
 Suggests: 
     testthat,
-    pROC
+    pROC,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
