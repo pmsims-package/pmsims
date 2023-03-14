@@ -1,8 +1,6 @@
 # `pmsims`
 
- [![R-CMD-check](https://github.com/ewancarr/pmsims/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ewancarr/pmsims/actions/workflows/R-CMD-check.yaml)
-
-![Styler](https://github.com/ewancarr/pmsims/actions/workflows/style.yml/badge.svg)
+ [![R-CMD-check](https://github.com/ewancarr/pmsims/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ewancarr/pmsims/actions/workflows/R-CMD-check.yaml) [![Styler](https://github.com/ewancarr/pmsims/actions/workflows/style.yaml/badge.svg)](https://github.com/ewancarr/pmsims/actions/workflows/style.yaml) [![test-coverage](https://github.com/ewancarr/pmsims/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/ewancarr/pmsims/actions/workflows/test-coverage.yaml)
 
 The functions in the package are currently organised in three scripts:
 
