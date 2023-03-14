@@ -45,7 +45,7 @@
 #'   logistic_model <- glm("y ~ .", data = data, family = "binomial")
 #' }
 #'
-#' # Get performance must be a function of data and a model objedt
+#' # Get performance must be a function of data and a model object
 #' get_performance <- function(data, model) {
 #'   y <- data[,1]
 #'   x <- data[,-1]
@@ -92,7 +92,9 @@ calculate_sample_size <- function(data_generating_function,
                              tune_param = tune_param)
 
   # Applying surrogate modelling and plotting
-  results_list <- sm_linear_extrapolation(results, simulation_parameters, target_performance)
+  results_list <- sm_linear_extrapolation(results,
+                                          simulation_parameters,
+                                          target_performance)
   plot_sample_size_curve(results_list)
 
   return(results_list)
@@ -100,11 +102,11 @@ calculate_sample_size <- function(data_generating_function,
 
 #' Get a data frame of sample sizes and reps at each sample size to use in simulation
 #'
-#'get_simulation_parameters returns a data frame with the first column containing
-#'different sample sizes and the second the number of reps to run at each sample size.
-#'The sample sizes are equally spaced between the min and max sample sizes. The number
-#'of reps  is the total number of simulation reps divided by the number of different
-#'sample sizes to run simulations on.
+#' get_simulation_parameters returns a data frame with the first column containing
+#' different sample sizes and the second the number of reps to run at each sample size.
+#' The sample sizes are equally spaced between the min and max sample sizes. The number
+#' of reps  is the total number of simulation reps divided by the number of different
+#' sample sizes to run simulations on.
 #'
 #' @param min_sample_size The minimum sample size
 #' @param max_sample_size The maximum sample size
@@ -184,9 +186,13 @@ plot_sample_size_curve <- function(results_summaries) {
   graphics::lines(train_size, median_performance, col = "black")
   graphics::lines(train_size, quant5_performance, col = "grey", lty = 1)
   graphics::lines(train_size, quant95_performance, col = "grey", lty = 1)
-  #abline(h = target_auc, col = 3)
+  # abline(h = target_auc, col = 3)
   graphics::abline(h = results_summaries$target, col = "green", lty = 3)
   graphics::abline(v = results_summaries$min_n, col = "green", lty = 3)
-  graphics::legend("bottomright", legend = c("AUC median", "AUC 5th to 95th percentile", "AUC 20th percentile", "Acceptable AUC"),
+  graphics::legend("bottomright",
+                   legend = c("AUC median",
+                              "AUC 5th to 95th percentile",
+                              "AUC 20th percentile",
+                              "Acceptable AUC"),
          col = c("black", "grey", "red", "green"), lty = c(1,1,2,3))
 }
