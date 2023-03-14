@@ -1,5 +1,7 @@
 # `pmsims`
 
+ [![R-CMD-check](https://github.com/ewancarr/pmsims/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ewancarr/pmsims/actions/workflows/R-CMD-check.yaml)
+
 ![Styler](https://github.com/ewancarr/pmsims/actions/workflows/style.yml/badge.svg)
 
 The functions in the package are currently organised in three scripts:
