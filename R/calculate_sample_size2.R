@@ -1,5 +1,5 @@
 #' Calculate the minimum sample size required to develop a prediction model
-#' 
+#'
 #' Minimum working example using the mlpwr package
 #'
 #' @param data_generating_function A function of two parameters, n and a tuning parameter, that returns data for the model function
@@ -68,92 +68,88 @@
 #'   n_sample_sizes = 10
 #' )
 calculate_sample_size2 <- function(data_generating_function,
-                                  model_function,
-                                  performance_function,
-                                  target_performance,
-                                  test_n,
-                                  tune_param,
-                                  min_sample_size,
-                                  max_sample_size,
-                                  n_reps,
-                                  n_sample_sizes = 10,
-                                  n_init = 4) {
-  
-  
-  simfun = function(n) {
-    
+                                   model_function,
+                                   performance_function,
+                                   target_performance,
+                                   test_n,
+                                   tune_param,
+                                   min_sample_size,
+                                   max_sample_size,
+                                   n_reps,
+                                   n_sample_sizes = 10,
+                                   n_init = 4) {
+  simfun <- function(n) {
     simulation_parameters <- get_simulation_parameters(
       min_sample_size = n,
       max_sample_size = n,
       n_reps = 1,
       n_sample_sizes = 1
     )
-    
+
     # Running the simulations
     results <- run_simulations(simulation_parameters,
-                               test_n = test_n,
-                               data_generating_function = data_generating_function,
-                               model_function = model_function,
-                               performance_function = performance_function,
-                               tune_param = tune_param
+      test_n = test_n,
+      data_generating_function = data_generating_function,
+      model_function = model_function,
+      performance_function = performance_function,
+      tune_param = tune_param
     )
-    
+
     return(as.numeric(results))
   }
-  
-  
-  aggregate_fun = function(x) quantile(x,probs=.2)
-  # To estimate the variance of the estimated quantile, we use a bootstrap
-  var_bootstrap = function(x) var(sapply(1:20,function(a) aggregate_fun(sample(x,length(x),replace=T))))
-  noise_fun = function(x) var_bootstrap(x$y) # This is the bootstrapped quantile variance
-  power = target_performance # This is the goal AUC 
-  evaluations =  n_reps # Total number of evaluations
-  boundaries = c(min_sample_size,max_sample_size) # Edge Sample Sizes
-  surrogate = "gpr" # Gaussian Process Regression as surrogate Model 
-  setsize = n_reps/n_sample_sizes # 5 Evaluations for each sample size
-  n.startsets = n_init
-    
-  # perform search
-  ds <- mlpwr::find.design(simfun = simfun, aggregate_fun = aggregate_fun,noise_fun=noise_fun, boundaries = boundaries, power = power,surrogate=surrogate,setsize = setsize,evaluations = evaluations, n.startsets = n.startsets)
 
-  # extracting results 
-  dat = ds$dat
-  dat = dat[order(sapply(dat,\(x)x$x))]
-  maxlen = max(sapply(dat,\(x) length(x$y)))
-  results = matrix(nrow=length(dat),ncol=maxlen)
-  rownames(results) = sapply(dat,\(x)x$x)
+
+  aggregate_fun <- function(x) quantile(x, probs = .2)
+  # To estimate the variance of the estimated quantile, we use a bootstrap
+  var_bootstrap <- function(x) var(sapply(1:20, function(a) aggregate_fun(sample(x, length(x), replace = T))))
+  noise_fun <- function(x) var_bootstrap(x$y) # This is the bootstrapped quantile variance
+  power <- target_performance # This is the goal AUC
+  evaluations <- n_reps # Total number of evaluations
+  boundaries <- c(min_sample_size, max_sample_size) # Edge Sample Sizes
+  surrogate <- "gpr" # Gaussian Process Regression as surrogate Model
+  setsize <- n_reps / n_sample_sizes # 5 Evaluations for each sample size
+  n.startsets <- n_init
+
+  # perform search
+  ds <- mlpwr::find.design(simfun = simfun, aggregate_fun = aggregate_fun, noise_fun = noise_fun, boundaries = boundaries, power = power, surrogate = surrogate, setsize = setsize, evaluations = evaluations, n.startsets = n.startsets)
+
+  # extracting results
+  dat <- ds$dat
+  dat <- dat[order(sapply(dat, \(x)x$x))]
+  maxlen <- max(sapply(dat, \(x) length(x$y)))
+  results <- matrix(nrow = length(dat), ncol = maxlen)
+  rownames(results) <- sapply(dat, \(x)x$x)
   for (i in seq(length(dat))) {
-    results[i,seq(length(dat[[i]]$y))] = dat[[i]]$y
+    results[i, seq(length(dat[[i]]$y))] <- dat[[i]]$y
   }
-  
+
   median_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.5, na.rm = TRUE)
   quant20_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.2, na.rm = TRUE)
   quant5_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.05, na.rm = TRUE)
   quant95_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.95, na.rm = TRUE)
-  
-  results_list = list(
-      min_n = as.numeric(ds$final$design),
-      target = target_performance,
-      summaries = data.frame(
-        median_performance = median_performance,
-        quant20_performance = quant20_performance,
-        quant5_performance = quant5_performance,
-        quant95_performance = quant95_performance
-      ),
-      data = results,
-      train_size = rownames(results)
-    )
-  
+
+  results_list <- list(
+    min_n = as.numeric(ds$final$design),
+    target = target_performance,
+    summaries = data.frame(
+      median_performance = median_performance,
+      quant20_performance = quant20_performance,
+      quant5_performance = quant5_performance,
+      quant95_performance = quant95_performance
+    ),
+    data = results,
+    train_size = rownames(results)
+  )
+
   simulation_parameters <- get_simulation_parameters(
     min_sample_size = min_sample_size,
     max_sample_size = max_sample_size,
     n_reps = n_reps,
     n_sample_sizes = n_sample_sizes
   )
-  
+
 
   plot_sample_size_curve(results_list)
 
   return(results_list)
 }
-
