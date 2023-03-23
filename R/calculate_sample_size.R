@@ -178,11 +178,6 @@ run_simulations <- function(simulation_parameters,
   return(results)
 }
 
-
-
-
-
-
 plot_sample_size_curve <- function(results_summaries) {
   train_size <- results_summaries$train_size
   performance <- results_summaries$summaries

@@ -79,25 +79,16 @@ calculate_sample_size2 <- function(data_generating_function,
                                    n_sample_sizes = 10,
                                    n_init = 4) {
   simfun <- function(n) {
-    simulation_parameters <- get_simulation_parameters(
-      min_sample_size = n,
-      max_sample_size = n,
-      n_reps = 1,
-      n_sample_sizes = 1
-    )
-
-    # Running the simulations
-    results <- run_simulations(simulation_parameters,
+    results <- run_simulations(data.frame(train_size = n,
+                                          n_sims = 1),
       test_n = test_n,
       data_generating_function = data_generating_function,
       model_function = model_function,
       performance_function = performance_function,
       tune_param = tune_param
     )
-
     return(as.numeric(results))
   }
-
 
   aggregate_fun <- function(x) quantile(x, probs = .2)
   # To estimate the variance of the estimated quantile, we use a bootstrap
@@ -111,8 +102,19 @@ calculate_sample_size2 <- function(data_generating_function,
   n.startsets <- n_init
 
   # perform search
-  ds <- mlpwr::find.design(simfun = simfun, aggregate_fun = aggregate_fun, noise_fun = noise_fun, boundaries = boundaries, power = power, surrogate = surrogate, setsize = setsize, evaluations = evaluations, n.startsets = n.startsets)
-
+  ds <-
+    mlpwr::find.design(
+      simfun = simfun,
+      aggregate_fun = aggregate_fun,
+      noise_fun = noise_fun,
+      boundaries = boundaries,
+      power = power,
+      surrogate = surrogate,
+      setsize = setsize,
+      evaluations = evaluations,
+      n.startsets = n.startsets
+    )
+  
   # extracting results
   dat <- ds$dat
   dat <- dat[order(sapply(dat, \(x)x$x))]
