@@ -147,9 +147,8 @@ calculate_sample_size2 <- function(data_generating_function,
     n_reps = n_reps,
     n_sample_sizes = n_sample_sizes
   )
-
-
-  plot_sample_size_curve(results_list)
-
+  
+  attr(results_list, "class") <- "pmsims"
+  
   return(results_list)
 }
