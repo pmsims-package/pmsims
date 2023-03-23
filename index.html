@@ -59,14 +59,17 @@
 <div class="page-header"><h1 id="pmsims">
 <code>pmsims</code><a class="anchor" aria-label="anchor" href="#pmsims"></a>
 </h1></div>
-<p><a href="https://github.com/ewancarr/pmsims/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/ewancarr/pmsims/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a> <a href="https://github.com/ewancarr/pmsims/actions/workflows/style.yaml" class="external-link"><img src="https://github.com/ewancarr/pmsims/actions/workflows/style.yaml/badge.svg" alt="Styler"></a> <a href="https://github.com/ewancarr/pmsims/actions/workflows/test-coverage.yaml" class="external-link"><img src="https://github.com/ewancarr/pmsims/actions/workflows/test-coverage.yaml/badge.svg" alt="test-coverage"></a></p>
+<p><a href="https://github.com/ewancarr/pmsims/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/ewancarr/pmsims/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a> <a href="https://github.com/ewancarr/pmsims/actions/workflows/style.yaml" class="external-link"><img src="https://github.com/ewancarr/pmsims/actions/workflows/style.yaml/badge.svg" alt="Styler"></a> <a href="https://github.com/ewancarr/pmsims/actions/workflows/test-coverage.yaml" class="external-link"><img src="https://github.com/ewancarr/pmsims/actions/workflows/test-coverage.yaml/badge.svg" alt="test-coverage"></a> <a href="http://perso.crans.org/besson/LICENSE.html" class="external-link"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="GPLv3 license"></a></p>
 <p>The functions in the package are currently organised in three scripts:</p>
 <ul>
-<li>R/tune_generate_data.R: function that tunes the data generating model</li>
-<li>R/calculate_sample_size.R: function that calculates sample size for prediction model by running a surrogate model</li>
-<li>R/surrogate_models.R: functions for implementing surrogate models</li>
+<li>
+<code>tune_generate_data.R</code>: function that tunes the data generating model</li>
+<li>
+<code>calculate_sample_size.R</code>: function that calculates sample size for prediction model by running a surrogate model</li>
+<li>
+<code>surrogate_models.R</code>: functions for implementing surrogate models</li>
 </ul>
-<p>At the moment data generating mechanisms, performance metrics, and models are arguments for the calculate sample_size.R function, to be provided by users. The example.R script shows how this can be done for a binary outcome analysed with logistic or logistic lasso regression.</p>
+<p>At the moment, data generating mechanisms, performance metrics, and models are arguments for the <code>calculate_sample_size.R</code> function, to be provided by users. The <code>example.R</code> script shows how this can be done for a binary outcome analysed with logistic or logistic lasso regression.</p>
 </div>
   </div>
 
