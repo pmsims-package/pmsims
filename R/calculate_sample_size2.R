@@ -92,7 +92,7 @@ calculate_sample_size2 <- function(data_generating_function,
 
   aggregate_fun <- function(x) quantile(x, probs = .2)
   # To estimate the variance of the estimated quantile, we use a bootstrap
-  var_bootstrap <- function(x) var(sapply(1:20, function(a) aggregate_fun(sample(x, length(x), replace = T))))
+  var_bootstrap <- function(x) var(replicate(20, aggregate_fun(sample(x, length(x), replace = T))))
   noise_fun <- function(x) var_bootstrap(x$y) # This is the bootstrapped quantile variance
   power <- target_performance # This is the goal AUC
   evaluations <- n_reps # Total number of evaluations
