@@ -67,9 +67,50 @@
 #'   n_reps = 100,
 #'   n_sample_sizes = 10
 #' )
-calculate_sample_size2 <- function(data_generating_function,
-                                   model_function,
-                                   performance_function,
+
+get_performance_n <- function(n,
+                              test_n,
+                              data_generating_function,
+                              model_function,
+                              performance_function,
+                              tune_param,
+                              ...) {
+  test_data <- data_generating_function(test_n, tune_param, ...)
+  train_data <- data_generating_function(n, tune_param, ...)
+  model <- model_function(train_data)
+  performance <- performance_function(test_data, model)
+  return(performance)
+}
+
+run_simulations <- function(simulation_parameters,
+                            test_n = test_n,
+                            data_generating_function = data_generating_function,
+                            model_function = model_function,
+                            performance_function = performance_function,
+                            tune_param = tune_param) {
+  results <- matrix(
+    nrow = length(simulation_parameters$train_size),
+    ncol = max(simulation_parameters$n_sims)
+  )
+  for (i in 1:length(simulation_parameters$train_size)) {
+    for (j in seq(simulation_parameters$n_sims[i])) {
+      results[i, j] <- get_performance_n(
+        n = simulation_parameters$train_size[i],
+        test_n = test_n,
+        data_generating_function = data_generating_function,
+        model_function = model_function,
+        performance_function = performance_function,
+        tune_param = tune_param
+      ) # function defined below
+    }
+  }
+  rownames(results) <- simulation_parameters$train_size
+  return(results)
+}
+
+calculate_sample_size2 <- function(data,
+                                   model = NULL,
+                                   performance_function = NULL,
                                    target_performance,
                                    test_n,
                                    tune_param,
@@ -78,6 +119,23 @@ calculate_sample_size2 <- function(data_generating_function,
                                    n_reps,
                                    n_sample_sizes = 10,
                                    n_init = 4) {
+  
+  if (is.function(data)) {
+    data_generating_function <- data
+  } else if (is.list(data)) {
+    data_generating_function <- default_data_generators(type = data$type,
+                                                        beta_signal = data$beta_signal,
+                                                        n_params = data$n_params)
+  }
+
+  if (is.null(model)) {
+    m <- default_model_generators(type = data$type)
+    model_function <- m$model
+    performance_function <- m$metric
+  } else {
+    model_function <- model
+  }
+
   simfun <- function(n) {
     results <- run_simulations(
       data.frame(
@@ -133,9 +191,14 @@ calculate_sample_size2 <- function(data_generating_function,
   quant5_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.05, na.rm = TRUE)
   quant95_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.95, na.rm = TRUE)
 
+  min_n <- as.numeric(ds$final$design)
+
   results_list <- list(
-    min_n = as.numeric(ds$final$design),
-    target = target_performance,
+    min_n = ifelse(is.na(min_n),
+      "Not possible. Increase sample or lower performance",
+      min_n
+    ),
+    target_performance = target_performance,
     summaries = data.frame(
       median_performance = median_performance,
       quant20_performance = quant20_performance,
