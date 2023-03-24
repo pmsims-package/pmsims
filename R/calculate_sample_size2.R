@@ -79,8 +79,11 @@ calculate_sample_size2 <- function(data_generating_function,
                                    n_sample_sizes = 10,
                                    n_init = 4) {
   simfun <- function(n) {
-    results <- run_simulations(data.frame(train_size = n,
-                                          n_sims = 1),
+    results <- run_simulations(
+      data.frame(
+        train_size = n,
+        n_sims = 1
+      ),
       test_n = test_n,
       data_generating_function = data_generating_function,
       model_function = model_function,
@@ -114,7 +117,7 @@ calculate_sample_size2 <- function(data_generating_function,
       evaluations = evaluations,
       n.startsets = n.startsets
     )
-  
+
   # extracting results
   dat <- ds$dat
   dat <- dat[order(sapply(dat, \(x)x$x))]
@@ -149,8 +152,8 @@ calculate_sample_size2 <- function(data_generating_function,
     n_reps = n_reps,
     n_sample_sizes = n_sample_sizes
   )
-  
+
   attr(results_list, "class") <- "pmsims"
-  
+
   return(results_list)
 }
