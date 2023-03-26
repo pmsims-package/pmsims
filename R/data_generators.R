@@ -14,10 +14,10 @@ default_data_generators <- function(opts) {
                   n_params = 10,
                   prob_p = 0.1,
                   baseline_probability = 0.3) {
-      X <- rbinom(n * .n_params, 1, .prob_p)
-      X <- matrix(X, nrow = n, ncol = .n_params)
-      W_ <- rep(.beta_signal, .n_params)
-      b0 <- log(.baseline_probability / (1 - .baseline_probability))
+      X <- rbinom(n * n_params, 1, prob_p)
+      X <- matrix(X, nrow = n, ncol = n_params)
+      W_ <- rep(beta_signal, n_params)
+      b0 <- log(baseline_probability / (1 - baseline_probability))
       lp <- X %*% W_ + b0
       y_prob <- 1 / (1 + exp(-lp))
       y <- rbinom(n, 1, y_prob)
