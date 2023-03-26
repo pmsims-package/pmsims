@@ -123,9 +123,7 @@ calculate_sample_size2 <- function(data,
   if (is.function(data)) {
     data_generating_function <- data
   } else if (is.list(data)) {
-    data_generating_function <- default_data_generators(type = data$type,
-                                                        beta_signal = data$beta_signal,
-                                                        n_params = data$n_params)
+    data_generating_function <- default_data_generators(data)
   }
 
   if (is.null(model)) {
@@ -217,6 +215,5 @@ calculate_sample_size2 <- function(data,
   )
 
   attr(results_list, "class") <- "pmsims"
-
   return(results_list)
 }

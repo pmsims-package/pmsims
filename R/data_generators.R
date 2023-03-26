@@ -1,14 +1,19 @@
-default_data_generators <- function(type, beta_signal, n_params) {
-  if (type == "binary") {
+update_arguments <- function(fn, args) {
+  for (key in names(args)) {
+    if (key %in% names(formals(fn))) {
+      formals(fn)[[key]] <- args[[key]]
+    }
+  }
+  return(fn)
+}
+
+default_data_generators <- function(opts) {
+  if (opts$type == "binary") {
     f <- function(n = 500,
-                  .beta_signal = beta_signal,
-                  .n_params = n_params,
-                  .prob_p = 0.1,
-                  .baseline_probability = 0.3) {
-      # n: sample size
-      # beta_signal:
-      # prob_p:
-      # baseline_probability: baseline probability of a positive outcome
+                  beta_signal = 0.5,
+                  n_params = 10,
+                  prob_p = 0.1,
+                  baseline_probability = 0.3) {
       X <- rbinom(n * .n_params, 1, .prob_p)
       X <- matrix(X, nrow = n, ncol = .n_params)
       W_ <- rep(.beta_signal, .n_params)
@@ -46,5 +51,5 @@ default_data_generators <- function(type, beta_signal, n_params) {
       return(data.frame(id = 1:n, time = T, status = 1 - C, x))
     }
   }
-  return(f)
+  return(update_arguments(f, opts$args))
 }
