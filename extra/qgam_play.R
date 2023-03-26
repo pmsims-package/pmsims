@@ -1,4 +1,3 @@
-# data generating function returns dataframe not matrix as logistic regression needs df- this is something we need to consider in error checking for the function.
 generate_data <- function(n, beta_signal) {
   p_signal <- 10 # number of predictors
   prob_p <- 0.1 # probability of a predictor to be 1
@@ -33,22 +32,14 @@ get_performance <- function(data, model) {
   return(auc[1])
 }
 
-test_that("tune_generate_data works", {
-  tune_param <- tune_generate_data(
-    data_generating_function = generate_data,
-    large_n = 10000,
-    min_tune_arg = 0,
-    max_tune_arg = 1,
-    model_function = fit_model,
-    performance_function = get_performance,
-    target_large_sample_performance = 0.7
-  )
-  expect_equal(length(tune_param), 1)
+simulation_parameters <- get_simulation_parameters(100, 1000, 100, 100)
 
-  train_data <- generate_data(10000, tune_param)
-  test_data <- generate_data(10000, tune_param)
-  model <- fit_model(train_data)
-  performance <- get_performance(test_data, model)
+run_simulations(simulation_parameters,
+  data_generating_function = generate_data,
+  model_function = fit_model,
+  performance_function = get_performance,
+  test_n = 10000,
+  tune_param = 0.7
+)
 
-  expect_equal(performance, 0.7, tol = 0.1)
-})
+?qgam

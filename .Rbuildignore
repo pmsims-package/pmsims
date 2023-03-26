@@ -1,2 +1,5 @@
 ^pmsims\.Rproj$
 ^\.Rproj\.user$
+^\.github$
+^codecov\.yml$
+^LICENSE\.md$

@@ -3,4 +3,5 @@
 .RData
 .Ruserdata
 pmsims.Rproj
-inst/doc
+.DS_store
+/stuff/

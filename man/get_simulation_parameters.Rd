@@ -20,13 +20,10 @@ get_simulation_parameters(
 
 \item{n_sample_sizes}{The number of different sample sizes to run simulations on}
 }
-\value{
-
-}
 \description{
-get_simulation_parameters returns a data frame with the first column containing
-different sample sizes and the second the number of reps to run at each sample size.
-The sample sizes are equally spaced between the min and max sample sizes. The number
-of reps  is the total number of simulation reps divided by the number of different
-sample sizes to run simulations on.
+get_simulation_parameters returns a data frame with the first column
+containing different sample sizes and the second the number of reps to run
+at each sample size. The sample sizes are equally spaced between the min and
+max sample sizes. The number of reps is the total number of simulation reps
+divided by the number of different sample sizes to run simulations on.
 }
