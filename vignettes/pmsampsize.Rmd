@@ -1,0 +1,47 @@
+---
+title: "Comparison to pmsampsize"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{pmsampsize}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(pmsims)
+library(pmsampsize)
+set.seed(42)
+```
+
+```{r}
+pmsampsize(type = "b",
+           parameters = 10,
+           prevalence = 0.2,
+           cstatistic = 0.7,
+           seed = 42)
+```
+
+```{r}
+opts <- list(type = "binary",
+             args = list(n_params = 10))
+
+pmsims::calculate_sample_size2(
+  data = opts,
+  target_performance = 0.70,
+  test_n = 1e4,
+  tune_param = 0.7,
+  min_sample_size = 100,
+  max_sample_size = 3000,
+  n_reps = 100,
+  n_sample_sizes = 20
+)
+```
