@@ -67,7 +67,6 @@
 #'   n_reps = 100,
 #'   n_sample_sizes = 10
 #' )
-
 get_performance_n <- function(n,
                               test_n,
                               data_generating_function,
@@ -119,7 +118,6 @@ calculate_sample_size2 <- function(data,
                                    n_reps,
                                    n_sample_sizes = 10,
                                    n_init = 4) {
-  
   if (is.function(data)) {
     data_generating_function <- data
   } else if (is.list(data)) {
