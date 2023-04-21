@@ -6,6 +6,9 @@ tune_generate_data <- function(data_generating_function,
                                performance_function,
                                target_large_sample_performance,
                                tolerance = target_large_sample_performance / 100) {
+  
+  
+  
   # Optimise
   optimal_param <- stats::optimise(optimise_me, # function defined below
     lower = min_tune_arg,

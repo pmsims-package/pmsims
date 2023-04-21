@@ -8,6 +8,7 @@
 #' @param target_performance The desired performance of the prediction model
 #' @param test_n The sample size used for testing model performance
 #' @param tune_param A tuning parameter to be passed to the data generating function
+#' @param large_sample_performance The desired model performance in a large smaple. This may be specified in place of tune_param. The data generating model is tuned so the desired performance is obtained when n is equal to the max_sample_size. 
 #' @param min_sample_size The minimum sample size used in simualations
 #' @param max_sample_size The maximum sample size used in simulations
 #' @param n_reps The number of simualtion reps
@@ -112,7 +113,8 @@ calculate_sample_size2 <- function(data,
                                    performance_function = NULL,
                                    target_performance,
                                    test_n,
-                                   tune_param,
+                                   tune_param = NULL,
+                                   large_sample_performance = NULL,
                                    min_sample_size,
                                    max_sample_size,
                                    n_reps,
@@ -130,6 +132,22 @@ calculate_sample_size2 <- function(data,
     performance_function <- m$metric
   } else {
     model_function <- model
+  }
+  
+  if (is.null(tune_param) & is.null(large_sample_performance)) {
+    stop("one of tune_param or large_sample_performance must be specified")
+  }
+  
+  # Tuning parameters
+  if (is.null(tune_param)) {
+    tune_param <- tune_generate_data(data_generating_function = data_generating_function,
+                       large_n = max_sample_size,
+                       min_tune_arg = 0,
+                       max_tune_arg = 1,
+                       model_function = model_function,
+                       performance_function = performance_function,
+                       target_large_sample_performance = large_sample_performance,
+                       tolerance = large_sample_performance/100)
   }
 
   simfun <- function(n) {
