@@ -1,0 +1,45 @@
+---
+title: "auto-tune"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(pmsims)
+```
+
+# Intoduction
+
+Like [T-Pain](https://youtube.com/clip/UgkxcLsn71XArmofo0yZ_OrnFFlZb8Wze32r) data generating model in `pmsims` need autotune. When we specify a data generating model there will be a number of parameters under our control. For example in the default data generating model for binary outcomes included in `pmsims` we can choose the number of binary predictors, the probability that each predictor takes value 1, the probability of an outcome event when all predictors are zero, and a single `beta signal` - the association between all predictors and the log odds of outcome. We also want to specify the overall level of predictive performance for our analysis model in a large dataset. For example we may think that the likely c-statistic is 0.8. The model performance is however not directly set by any of the parameters of the data generating model.
+
+Some of the values of the data generating model parameters are based on a-priori knowledge or will be controlled by the analyst: When developing a prediction model you choose the number of predictors; the probability that a predictor or outcome takes value 1 will be chosen based on knowledge of the data to be used for modelling. There are other parameters, in this case `beta signal`, whose value is difficult to link to the data or our analysis plan. This parameters can be tuned the model to give the desired predictive performance.
+
+# What happens if we do not tune the data generating model
+
+If instead of tuning the data generating model we instead fix the value of `beta signal` then we can get seemingly paradoxical results. We expect the sample size for developing a prediction model to increase as the number of predictors increases as more predictors in the model increases the risk of overfitting. If we change the number of predictors in the data generating model, with a fixed `beta signal` then the required sample size falls. This is because with more predictors for a set level of `beta signal` strengthens the overall association between the whole linear predictor and outcome.
+
+```{r}
+sample_size <- calculate_sample_size2(data = list(type = "binary"),
+                       target_performance = 0.78,
+                       min_sample_size = 100,
+                       max_sample_size = 3000,
+                       n_reps = 1000,
+                       test_n = 10000)
+sample_size$min_n
+  
+)
+```
+
+
+# How to use autotune
+
+# How to autotune a custom data generating mdoel
+
+# Autotune is slow
+
+# Pitfalls and gotchas in our current approach

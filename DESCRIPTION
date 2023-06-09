@@ -20,4 +20,6 @@ Imports:
 Suggests: 
     testthat,
     pROC,
-    covr
+    covr,
+    pmsampsize,
+    rmarkdown
