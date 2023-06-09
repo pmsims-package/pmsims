@@ -20,6 +20,9 @@ get_simulation_parameters(
 
 \item{n_sample_sizes}{The number of different sample sizes to run simulations on}
 }
+\value{
+
+}
 \description{
 get_simulation_parameters returns a data frame with the first column
 containing different sample sizes and the second the number of reps to run
