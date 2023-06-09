@@ -7,7 +7,6 @@
 #' @param performance_function A function which takes a a test dataset and model object as argments and returns a performance metric
 #' @param target_performance The desired performance of the prediction model
 #' @param test_n The sample size used for testing model performance
-#' @param tune_param A tuning parameter to be passed to the data generating function
 #' @param large_sample_performance The desired model performance in a large smaple. This may be specified in place of tune_param. The data generating model is tuned so the desired performance is obtained when n is equal to the max_sample_size. 
 #' @param max_interval_expansion The maximum number of times the interval that the tuning parameter is searched for in can be expanded. The default interval is 0,1 and at each expansion the interval is increased by 1.
 #' @param min_sample_size The minimum sample size used in simualations
@@ -76,8 +75,14 @@ get_performance_n <- function(n,
                               performance_function,
                               tune_param,
                               ...) {
-  test_data <- data_generating_function(test_n, tune_param, ...)
-  train_data <- data_generating_function(n, tune_param, ...)
+  if (is.null(tune_param)) {
+    test_data <- data_generating_function(test_n, ...)
+    train_data <- data_generating_function(n, ...)
+  } else {
+    test_data <- data_generating_function(test_n, tune_param, ...)
+    train_data <- data_generating_function(n, tune_param, ...)
+    
+  }
   model <- model_function(train_data)
   performance <- performance_function(test_data, model)
   return(performance)
@@ -114,7 +119,6 @@ calculate_sample_size2 <- function(data,
                                    performance_function = NULL,
                                    target_performance,
                                    test_n,
-                                   tune_param = NULL,
                                    large_sample_performance = NULL,
                                    max_interval_expansion = 10,
                                    min_sample_size,
@@ -127,7 +131,7 @@ calculate_sample_size2 <- function(data,
   } else if (is.list(data)) {
     data_generating_function <- default_data_generators(data)
   }
-
+  
   if (is.null(model)) {
     m <- default_model_generators(type = data$type)
     model_function <- m$model
@@ -135,24 +139,23 @@ calculate_sample_size2 <- function(data,
   } else {
     model_function <- model
   }
-  
-  if (is.null(tune_param) & is.null(large_sample_performance)) {
-    stop("one of tune_param or large_sample_performance must be specified")
-  }
+
   
   # Tuning parameters
-  if (is.null(tune_param)) {
+  if (is.null(large_sample_performance)) {
+    tune_param = NULL
+  } else {
     tune_param <- tune_generate_data(data_generating_function = data_generating_function,
-                       large_n = max_sample_size,
-                       min_tune_arg = 0,
-                       max_tune_arg = 1,
-                       model_function = model_function,
-                       performance_function = performance_function,
-                       target_large_sample_performance = large_sample_performance,
-                       tolerance = large_sample_performance/100,
-                       max_interval_expansion = max_interval_expansion)
+                                     large_n = max_sample_size,
+                                     min_tune_arg = 0,
+                                     max_tune_arg = 1,
+                                     model_function = model_function,
+                                     performance_function = performance_function,
+                                     target_large_sample_performance = large_sample_performance,
+                                     tolerance = large_sample_performance/100,
+                                     max_interval_expansion = max_interval_expansion)
   }
-
+  
   simfun <- function(n) {
     results <- run_simulations(
       data.frame(
@@ -167,7 +170,7 @@ calculate_sample_size2 <- function(data,
     )
     return(as.numeric(results))
   }
-
+  
   aggregate_fun <- function(x) quantile(x, probs = .2)
   # To estimate the variance of the estimated quantile, we use a bootstrap
   var_bootstrap <- function(x) var(replicate(20, aggregate_fun(sample(x, length(x), replace = T))))
@@ -178,7 +181,7 @@ calculate_sample_size2 <- function(data,
   surrogate <- "gpr" # Gaussian Process Regression as surrogate Model
   setsize <- n_reps / n_sample_sizes # 5 Evaluations for each sample size
   n.startsets <- n_init
-
+  
   # perform search
   ds <-
     mlpwr::find.design(
@@ -192,7 +195,7 @@ calculate_sample_size2 <- function(data,
       evaluations = evaluations,
       n.startsets = n.startsets
     )
-
+  
   # extracting results
   dat <- ds$dat
   dat <- dat[order(sapply(dat, \(x)x$x))]
@@ -202,18 +205,18 @@ calculate_sample_size2 <- function(data,
   for (i in seq(length(dat))) {
     results[i, seq(length(dat[[i]]$y))] <- dat[[i]]$y
   }
-
+  
   median_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.5, na.rm = TRUE)
   quant20_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.2, na.rm = TRUE)
   quant5_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.05, na.rm = TRUE)
   quant95_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.95, na.rm = TRUE)
-
+  
   min_n <- as.numeric(ds$final$design)
-
+  
   results_list <- list(
     min_n = ifelse(is.na(min_n),
-      "Not possible. Increase sample or lower performance",
-      min_n
+                   "Not possible. Increase sample or lower performance",
+                   min_n
     ),
     target_performance = target_performance,
     summaries = data.frame(
@@ -225,14 +228,14 @@ calculate_sample_size2 <- function(data,
     data = results,
     train_size = rownames(results)
   )
-
+  
   simulation_parameters <- get_simulation_parameters(
     min_sample_size = min_sample_size,
     max_sample_size = max_sample_size,
     n_reps = n_reps,
     n_sample_sizes = n_sample_sizes
   )
-
+  
   attr(results_list, "class") <- "pmsims"
   return(results_list)
 }
