@@ -19,7 +19,7 @@ Here we give the simplest example of using `pmsims`.
 
 Imagine you are an analyst planning on developing a prediction model for Type 2 diabetes based on a novel bio marker. You know that the best existing prediction models have c-statistic of around 0.8. You'll need to recruit new patients to develop your model, and want to know how many patients to recruit.
 
-You are treating onset of Type 2 diabetes as a binary outcome. We will use the default data generator for binary outcome, which assumes 10 predictors and uses logistic regression to develop the model. You'd like the c-statistic to be within 0.2 of the model performance possible in a large dataset (ie. target performance of 0.78 vs large sample performance of 0.8).
+You are treating onset of Type 2 diabetes as a binary outcome. We will use the default data generator for binary outcome, which assumes 10 predictors and uses logistic regression to develop the model. You'd like the c-statistic to be within 0.02 of the model performance possible in a large dataset (ie. target performance of 0.78 vs large sample performance of 0.8).
 
 To use `pmsims::calculate_sample_size2` to get a sample size estimate you run:
 
