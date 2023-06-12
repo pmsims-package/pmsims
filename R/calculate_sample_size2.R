@@ -1,3 +1,44 @@
+
+get_performance_n <- function(n,
+                              test_n,
+                              data_generating_function,
+                              model_function,
+                              performance_function,
+                              tune_param,
+                              ...) {
+  test_data <- data_generating_function(test_n, tune_param, ...)
+  train_data <- data_generating_function(n, tune_param, ...)
+  model <- model_function(train_data)
+  performance <- performance_function(test_data, model)
+  return(performance)
+}
+
+run_simulations <- function(simulation_parameters,
+                            test_n = test_n,
+                            data_generating_function = data_generating_function,
+                            model_function = model_function,
+                            performance_function = performance_function,
+                            tune_param = tune_param) {
+  results <- matrix(
+    nrow = length(simulation_parameters$train_size),
+    ncol = max(simulation_parameters$n_sims)
+  )
+  for (i in 1:length(simulation_parameters$train_size)) {
+    for (j in seq(simulation_parameters$n_sims[i])) {
+      results[i, j] <- get_performance_n(
+        n = simulation_parameters$train_size[i],
+        test_n = test_n,
+        data_generating_function = data_generating_function,
+        model_function = model_function,
+        performance_function = performance_function,
+        tune_param = tune_param
+      ) # function defined below
+    }
+  }
+  rownames(results) <- simulation_parameters$train_size
+  return(results)
+}
+
 #' Calculate the minimum sample size required to develop a prediction model
 #'
 #' Minimum working example using the mlpwr package
@@ -69,46 +110,6 @@
 #'   n_reps = 100,
 #'   n_sample_sizes = 10
 #' )
-get_performance_n <- function(n,
-                              test_n,
-                              data_generating_function,
-                              model_function,
-                              performance_function,
-                              tune_param,
-                              ...) {
-  test_data <- data_generating_function(test_n, tune_param, ...)
-  train_data <- data_generating_function(n, tune_param, ...)
-  model <- model_function(train_data)
-  performance <- performance_function(test_data, model)
-  return(performance)
-}
-
-run_simulations <- function(simulation_parameters,
-                            test_n = test_n,
-                            data_generating_function = data_generating_function,
-                            model_function = model_function,
-                            performance_function = performance_function,
-                            tune_param = tune_param) {
-  results <- matrix(
-    nrow = length(simulation_parameters$train_size),
-    ncol = max(simulation_parameters$n_sims)
-  )
-  for (i in 1:length(simulation_parameters$train_size)) {
-    for (j in seq(simulation_parameters$n_sims[i])) {
-      results[i, j] <- get_performance_n(
-        n = simulation_parameters$train_size[i],
-        test_n = test_n,
-        data_generating_function = data_generating_function,
-        model_function = model_function,
-        performance_function = performance_function,
-        tune_param = tune_param
-      ) # function defined below
-    }
-  }
-  rownames(results) <- simulation_parameters$train_size
-  return(results)
-}
-
 calculate_sample_size2 <- function(data,
                                    model = NULL,
                                    performance_function = NULL,
@@ -139,6 +140,10 @@ calculate_sample_size2 <- function(data,
   if (is.null(tune_param) & is.null(large_sample_performance)) {
     stop("one of tune_param or large_sample_performance must be specified")
   }
+  if (!is.null(tune_param) & !is.null(large_sample_performance)) {
+    stop("only one of tune_param or large_sample_performance must be specified ")
+  }
+  
   
   # Tuning parameters
   if (is.null(tune_param)) {
