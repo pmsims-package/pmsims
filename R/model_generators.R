@@ -1,6 +1,6 @@
 #' default_model_generators
 #'
-#' @param type type of outcome, options include "binary"
+#' @param type type of outcome, possible options are: "binary".
 #'
 #' @return
 #' @export
