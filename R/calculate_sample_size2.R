@@ -50,7 +50,7 @@ run_simulations <- function(simulation_parameters,
 #' @param test_n The sample size used for testing model performance
 #' @param tune_param A tuning parameter to be passed to the data generating function
 #' @param large_sample_performance The desired model performance in a large smaple. This may be specified in place of tune_param. The data generating model is tuned so the desired performance is obtained when n is equal to the max_sample_size. 
-#' @param max_interval_expansion The maximum number of times the interval that the tuning parameter is searched for in can be expanded. The default interval is 0,1 and at each expansion the interval is increased by 1.
+#' @param tune_args A named list of arguments to be passed to tune_generate_data.R. Possible arguments are large_n, min_tune_arg, max_tune_arg, max_interval_expansion, and tolerance. See \code{\link{tune_generate_data}} for more details.
 #' @param min_sample_size The minimum sample size used in simualations
 #' @param max_sample_size The maximum sample size used in simulations
 #' @param n_reps The number of simualtion reps
@@ -117,7 +117,7 @@ calculate_sample_size2 <- function(data,
                                    test_n,
                                    tune_param = NULL,
                                    large_sample_performance = NULL,
-                                   max_interval_expansion = 10,
+                                   tune_args = list(),
                                    min_sample_size,
                                    max_sample_size,
                                    n_reps,
@@ -147,15 +147,19 @@ calculate_sample_size2 <- function(data,
   
   # Tuning parameters
   if (is.null(tune_param)) {
-    tune_param <- tune_generate_data(data_generating_function = data_generating_function,
-                       large_n = max_sample_size,
-                       min_tune_arg = 0,
-                       max_tune_arg = 1,
-                       model_function = model_function,
-                       performance_function = performance_function,
-                       target_large_sample_performance = large_sample_performance,
-                       tolerance = large_sample_performance/100,
-                       max_interval_expansion = max_interval_expansion)
+    # Managing parameters and defaults
+    if (is.null(tune_args$min_tune_arg)) tune_args$min_tune_arg <- 0
+    if (is.null(tune_args$max_tune_arg)) tune_args$max_tune_arg <- 1
+    if (is.null(tune_args$large_n)) tune_args$large_n <- max_sample_size
+    if (is.null(tune_args$tolerance)) tune_args$tolerance <- large_sample_performance/100
+    if (is.null(tune_args$max_interval_expansion)) tune_args$max_interval_expansion <-10
+    
+    tune_args$data_generating_function  <-  data_generating_function
+    tune_args$model_function  <-  model_function
+    tune_args$performance_function  <-  performance_function
+    tune_args$target_large_sample_performance  <-  large_sample_performance
+    
+    tune_param <- do.call(tune_generate_data, tune_args)
   }
 
   simfun <- function(n) {

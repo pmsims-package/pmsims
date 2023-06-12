@@ -38,7 +38,7 @@ test_that("calculate_sample_size2 with tuning", {
     data = opts,
     target_performance = 0.70,
     test_n = 1e4,
-   large_sample_performance = 0.75,
+    large_sample_performance = 0.75,
     min_sample_size = 100,
     max_sample_size = 3000,
     n_reps = 10,
