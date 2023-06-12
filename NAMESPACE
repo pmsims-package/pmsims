@@ -2,4 +2,6 @@
 
 export(calculate_sample_size)
 export(calculate_sample_size2)
+export(default_model_generators)
 export(get_simulation_parameters)
+export(tune_generate_data)
