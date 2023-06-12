@@ -1,3 +1,19 @@
+#' Title Tune generate data
+#'
+#' @param data_generating_functiona A function of two parameters, n and a tuning parameter, that returns data for the model function
+#' @param large_n A large sample size used for parameter tuning
+#' @param min_tune_arg The minimum valaue of the parameter to be tuned
+#' @param max_tune_arg The maximum valaue of the parameter to be tuned
+#' @param model_function A function which takes the object returned by the data generating function and fits the analysis model of interest.
+#' @param performance_function A function which takes a a test dataset and model object as argments and returns a performance metric
+#' @param target_large_sample_performance The desired model performance in a large sample 
+#' @param tolerance The tolerance in the large sample performance
+#' @param max_interval_expansion The maximum number of time the search interval will be expanded before tune gererate data quits looking. This prevents getting stuck in impossible searches.
+#'
+#' @return optimal value for second argument of the data generating function
+#' @export
+#'
+#' @examples
 tune_generate_data <- function(data_generating_function,
                                large_n,
                                min_tune_arg,
