@@ -23,23 +23,120 @@ Some of the values of the data generating model parameters are based on a-priori
 
 If instead of tuning the data generating model we instead fix the value of `beta signal` then we can get seemingly paradoxical results. We expect the sample size for developing a prediction model to increase as the number of predictors increases as more predictors in the model increases the risk of overfitting. If we change the number of predictors in the data generating model, with a fixed `beta signal` then the required sample size falls. This is because with more predictors for a set level of `beta signal` strengthens the overall association between the whole linear predictor and outcome.
 
+To fix the value of the tuning parameter argument you use the `tune_param` option in `calculate_sample_size`. Below we run calcualte sample size with 20 and 25 parameters, with a fixed `tune_param`. 
+
 ```{r}
-sample_size <- calculate_sample_size2(data = list(type = "binary"),
+data_options <- list(type = "binary",
+                args = list(n_params = 20))
+set.seed(423423)
+sample_size20 <- calculate_sample_size2(data = data_options,
+                       tune_param = 0.6,
+                       target_performance = 0.7,
+                       min_sample_size = 100,
+                       max_sample_size = 3000,
+                       n_reps = 1000,
+                       test_n = 10000)
+
+data_options <- list(type = "binary",
+                args = list(n_params = 25))
+set.seed(423423)
+sample_size25 <- calculate_sample_size2(data = data_options,
+                       tune_param = 0.6,
+                       target_performance = 0.7,
+                       min_sample_size = 100,
+                       max_sample_size = 3000,
+                       n_reps = 1000,
+                       test_n = 10000)
+
+sample_size20$min_n
+sample_size25$min_n
+```
+
+The sample size `r sample_size20$min_n`  for 20 predictors, higher than the sample size of `r sample_size25$min_n` that we get for 25 predictors. Without tuning the sample size changes in unexpected ways as the large sample model performance changes is not being held constant.
+
+
+# How to use autotune
+To use the autotune functionality built into `pmsims` include the `large_sample_performance` option in `calculate_sample_size2`. Using this option you can specify the performance you'd expect in a large sample, where there is no loss. The default perofmrance metric, in `pmsims`, for binary outcomes is the c-statistic. Below 
+
+```{r}
+
+data_options <- list(type = "binary",
+                args = list(n_params = 20))
+set.seed(423423)
+sample_size20 <- calculate_sample_size2(data = data_options,
+                       large_sample_performance = 0.8,
                        target_performance = 0.78,
                        min_sample_size = 100,
                        max_sample_size = 3000,
                        n_reps = 1000,
                        test_n = 10000)
-sample_size$min_n
-  
-)
+
+data_options <- list(type = "binary",
+                args = list(n_params = 25))
+set.seed(423423)
+sample_size25 <- calculate_sample_size2(data = data_options,
+                       large_sample_performance = 0.8,
+                       target_performance = 0.78,
+                       min_sample_size = 100,
+                       max_sample_size = 3000,
+                       n_reps = 1000,
+                       test_n = 10000)
+
+sample_size20$min_n
+sample_size25$min_n
 ```
 
 
-# How to use autotune
+We now see that the sample size for 20 predictors (n = `r sample_size20$min_n`), is lower than that for 25 predictors n = `r sample_size25$min_n`)  for s, higher than the sample size of `r sample_size25$min_n` that we get for 25 predictors. Without tuning the sample size changes in unexpected ways as the large sample model performance changes is not being held constant.
+
 
 # How to autotune a custom data generating mdoel
+If you are using your own data generating model parameter tuning can also be used. To do this you must write your data generating model to have two arguments. The first must be `n` the number of rows in the data set to be produced and the second argument must be the parameter that is tuned. Below is an example of a custom data generating model that has some `signal` parameters that are associated with the outcome, and some `noise` parameters that are independent of the outcome.
+
+```{r}
+custom_dgf <- function(
+    n = 500,
+    beta_signal = 0.5,
+    n_signal_params = 10,
+    n_noise_params = 20,
+    prob_p = 0.1,
+    baseline_probability = 0.3) {
+      X <- rbinom(n * n_params, 1, prob_p)
+      X <- matrix(X, nrow = n, ncol = n_params)
+      W_ <- c(rep(beta_signal, n_signal_params), rep(0, n_noise_params))
+      b0 <- log(baseline_probability / (1 - baseline_probability))
+      lp <- X %*% W_ + b0
+      y_prob <- 1 / (1 + exp(-lp))
+      y <- rbinom(n, 1, y_prob)
+      data <- cbind(y, X)
+      # colnames(data) <- c("y", paste0("x", 1:(ncol(data) - 1)))
+      return(as.data.frame(data))
+    }
+
+default_model_metric <- default_model_generators(type = "binary")
+```
+
+Tuning will then be applied if we use our custom data generating function and specify large_sample_performance.
+
+```{r}
+set.seed(423423)
+sample_size25 <- calculate_sample_size2(
+     data = custom_dgf,
+     model = default_model_metric$model,
+     performance_function = default_model_metric$metric,
+     large_sample_performance = 0.8,
+     target_performance = 0.78,
+     min_sample_size = 100,
+     max_sample_size = 3000,
+     n_reps = 1000,
+     test_n = 10000
+)
+```
 
 # Autotune is slow
+Autotune can be slow as it involves repeatedly fitting the model on a large sample. If the model is slow to fit in large samples tuning of the model may take as long as calcualting the sample size.
 
 # Pitfalls and gotchas in our current approach
+Tuning is based on the r function optimize. This function is a numerical optimizer that looks to minimise a function whilst varying a single input. In our implantation the function outputs model performance whilst varying the tuning parameter. Optimize is designed to work with functions that give fixed output. When we use it, the output of our function is stochastic and can vary at the same value of the tuning parameter. This is because model performance can vary based on random variation in the sample. If the large sample size used for tuning is too small, or the tolerence passed to optimize is too small, this can lead to no solution being found.
+
+One of the inputs to optimize is the interval in which to search for the solution. In our implentation, if a solution is found on the boundary of the interval, the interval will be expanded and the new interval searched for a solution. If the initial interval is too far from the true value 
