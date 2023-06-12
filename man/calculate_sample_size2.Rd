@@ -5,12 +5,14 @@
 \title{Calculate the minimum sample size required to develop a prediction model}
 \usage{
 calculate_sample_size2(
-  data_generating_function,
-  model_function,
-  performance_function,
+  data,
+  model = NULL,
+  performance_function = NULL,
   target_performance,
   test_n,
-  tune_param,
+  tune_param = NULL,
+  large_sample_performance = NULL,
+  max_interval_expansion = 10,
   min_sample_size,
   max_sample_size,
   n_reps,
@@ -19,10 +21,6 @@ calculate_sample_size2(
 )
 }
 \arguments{
-\item{data_generating_function}{A function of two parameters, n and a tuning parameter, that returns data for the model function}
-
-\item{model_function}{A function which takes the object returned by the data generating function and fits the analysis model of interest.}
-
 \item{performance_function}{A function which takes a a test dataset and model object as argments and returns a performance metric}
 
 \item{target_performance}{The desired performance of the prediction model}
@@ -30,6 +28,10 @@ calculate_sample_size2(
 \item{test_n}{The sample size used for testing model performance}
 
 \item{tune_param}{A tuning parameter to be passed to the data generating function}
+
+\item{large_sample_performance}{The desired model performance in a large smaple. This may be specified in place of tune_param. The data generating model is tuned so the desired performance is obtained when n is equal to the max_sample_size.}
+
+\item{max_interval_expansion}{The maximum number of times the interval that the tuning parameter is searched for in can be expanded. The default interval is 0,1 and at each expansion the interval is increased by 1.}
 
 \item{min_sample_size}{The minimum sample size used in simualations}
 
@@ -40,6 +42,10 @@ calculate_sample_size2(
 \item{n_sample_sizes}{The number of different sample sizes simulations are carried out at}
 
 \item{n_init}{The number of different sample sizes for initialization (before updates)}
+
+\item{data_generating_function}{A function of two parameters, n and a tuning parameter, that returns data for the model function}
+
+\item{model_function}{A function which takes the object returned by the data generating function and fits the analysis model of interest.}
 }
 \value{
 A list of results form the simulation
