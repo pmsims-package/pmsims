@@ -84,7 +84,7 @@ test_that("calculate_sample_size", {
     tune_param = 0.7,
     min_sample_size = 100,
     max_sample_size = 3000,
-    n_reps = 10,
+    n_reps = 20,
     n_sample_sizes = 10
   )
   expect_equal(length(sample_size), 5)

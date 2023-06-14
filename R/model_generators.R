@@ -1,3 +1,11 @@
+#' default_model_generators
+#'
+#' @param type type of outcome, possible options are: "binary".
+#'
+#' @return
+#' @export
+#'
+#' @examples default_model_generators("binary")
 default_model_generators <- function(type) {
   if (type == "binary") {
     model <- function(data) {

@@ -1,3 +1,44 @@
+
+get_performance_n <- function(n,
+                              test_n,
+                              data_generating_function,
+                              model_function,
+                              performance_function,
+                              tune_param,
+                              ...) {
+  test_data <- data_generating_function(test_n, tune_param, ...)
+  train_data <- data_generating_function(n, tune_param, ...)
+  model <- model_function(train_data)
+  performance <- performance_function(test_data, model)
+  return(performance)
+}
+
+run_simulations <- function(simulation_parameters,
+                            test_n = test_n,
+                            data_generating_function = data_generating_function,
+                            model_function = model_function,
+                            performance_function = performance_function,
+                            tune_param = tune_param) {
+  results <- matrix(
+    nrow = length(simulation_parameters$train_size),
+    ncol = max(simulation_parameters$n_sims)
+  )
+  for (i in 1:length(simulation_parameters$train_size)) {
+    for (j in seq(simulation_parameters$n_sims[i])) {
+      results[i, j] <- get_performance_n(
+        n = simulation_parameters$train_size[i],
+        test_n = test_n,
+        data_generating_function = data_generating_function,
+        model_function = model_function,
+        performance_function = performance_function,
+        tune_param = tune_param
+      ) # function defined below
+    }
+  }
+  rownames(results) <- simulation_parameters$train_size
+  return(results)
+}
+
 #' Calculate the minimum sample size required to develop a prediction model
 #'
 #' Minimum working example using the mlpwr package
@@ -8,6 +49,8 @@
 #' @param target_performance The desired performance of the prediction model
 #' @param test_n The sample size used for testing model performance
 #' @param tune_param A tuning parameter to be passed to the data generating function
+#' @param large_sample_performance The desired model performance in a large smaple. This may be specified in place of tune_param. The data generating model is tuned so the desired performance is obtained when n is equal to the max_sample_size. 
+#' @param tune_args A named list of arguments to be passed to tune_generate_data.R. Possible arguments are large_n, min_tune_arg, max_tune_arg, max_interval_expansion, and tolerance. See \code{\link{tune_generate_data}} for more details.
 #' @param min_sample_size The minimum sample size used in simualations
 #' @param max_sample_size The maximum sample size used in simulations
 #' @param n_reps The number of simualtion reps
@@ -67,52 +110,14 @@
 #'   n_reps = 100,
 #'   n_sample_sizes = 10
 #' )
-get_performance_n <- function(n,
-                              test_n,
-                              data_generating_function,
-                              model_function,
-                              performance_function,
-                              tune_param,
-                              ...) {
-  test_data <- data_generating_function(test_n, tune_param, ...)
-  train_data <- data_generating_function(n, tune_param, ...)
-  model <- model_function(train_data)
-  performance <- performance_function(test_data, model)
-  return(performance)
-}
-
-run_simulations <- function(simulation_parameters,
-                            test_n = test_n,
-                            data_generating_function = data_generating_function,
-                            model_function = model_function,
-                            performance_function = performance_function,
-                            tune_param = tune_param) {
-  results <- matrix(
-    nrow = length(simulation_parameters$train_size),
-    ncol = max(simulation_parameters$n_sims)
-  )
-  for (i in 1:length(simulation_parameters$train_size)) {
-    for (j in seq(simulation_parameters$n_sims[i])) {
-      results[i, j] <- get_performance_n(
-        n = simulation_parameters$train_size[i],
-        test_n = test_n,
-        data_generating_function = data_generating_function,
-        model_function = model_function,
-        performance_function = performance_function,
-        tune_param = tune_param
-      ) # function defined below
-    }
-  }
-  rownames(results) <- simulation_parameters$train_size
-  return(results)
-}
-
 calculate_sample_size2 <- function(data,
                                    model = NULL,
                                    performance_function = NULL,
                                    target_performance,
                                    test_n,
-                                   tune_param,
+                                   tune_param = NULL,
+                                   large_sample_performance = NULL,
+                                   tune_args = list(),
                                    min_sample_size,
                                    max_sample_size,
                                    n_reps,
@@ -130,6 +135,31 @@ calculate_sample_size2 <- function(data,
     performance_function <- m$metric
   } else {
     model_function <- model
+  }
+  
+  if (is.null(tune_param) & is.null(large_sample_performance)) {
+    stop("one of tune_param or large_sample_performance must be specified")
+  }
+  if (!is.null(tune_param) & !is.null(large_sample_performance)) {
+    stop("only one of tune_param or large_sample_performance must be specified ")
+  }
+  
+  
+  # Tuning parameters
+  if (is.null(tune_param)) {
+    # Managing parameters and defaults
+    if (is.null(tune_args$min_tune_arg)) tune_args$min_tune_arg <- 0
+    if (is.null(tune_args$max_tune_arg)) tune_args$max_tune_arg <- 1
+    if (is.null(tune_args$large_n)) tune_args$large_n <- max_sample_size
+    if (is.null(tune_args$tolerance)) tune_args$tolerance <- large_sample_performance/100
+    if (is.null(tune_args$max_interval_expansion)) tune_args$max_interval_expansion <-10
+    
+    tune_args$data_generating_function  <-  data_generating_function
+    tune_args$model_function  <-  model_function
+    tune_args$performance_function  <-  performance_function
+    tune_args$target_large_sample_performance  <-  large_sample_performance
+    
+    tune_param <- do.call(tune_generate_data, tune_args)
   }
 
   simfun <- function(n) {

@@ -52,3 +52,23 @@ test_that("tune_generate_data works", {
 
   expect_equal(performance, 0.7, tol = 0.1)
 })
+
+test_that("interval_expansion works", {
+  tune_param <- tune_generate_data(
+    data_generating_function = generate_data,
+    large_n = 10000,
+    min_tune_arg = 0,
+    max_tune_arg = 0.1,
+    model_function = fit_model,
+    performance_function = get_performance,
+    target_large_sample_performance = 0.7
+  )
+  expect_equal(length(tune_param), 1)
+  
+  train_data <- generate_data(10000, tune_param)
+  test_data <- generate_data(10000, tune_param)
+  model <- fit_model(train_data)
+  performance <- get_performance(test_data, model)
+  
+  expect_equal(performance, 0.7, tol = 0.1)
+})
