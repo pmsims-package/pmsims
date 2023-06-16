@@ -15,9 +15,9 @@ library(pmsims)
 
 # Intoduction
 
-Like [T-Pain](https://youtube.com/clip/UgkxcLsn71XArmofo0yZ_OrnFFlZb8Wze32r) data generating model in `pmsims` needs autotune. 
+Like [T-Pain](https://youtube.com/clip/UgkxcLsn71XArmofo0yZ_OrnFFlZb8Wze32r), data generating model in `pmsims` needs autotune. 
 
-When we specify a data generating model there will be a number of parameters under our control. For example in the default data generating model for binary outcomes included in `pmsims` we can choose the number of binary predictors, the probability that each predictor takes value 1, the probability of an outcome event when all predictors are zero, and a single `beta_signal` - the association between all predictors and the log odds of outcome. We may also want to specify the overall level of predictive performance for our analysis model in a large dataset. For example we may think that the likely c-statistic is 0.8. The model performance is however not directly set by any of the parameters of the data generating model.
+When we specify a data generating model there will be a number of parameters under our control. For example in the default data generating model for binary outcomes included in `pmsims`, we can specify (1) the number of binary predictors, (2) the probability that each predictor takes value 1, (3) the probability of an outcome event when all predictors are zero, (4) and a single `beta_signal`, the association between all predictors and the log-odds of outcome. We may also want to specify the overall level of predictive performance for our analysis model in a large dataset. For example, we may think that the likely c-statistic is 0.8. The model performance is, however, not directly set by any of the parameters of the data generating model.
 
 Some of the values of the data generating model parameters are based on a-priori knowledge or will be controlled by the analyst: When developing a prediction model you choose the number of predictors; the probability that a predictor or outcome takes value 1 will be chosen based on knowledge of the data to be used for modelling. There are other parameters, in this case `beta_signal`, whose value is difficult to link to the data or our analysis plan. This parameters can be tuned the model to give the desired predictive performance.
 
@@ -64,23 +64,24 @@ The sample size `r sample_size20$min_n`  for 20 predictors, higher than the samp
 
 
 # How to use autotune
-To use the autotune functionality built into `pmsims` include the `large_sample_performance` option in `calculate_sample_size2`. Using this option you can specify the performance you'd expect in a large sample, where there is no loss. The default perofmrance metric, in `pmsims`, for binary outcomes is the c-statistic. 
+
+To use the autotune functionality built into `pmsims`, include the `large_sample_performance` option in `calculate_sample_size2`. This option specifies the performance you would expect in a large sample where there is no loss. For binary outcomes, the default performance metric in `pmsims` is the c-statistic. 
 
 ```{r}
-
 data_options <- list(type = "binary",
-                args = list(n_params = 20))
+                     args = list(n_params = 20))
+
 set.seed(423423)
 sample_size20 <- calculate_sample_size2(data = data_options,
-                       large_sample_performance = 0.8,
-                       target_performance = 0.78,
-                       min_sample_size = 100,
-                       max_sample_size = 3000,
-                       n_reps = 1000,
-                       test_n = 10000)
+                                        large_sample_performance = 0.8,
+                                        target_performance = 0.78,
+                                        min_sample_size = 100,
+                                        max_sample_size = 3000,
+                                        n_reps = 1000,
+                                        test_n = 10000)
 
 data_options <- list(type = "binary",
-                args = list(n_params = 25))
+                     args = list(n_params = 25))
 set.seed(423423)
 sample_size25 <- calculate_sample_size2(data = data_options,
                        large_sample_performance = 0.8,
@@ -95,11 +96,12 @@ sample_size25$min_n
 ```
 
 
-We now see that the sample size for 20 predictors (n = `r sample_size20$min_n`), is lower than that for 25 predictors n = `r sample_size25$min_n`). 
+We now see that the minimum sample size for 20 predictors (n = `r sample_size20$min_n`) is lower than that for 25 predictors (n = `r sample_size25$min_n`). 
 
 
-# How to autotune a custom data generating mdoel
-If you are using your own data generating model parameter tuning can also be used. To do this you must write your data generating model to have two arguments. The first must be `n` the number of rows in the data set to be produced and the second argument must be the parameter that is tuned. Below is an example of a custom data generating model that has some `signal` parameters that are associated with the outcome, and some `noise` parameters that are independent of the outcome.
+# How to autotune a custom data generating model
+
+If you are using your own data generating model parameter, tuning can also be used. To do this, you must write your data generating model to have two arguments. The first must be `n` the number of rows in the data set to be produced and the second argument must be the parameter that is tuned. Below is an example of a custom data generating model that has some `signal` parameters that are associated with the outcome, and some `noise` parameters that are independent of the outcome.
 
 ```{r}
 custom_dgf <- function(
@@ -143,9 +145,11 @@ sample_size25 <- calculate_sample_size2(
 ```
 
 # Autotune can be slow
+
 Autotune can be slow as it involves repeatedly fitting the model on a large sample. If the model is slow to fit in large samples tuning of the model may take as long as calculating the sample size.
 
 # Pitfalls and gotchas in our current approach
+
 Tuning is based on the r function optimize. This function is a numerical optimizer that looks to minimise a function whilst varying a single input. In our implantation the function outputs model performance whilst varying the tuning parameter. Optimize is designed to work with functions that give fixed output. When we use it, the output of our function is stochastic and can vary at the same value of the tuning parameter. This is because model performance can vary based on random variation in the sample. If the large sample size used for tuning is too small, or the tolerence passed to optimize is too small, this can lead to no solution being found.
 
 One of the inputs to optimize is the interval in which to search for the solution. In our implementation, if a solution is found on the boundary of the interval, the interval will be expanded and the new interval searched for a solution. To stop pmsims getting lost in an infinite search, a limit is set on the number of increases to the search interval that will occur. The default is 10.
