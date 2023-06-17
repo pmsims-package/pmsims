@@ -61,68 +61,20 @@ run_simulations <- function(simulation_parameters,
 #' @export
 #'
 #' @examples
-#'
-#' library(pROC)
-#'
-#' generate_data <- function(n, beta_signal) {
-#'   p_signal <- 10 # number of predictors
-#'   prob_p <- 0.1 # probability of a predictor to be 1
-#'   base_prev <- 0.3 # baseline probability of a positive outcome
-#'
-#'   alldata <- rbinom(n * p_signal, 1, prob_p)
-#'   X <- matrix(alldata, nrow = n, ncol = p_signal)
-#'   W_ <- rep(beta_signal, p_signal)
-#'   b0 <- log(base_prev / (1 - base_prev))
-#'   lp <- X %*% W_ + b0
-#'   y_prob <- 1 / (1 + exp(-lp))
-#'
-#'   # generate outcome
-#'   y <- rbinom(n, 1, y_prob)
-#'   data <- cbind(y, X) |> data.frame()
-#'   x_names <- paste0("x", 1:(ncol(data) - 1))
-#'   data_names <- c("y", x_names)
-#'   colnames(data) <- data_names
-#'   return(data)
-#' }
-#'
-#' fit_model <- function(data) {
-#'   logistic_model <- glm("y ~ .", data = data, family = "binomial")
-#' }
-#'
-#' # Get performance must be a function of data and a model object
-#' get_performance <- function(data, model) {
-#'   y <- data[, 1]
-#'   x <- data[, -1]
-#'   y_hat <- predict(model, x, type = "response")
-#'   auc <- pROC::auc(y, as.numeric(y_hat), quiet = TRUE)
-#'   return(auc[1])
-#' }
-#'
-#' calculate_sample_size(
-#'   data_generating_function = generate_data,
-#'   model_function = fit_model,
-#'   performance_function = get_performance,
-#'   target_performance = 0.75,
-#'   test_n = 10000,
-#'   tune_param = 0.7,
-#'   min_sample_size = 100,
-#'   max_sample_size = 3000,
-#'   n_reps = 100,
-#'   n_sample_sizes = 10
-#' )
-calculate_sample_size <- function(data,
-                                  model = NULL,
-                                  performance_function = NULL,
-                                  target_performance,
-                                  test_n,
-                                  tune_param = NULL,
-                                  large_sample_performance = NULL,
-                                  tune_args = list(),
-                                  min_sample_size,
-                                  max_sample_size,
-                                  n_reps,
-                                  n_sample_sizes = 10,
-                                  n_init = 4) {
+#' # TODO
+simulate_custom <- function(data,
+                            model = NULL,
+                            performance_function = NULL,
+                            target_performance,
+                            test_n,
+                            tune_param = NULL,
+                            large_sample_performance = NULL,
+                            tune_args = list(),
+                            min_sample_size,
+                            max_sample_size,
+                            n_reps,
+                            n_sample_sizes = 10,
+                            n_init = 4) {
   if (is.function(data)) {
     data_generating_function <- data
   } else if (is.list(data)) {
@@ -244,4 +196,35 @@ calculate_sample_size <- function(data,
 
   attr(results_list, "class") <- "pmsims"
   return(results_list)
+}
+
+
+#' Calculate the minimum sample size required for a binary outcome
+#'
+#' @return
+#' @export
+#'
+#' @examples
+simulate_binary <- function() {
+ # TODO 
+}
+
+#' Calculate the minimum sample size required for a linear outcome
+#'
+#' @return
+#' @export
+#'
+#' @examples
+simulate_linear <- function() {
+ # TODO 
+}
+
+#' Calculate the minimum sample size required for a survival outcome
+#'
+#' @return
+#' @export
+#'
+#' @examples
+simulate_survival <- function() {
+ # TODO 
 }
