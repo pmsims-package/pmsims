@@ -7,10 +7,7 @@
 default_model_generators(type)
 }
 \arguments{
-\item{type}{type of outcome, options include "binary"}
-}
-\value{
-
+\item{type}{type of outcome, possible options are: "binary".}
 }
 \description{
 default_model_generators

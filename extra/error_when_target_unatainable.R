@@ -1,6 +1,6 @@
-# error in calculate_sample_size2
+# error in calculate_sample_size
 set.seed(16516)
-calculate_sample_size2(
+calculate_sample_size(
    data = list(type = "binary"),
    target_performance = 0.8,
    test_n = 10000,

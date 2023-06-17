@@ -5,23 +5,22 @@
 \title{Calculate the minimum sample size required to develop a prediction model}
 \usage{
 calculate_sample_size(
-  data_generating_function,
-  model_function,
-  performance_function,
+  data,
+  model = NULL,
+  performance_function = NULL,
   target_performance,
   test_n,
-  tune_param,
+  tune_param = NULL,
+  large_sample_performance = NULL,
+  tune_args = list(),
   min_sample_size,
   max_sample_size,
   n_reps,
-  n_sample_sizes = 10
+  n_sample_sizes = 10,
+  n_init = 4
 )
 }
 \arguments{
-\item{data_generating_function}{A function of two parameters, n and a tuning parameter, that returns data for the model function}
-
-\item{model_function}{A function which takes the object returned by the data generating function and fits the analysis model of interest.}
-
 \item{performance_function}{A function which takes a a test dataset and model object as argments and returns a performance metric}
 
 \item{target_performance}{The desired performance of the prediction model}
@@ -30,6 +29,10 @@ calculate_sample_size(
 
 \item{tune_param}{A tuning parameter to be passed to the data generating function}
 
+\item{large_sample_performance}{The desired model performance in a large smaple. This may be specified in place of tune_param. The data generating model is tuned so the desired performance is obtained when n is equal to the max_sample_size.}
+
+\item{tune_args}{A named list of arguments to be passed to tune_generate_data.R. Possible arguments are large_n, min_tune_arg, max_tune_arg, max_interval_expansion, and tolerance. See \code{\link{tune_generate_data}} for more details.}
+
 \item{min_sample_size}{The minimum sample size used in simualations}
 
 \item{max_sample_size}{The maximum sample size used in simulations}
@@ -37,12 +40,18 @@ calculate_sample_size(
 \item{n_reps}{The number of simualtion reps}
 
 \item{n_sample_sizes}{The number of different sample sizes simulations are carried out at}
+
+\item{n_init}{The number of different sample sizes for initialization (before updates)}
+
+\item{data_generating_function}{A function of two parameters, n and a tuning parameter, that returns data for the model function}
+
+\item{model_function}{A function which takes the object returned by the data generating function and fits the analysis model of interest.}
 }
 \value{
 A list of results form the simulation
 }
 \description{
-Calculate the minimum sample size required to develop a prediction model
+Minimum working example using the mlpwr package
 }
 \examples{
 
@@ -91,7 +100,7 @@ calculate_sample_size(
   tune_param = 0.7,
   min_sample_size = 100,
   max_sample_size = 3000,
-  n_reps = 10,
+  n_reps = 100,
   n_sample_sizes = 10
 )
 }
