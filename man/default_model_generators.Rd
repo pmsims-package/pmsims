@@ -4,10 +4,10 @@
 \alias{default_model_generators}
 \title{default_model_generators}
 \usage{
-default_model_generators(type)
+default_model_generators(outcome)
 }
 \arguments{
-\item{type}{type of outcome, possible options are: "binary".}
+\item{outcome}{type of outcome, possible options are: "binary".}
 }
 \description{
 default_model_generators
