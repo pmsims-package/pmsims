@@ -1,4 +1,5 @@
-default_metric_generator(data, model, metric = "auc") {
+default_metric_generator = function(data, model, metric = "auc") {
 
 return(metric_function)
 
+}

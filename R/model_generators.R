@@ -25,8 +25,8 @@ default_model_generators <- function(outcome) {
       return(data.frame())
     }
   } else if (opts$outcome == "survival") {
-    f <- function(params = parameters,
-                  }
+    f <- function(params = parameters)
+                  
 
     return(list(
       model = model,
