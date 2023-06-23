@@ -15,33 +15,6 @@ get_simulation_parameters <- function(min_sample_size,
   return(simulation_parameters)
 }
 
-get_performance_n <- function(n,
-                              test_n,
-                              data_function,
-                              model_function,
-                              tune_param,
-                              ...) {
-  test_data <- data_function(test_n, tune_param, ...)
-  train_data <- data_function(n, tune_param, ...)
-  model <- model_function$model(train_data)
-  return(model_function$metric(test_data, model))
-}
-
-run_simulations <- function(train_size,
-                            n_sims,
-                            test_n,
-                            data_function,
-                            model_function,
-                            tune_param) {
-  results <- expand.grid(rep = 1:max(n_sims), train_size = train_size)
-  apply(results, 1, \(r) {
-    get_performance_n(n = r[2],
-                      test_n = test_n,
-                      data_function = data_function,
-                      model_function = model_function,
-                      tune_param = tune_param)
-  })
-}
 
 #' Calculate the minimum sample size required to develop a prediction model
 #'
@@ -116,14 +89,10 @@ simulate_custom <- function(data_spec = NULL,
 
   # Create inputs for mlpwr ----------------------------------------------------
   mlpwr_simulation_function <- function(n) {
-    run_simulations(
-      train_size = n,
-      n_sims = 1,
-      test_n = test_n,
-      data_function = data_function,
-      model_function = model_function,
-      tune_param = tune_param
-    )
+    test_data <- data_function(test_n, tune_param)
+    train_data <- data_function(n, tune_param)
+    model <- model_function$model(train_data)
+    model_function$metric(test_data, model)
   }
 
   aggregate_fun <- function(x) quantile(x, probs = .2)
