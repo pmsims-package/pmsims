@@ -5,18 +5,20 @@
 \title{Title Tune generate data}
 \usage{
 tune_generate_data(
-  data_generating_function,
+  data_function,
   large_n,
   min_tune_arg,
   max_tune_arg,
   model_function,
-  performance_function,
   target_large_sample_performance,
   tolerance = target_large_sample_performance/100,
-  max_interval_expansion = 10
+  max_interval_expansion = 10,
+  verbose = FALSE
 )
 }
 \arguments{
+\item{data_function}{A function of two parameters, n and a tuning parameter, that returns data for the model function}
+
 \item{large_n}{A large sample size used for parameter tuning}
 
 \item{min_tune_arg}{The minimum valaue of the parameter to be tuned}
@@ -25,15 +27,13 @@ tune_generate_data(
 
 \item{model_function}{A function which takes the object returned by the data generating function and fits the analysis model of interest.}
 
-\item{performance_function}{A function which takes a a test dataset and model object as argments and returns a performance metric}
-
 \item{target_large_sample_performance}{The desired model performance in a large sample}
 
 \item{tolerance}{The tolerance in the large sample performance}
 
 \item{max_interval_expansion}{The maximum number of time the search interval will be expanded before tune gererate data quits looking. This prevents getting stuck in impossible searches.}
 
-\item{data_generating_functiona}{A function of two parameters, n and a tuning parameter, that returns data for the model function}
+\item{performance_function}{A function which takes a a test dataset and model object as argments and returns a performance metric}
 }
 \value{
 optimal value for second argument of the data generating function
