@@ -20,6 +20,13 @@ default_model_generators <- function(outcome) {
       auc <- pROC::auc(y, as.numeric(y_hat), quiet = TRUE)
       return(auc[1])
     }
+  } else if (opts$outcome == "linear") {
+    f <- function() {
+      return(data.frame())
+    }
+  } else if (opts$outcome == "survival") {
+    f <- function(params = parameters,
+                  }
 
     return(list(
       model = model,

@@ -1,19 +1,19 @@
-get_simulation_parameters <- function(min_sample_size,
-                                      max_sample_size,
-                                      n_reps,
-                                      n_sample_sizes) {
-  train_size <- seq(
-	from = min_sample_size,
-	to = max_sample_size,
-	length.out = n_sample_sizes
-  ) |> as.integer(0)
-  n_sims <- rep(n_reps / n_sample_sizes, n_sample_sizes) |> as.integer(0)
-  simulation_parameters <- data.frame(
-    train_size = train_size,
-    n_sims = n_sims
-  )
-  return(simulation_parameters)
-}
+# get_simulation_parameters <- function(min_sample_size,
+#                                       max_sample_size,
+#                                       n_reps,
+#                                       n_sample_sizes) {
+#   train_size <- seq(
+# 	from = min_sample_size,
+# 	to = max_sample_size,
+# 	length.out = n_sample_sizes
+#   ) |> as.integer(0)
+#   n_sims <- rep(n_reps / n_sample_sizes, n_sample_sizes) |> as.integer(0)
+#   simulation_parameters <- data.frame(
+#     train_size = train_size,
+#     n_sims = n_sims
+#   )
+#   return(simulation_parameters)
+# }
 
 
 #' Calculate the minimum sample size required to develop a prediction model

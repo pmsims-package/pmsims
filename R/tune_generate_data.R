@@ -74,6 +74,7 @@ tune_generate_data <- function(data_function,
   return(result$minimum )
 }
 
+# Update to allow spec. of tuning parameter.
 
 optimise_me <- function(tune_var,
                         n,
@@ -81,7 +82,7 @@ optimise_me <- function(tune_var,
                         model_function,
                         performance_function,
                         target_large_sample_performance) {
-  data <- data_function(n, tune_var)
+  data <- data_function(n, tune_var) # TODO: update to allow choice of tuning parameter.
   model <- model_function(data)
   test_data <- data_function(n, tune_var)
   performance <- performance_function(data = test_data, model = model)

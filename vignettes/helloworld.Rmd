@@ -47,11 +47,9 @@ The minimum sample size is `r sample_size$min_n`.
 ```{r}
 sample_size <- simulate_binary(parameters = 20,
                                prevalence = 0.5, # Currently doing nothing, I think.
-                               cstatistic = 0.78,
+                               cstatistic = 0.75,
                                min_sample_size = 200,
                                max_sample_size = 8000)
 
 summary(sample_size)
 ```
-
-The minimum sample size is `r sample_size$min_n`.
