@@ -76,6 +76,16 @@ simulate_custom <- function(data_spec = NULL,
     model <- model_function$model(train_data)
     model_function$metric(test_data, model)
   }
+  
+  # error handling in the simulation function
+  value_on_error = .5 # can be changed based on the chosen metric
+  mlpwr_simulation_function <- function(n) {
+    tryCatch(
+      mlpwr_simulation_function(n),
+      error = function(e)
+        return(value_on_error)
+    )
+  }
 
   aggregate_fun <- function(x) quantile(x, probs = .2)
   
