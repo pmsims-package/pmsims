@@ -3,9 +3,9 @@ get_simulation_parameters <- function(min_sample_size,
                                       n_reps,
                                       n_sample_sizes) {
   train_size <- seq(
-    from = min_sample_size,
-    to = max_sample_size,
-    length.out = n_sample_sizes
+	from = min_sample_size,
+	to = max_sample_size,
+	length.out = n_sample_sizes
   ) |> as.integer(0)
   n_sims <- rep(n_reps / n_sample_sizes, n_sample_sizes) |> as.integer(0)
   simulation_parameters <- data.frame(
@@ -14,7 +14,6 @@ get_simulation_parameters <- function(min_sample_size,
   )
   return(simulation_parameters)
 }
-
 
 get_performance_n <- function(n,
                               test_n,
@@ -54,7 +53,7 @@ run_simulations <- function(train_size,
 #' @param target_performance The desired performance of the prediction model
 #' @param test_n The sample size used for testing model performance
 #' @param tune_param A tuning parameter to be passed to the data generating function
-#' @param large_sample_performance The desired model performance in a large sample. This may be specified in place of tune_param. The data generating model is tuned so the desired performance is obtained when n is equal to the max_sample_size. 
+#' @param large_sample_performance The desired model performance in a large sample. This may be specified in place of tune_param. The data generating model is tuned so the desired performance is obtained when n is equal to the max_sample_size.
 #' @param tune_args A named list of arguments to be passed to tune_generate_data.R. Possible arguments are large_n, min_tune_arg, max_tune_arg, max_interval_expansion, and tolerance. See \code{\link{tune_generate_data}} for more details.
 #' @param min_sample_size The minimum sample size used in simulations
 #' @param max_sample_size The maximum sample size used in simulations
@@ -70,7 +69,6 @@ run_simulations <- function(train_size,
 simulate_custom <- function(data_spec = NULL,
                             data_function = NULL,
                             model_function = NULL,
-                            # performance_function = NULL,
                             target_performance,
                             test_n = NULL,
                             tune_param = NULL,
@@ -82,7 +80,7 @@ simulate_custom <- function(data_spec = NULL,
                             n_sample_sizes = 10,
                             n_init = 4,
                             verbose = FALSE) {
-  
+  # Parse input parameters --------------------------------------------------
   if (is.null(data_spec) & is.null(data_function)) {
     stop("One of 'data_spec' or 'data_function' must be provided.")
   }
@@ -95,12 +93,12 @@ simulate_custom <- function(data_spec = NULL,
     model_function <- default_model_generators(outcome = attr(data_function,
                                                               "outcome"))
   }
-  
+
   if (sum(c(is.null(tune_param), is.null(large_sample_performance))) != 1) {
     stop("Exactly one of 'tune_param' or 'large_sample_performance' must be specified.")
   }
-  
-  # Set tuning arguments
+
+  # Set tuning arguments -------------------------------------------------------
   if (is.null(tune_param)) {
     # Use defaults if tuning parameters not specified
     if (is.null(tune_args$min_tune_arg)) tune_args$min_tune_arg <- 0
@@ -116,8 +114,8 @@ simulate_custom <- function(data_spec = NULL,
     tune_param <- do.call(tune_generate_data, tune_args)
   }
 
-  # Create inputs for mlpwr -------------------------------------------------
-  simfun <- function(n) {
+  # Create inputs for mlpwr ----------------------------------------------------
+  mlpwr_simulation_function <- function(n) {
     run_simulations(
       train_size = n,
       n_sims = 1,
@@ -129,32 +127,32 @@ simulate_custom <- function(data_spec = NULL,
   }
 
   aggregate_fun <- function(x) quantile(x, probs = .2)
-  # To estimate the variance of the estimated quantile, we use a bootstrap
-  var_bootstrap <- function(x) var(replicate(20, aggregate_fun(sample(x, length(x), replace = T))))
-  noise_fun <- function(x) var_bootstrap(x$y) # This is the bootstrapped quantile variance
-  power <- target_performance # This is the goal AUC
-  evaluations <- n_reps # Total number of evaluations
-  boundaries <- c(min_sample_size, max_sample_size) # Edge Sample Sizes
-  surrogate <- "gpr" # Gaussian Process Regression as surrogate Model
-  setsize <- n_reps / n_sample_sizes # 5 Evaluations for each sample size
-  n.startsets <- n_init
-
-  # Perform search using mlpwr
+  
+  # Use a bootstrap to estimate the variance of the estimated quantile
+  var_bootstrap <- function(x) {
+    var(replicate(20, aggregate_fun(sample(x, length(x), replace = TRUE))))
+  }
+  
+  # Calculate bootstrapped quantile variance
+  noise_fun <- function(x) var_bootstrap(x$y)
+  
+  # Perform search using mlpwr -------------------------------------------------
   ds <-
     mlpwr::find.design(
-      simfun = simfun,
+      simfun = mlpwr_simulation_function,
       aggregate_fun = aggregate_fun,
       noise_fun = noise_fun,
-      boundaries = boundaries,
-      power = power,
-      surrogate = surrogate,
-      setsize = setsize,
-      evaluations = evaluations,
-      n.startsets = n.startsets,
+      boundaries = c(min_sample_size, max_sample_size),
+      power = target_performance,
+      surrogate = "gpr",
+      setsize = n_reps / n_sample_sizes,
+      evaluations = n_reps,
+      n.startsets = n_init,
       silent = !verbose
     )
 
-  # extracting results
+
+  # Process results from mlpwr -------------------------------------------------
   dat <- ds$dat
   dat <- dat[order(sapply(dat, \(x)x$x))]
   maxlen <- max(sapply(dat, \(x) length(x$y)))
@@ -205,7 +203,7 @@ simulate_custom <- function(data_spec = NULL,
 #' Calculate the minimum sample size required for a binary outcome
 #'
 #' @param parameters The number of candidate predictor parameters for potential inclusion in the new prediction model.
-#' @param prevalence The outcome proportion (for a prognostic model) or overall prevalence (for a diagnostic model) expected within the model development dataset. 
+#' @param prevalence The outcome proportion (for a prognostic model) or overall prevalence (for a diagnostic model) expected within the model development dataset.
 #' @param ... Other options passed to [simulate_custom()]
 #'
 #' @return
@@ -237,7 +235,7 @@ simulate_binary <- function(parameters,
 #'
 #' @examples
 simulate_linear <- function() {
- # TODO 
+ # TODO
 }
 
 #' Calculate the minimum sample size required for a survival outcome
@@ -247,6 +245,6 @@ simulate_linear <- function() {
 #'
 #' @examples
 simulate_survival <- function() {
- # TODO 
+ # TODO
 }
 
