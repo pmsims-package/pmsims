@@ -1,31 +1,36 @@
-# error in calculate_sample_size
-set.seed(16516)
-calculate_sample_size(
-   data = list(type = "binary"),
-   target_performance = 0.8,
-   test_n = 10000,
-   tune_param = 0.5,
-   min_sample_size = 50,
-   max_sample_size = 3000,
-   n_reps = 100
-)
-
-# The error occurs when running mlpwr. Here are the relevant bits extracted
-
-################################ Set up################################
-
 test_n = 10000
-tune_param = 0.5
-# default binary data generator - copied from data_generators script
-data_generating_function <-  default_data_generators(list(type = "binary"))
-m <- default_model_generators(type = "binary")
 
+# default binary data generator
+data_generating_function <-   function(n = 500,
+                                       beta_signal = 0.5,
+                                       n_params = 10,
+                                       prob_p = 0.1,
+                                       baseline_probability = 0.3) {
+  X <- rbinom(n * n_params, 1, prob_p)
+  X <- matrix(X, nrow = n, ncol = n_params)
+  W_ <- rep(beta_signal, n_params)
+  b0 <- log(baseline_probability / (1 - baseline_probability))
+  lp <- X %*% W_ + b0
+  y_prob <- 1 / (1 + exp(-lp))
+  y <- rbinom(n, 1, y_prob)
+  data <- cbind(y, X)
+  # colnames(data) <- c("y", paste0("x", 1:(ncol(data) - 1)))
+  return(as.data.frame(data))
+}
 
 # default model function
-model <- m$model
+model <- function(data) {
+  logistic_model <- glm("y ~ .", data = data, family = "binomial")
+}
 
 #default metric function
-metric <- m$metric
+metric <- function(data, model) {
+  y <- data[, 1]
+  x <- data[, -1]
+  y_hat <- predict(model, x, type = "response")
+  auc <- pROC::auc(y, as.numeric(y_hat), quiet = TRUE)
+  return(auc[1])
+}
 
 #simfun copied from calc_sample_size2
 simfun <- function(n) {
@@ -38,7 +43,7 @@ simfun <- function(n) {
     data_generating_function = data_generating_function,
     model_function = model,
     performance_function = metric,
-    tune_param = tune_param
+    tune_param = NULL
   )
   return(as.numeric(results))
 }
@@ -52,8 +57,6 @@ boundaries <- c(50, 3000) # Edge Sample Sizes
 surrogate <- "gpr" # Gaussian Process Regression as surrogate Model
 setsize <- 10 
 n.startsets <- 4
-
-################################ reproducing the error ################################
 
 # If we set target power to be 0.6 we get no error
 power <- 0.6
@@ -71,9 +74,7 @@ ds <-
   )
 min_n <- as.numeric(ds$final$design)
 min_n
-
-# If we set target power to be 0.8 we get an error - this is not expected behavior
-# The way calc_sample_size2 is written we would expect a ds object to be returned which results in an na for min sample size.
+# If we set target power to be 0.8 we get an error - this is not expected behaviour
 power <- 0.8
 set.seed(134524)
 ds2 <-
@@ -90,6 +91,5 @@ ds2 <-
 min_n2 <- as.numeric(ds2$final$design)
 min_n2
 
-# if we run simfun on a large smaple we see that the AUC is close to 0.6 
-# I suspect the error is occurring as the target sample size is out of range
+# if we run simfun on a large smaple we see that the AUC is close to 0.6 - i suspect the error is occurring as the target sample size is out of range
 simfun(100000)
