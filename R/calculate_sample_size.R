@@ -4,7 +4,7 @@
 #'
 #' @param data_generating_function A function of two parameters, n and a tuning parameter, that returns data for the model function
 #' @param model_function A function which takes the object returned by the data generating function and fits the analysis model of interest.
-#' @param performance_function A function which takes a a test dataset and model object as arguments and returns a performance metric
+#' @param metric_function A function which takes a a test dataset and model object as arguments and returns a performance metric
 #' @param target_performance The desired performance of the prediction model
 #' @param test_n The sample size used for testing model performance
 #' @param tune_param A tuning parameter to be passed to the data generating function
@@ -21,9 +21,9 @@
 #'
 #' @examples
 #' # TODO
-simulate_custom <- function(data_spec = NULL,
-                            data_function = NULL,
+simulate_custom <- function(data_function = NULL,
                             model_function = NULL,
+                            metric_function = NULL,
                             target_performance,
                             test_n = NULL,
                             tune_param = NULL,
@@ -36,12 +36,8 @@ simulate_custom <- function(data_spec = NULL,
                             n_init = 4,
                             verbose = FALSE) {
   # Parse input parameters --------------------------------------------------
-  if (is.null(data_spec) & is.null(data_function)) {
-    stop("One of 'data_spec' or 'data_function' must be provided.")
-  }
-  # Use a default data function if not supplied
   if (is.null(data_function)) {
-    data_function <- default_data_generators(data_spec)
+    stop("data_function missing")
   }
   # Use a default model function if not supplied
   if (is.null(model_function)) {
@@ -143,6 +139,51 @@ simulate_custom <- function(data_spec = NULL,
   return(results_list)
 }
 
+
+metric_is_compatible <- function(metric, data_function) {
+  stopifnot("metric must be string" = is.character(metric))
+  compatability <- list(binary = c("auc"),
+                        continuous = c("r2"))
+  return(metric %in% compatability[[attr(data_function, "outcome")]])
+}
+
+
+
+#' Title
+#'
+#' @param ... 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+
+parse_inputs <- function(data_spec, metric) {
+  # Set data generating function
+  if (is.null(data_spec)) {
+    stop("data_spec missing")
+  } else {
+    data_function <- default_data_generators(data_spec)
+  }
+  # Set model function, based on outcome type
+  model_function <- default_model_generators(
+    outcome = attr(data_function, "outcome")
+  )
+  # Set a metric, based on outcome type
+  if (is.null(metric)) stop("metric is missing")
+  if (metric_is_compatible(metric, data_function)) {
+    metric_function <- default_metric_generator(data_function,
+                                                model_function,
+                                                metric)
+    } else {
+      stop("Incompatible metric selected; please fix")
+  }
+  # Return
+  return(data_function = data_function,
+         model_function = model_function,
+         metric_function = metric_function)
+}
+
 #' Calculate the minimum sample size required for a binary outcome
 #'
 #' @param parameters The number of candidate predictor parameters for potential inclusion in the new prediction model.
@@ -155,29 +196,34 @@ simulate_custom <- function(data_spec = NULL,
 #' @examples
 simulate_binary <- function(parameters,
                             prevalence,
-                            cstatistic,
+                            metric = "auc",
+                            large_sample_performance, # e.g. 0.75
+                            minimum_threshold = 0.10, # Within 10% of 0.75
                             min_sample_size,
                             max_sample_size,
                             n_reps = 100,
                             ...) {
-  simulate_custom(data_spec = list(outcome = "binary",
-                                   args = list(parameters = parameters)),
-                  target_performance = cstatistic,
-                  large_sample_performance = cstatistic + 0.1,
-                  min_sample_size = min_sample_size,
-                  max_sample_size = max_sample_size,
-                  n_reps = n_reps,
-                  test_n = max_sample_size * 2,
-                  ...)
+  inputs <- parse_inputs(data_spec = list(outcome = "binary",
+                                     args = list(parameters = parameters)),
+                    metric)
+  do.call(simulate_custom,
+          args = c(inputs,
+                   target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
+                   large_sample_performance = large_sample_performance,
+                   min_sample_size = min_sample_size,
+                   max_sample_size = max_sample_size,
+                   n_reps = n_reps,
+                   test_n = max_sample_size * 2,
+                   ...))
 }
 
-#' Calculate the minimum sample size required for a linear outcome
+#' Calculate the minimum sample size required for a continous outcome
 #'
 #' @return
 #' @export
 #'
 #' @examples
-simulate_linear <- function() {
+simulate_continuous <- function() {
  # TODO
 }
 
