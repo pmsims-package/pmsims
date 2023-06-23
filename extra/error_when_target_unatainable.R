@@ -72,7 +72,8 @@ ds <-
 min_n <- as.numeric(ds$final$design)
 min_n
 
-# If we set target power to be 0.8 we get an error - this is not expected behavior - the way calc_sample_size2 is written we would expect a ds object to be returned which results in an na for min sample size.
+# If we set target power to be 0.8 we get an error - this is not expected behavior
+# The way calc_sample_size2 is written we would expect a ds object to be returned which results in an na for min sample size.
 power <- 0.8
 set.seed(134524)
 ds2 <-
@@ -89,5 +90,6 @@ ds2 <-
 min_n2 <- as.numeric(ds2$final$design)
 min_n2
 
-# if we run simfun on a large smaple we see that the AUC is close to 0.6 - i suspect the error is occurring as the target sample size is out of range
+# if we run simfun on a large smaple we see that the AUC is close to 0.6 
+# I suspect the error is occurring as the target sample size is out of range
 simfun(100000)
