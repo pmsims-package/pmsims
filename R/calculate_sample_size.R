@@ -70,20 +70,19 @@ simulate_custom <- function(data_spec = NULL,
   }
 
   # Create inputs for mlpwr ----------------------------------------------------
-  mlpwr_simulation_function <- function(n) {
-    test_data <- data_function(test_n, tune_param)
-    train_data <- data_function(n, tune_param)
-    model <- model_function$model(train_data)
-    model_function$metric(test_data, model)
-  }
   
-  # error handling in the simulation function
+  
   value_on_error = .5 # can be changed based on the chosen metric
+  
   mlpwr_simulation_function <- function(n) {
-    tryCatch(
-      mlpwr_simulation_function(n),
-      error = function(e)
-        return(value_on_error)
+
+    tryCatch({
+      test_data <- data_function(test_n, tune_param)
+      train_data <- data_function(n, tune_param)
+      model <- model_function$model(train_data)
+      model_function$metric(test_data, model)
+      },
+      error = function(e) return(value_on_error)
     )
   }
 
