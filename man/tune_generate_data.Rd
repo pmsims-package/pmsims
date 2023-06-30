@@ -10,6 +10,7 @@ tune_generate_data(
   min_tune_arg,
   max_tune_arg,
   model_function,
+  metric_function,
   target_large_sample_performance,
   tolerance = target_large_sample_performance/100,
   max_interval_expansion = 10,

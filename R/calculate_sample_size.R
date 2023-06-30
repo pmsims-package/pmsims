@@ -59,6 +59,7 @@ simulate_custom <- function(data_function = NULL,
     if (is.null(tune_args$max_interval_expansion)) tune_args$max_interval_expansion <- 10
     default <- list(data_function = data_function,
                     model_function = model_function,
+                    metric_function = metric_function,
                     target_large_sample_performance = large_sample_performance,
                     verbose = verbose)
     tune_args <- c(tune_args, default)
@@ -127,7 +128,7 @@ simulate_custom <- function(data_function = NULL,
 
   results_list <- list(
     outcome = attr(data_function, "outcome"),
-    parameters = data_spec$args$parameters, # TOFIX: This will fail if data_spec isn't provided.
+    # parameters = data_spec$args$parameters, # TOFIX: This will fail if data_spec isn't provided.
     min_n = ifelse(
       is.na(min_n),
       "Not possible. Increase sample or lower performance",
@@ -187,9 +188,9 @@ parse_inputs <- function(data_spec, metric) {
       stop("Incompatible metric selected; please fix")
   }
   # Return
-  return(data_function = data_function,
-         model_function = model_function,
-         metric_function = metric_function)
+  return(list(data_function = data_function,
+              model_function = model_function,
+              metric_function = metric_function))
 }
 
 #' Calculate the minimum sample size required for a binary outcome

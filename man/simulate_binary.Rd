@@ -5,8 +5,6 @@
 \title{Calculate the minimum sample size required for a binary outcome}
 \usage{
 simulate_binary(
-  n,
-  beta_signal,
   signal_parameters,
   noise_parameters,
   predictor_type = "continuous",
@@ -22,10 +20,6 @@ simulate_binary(
 )
 }
 \arguments{
-\item{n}{Sample size}
-
-\item{beta_signal}{Assosiation between signal predictors and the outcome}
-
 \item{signal_parameters}{Number of predictors that have a non zero assosaion with the outcome}
 
 \item{noise_parameters}{Number of predictors with no assosiation with outcome}

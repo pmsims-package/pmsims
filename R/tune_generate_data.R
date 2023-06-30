@@ -19,7 +19,7 @@ tune_generate_data <- function(data_function,
                                min_tune_arg,
                                max_tune_arg,
                                model_function,
-                               # performance_function,
+                               metric_function,
                                target_large_sample_performance,
                                tolerance = target_large_sample_performance / 100,
                                max_interval_expansion = 10,
@@ -36,7 +36,7 @@ tune_generate_data <- function(data_function,
     n = large_n,
     data_function = data_function,
     model_function = model_function$model,
-    performance_function = model_function$metric,
+    metric_function = metric_function,
     target_large_sample_performance = target_large_sample_performance
   )
   optimal_value <- result$minimum
@@ -63,7 +63,7 @@ tune_generate_data <- function(data_function,
        n = large_n,
        data_function = data_function,
        model_function = model_function$model,
-       performance_function = model_function$metric,
+       metric_function = metric_function,
        target_large_sample_performance = target_large_sample_performance
     )
     
@@ -80,12 +80,12 @@ optimise_me <- function(tune_var,
                         n,
                         data_function,
                         model_function,
-                        performance_function,
+                        metric_function,
                         target_large_sample_performance) {
   data <- data_function(n, tune_var) # TODO: update to allow choice of tuning parameter.
   model <- model_function(data)
   test_data <- data_function(n, tune_var)
-  performance <- performance_function(data = test_data, model = model)
+  performance <- metric_function(data = test_data, model = model)
   delta <- abs(performance - target_large_sample_performance)
   return(delta)
 }
