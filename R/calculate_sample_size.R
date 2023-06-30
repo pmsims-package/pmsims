@@ -150,13 +150,6 @@ simulate_custom <- function(data_function = NULL,
 }
 
 
-metric_is_compatible <- function(metric, data_function) {
-  stopifnot("metric must be string" = is.character(metric))
-  compatability <- list(binary = c("auc"),
-                        continuous = c("r2"),
-                        survival = c("auc"))
-  return(metric %in% compatability[[attr(data_function, "outcome")]])
-}
 
 
 
@@ -182,12 +175,9 @@ parse_inputs <- function(data_spec, metric) {
   )
   # Set a metric, based on outcome type
   if (is.null(metric)) stop("metric is missing")
-  if (metric_is_compatible(metric, data_function)) {
-    metric_function <- default_metric_generator(data_function,
+  metric_function <- default_metric_generator(data_function,
                                                 metric)
-    } else {
-      stop("Incompatible metric selected; please fix")
-  }
+
   # Return
   return(list(data_function = data_function,
               model_function = model_function,
