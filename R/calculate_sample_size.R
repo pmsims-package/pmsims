@@ -241,8 +241,36 @@ simulate_binary <- function(signal_parameters,
 #' @export
 #'
 #' @examples
-simulate_continuous <- function() {
- # TODO
+simulate_continuous <- function(
+    signal_parameters, 
+    noise_parameters = 0, 
+    predictor_type = "continuous", 
+    predictor_prop  =NULL,
+    metric = "r2",
+    large_sample_performance = 0.8, # e.g. 0.8
+    minimum_threshold = 0.10, # Within 10% of 0.8
+    min_sample_size,
+    max_sample_size,
+    n_reps = 100,
+    ...) {
+  inputs <- parse_inputs(data_spec = list(type = "continuous",
+                                          args = list(
+                                            signal_parameters=signal_parameters, 
+                                            noise_parameters=noise_parameters, 
+                                            predictor_type = predictor_type, 
+                                            predictor_prop = predictor_prop
+                                          )
+  ),
+  metric)
+  do.call(simulate_custom,
+          args = c(inputs,
+                   target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
+                   large_sample_performance = large_sample_performance,
+                   min_sample_size = min_sample_size,
+                   max_sample_size = max_sample_size,
+                   n_reps = n_reps,
+                   test_n = max_sample_size * 2,
+                   ...))
 }
 
 #' Calculate the minimum sample size required for a survival outcome

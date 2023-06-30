@@ -11,11 +11,11 @@ default_model_generators <- function(outcome) {
     model <- function(data) {
       logistic_model <- glm("y ~ .", data = data, family = "binomial")
     }
-  } else if (opts$outcome == "linear") {
+  } else if (outcome == "continuous") {
     model <- function(data) {
       linear_model <- glm("y ~ .", data = data, family = "gaussian")
     }
-  } else if (opts$outcome == "survival") {
+  } else if (outcome == "survival") {
     model <- function(data) {
       cox_model <- survival::cox.ph("Surv(time, event) ~ .", data = data)
       }
