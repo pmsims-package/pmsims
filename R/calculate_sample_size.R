@@ -99,10 +99,11 @@ simulate_custom <- function(data_function = NULL,
   noise_fun <- function(x) var_bootstrap(x$y)
   
   # processing final_estimate_se
-  
+  setsize <- n_reps/n_sample_sizes
   if(!(is.null(se_final))){
     ci = se_final*qnorm(0.975)*2 
     n_reps = 10000 # setting large nreps so ci dominates.
+    setsize = 100 # fixing setsize so not driven by nreps
   } else {
     ci = NULL
   }
@@ -116,7 +117,7 @@ simulate_custom <- function(data_function = NULL,
       boundaries = c(min_sample_size, max_sample_size),
       power = target_performance,
       surrogate = "gpr",
-      setsize = n_reps / n_sample_sizes,
+      setsize = setsize,
       evaluations = n_reps,
       ci = ci,
       n.startsets = n_init,
