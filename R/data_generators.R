@@ -14,7 +14,7 @@ default_data_generators <- function(opts) {
     f <- generate_binary_data
   } else if (type == "continuous") {
     f <- generate_continuous_data
-  } else if (opts$outcome == "survival") {
+  } else if (type == "survival") {
     f <- generate_survival_data
   } else {
     stop('"opts$type must be one of "continuous", "binary", or "survival""')
@@ -150,7 +150,7 @@ update_arguments <- function(fn, opts) {
       formals(fn)[[key]] <- opts$args[[key]]
     }
   }
-  attr(fn, "outcome") <- opts$outcome
+  attr(fn, "outcome") <- opts$type
   return(fn)
 }
 

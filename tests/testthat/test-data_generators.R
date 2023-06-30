@@ -135,6 +135,7 @@ test_that("default_data_generators", {
   
   expect_equal(nrow(data), 100)
   expect_equal(ncol(data), 11) 
+  expect_equal(attr(f, "outcome"), "continuous")
 
 })
 
