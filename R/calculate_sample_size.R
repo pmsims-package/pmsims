@@ -217,7 +217,16 @@ simulate_binary <- function(n,
                             n_reps = 100,
                             ...) {
   inputs <- parse_inputs(data_spec = list(outcome = "binary",
-                                     args = list(parameters = parameters)),
+                                             args = list(
+                                               n=n, 
+                                               beta_signal=beta_signal,
+                                               signal_parameters=signal_parameters, 
+                                               noise_parameters=noise_parameters, 
+                                               predictor_type = predictor_type, 
+                                               predictor_prop = predictor_prop,
+                                               baseline_prob=baseline_prob
+                                              )
+                                          ),
                     metric)
   do.call(simulate_custom,
           args = c(inputs,
