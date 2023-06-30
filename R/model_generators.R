@@ -22,3 +22,4 @@ default_model_generators <- function(outcome) {
     }
   return(list(model = model))
 }
+
