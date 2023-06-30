@@ -182,7 +182,6 @@ parse_inputs <- function(data_spec, metric) {
   if (is.null(metric)) stop("metric is missing")
   if (metric_is_compatible(metric, data_function)) {
     metric_function <- default_metric_generator(data_function,
-                                                model_function,
                                                 metric)
     } else {
       stop("Incompatible metric selected; please fix")
@@ -214,7 +213,7 @@ simulate_binary <- function(signal_parameters,
                             max_sample_size,
                             n_reps = 100,
                             ...) {
-  inputs <- parse_inputs(data_spec = list(outcome = "binary",
+  inputs <- parse_inputs(data_spec = list(type = "binary",
                                              args = list(
                                                signal_parameters=signal_parameters, 
                                                noise_parameters=noise_parameters, 

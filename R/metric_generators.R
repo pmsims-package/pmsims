@@ -1,6 +1,5 @@
 
-default_metric_generator<- function(data_function, 
-                                    metric) {
+default_metric_generator <- function(data_function,  metric) {
   
   outcome = attr(data_function, "outcome") # outcome type
   

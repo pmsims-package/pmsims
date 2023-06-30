@@ -5,9 +5,9 @@
 \title{Calculate the minimum sample size required to develop a prediction model}
 \usage{
 simulate_custom(
-  data_spec = NULL,
   data_function = NULL,
   model_function = NULL,
+  metric_function = NULL,
   target_performance,
   test_n = NULL,
   tune_param = NULL,
@@ -23,6 +23,8 @@ simulate_custom(
 }
 \arguments{
 \item{model_function}{A function which takes the object returned by the data generating function and fits the analysis model of interest.}
+
+\item{metric_function}{A function which takes a a test dataset and model object as arguments and returns a performance metric}
 
 \item{target_performance}{The desired performance of the prediction model}
 
@@ -45,8 +47,6 @@ simulate_custom(
 \item{n_init}{The number of different sample sizes for initialization (before updates)}
 
 \item{data_generating_function}{A function of two parameters, n and a tuning parameter, that returns data for the model function}
-
-\item{performance_function}{A function which takes a a test dataset and model object as arguments and returns a performance metric}
 }
 \value{
 A list of results form the simulation
