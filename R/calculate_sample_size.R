@@ -195,19 +195,23 @@ parse_inputs <- function(data_spec, metric) {
 
 #' Calculate the minimum sample size required for a binary outcome
 #'
-#' @param parameters The number of candidate predictor parameters for potential inclusion in the new prediction model.
-#' @param prevalence The outcome proportion (for a prognostic model) or overall prevalence (for a diagnostic model) expected within the model development dataset.
+#' @inheritParams generate_binary_data
 #' @param ... Other options passed to [simulate_custom()]
 #'
 #' @return
 #' @export
 #'
 #' @examples
-simulate_binary <- function(parameters,
-                            prevalence,
+simulate_binary <- function(n, 
+                            beta_signal,
+                            signal_parameters, 
+                            noise_parameters, 
+                            predictor_type = "continuous", 
+                            predictor_prop = NULL,
+                            baseline_prob,
                             metric = "auc",
-                            large_sample_performance, # e.g. 0.75
-                            minimum_threshold = 0.10, # Within 10% of 0.75
+                            large_sample_performance = 0.8, # e.g. 0.8
+                            minimum_threshold = 0.10, # Within 10% of 0.8
                             min_sample_size,
                             max_sample_size,
                             n_reps = 100,
