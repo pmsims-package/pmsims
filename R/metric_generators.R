@@ -1,9 +1,9 @@
 
 default_metric_generator<- function(data_function, 
-                                    #model_function, 
                                     metric) {
   
-  #outcome = attr(data_function, "outcome") # outcome type
+  outcome = attr(data_function, "outcome") # outcome type
+  
   if (outcome == "binary") {
     if(metric == "auc") {
       metric_function <- binary_auc_metric
