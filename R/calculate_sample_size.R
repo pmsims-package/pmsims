@@ -25,7 +25,7 @@ simulate_custom <- function(data_function = NULL,
                             model_function = NULL,
                             metric_function = NULL,
                             target_performance,
-                            test_n = NULL,
+                            test_n = 10000,
                             tune_param = NULL,
                             tune_args = list(),
                             large_sample_performance = NULL,
@@ -77,7 +77,7 @@ simulate_custom <- function(data_function = NULL,
       test_data <- data_function(test_n, tune_param)
       train_data <- data_function(n, tune_param)
       model <- model_function$model(train_data)
-      model_function$metric(test_data, model)
+      metric_function(test_data, model)
       },
       error = function(e) return(value_on_error)
     )
