@@ -202,9 +202,7 @@ parse_inputs <- function(data_spec, metric) {
 #' @export
 #'
 #' @examples
-simulate_binary <- function(n, 
-                            beta_signal,
-                            signal_parameters, 
+simulate_binary <- function(signal_parameters, 
                             noise_parameters, 
                             predictor_type = "continuous", 
                             predictor_prop = NULL,
@@ -218,8 +216,6 @@ simulate_binary <- function(n,
                             ...) {
   inputs <- parse_inputs(data_spec = list(outcome = "binary",
                                              args = list(
-                                               n=n, 
-                                               beta_signal=beta_signal,
                                                signal_parameters=signal_parameters, 
                                                noise_parameters=noise_parameters, 
                                                predictor_type = predictor_type, 
