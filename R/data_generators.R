@@ -116,8 +116,8 @@ generate_survival_data <- function(
     noise_parameters, 
     predictor_type, 
     predictor_prop,
-    baseline_hazard = 0.01,
-    censoring_rate = 0.2
+    baseline_hazard,
+    censoring_rate
 ) {
   parameters <- signal_parameters + noise_parameters
   intercept <- 0

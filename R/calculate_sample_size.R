@@ -153,7 +153,8 @@ simulate_custom <- function(data_function = NULL,
 metric_is_compatible <- function(metric, data_function) {
   stopifnot("metric must be string" = is.character(metric))
   compatability <- list(binary = c("auc"),
-                        continuous = c("r2"))
+                        continuous = c("r2"),
+                        survival = c("auc"))
   return(metric %in% compatability[[attr(data_function, "outcome")]])
 }
 
@@ -203,7 +204,7 @@ parse_inputs <- function(data_spec, metric) {
 #'
 #' @examples
 simulate_binary <- function(signal_parameters, 
-                            noise_parameters, 
+                            noise_parameters=0, 
                             predictor_type = "continuous", 
                             predictor_prop = NULL,
                             baseline_prob,
@@ -237,7 +238,7 @@ simulate_binary <- function(signal_parameters,
 
 #' Calculate the minimum sample size required for a continous outcome
 #'
-#' @return
+#' @inheritParams generate_continuous_data
 #' @export
 #'
 #' @examples
@@ -274,11 +275,45 @@ simulate_continuous <- function(
 }
 
 #' Calculate the minimum sample size required for a survival outcome
-#'
+#' 
+#' @inheritParams generate_survival_data
+#' 
 #' @return
 #' @export
 #'
 #' @examples
-simulate_survival <- function() {
- # TODO
+simulate_survival <- function(signal_parameters, 
+                              noise_parameters = 0, 
+                              predictor_type = "continuous", 
+                              predictor_prop  =NULL,
+                              baseline_hazard = 0.01,
+                              censoring_rate = 0.2,
+                              metric = "auc",
+                              large_sample_performance = 0.8, # e.g. 0.8
+                              minimum_threshold = 0.10, # Within 10% of 0.8
+                              min_sample_size,
+                              max_sample_size,
+                              n_reps = 100,
+                              ...) {
+  inputs <- parse_inputs(data_spec = list(type = "survival",
+                                          args = list(
+                                            signal_parameters=signal_parameters, 
+                                            noise_parameters=noise_parameters, 
+                                            predictor_type = predictor_type, 
+                                            predictor_prop = predictor_prop,
+                                            baseline_hazard = baseline_hazard,
+                                            censoring_rate = censoring_rate
+                                          )
+  ),
+  metric)
+  do.call(simulate_custom,
+          args = c(inputs,
+                   target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
+                   large_sample_performance = large_sample_performance,
+                   min_sample_size = min_sample_size,
+                   max_sample_size = max_sample_size,
+                   n_reps = n_reps,
+                   test_n = max_sample_size * 2,
+                   ...))
 }
+
