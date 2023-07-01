@@ -68,11 +68,9 @@ simulate_custom <- function(data_function = NULL,
 
   # Create inputs for mlpwr ----------------------------------------------------
   
-  
-  value_on_error = .5 # can be changed based on the chosen metric
+  value_on_error <- .5 # can be changed based on the chosen metric
   
   mlpwr_simulation_function <- function(n) {
-
     tryCatch({
       test_data <- data_function(test_n, tune_param)
       train_data <- data_function(n, tune_param)
@@ -118,11 +116,15 @@ simulate_custom <- function(data_function = NULL,
   for (i in seq(length(dat))) {
     results[i, seq(length(dat[[i]]$y))] <- dat[[i]]$y
   }
+  
+  get_perf <- function(results, p) { 
+    apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
+  }
 
-  median_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.5, na.rm = TRUE)
-  quant20_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.2, na.rm = TRUE)
-  quant5_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.05, na.rm = TRUE)
-  quant95_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.95, na.rm = TRUE)
+  median_performance <- get_perf(results, p = 0.5)
+  quant20_performance <- get_perf(results, p = 0.2)
+  quant5_performance <- get_perf(results, p = 0.05)
+  quant95_performance <- get_perf(results, p = 0.95)
 
   min_n <- as.numeric(ds$final$design)
 
@@ -148,10 +150,6 @@ simulate_custom <- function(data_function = NULL,
   attr(results_list, "class") <- "pmsims"
   return(results_list)
 }
-
-
-
-
 
 #' Title
 #'
