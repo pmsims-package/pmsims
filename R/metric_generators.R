@@ -10,6 +10,8 @@ default_metric_generator <- function(data_function, metric) {
       metric_function <- binary_brier_score
     } else if (metric == "brier_score_scaled") {
       metric_function <- binary_brier_score_scaled
+    } else {
+      stop(paste("Default metric", metric, "for", outcome, "outcomes does not exist."))
     }
   }
   if (outcome == "survival") {
@@ -18,15 +20,19 @@ default_metric_generator <- function(data_function, metric) {
     } else if (metric == "auc") {
       metric_function <- survival_auc
     } else if (metric == "IBS") { # integrated Brier Score
-      metric_function <- NULL # survival_ibs #not ready, placeholder
+      metric_function <- NULL # survival_ibs; not ready, placeholder
+    } else {
+      stop(paste("Default metric", metric, "for", outcome, "outcomes does not exist."))
     }
   }
   if (outcome == "continuous") {
     if (metric == "r2") {
       metric_function <- continuous_r2
-    } else if (metric == "something_else") {
+    } else if (metric == "something_else") { 
       metric_function <- NULL # placeholder
-    }
+    } else {
+      stop(paste("Default metric", metric, "for", outcome, "outcomes does not exist."))
+    } 
   }
   return(metric_function)
 }
