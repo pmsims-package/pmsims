@@ -1,5 +1,5 @@
 #' @export
-summary.pmsims <- function(result){
+summary.pmsims <- function(result) {
   cat("\n",
       "---------------------------------", "\n",
       "Target performance:     ", result$target_performance, "\n",

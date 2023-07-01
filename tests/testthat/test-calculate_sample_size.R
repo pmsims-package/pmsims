@@ -1,48 +1,88 @@
-test_that("calculate_sample_size", {
-  opts <- list(type = "binary",
-               args = list(n_params = 10))
-  
-  output <- pmsims::calculate_sample_size(
-    data = opts,
-    target_performance = 0.70,
-    test_n = 1e4,
-    tune_param = 0.7,
-    min_sample_size = 100,
-    max_sample_size = 3000,
-    n_reps = 10,
-    n_sample_sizes = 10
+  test_that("parse_inputs", {
+    signal_parameters <- 5
+    noise_parameters <- 5
+    #Binary
+    inputs <- parse_inputs(data_spec = list(type = "binary",
+                                              args = list(
+                                                signal_parameters = signal_parameters, 
+                                                noise_parameters = noise_parameters, 
+                                                predictor_type = "continuous", 
+                                                beta_signal = 0.1,
+                                                baseline_prob = 0.1
+                                              )
+                ),
+    metric="auc")
+    expect_equal(length(inputs), 3)
+    
+    # Continuous
+
+    inputs <- parse_inputs(data_spec = list(type = "continuous",
+                                            args = list(
+                                              signal_parameters = signal_parameters, 
+                                              noise_parameters = noise_parameters, 
+                                              predictor_type = "continuous", 
+                                              beta_signal = 0.1
+                                            )
+    ),
+    metric="r2")
+    expect_equal(length(inputs), 3)
+    
+    #Survival
+    inputs <- parse_inputs(data_spec = list(type = "survival",
+                                            args = list(
+                                              signal_parameters = signal_parameters, 
+                                              noise_parameters = noise_parameters, 
+                                              predictor_type = "continuous", 
+                                              beta_signal = 0.1
+                                            )
+    ),
+    metric="auc")
+    expect_equal(length(inputs), 3)
+    
+    
+  })
+
+test_that("simulate_binary", {
+  signal_parameters <- 5
+  noise_parameters <- 5
+  output <- simulate_binary(
+      signal_parameters = signal_parameters, 
+      noise_parameters = noise_parameters, 
+      predictor_type = "continuous", 
+      baseline_prob = 0.1,
+      min_sample_size = 100,
+      max_sample_size = 3000,
+      n_reps = 10
   )
-  expect_equal(length(output), 5)
+  expect_equal(length(output), 6)
 })
 
-test_that("tune error message", {
-  opts <- list(type = "binary",
-               args = list(n_params = 10))
-  
-  expect_error(pmsims::calculate_sample_size(
-    data = opts,
-    target_performance = 0.70,
-    test_n = 1e4,
+
+test_that("simulate_continuous", {
+  signal_parameters <- 5
+  noise_parameters <- 5
+  output <- simulate_continuous(
+    signal_parameters = signal_parameters, 
+    noise_parameters = noise_parameters, 
+    predictor_type = "continuous", 
     min_sample_size = 100,
     max_sample_size = 3000,
-    n_reps = 10,
-    n_sample_sizes = 10
-  ), regexp = "one of tune_param or large_sample_performance must be specified")
+    n_reps = 10
+  )
+  expect_equal(length(output), 6)
 })
 
-test_that("calculate_sample_size with tuning", {
-  opts <- list(type = "binary",
-               args = list(n_params = 10))
-  
-  output <- pmsims::calculate_sample_size(
-    data = opts,
-    target_performance = 0.70,
-    test_n = 1e4,
-    large_sample_performance = 0.75,
+
+test_that("simulate_survival", {
+  signal_parameters <- 5
+  noise_parameters <- 5
+  output <- simulate_continuous(
+    signal_parameters = signal_parameters, 
+    noise_parameters = noise_parameters, 
+    predictor_type = "continuous", 
     min_sample_size = 100,
     max_sample_size = 3000,
-    n_reps = 10,
-    n_sample_sizes = 10
+    n_reps = 10
   )
-  expect_equal(length(output), 5)
+  expect_equal(length(output), 6)
 })

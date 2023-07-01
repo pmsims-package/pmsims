@@ -25,7 +25,7 @@ simulate_custom <- function(data_function = NULL,
                             model_function = NULL,
                             metric_function = NULL,
                             target_performance,
-                            test_n = NULL,
+                            test_n = 10000,
                             tune_param = NULL,
                             tune_args = list(),
                             large_sample_performance = NULL,
@@ -77,7 +77,7 @@ simulate_custom <- function(data_function = NULL,
       test_data <- data_function(test_n, tune_param)
       train_data <- data_function(n, tune_param)
       model <- model_function$model(train_data)
-      model_function$metric(test_data, model)
+      metric_function(test_data, model)
       },
       error = function(e) return(value_on_error)
     )
@@ -193,9 +193,9 @@ parse_inputs <- function(data_spec, metric) {
 #' @export
 #'
 #' @examples
-simulate_binary <- function(signal_parameters, 
-                            noise_parameters=0, 
-                            predictor_type = "continuous", 
+simulate_binary <- function(signal_parameters,
+                            noise_parameters=0,
+                            predictor_type = "continuous",
                             predictor_prop = NULL,
                             baseline_prob,
                             metric = "auc",
@@ -205,16 +205,17 @@ simulate_binary <- function(signal_parameters,
                             max_sample_size,
                             n_reps = 100,
                             ...) {
-  inputs <- parse_inputs(data_spec = list(type = "binary",
-                                             args = list(
-                                               signal_parameters=signal_parameters, 
-                                               noise_parameters=noise_parameters, 
-                                               predictor_type = predictor_type, 
-                                               predictor_prop = predictor_prop,
-                                               baseline_prob=baseline_prob
-                                              )
-                                          ),
-                    metric)
+  inputs <- parse_inputs(data_spec = list(
+    type = "binary",
+    args = list(signal_parameters = signal_parameters,
+                noise_parameters = noise_parameters,
+                predictor_type = predictor_type,
+                predictor_prop = predictor_prop,
+                baseline_prob = baseline_prob
+                )
+      ), 
+      metric)
+
   do.call(simulate_custom,
           args = c(inputs,
                    target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
@@ -233,10 +234,10 @@ simulate_binary <- function(signal_parameters,
 #'
 #' @examples
 simulate_continuous <- function(
-    signal_parameters, 
-    noise_parameters = 0, 
-    predictor_type = "continuous", 
-    predictor_prop  =NULL,
+    signal_parameters,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    predictor_prop = NULL,
     metric = "r2",
     large_sample_performance = 0.8, # e.g. 0.8
     minimum_threshold = 0.10, # Within 10% of 0.8
@@ -246,9 +247,9 @@ simulate_continuous <- function(
     ...) {
   inputs <- parse_inputs(data_spec = list(type = "continuous",
                                           args = list(
-                                            signal_parameters=signal_parameters, 
-                                            noise_parameters=noise_parameters, 
-                                            predictor_type = predictor_type, 
+                                            signal_parameters = signal_parameters,
+                                            noise_parameters = noise_parameters,
+                                            predictor_type = predictor_type,
                                             predictor_prop = predictor_prop
                                           )
   ),
@@ -272,10 +273,10 @@ simulate_continuous <- function(
 #' @export
 #'
 #' @examples
-simulate_survival <- function(signal_parameters, 
-                              noise_parameters = 0, 
-                              predictor_type = "continuous", 
-                              predictor_prop  =NULL,
+simulate_survival <- function(signal_parameters,
+                              noise_parameters = 0,
+                              predictor_type = "continuous",
+                              predictor_prop = NULL,
                               baseline_hazard = 0.01,
                               censoring_rate = 0.2,
                               metric = "auc",
@@ -287,9 +288,9 @@ simulate_survival <- function(signal_parameters,
                               ...) {
   inputs <- parse_inputs(data_spec = list(type = "survival",
                                           args = list(
-                                            signal_parameters=signal_parameters, 
-                                            noise_parameters=noise_parameters, 
-                                            predictor_type = predictor_type, 
+                                            signal_parameters = signal_parameters, 
+                                            noise_parameters = noise_parameters,
+                                            predictor_type = predictor_type,
                                             predictor_prop = predictor_prop,
                                             baseline_hazard = baseline_hazard,
                                             censoring_rate = censoring_rate
