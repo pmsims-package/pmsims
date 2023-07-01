@@ -117,19 +117,20 @@ survival_auc <- function(data, model) {
   y_surv <- Surv(data$time, data$event)
   x <- data[, names(data) != "time" & names(data) != "event"]
   y_hat <- predict(model, x, type = "lp")
-  
-  if (class(try(concordancefit(y_surv, y_hat), silent=TRUE))[1]=="try-error"){
-    auc_survival = NaN 
-  }else{
-    t_max = max(data[data$event==1, "time"])
-    auc_survival = timeROC::timeROC(T = data$time,
-                                    delta=data$event,
-                                    marker= y_hat, 
-                                    times = t_max*0.9999999,
-                                    # 0.99... stabilizes in case t_max is final study time
-                                    cause=1,
-                                    weighting = "marginal"
-                                    )$AUC[2]
+
+  if (class(try(concordancefit(y_surv, y_hat), silent = TRUE))[1] == "try-error") {
+    auc_survival <- NaN
+  } else {
+    t_max <- max(data[data$event == 1, "time"])
+    auc_survival <- timeROC::timeROC(
+      T = data$time,
+      delta = data$event,
+      marker = y_hat,
+      times = t_max * 0.9999999,
+      # 0.99... stabilizes in case t_max is final study time
+      cause = 1,
+      weighting = "marginal"
+    )$AUC[2]
   }
   return(as.numeric(auc_survival))
 }
