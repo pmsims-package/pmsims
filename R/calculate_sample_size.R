@@ -52,6 +52,8 @@ simulate_custom <- function(data_function = NULL,
   
   if (sum(c(is.null(n_reps), is.null(se_final))) != 1) {
     stop("Exactly one of 'n_reps' or 'se_final' must be specified.")
+  }
+  
   if (min_sample_size > max_sample_size) {
     stop("min_sample_size must be less than max_sample_size")
   }
