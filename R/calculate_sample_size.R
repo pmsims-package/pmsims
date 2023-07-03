@@ -57,6 +57,11 @@ simulate_custom <- function(data_function = NULL,
   if (min_sample_size > max_sample_size) {
     stop("min_sample_size must be less than max_sample_size")
   }
+  
+  if (!is.null(large_sample_performance)) {
+    large_sample_performance <- max(large_sample_performance,
+                                    min(max(10000, 50 * signal_parameters), 100000))
+  }
 
   # Set tuning arguments
   if (is.null(tune_param)) {
