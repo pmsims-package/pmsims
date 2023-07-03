@@ -217,25 +217,29 @@ parse_inputs <- function(data_spec, metric) {
 #'
 #' @examples
 simulate_binary <- function(signal_parameters,
-                            noise_parameters=0,
+                            noise_parameters = 0,
                             predictor_type = "continuous",
                             predictor_prop = NULL,
                             baseline_prob,
                             metric = "auc",
-                            large_sample_performance = 0.8, # e.g. 0.8
-                            minimum_threshold = 0.10, # Within 10% of 0.8
+                            large_sample_performance = 0.8,
+                            # e.g. 0.8
+                            minimum_threshold = 0.10,
+                            # Within 10% of 0.8
                             min_sample_size,
                             max_sample_size,
-                            se_final = 0.005, # this will give confidence intervals +/- 0.01
+                            se_final = 0.005,
+                            # this will give confidence intervals +/- 0.01
                             n_reps = NULL,
                             ...) {
+  
   inputs <- parse_inputs(data_spec = list(type = "binary",
                                              args = list(
-                                               signal_parameters=signal_parameters, 
-                                               noise_parameters=noise_parameters, 
-                                               predictor_type = predictor_type, 
+                                               signal_parameters = signal_parameters,
+                                               noise_parameters = noise_parameters,
+                                               predictor_type = predictor_type,
                                                predictor_prop = predictor_prop,
-                                               baseline_prob=baseline_prob
+                                               baseline_prob = baseline_prob
                                               )
                                           ),
                     metric)
@@ -249,7 +253,7 @@ simulate_binary <- function(signal_parameters,
                    max_sample_size = max_sample_size,
                    se_final = se_final,
                    n_reps = n_reps,
-                   test_n = max_sample_size * 2,
+                   test_n = max_sample_size * 2, 
                    ...))
 }
 
@@ -270,7 +274,7 @@ simulate_continuous <- function(
     min_sample_size,
     max_sample_size,
     se_final = 0.005, # this will give confidence intervals +/- 0.01
-    n_reps = NULL,
+    n_reps = NULL, 
     ...) {
   inputs <- parse_inputs(data_spec = list(type = "continuous",
                                           args = list(
@@ -313,7 +317,7 @@ simulate_survival <- function(signal_parameters,
                               min_sample_size,
                               max_sample_size,
                               se_final = 0.005, # this will give confidence intervals +/- 0.01
-                              n_reps = NULL,
+                              n_reps = NULL, 
                               ...) {
   inputs <- parse_inputs(data_spec = list(type = "survival",
                                           args = list(
