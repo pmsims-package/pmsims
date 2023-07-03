@@ -35,7 +35,7 @@ simulate_custom <- function(data_function = NULL,
                             n_sample_sizes = 10,
                             n_init = 4,
                             verbose = FALSE) {
-  # Parse input parameters --------------------------------------------------
+  # Parse input parameters
   if (is.null(data_function)) {
     stop("data_function missing")
   }
@@ -48,8 +48,12 @@ simulate_custom <- function(data_function = NULL,
   if (sum(c(is.null(tune_param), is.null(large_sample_performance))) != 1) {
     stop("Exactly one of 'tune_param' or 'large_sample_performance' must be specified.")
   }
+  
+  if (min_sample_size > max_sample_size) {
+    stop("min_sample_size must be less than max_sample_size")
+  }
 
-  # Set tuning arguments -------------------------------------------------------
+  # Set tuning arguments
   if (is.null(tune_param)) {
     # Use defaults if tuning parameters not specified
     if (is.null(tune_args$min_tune_arg)) tune_args$min_tune_arg <- 0
