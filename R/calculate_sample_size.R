@@ -36,7 +36,7 @@ simulate_custom <- function(data_function = NULL,
                             n_sample_sizes = 10,
                             n_init = 4,
                             verbose = FALSE) {
-  # Parse input parameters --------------------------------------------------
+  # Parse input parameters
   if (is.null(data_function)) {
     stop("data_function missing")
   }
@@ -52,9 +52,11 @@ simulate_custom <- function(data_function = NULL,
   
   if (sum(c(is.null(n_reps), is.null(se_final))) != 1) {
     stop("Exactly one of 'n_reps' or 'se_final' must be specified.")
+  if (min_sample_size > max_sample_size) {
+    stop("min_sample_size must be less than max_sample_size")
   }
 
-  # Set tuning arguments -------------------------------------------------------
+  # Set tuning arguments
   if (is.null(tune_param)) {
     # Use defaults if tuning parameters not specified
     if (is.null(tune_args$min_tune_arg)) tune_args$min_tune_arg <- 0
@@ -73,11 +75,9 @@ simulate_custom <- function(data_function = NULL,
 
   # Create inputs for mlpwr ----------------------------------------------------
   
-  
-  value_on_error = .5 # can be changed based on the chosen metric
+  value_on_error <- .5 # can be changed based on the chosen metric
   
   mlpwr_simulation_function <- function(n) {
-
     tryCatch({
       test_data <- data_function(test_n, tune_param)
       train_data <- data_function(n, tune_param)
@@ -134,11 +134,15 @@ simulate_custom <- function(data_function = NULL,
   for (i in seq(length(dat))) {
     results[i, seq(length(dat[[i]]$y))] <- dat[[i]]$y
   }
+  
+  get_perf <- function(results, p) { 
+    apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
+  }
 
-  median_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.5, na.rm = TRUE)
-  quant20_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.2, na.rm = TRUE)
-  quant5_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.05, na.rm = TRUE)
-  quant95_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.95, na.rm = TRUE)
+  median_performance <- get_perf(results, p = 0.5)
+  quant20_performance <- get_perf(results, p = 0.2)
+  quant5_performance <- get_perf(results, p = 0.05)
+  quant95_performance <- get_perf(results, p = 0.95)
 
   min_n <- as.numeric(ds$final$design)
 
@@ -165,17 +169,6 @@ simulate_custom <- function(data_function = NULL,
   return(results_list)
 }
 
-
-metric_is_compatible <- function(metric, data_function) {
-  stopifnot("metric must be string" = is.character(metric))
-  compatability <- list(binary = c("auc"),
-                        continuous = c("r2"),
-                        survival = c("auc"))
-  return(metric %in% compatability[[attr(data_function, "outcome")]])
-}
-
-
-
 #' Title
 #'
 #' @param ... 
@@ -198,12 +191,9 @@ parse_inputs <- function(data_spec, metric) {
   )
   # Set a metric, based on outcome type
   if (is.null(metric)) stop("metric is missing")
-  if (metric_is_compatible(metric, data_function)) {
-    metric_function <- default_metric_generator(data_function,
+  metric_function <- default_metric_generator(data_function,
                                                 metric)
-    } else {
-      stop("Incompatible metric selected; please fix")
-  }
+
   # Return
   return(list(data_function = data_function,
               model_function = model_function,
@@ -219,9 +209,9 @@ parse_inputs <- function(data_spec, metric) {
 #' @export
 #'
 #' @examples
-simulate_binary <- function(signal_parameters, 
-                            noise_parameters=0, 
-                            predictor_type = "continuous", 
+simulate_binary <- function(signal_parameters,
+                            noise_parameters=0,
+                            predictor_type = "continuous",
                             predictor_prop = NULL,
                             baseline_prob,
                             metric = "auc",
@@ -243,6 +233,7 @@ simulate_binary <- function(signal_parameters,
                                           ),
                     metric)
   if (!(is.null(n_reps))) {se_final <- NULL}
+
   do.call(simulate_custom,
           args = c(inputs,
                    target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
@@ -262,10 +253,10 @@ simulate_binary <- function(signal_parameters,
 #'
 #' @examples
 simulate_continuous <- function(
-    signal_parameters, 
-    noise_parameters = 0, 
-    predictor_type = "continuous", 
-    predictor_prop  =NULL,
+    signal_parameters,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    predictor_prop = NULL,
     metric = "r2",
     large_sample_performance = 0.8, # e.g. 0.8
     minimum_threshold = 0.10, # Within 10% of 0.8
@@ -276,9 +267,9 @@ simulate_continuous <- function(
     ...) {
   inputs <- parse_inputs(data_spec = list(type = "continuous",
                                           args = list(
-                                            signal_parameters=signal_parameters, 
-                                            noise_parameters=noise_parameters, 
-                                            predictor_type = predictor_type, 
+                                            signal_parameters = signal_parameters,
+                                            noise_parameters = noise_parameters,
+                                            predictor_type = predictor_type,
                                             predictor_prop = predictor_prop
                                           )
   ),
@@ -303,10 +294,10 @@ simulate_continuous <- function(
 #' @export
 #'
 #' @examples
-simulate_survival <- function(signal_parameters, 
-                              noise_parameters = 0, 
-                              predictor_type = "continuous", 
-                              predictor_prop  =NULL,
+simulate_survival <- function(signal_parameters,
+                              noise_parameters = 0,
+                              predictor_type = "continuous",
+                              predictor_prop = NULL,
                               baseline_hazard = 0.01,
                               censoring_rate = 0.2,
                               metric = "auc",
@@ -319,9 +310,9 @@ simulate_survival <- function(signal_parameters,
                               ...) {
   inputs <- parse_inputs(data_spec = list(type = "survival",
                                           args = list(
-                                            signal_parameters=signal_parameters, 
-                                            noise_parameters=noise_parameters, 
-                                            predictor_type = predictor_type, 
+                                            signal_parameters = signal_parameters, 
+                                            noise_parameters = noise_parameters,
+                                            predictor_type = predictor_type,
                                             predictor_prop = predictor_prop,
                                             baseline_hazard = baseline_hazard,
                                             censoring_rate = censoring_rate

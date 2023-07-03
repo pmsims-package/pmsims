@@ -1,8 +1,12 @@
+get_perf <- function(results, p) {
+  apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
+}
+
 sm_linear_extrapolation <- function(results, simulation_parameters, target_performance) {
-  median_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.5, na.rm = TRUE)
-  quant20_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.2, na.rm = TRUE)
-  quant5_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.05, na.rm = TRUE)
-  quant95_performance <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = 0.95, na.rm = TRUE)
+  median_performance <- get_perf(results, p = 0.5)
+  quant20_performance <- get_perf(results, p = 0.2)
+  quant5_performance <- get_perf(results, p = 0.05)
+  quant95_performance <- get_perf(results, p = 0.95)
 
   # min training size where 80% of AUC are > 0.70:
   # We linearly approximate values between the train sizes and get the min_n from there:
