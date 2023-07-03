@@ -58,11 +58,6 @@ simulate_custom <- function(data_function = NULL,
     stop("min_sample_size must be less than max_sample_size")
   }
   
-  if (!is.null(max_sample_size)) {
-    max_sample_size <- max(max_sample_size,
-                           min(max(10000, 50 * signal_parameters), 100000))
-  }
-
   # Set tuning arguments
   if (is.null(tune_param)) {
     # Use defaults if tuning parameters not specified
@@ -244,6 +239,11 @@ simulate_binary <- function(signal_parameters,
                                           ),
                     metric)
   if (!(is.null(n_reps))) {se_final <- NULL}
+
+  if (!is.null(max_sample_size)) {
+    max_sample_size <- max(max_sample_size,
+                           min(max(10000, 50 * signal_parameters), 100000))
+  }
 
   do.call(simulate_custom,
           args = c(inputs,
