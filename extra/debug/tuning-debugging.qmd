@@ -19,6 +19,12 @@ run_tune <- function(signal_parameters,
                      min_sample_size,
                      max_sample_size,
                      large_sample_performance) {
+  print(c(
+    signal_parameters,
+    min_sample_size,
+    max_sample_size,
+    large_sample_performance
+  ))
   noise_parameters = 0
   baseline_prob = 0.2
   metric = "auc"
@@ -71,7 +77,7 @@ run_tune <- function(signal_parameters,
 ```{r}
 opts <- expand_grid(
   signal_parameters = c(10, 30, 100, 200),
-  min_sample_size = c(100, 200, 500),
+  min_sample_size = 100,
   max_sample_size = c(100, 200, 1000, 5000),
   large_sample_performance = seq(0.6, 0.9, 0.1)
 )
@@ -90,7 +96,9 @@ eval_wrapper <- function(signal_parameters,
 
 opts$result <- future_pmap(opts,
                            eval_wrapper,
-                           .options = furrr_options(globals = c("run_tune",
+                           .options = furrr_options(globals = c("str_glue",
+                                                                "evaluate",
+                                                                "run_tune",
                                                                 "tune_generate_data",
                                                                 "optimise_me"),
                                                     seed = 42))
@@ -123,8 +131,7 @@ opts |>
   geom_point(size = 5) +
   facet_grid(rows = vars(reorder_factor(max_sample_size, "Max sample:")),
              cols = vars(reorder_factor(signal_parameters, "Signal parameters:"))) +
-  labs(x = "Minimum sample size",
-       y = "Large sample performance",
+  labs(y = "Large sample performance",
        color = "Result") +
   scale_color_manual(values = c("darkred", "orange", "darkgreen")) +
   theme_minimal()
