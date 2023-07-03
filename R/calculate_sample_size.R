@@ -13,9 +13,9 @@
 #' @param min_sample_size The minimum sample size used in simulations
 #' @param max_sample_size The maximum sample size used in simulations
 #' @param n_reps The number of simulation reps
-#' @param n_sample_sizes The number of different sample sizes simulations are carried out at
+#' @param final_estimate_se The standard error for the estimate of model performance at the minimum sample size. Either this or nreps should be specified.
+#' @param n_sample_sizes The number of different sample sizes simulations are carried out at each sample size
 #' @param n_init The number of different sample sizes for initialization (before updates)
-#'
 #' @return A list of results form the simulation
 #' @export
 #'
@@ -31,7 +31,8 @@ simulate_custom <- function(data_function = NULL,
                             large_sample_performance = NULL,
                             min_sample_size,
                             max_sample_size,
-                            n_reps,
+                            n_reps = NULL,
+                            se_final = NULL,
                             n_sample_sizes = 10,
                             n_init = 4,
                             verbose = FALSE) {
@@ -49,6 +50,8 @@ simulate_custom <- function(data_function = NULL,
     stop("Exactly one of 'tune_param' or 'large_sample_performance' must be specified.")
   }
   
+  if (sum(c(is.null(n_reps), is.null(se_final))) != 1) {
+    stop("Exactly one of 'n_reps' or 'se_final' must be specified.")
   if (min_sample_size > max_sample_size) {
     stop("min_sample_size must be less than max_sample_size")
   }
@@ -95,6 +98,16 @@ simulate_custom <- function(data_function = NULL,
   # Calculate bootstrapped quantile variance
   noise_fun <- function(x) var_bootstrap(x$y)
   
+  # processing final_estimate_se
+  setsize <- n_reps/n_sample_sizes
+  if(!(is.null(se_final))){
+    ci = se_final*qnorm(0.975)*2 
+    n_reps = 10000 # setting large nreps so ci dominates.
+    setsize = 100 # fixing setsize so not driven by nreps
+  } else {
+    ci = NULL
+  }
+  
   # Perform search using mlpwr -------------------------------------------------
   ds <-
     mlpwr::find.design(
@@ -104,8 +117,9 @@ simulate_custom <- function(data_function = NULL,
       boundaries = c(min_sample_size, max_sample_size),
       power = target_performance,
       surrogate = "gpr",
-      setsize = n_reps / n_sample_sizes,
+      setsize = setsize,
       evaluations = n_reps,
+      ci = ci,
       n.startsets = n_init,
       silent = !verbose
     )
@@ -205,18 +219,20 @@ simulate_binary <- function(signal_parameters,
                             minimum_threshold = 0.10, # Within 10% of 0.8
                             min_sample_size,
                             max_sample_size,
-                            n_reps = 100,
+                            se_final = 0.005, # this will give confidence intervals +/- 0.01
+                            n_reps = NULL,
                             ...) {
-  inputs <- parse_inputs(data_spec = list(
-    type = "binary",
-    args = list(signal_parameters = signal_parameters,
-                noise_parameters = noise_parameters,
-                predictor_type = predictor_type,
-                predictor_prop = predictor_prop,
-                baseline_prob = baseline_prob
-                )
-      ), 
-      metric)
+  inputs <- parse_inputs(data_spec = list(type = "binary",
+                                             args = list(
+                                               signal_parameters=signal_parameters, 
+                                               noise_parameters=noise_parameters, 
+                                               predictor_type = predictor_type, 
+                                               predictor_prop = predictor_prop,
+                                               baseline_prob=baseline_prob
+                                              )
+                                          ),
+                    metric)
+  if (!(is.null(n_reps))) {se_final <- NULL}
 
   do.call(simulate_custom,
           args = c(inputs,
@@ -224,6 +240,7 @@ simulate_binary <- function(signal_parameters,
                    large_sample_performance = large_sample_performance,
                    min_sample_size = min_sample_size,
                    max_sample_size = max_sample_size,
+                   se_final = se_final,
                    n_reps = n_reps,
                    test_n = max_sample_size * 2,
                    ...))
@@ -245,7 +262,8 @@ simulate_continuous <- function(
     minimum_threshold = 0.10, # Within 10% of 0.8
     min_sample_size,
     max_sample_size,
-    n_reps = 100,
+    se_final = 0.005, # this will give confidence intervals +/- 0.01
+    n_reps = NULL,
     ...) {
   inputs <- parse_inputs(data_spec = list(type = "continuous",
                                           args = list(
@@ -263,6 +281,7 @@ simulate_continuous <- function(
                    min_sample_size = min_sample_size,
                    max_sample_size = max_sample_size,
                    n_reps = n_reps,
+                   se_final = se_final,
                    test_n = max_sample_size * 2,
                    ...))
 }
@@ -286,7 +305,8 @@ simulate_survival <- function(signal_parameters,
                               minimum_threshold = 0.10, # Within 10% of 0.8
                               min_sample_size,
                               max_sample_size,
-                              n_reps = 100,
+                              se_final = 0.005, # this will give confidence intervals +/- 0.01
+                              n_reps = NULL,
                               ...) {
   inputs <- parse_inputs(data_spec = list(type = "survival",
                                           args = list(
@@ -305,6 +325,7 @@ simulate_survival <- function(signal_parameters,
                    large_sample_performance = large_sample_performance,
                    min_sample_size = min_sample_size,
                    max_sample_size = max_sample_size,
+                   se_final = se_final,
                    n_reps = n_reps,
                    test_n = max_sample_size * 2,
                    ...))
