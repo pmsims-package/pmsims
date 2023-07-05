@@ -1,4 +1,4 @@
-test_that("cox_model", {
+test_that("survival_auc", {
   inputs <- parse_inputs(data_spec = list(type = "survival",
                                           args = list(
                                             signal_parameters = 5, 
@@ -10,12 +10,11 @@ test_that("cox_model", {
                                           )
   ),
   metric="auc")
-                         
+  set.seed(1234)
   data <- inputs$data_function(1000)
   test_data <- inputs$data_function(1000)
   fit <- inputs$model_function(data)
   metric <- inputs$metric_function(test_data,fit)
-  expect_equal(class(fit), "coxph")
+  
+  expect_false(is.na(metric))
 })
-
-

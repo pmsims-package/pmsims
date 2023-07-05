@@ -82,7 +82,8 @@ test_that("simulate_survival", {
     min_sample_size = 100,
     max_sample_size = 3000,
     n_reps = 10,
-    minimum_threshold = 0.05
+    minimum_threshold = 0.05,
+    large_sample_performance = 0.7
   )
   expect_equal(length(output), 6)
 })
