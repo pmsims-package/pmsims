@@ -9,13 +9,14 @@ simulate_custom(
   model_function = NULL,
   metric_function = NULL,
   target_performance,
-  test_n = NULL,
+  test_n = 10000,
   tune_param = NULL,
   tune_args = list(),
   large_sample_performance = NULL,
   min_sample_size,
   max_sample_size,
-  n_reps,
+  n_reps = NULL,
+  se_final = NULL,
   n_sample_sizes = 10,
   n_init = 4,
   verbose = FALSE
@@ -42,11 +43,13 @@ simulate_custom(
 
 \item{n_reps}{The number of simulation reps}
 
-\item{n_sample_sizes}{The number of different sample sizes simulations are carried out at}
+\item{n_sample_sizes}{The number of different sample sizes simulations are carried out at each sample size}
 
 \item{n_init}{The number of different sample sizes for initialization (before updates)}
 
 \item{data_generating_function}{A function of two parameters, n and a tuning parameter, that returns data for the model function}
+
+\item{final_estimate_se}{The standard error for the estimate of model performance at the minimum sample size. Either this or nreps should be specified.}
 }
 \value{
 A list of results form the simulation

@@ -6,7 +6,7 @@
 \usage{
 simulate_binary(
   signal_parameters,
-  noise_parameters,
+  noise_parameters = 0,
   predictor_type = "continuous",
   predictor_prop = NULL,
   baseline_prob,
@@ -15,7 +15,8 @@ simulate_binary(
   minimum_threshold = 0.1,
   min_sample_size,
   max_sample_size,
-  n_reps = 100,
+  se_final = 0.005,
+  n_reps = NULL,
   ...
 )
 }

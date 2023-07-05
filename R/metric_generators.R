@@ -124,7 +124,7 @@ survival_auc <- function(data, model) {
   x <- data[, names(data) != "time" & names(data) != "event"]
   y_hat <- predict(model, x, type = "lp")
 
-  if (class(try(concordancefit(y_surv, y_hat), silent = TRUE))[1] == "try-error") {
+  if (class(try(survival::concordancefit(y_surv, y_hat), silent = TRUE))[1] == "try-error") {
     auc_survival <- NaN
   } else {
     t_max <- max(data[data$event == 1, "time"])

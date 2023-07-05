@@ -4,7 +4,35 @@
 \alias{simulate_survival}
 \title{Calculate the minimum sample size required for a survival outcome}
 \usage{
-simulate_survival()
+simulate_survival(
+  signal_parameters,
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  predictor_prop = NULL,
+  baseline_hazard = 0.01,
+  censoring_rate = 0.2,
+  metric = "auc",
+  large_sample_performance = 0.8,
+  minimum_threshold = 0.1,
+  min_sample_size,
+  max_sample_size,
+  se_final = 0.005,
+  n_reps = NULL,
+  ...
+)
+}
+\arguments{
+\item{signal_parameters}{Number of predictors that have a non zero assosaion with the outcome}
+
+\item{noise_parameters}{Number of predictors with no assosiation with outcome}
+
+\item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
+
+\item{predictor_prop}{If predictor type is binary, the probability of a predictor taking value 1}
+
+\item{baseline_hazard}{Baseline Hazard}
+
+\item{censoring_rate}{Censoring rate}
 }
 \description{
 Calculate the minimum sample size required for a survival outcome
