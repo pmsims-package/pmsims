@@ -78,7 +78,7 @@ simulate_custom <- function(data_function = NULL,
   # Create inputs for mlpwr ----------------------------------------------------
   
   # define a default metric value if calculations fail: 0.5 for default
-  metric_name = "auc"
+  metric_name = attr(metric_function, "metric")
   value_on_error <-
     ifelse((metric_name == "auc") | (metric_name == "cindex") ,
            0.5,
