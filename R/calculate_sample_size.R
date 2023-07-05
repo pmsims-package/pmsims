@@ -410,8 +410,8 @@ crude_sample_size_calculation <- function(data_function,
   # generate data and compute metric for sizes_to_check, n_sample_sizes times  
   performance_matrix = 
     matrix(nrow = length(sizes_to_check), ncol = n_sample_sizes)
-  colnames(performance_metric) = 1:n_sample_sizes
-  rownames(performance_metric) = sizes_to_check
+  colnames(performance_matrix) = 1:n_sample_sizes
+  rownames(performance_matrix) = sizes_to_check
   
   test_n = max(3*max_sample_size,30000)
   test_data <- data_function(test_n, tune_param)
