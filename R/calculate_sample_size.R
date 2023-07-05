@@ -187,8 +187,8 @@ simulate_custom <- function(data_function = NULL,
     train_size = rownames(results),
     tune_param = tune_param,
     data_function = data_function,
-    summaries_crude = crude_output$summaries,
-    min_n_crude = crude_output$min_n
+    summaries_crude = crude_output$crude_summaries,
+    min_n_crude = crude_output$crude_min_n
     )
 
   attr(results_list, "class") <- "pmsims"
@@ -375,13 +375,6 @@ simulate_survival <- function(signal_parameters,
 
 #' Calculate the minimum sample size 
 #' 
-#' @inheritParams data_function,tune_param,model_function,metric_function,
-#' value_on_error,min_sample_size,max_sample_size,n_sample_sizes
-#' 
-#' @return
-#' @export
-#'
-#' @examples
 
 crude_sample_size_calculation <- function(data_function,
                                           tune_param,
@@ -436,26 +429,26 @@ crude_sample_size_calculation <- function(data_function,
     apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
   }
   
-  summaries = data.frame(
+    crude_summaries = data.frame(
     median_performance = get_perf(performance_matrix,0.5),
     quant20_performance = get_perf(performance_matrix,0.2),
     quant5_performance = get_perf(performance_matrix,0.05),
     quant95_performance = get_perf(performance_matrix,0.95)
   )
   
-  if(is.na(which(summaries$quant20_performance>target_performance)[1])){
+  if(is.na(which(crude_summaries$quant20_performance>target_performance)[1])){
     crude_min_n = NA
     }else{
       crude_min_n = 
         sizes_to_check[
-          which(summaries$quant20_performance>target_performance)[1]
+          which(crude_summaries$quant20_performance>target_performance)[1]
           ]
       }
   
-  output = list()
-  output$summaries = summaries
-  output$min_n = crude_min_n
+  output_crude = list()
+  output_crude$crude_summaries = crude_summaries
+  output_crude$crude_min_n = crude_min_n
   
-  return(output)
+  return(output_crude)
 }
 
