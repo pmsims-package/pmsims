@@ -285,6 +285,10 @@ simulate_continuous <- function(
                                           )
   ),
   metric)
+  
+  if (!(is.null(n_reps))) {se_final <- NULL}
+  
+  
   do.call(simulate_custom,
           args = c(inputs,
                    target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
@@ -330,6 +334,9 @@ simulate_survival <- function(signal_parameters,
                                           )
   ),
   metric)
+  
+  if (!(is.null(n_reps))) {se_final <- NULL}
+  
   do.call(simulate_custom,
           args = c(inputs,
                    target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
