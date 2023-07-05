@@ -34,7 +34,7 @@ tune_generate_data <- function(data_function,
     tol = tolerance,
     n = large_n,
     data_function = data_function,
-    model_function = model_function$model,
+    model_function = model_function,
     metric_function = metric_function,
     target_large_sample_performance = target_large_sample_performance
   )
@@ -61,7 +61,7 @@ tune_generate_data <- function(data_function,
       tol = tolerance,
       n = large_n,
       data_function = data_function,
-      model_function = model_function$model,
+      model_function = model_function,
       metric_function = metric_function,
       target_large_sample_performance = target_large_sample_performance
     )

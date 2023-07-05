@@ -83,7 +83,7 @@ simulate_custom <- function(data_function = NULL,
     tryCatch({
       test_data <- data_function(test_n, tune_param)
       train_data <- data_function(n, tune_param)
-      model <- model_function$model(train_data)
+      model <- model_function(train_data)
       metric_function(test_data, model)
       },
       error = function(e) return(value_on_error)
