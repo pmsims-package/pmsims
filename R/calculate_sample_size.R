@@ -447,7 +447,7 @@ crude_sample_size_calculation <- function(data_function,
     crude_min_n = NA
     }else{
       crude_min_n = 
-        sample_sizes_to_check[
+        sizes_to_check[
           which(summaries$quant20_performance>target_performance)[1]
           ]
       }
