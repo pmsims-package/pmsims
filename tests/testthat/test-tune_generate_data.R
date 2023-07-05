@@ -35,12 +35,12 @@ get_performance <- function(data, model) {
 
 test_that("tune_generate_data works", {
   tune_param <- tune_generate_data(
-    data_generating_function = generate_data,
+    data_function = generate_data,
     large_n = 10000,
     min_tune_arg = 0,
     max_tune_arg = 1,
     model_function = fit_model,
-    performance_function = get_performance,
+    metric_function = get_performance,
     target_large_sample_performance = 0.7
   )
   expect_equal(length(tune_param), 1)
@@ -55,12 +55,12 @@ test_that("tune_generate_data works", {
 
 test_that("interval_expansion works", {
   tune_param <- tune_generate_data(
-    data_generating_function = generate_data,
+    data_function = generate_data,
     large_n = 10000,
     min_tune_arg = 0,
     max_tune_arg = 0.1,
     model_function = fit_model,
-    performance_function = get_performance,
+    metric_function = get_performance,
     target_large_sample_performance = 0.7
   )
   expect_equal(length(tune_param), 1)
