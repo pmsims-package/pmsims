@@ -25,7 +25,7 @@ simulate_custom <- function(data_function = NULL,
                             model_function = NULL,
                             metric_function = NULL,
                             target_performance,
-                            test_n = 10000,
+                            test_n = 30000,
                             tune_param = NULL,
                             tune_args = list(),
                             large_sample_performance = NULL,
@@ -63,8 +63,8 @@ simulate_custom <- function(data_function = NULL,
     # Use defaults if tuning parameters not specified
     if (is.null(tune_args$min_tune_arg)) tune_args$min_tune_arg <- 0
     if (is.null(tune_args$max_tune_arg)) tune_args$max_tune_arg <- 1
-    if (is.null(tune_args$large_n)) tune_args$large_n <- max_sample_size
-    if (is.null(tune_args$tolerance)) tune_args$tolerance <- large_sample_performance / 100
+    if (is.null(tune_args$large_n)) tune_args$large_n <- max(30000, 3*max_sample_size)
+    if (is.null(tune_args$tolerance)) tune_args$tolerance <- large_sample_performance * 0.005
     if (is.null(tune_args$max_interval_expansion)) tune_args$max_interval_expansion <- 10
     default <- list(data_function = data_function,
                     model_function = model_function,
@@ -164,7 +164,9 @@ simulate_custom <- function(data_function = NULL,
       quant95_performance = quant95_performance
     ),
     data = results,
-    train_size = rownames(results)
+    train_size = rownames(results),
+    tune_param = tune_param,
+    data_function = data_function
   )
 
   attr(results_list, "class") <- "pmsims"
@@ -242,7 +244,7 @@ simulate_binary <- function(signal_parameters,
 
   if (!is.null(max_sample_size)) {
     max_sample_size <- max(max_sample_size,
-                           min(max(10000, 50 * signal_parameters), 100000))
+                           min(max(1000, 50 * signal_parameters), 50000))
   }
 
   do.call(simulate_custom,
@@ -253,7 +255,7 @@ simulate_binary <- function(signal_parameters,
                    max_sample_size = max_sample_size,
                    se_final = se_final,
                    n_reps = n_reps,
-                   test_n = max_sample_size * 2, 
+                   test_n = max(30000, 3*max_sample_size), 
                    ...))
 }
 
@@ -297,7 +299,7 @@ simulate_continuous <- function(
                    max_sample_size = max_sample_size,
                    n_reps = n_reps,
                    se_final = se_final,
-                   test_n = max_sample_size * 2,
+                   test_n = max(30000, 3*max_sample_size),
                    ...))
 }
 
@@ -345,7 +347,7 @@ simulate_survival <- function(signal_parameters,
                    max_sample_size = max_sample_size,
                    se_final = se_final,
                    n_reps = n_reps,
-                   test_n = max_sample_size * 2,
+                   test_n = max(30000, 3*max_sample_size),
                    ...))
 }
 

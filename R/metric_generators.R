@@ -34,6 +34,7 @@ default_metric_generator <- function(data_function, metric) {
       stop(paste("Default metric", metric, "for", outcome, "outcomes does not exist."))
     } 
   }
+  attr(metric_function, "metric") = metric
   return(metric_function)
 }
 
