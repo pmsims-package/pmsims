@@ -96,7 +96,7 @@ survival_cindex <- function(data, model) {
   # this works for models being the Cox models
   # or those with predict(type = "lp") giving some sort of a risk score,
   # or linear predictor
-  y_surv <- Surv(data$time, data$event)
+  y_surv <- survival::Surv(data$time, data$event)
   x <- data[, names(data) != "time" & names(data) != "event"]
   y_hat <- predict(model, x, type = "lp")
 
@@ -120,7 +120,7 @@ survival_auc <- function(data, model) {
   # AUC is time-dependent for survival outcomes,
   # this function computes AUC for the latest event time available in the data
 
-  y_surv <- Surv(data$time, data$event)
+  y_surv <- survival::Surv(data$time, data$event)
   x <- data[, names(data) != "time" & names(data) != "event"]
   y_hat <- predict(model, x, type = "lp")
 

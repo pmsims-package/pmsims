@@ -1,11 +1,9 @@
   test_that("parse_inputs", {
-    signal_parameters <- 5
-    noise_parameters <- 5
     #Binary
     inputs <- parse_inputs(data_spec = list(type = "binary",
                                               args = list(
-                                                signal_parameters = signal_parameters, 
-                                                noise_parameters = noise_parameters, 
+                                                signal_parameters = 5, 
+                                                noise_parameters = 5, 
                                                 predictor_type = "continuous", 
                                                 beta_signal = 0.1,
                                                 baseline_prob = 0.1
@@ -18,8 +16,8 @@
 
     inputs <- parse_inputs(data_spec = list(type = "continuous",
                                             args = list(
-                                              signal_parameters = signal_parameters, 
-                                              noise_parameters = noise_parameters, 
+                                              signal_parameters = 5, 
+                                              noise_parameters = 5, 
                                               predictor_type = "continuous", 
                                               beta_signal = 0.1
                                             )
@@ -30,8 +28,8 @@
     #Survival
     inputs <- parse_inputs(data_spec = list(type = "survival",
                                             args = list(
-                                              signal_parameters = signal_parameters, 
-                                              noise_parameters = noise_parameters, 
+                                              signal_parameters = 5, 
+                                              noise_parameters = 5, 
                                               predictor_type = "continuous", 
                                               beta_signal = 0.1
                                             )
@@ -43,46 +41,48 @@
   })
 
 test_that("simulate_binary", {
-  signal_parameters <- 5
-  noise_parameters <- 5
+  set.seed(1234)
+  
   output <- simulate_binary(
-      signal_parameters = signal_parameters, 
-      noise_parameters = noise_parameters, 
+      signal_parameters = 5, 
+      noise_parameters = 5, 
       predictor_type = "continuous", 
       baseline_prob = 0.1,
       min_sample_size = 100,
       max_sample_size = 3000,
-      n_reps = 10
+      n_reps = 50,
+      minimum_threshold = 0.05
   )
   expect_equal(length(output), 6)
 })
 
 
 test_that("simulate_continuous", {
-  signal_parameters <- 5
-  noise_parameters <- 5
+  set.seed(1234)
   output <- simulate_continuous(
-    signal_parameters = signal_parameters, 
-    noise_parameters = noise_parameters, 
+    signal_parameters = 10, 
+    noise_parameters = 10, 
     predictor_type = "continuous", 
     min_sample_size = 100,
     max_sample_size = 3000,
-    n_reps = 10
+    n_reps = 10,
+    minimum_threshold = 0.05
   )
   expect_equal(length(output), 6)
 })
 
 
 test_that("simulate_survival", {
-  signal_parameters <- 5
-  noise_parameters <- 5
-  output <- simulate_continuous(
-    signal_parameters = signal_parameters, 
-    noise_parameters = noise_parameters, 
+  set.seed(1234)
+  
+  output <- simulate_survival(
+    signal_parameters = 10, 
+    noise_parameters = 10, 
     predictor_type = "continuous", 
     min_sample_size = 100,
     max_sample_size = 3000,
-    n_reps = 10
+    n_reps = 10,
+    minimum_threshold = 0.05
   )
   expect_equal(length(output), 6)
 })

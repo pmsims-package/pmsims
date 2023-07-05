@@ -8,18 +8,19 @@
 #' @examples default_model_generators("binary")
 default_model_generators <- function(outcome) {
   if (outcome == "binary") {
-    model <- function(data) {
+    model_function <- function(data) {
       logistic_model <- glm("y ~ .", data = data, family = "binomial")
     }
   } else if (outcome == "continuous") {
-    model <- function(data) {
+    model_function <- function(data) {
       linear_model <- glm("y ~ .", data = data, family = "gaussian")
     }
   } else if (outcome == "survival") {
-    model <- function(data) {
-      cox_model <- survival::cox.ph("Surv(time, event) ~ .", data = data)
+    model_function <- function(data) {
+      formula = "survival::Surv(time, event) ~ ." |>  as.formula()
+      survival::coxph(formula, data = data)
       }
     }
-  return(list(model = model))
+  return(model_function)
 }
 
