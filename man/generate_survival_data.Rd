@@ -11,8 +11,8 @@ generate_survival_data(
   noise_parameters,
   predictor_type,
   predictor_prop,
-  baseline_hazard = 0.01,
-  censoring_rate = 0.2
+  baseline_hazard,
+  censoring_rate
 )
 }
 \arguments{
