@@ -77,7 +77,16 @@ simulate_custom <- function(data_function = NULL,
 
   # Create inputs for mlpwr ----------------------------------------------------
   
-  value_on_error <- .5 # can be changed based on the chosen metric
+  # define a default metric value if calculations fail: 0.5 for default
+  metric_name = "auc"
+  value_on_error <- 
+    ifelse((metric_name == "auc") | (metric_name == "cindex") , 
+           0.5,
+           ifelse((metric_name == "r2")| (metric_name == "brier_score_scaled"),
+                  0,
+                  ifelse((metric_name == "brier_score")| (metric_name == "IBS"),
+                         1,
+                         ifelse((metric_name == "calib_slope"),0, 0.5))))
   
   mlpwr_simulation_function <- function(n) {
     tryCatch({
@@ -259,7 +268,7 @@ simulate_binary <- function(signal_parameters,
                    ...))
 }
 
-#' Calculate the minimum sample size required for a continous outcome
+#' Calculate the minimum sample size required for a continuous outcome
 #'
 #' @inheritParams generate_continuous_data
 #' @export
