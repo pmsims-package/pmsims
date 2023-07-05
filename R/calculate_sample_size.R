@@ -428,7 +428,7 @@ crude_sample_size_calculation <- function(data_function,
   # computing performance metrics across sizes and simulations
   for (i in 1:length(sizes_to_check)){
     for (j in 1:n_sample_sizes){  
-      performance_matrix[i,j] = metric_calculation
+      performance_matrix[i,j] = metric_calculation(sizes_to_check[i])
     }
   }
   
