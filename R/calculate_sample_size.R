@@ -78,7 +78,7 @@ simulate_custom <- function(data_function = NULL,
   # Create inputs for mlpwr ----------------------------------------------------
   
   # define a default metric value if calculations fail: 0.5 for default
-  metric_name = "auc"
+  metric_name = attr(metric_function, "metric")
   value_on_error <-
     ifelse((metric_name == "auc") | (metric_name == "cindex") ,
            0.5,
@@ -119,7 +119,17 @@ simulate_custom <- function(data_function = NULL,
   } else {
     ci = NULL
   }
-  
+  # Perform a crude search -----------------------------------------------------
+  crude_output <- crude_sample_size_calculation(data_function,
+                                                tune_param,
+                                                model_function,
+                                                metric_function,
+                                                value_on_error,
+                                                min_sample_size,
+                                                max_sample_size,
+                                                n_sample_sizes,
+                                                target_performance)
+
   # Perform search using mlpwr -------------------------------------------------
   ds <-
     mlpwr::find.design(
@@ -176,8 +186,10 @@ simulate_custom <- function(data_function = NULL,
     data = results,
     train_size = rownames(results),
     tune_param = tune_param,
-    data_function = data_function
-  )
+    data_function = data_function,
+    summaries_crude = crude_output$summaries,
+    min_n_crude = crude_output$min_n
+    )
 
   attr(results_list, "class") <- "pmsims"
   return(results_list)
@@ -359,5 +371,91 @@ simulate_survival <- function(signal_parameters,
                    n_reps = n_reps,
                    test_n = max(30000, 3*max_sample_size),
                    ...))
+}
+
+#' Calculate the minimum sample size 
+#' 
+#' @inheritParams data_function,tune_param,model_function,metric_function,
+#' value_on_error,min_sample_size,max_sample_size,n_sample_sizes
+#' 
+#' @return
+#' @export
+#'
+#' @examples
+
+crude_sample_size_calculation <- function(data_function,
+                                          tune_param,
+                                          model_function,
+                                          metric_function,
+                                          value_on_error,
+                                          min_sample_size,
+                                          max_sample_size,
+                                          n_sample_sizes,
+                                          target_performance
+                                          ){
+  # not allowing n_sample_sizes to be below 10
+  n_sample_sizes = max(10, n_sample_sizes)
+  
+  # sizes_to_check are 25 points between min and max_sample_size, 100 and 30000 
+  if (min_sample_size <= 100){
+    sizes_to_check <- 
+      c(round(seq(min_sample_size, max_sample_size, length.out=25)),
+        max(30000, 3*max_sample_size))
+  }else{
+    sizes_to_check <- 
+      c(100, round(seq(min_sample_size, max_sample_size, length.out=25)),
+        max(30000, 3*max_sample_size))
+  }
+  
+  # generate data and compute metric for sizes_to_check, n_sample_sizes times  
+  performance_matrix = 
+    matrix(nrow = length(sizes_to_check), ncol = n_sample_sizes)
+  colnames(performance_metric) = 1:n_sample_sizes
+  rownames(performance_metric) = sizes_to_check
+  
+  test_n = max(3*max_sample_size,30000)
+  test_data <- data_function(test_n, tune_param)
+  
+  metric_calculation <- function(n) {
+    tryCatch({
+      train_data <- data_function(n, tune_param)
+      model <- model_function(train_data)
+      metric_function(test_data, model)
+    },
+    error = function(e) return(value_on_error)
+    )
+  }
+  # computing performance metrics across sizes and simulations
+  for (i in 1:length(sizes_to_check)){
+    for (j in 1:n_sample_sizes){  
+      performance_matrix[i,j] = metric_calculation
+    }
+  }
+  
+    get_perf <- function(results, p) {
+    apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
+  }
+  
+  summaries = data.frame(
+    median_performance = get_perf(performance_matrix,0.5),
+    quant20_performance = get_perf(performance_matrix,0.2),
+    quant5_performance = get_perf(performance_matrix,0.05),
+    quant95_performance = get_perf(performance_matrix,0.95)
+  )
+  
+  if(is.na(which(summaries$quant20_performance>target_performance)[1])){
+    crude_min_n = NA
+    }else{
+      crude_min_n = 
+        sample_sizes_to_check[
+          which(summaries$quant20_performance>target_performance)[1]
+          ]
+      }
+  
+  output = list()
+  output$summaries = summaries
+  output$min_n = crude_min_n
+  
+  return(output)
 }
 
