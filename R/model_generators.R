@@ -17,7 +17,8 @@ default_model_generators <- function(outcome) {
     }
   } else if (outcome == "survival") {
     model_function <- function(data) {
-      cox_model <- survival::cox.ph("Surv(time, event) ~ .", data = data)
+      formula = "survival::Surv(time, event) ~ ." |>  as.formula()
+      survival::coxph(formula, data = data)
       }
     }
   return(model_function)
