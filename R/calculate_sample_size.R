@@ -40,38 +40,42 @@ simulate_custom <- function(data_function = NULL,
   if (is.null(data_function)) {
     stop("data_function missing")
   }
-  
+
   # Use a default model function if not supplied
   if (is.null(model_function)) {
-    model_function <- default_model_generators(outcome = attr(data_function,
-                                                              "outcome"))
+    model_function <-
+      default_model_generators(
+        outcome = attr(data_function, "outcome")
+      )
   }
 
   if (sum(c(is.null(tune_param), is.null(large_sample_performance))) != 1) {
     stop("Exactly one of 'tune_param' or 'large_sample_performance' must be specified.")
   }
-  
+
   if (sum(c(is.null(n_reps), is.null(se_final))) != 1) {
     stop("Exactly one of 'n_reps' or 'se_final' must be specified.")
   }
-  
+
   if (min_sample_size > max_sample_size) {
     stop("min_sample_size must be less than max_sample_size")
   }
-  
+
   # Set tuning arguments
   if (is.null(tune_param)) {
     # Use defaults if tuning parameters not specified
     if (is.null(tune_args$min_tune_arg)) tune_args$min_tune_arg <- 0
     if (is.null(tune_args$max_tune_arg)) tune_args$max_tune_arg <- 1
-    if (is.null(tune_args$large_n)) tune_args$large_n <- max(30000, 3*max_sample_size)
+    if (is.null(tune_args$large_n)) tune_args$large_n <- max(30000, 3 * max_sample_size)
     if (is.null(tune_args$tolerance)) tune_args$tolerance <- large_sample_performance * 0.005
     if (is.null(tune_args$max_interval_expansion)) tune_args$max_interval_expansion <- 10
-    default <- list(data_function = data_function,
-                    model_function = model_function,
-                    metric_function = metric_function,
-                    target_large_sample_performance = large_sample_performance,
-                    verbose = verbose)
+    default <- list(
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      target_large_sample_performance = large_sample_performance,
+      verbose = verbose
+    )
     tune_args <- c(tune_args, default)
     tune_param <- do.call(tune_generate_data, tune_args)
   }
@@ -89,49 +93,55 @@ simulate_custom <- function(data_function = NULL,
     calib_slope = 0
   )
   value_on_error <- ifelse(metric_name %in% names(error_values),
-                           error_values[[metric_name]],
-                           0.5)
+    error_values[[metric_name]],
+    0.5
+  )
 
   mlpwr_simulation_function <- function(n) {
-    tryCatch({
-      test_data <- data_function(test_n, tune_param)
-      train_data <- data_function(n, tune_param)
-      model <- model_function(train_data)
-      metric_function(test_data, model)
-    },
-    error = function(e)
-      return(value_on_error))
+    tryCatch(
+      {
+        test_data <- data_function(test_n, tune_param)
+        train_data <- data_function(n, tune_param)
+        model <- model_function(train_data)
+        metric_function(test_data, model)
+      },
+      error = function(e) {
+        return(value_on_error)
+      }
+    )
   }
 
   aggregate_fun <- function(x) quantile(x, probs = .2)
-  
+
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
     var(replicate(20, aggregate_fun(sample(x, length(x), replace = TRUE))))
   }
-  
+
   # Calculate bootstrapped quantile variance
   noise_fun <- function(x) var_bootstrap(x$y)
-  
+
   # processing final_estimate_se
-  setsize <- n_reps/n_sample_sizes
-  if(!(is.null(se_final))){
-    ci = se_final*qnorm(0.975)*2 
-    n_reps = 10000 # setting large nreps so ci dominates.
-    setsize = 100 # fixing setsize so not driven by nreps
+  setsize <- n_reps / n_sample_sizes
+  if (!(is.null(se_final))) {
+    ci <- se_final * qnorm(0.975) * 2
+    n_reps <- 10000 # setting large nreps so ci dominates.
+    setsize <- 100 # fixing setsize so not driven by nreps
   } else {
-    ci = NULL
+    ci <- NULL
   }
   # Perform a crude search -----------------------------------------------------
-  crude_output <- crude_sample_size_calculation(data_function,
-                                                tune_param,
-                                                model_function,
-                                                metric_function,
-                                                value_on_error,
-                                                min_sample_size,
-                                                max_sample_size,
-                                                n_sample_sizes,
-                                                target_performance)
+  crude_output <- crude_sample_size_calculation(
+    data_function,
+    tune_param,
+    model_function,
+    metric_function,
+    value_on_error,
+    min_sample_size,
+    max_sample_size,
+    n_sample_sizes,
+    target_performance
+  )
 
   # Perform search using mlpwr -------------------------------------------------
   ds <-
@@ -151,15 +161,15 @@ simulate_custom <- function(data_function = NULL,
 
   # Process results from mlpwr
   dat <- ds$dat
-  dat <- dat[order(sapply(dat, \(x)x$x))]
+  dat <- dat[order(sapply(dat, \(x) x$x))]
   maxlen <- max(sapply(dat, \(x) length(x$y)))
   results <- matrix(nrow = length(dat), ncol = maxlen)
-  rownames(results) <- sapply(dat, \(x)x$x)
-  for (i in seq(length(dat))) {
+  rownames(results) <- sapply(dat, \(x) x$x)
+  for (i in seq_along(dat)) {
     results[i, seq(length(dat[[i]]$y))] <- dat[[i]]$y
   }
-  
-  get_perf <- function(results, p) { 
+
+  get_perf <- function(results, p) {
     apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
   }
 
@@ -191,7 +201,7 @@ simulate_custom <- function(data_function = NULL,
     data_function = data_function,
     summaries_crude = crude_output$crude_summaries,
     min_n_crude = crude_output$crude_min_n
-    )
+  )
 
   attr(results_list, "class") <- "pmsims"
   return(results_list)
@@ -199,13 +209,12 @@ simulate_custom <- function(data_function = NULL,
 
 #' Title
 #'
-#' @param ... 
+#' @param ...
 #'
 #' @return
 #' @export
 #'
 #' @examples
-
 parse_inputs <- function(data_spec, metric) {
   # Set data generating function
   if (is.null(data_spec)) {
@@ -219,13 +228,17 @@ parse_inputs <- function(data_spec, metric) {
   )
   # Set a metric, based on outcome type
   if (is.null(metric)) stop("metric is missing")
-  metric_function <- default_metric_generator(data_function,
-                                                metric)
+  metric_function <- default_metric_generator(
+    data_function,
+    metric
+  )
 
   # Return
-  return(list(data_function = data_function,
-              model_function = model_function,
-              metric_function = metric_function))
+  return(list(
+    data_function = data_function,
+    model_function = model_function,
+    metric_function = metric_function
+  ))
 }
 
 #' Calculate the minimum sample size required for a binary outcome
@@ -253,34 +266,42 @@ simulate_binary <- function(signal_parameters,
                             # this will give confidence intervals +/- 0.01
                             n_reps = NULL,
                             ...) {
-  
-  inputs <- parse_inputs(data_spec = list(type = "binary",
-                                             args = list(
-                                               signal_parameters = signal_parameters,
-                                               noise_parameters = noise_parameters,
-                                               predictor_type = predictor_type,
-                                               predictor_prop = predictor_prop,
-                                               baseline_prob = baseline_prob
-                                              )
-                                          ),
-                    metric)
-  if (!(is.null(n_reps))) {se_final <- NULL}
+  inputs <- parse_inputs(
+    data_spec = list(
+      type = "binary",
+      args = list(
+        signal_parameters = signal_parameters,
+        noise_parameters = noise_parameters,
+        predictor_type = predictor_type,
+        predictor_prop = predictor_prop,
+        baseline_prob = baseline_prob
+      )
+    ),
+    metric
+  )
+  if (!(is.null(n_reps))) {
+    se_final <- NULL
+  }
 
   if (!is.null(max_sample_size)) {
-    max_sample_size <- max(max_sample_size,
-                           min(max(1000, 50 * signal_parameters), 50000))
+    max_sample_size <- max(
+      max_sample_size,
+      min(max(1000, 50 * signal_parameters), 50000)
+    )
   }
 
   do.call(simulate_custom,
-          args = c(inputs,
-                   target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
-                   large_sample_performance = large_sample_performance,
-                   min_sample_size = min_sample_size,
-                   max_sample_size = max_sample_size,
-                   se_final = se_final,
-                   n_reps = n_reps,
-                   test_n = max(30000, 3*max_sample_size), 
-                   ...))
+    args = c(inputs,
+      target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
+      large_sample_performance = large_sample_performance,
+      min_sample_size = min_sample_size,
+      max_sample_size = max_sample_size,
+      se_final = se_final,
+      n_reps = n_reps,
+      test_n = max(30000, 3 * max_sample_size),
+      ...
+    )
+  )
 }
 
 #' Calculate the minimum sample size required for a continous outcome
@@ -300,37 +321,44 @@ simulate_continuous <- function(
     min_sample_size,
     max_sample_size,
     se_final = 0.005, # this will give confidence intervals +/- 0.01
-    n_reps = NULL, 
+    n_reps = NULL,
     ...) {
-  inputs <- parse_inputs(data_spec = list(type = "continuous",
-                                          args = list(
-                                            signal_parameters = signal_parameters,
-                                            noise_parameters = noise_parameters,
-                                            predictor_type = predictor_type,
-                                            predictor_prop = predictor_prop
-                                          )
-  ),
-  metric)
-  
-  if (!(is.null(n_reps))) {se_final <- NULL}
-  
-  
+  inputs <- parse_inputs(
+    data_spec = list(
+      type = "continuous",
+      args = list(
+        signal_parameters = signal_parameters,
+        noise_parameters = noise_parameters,
+        predictor_type = predictor_type,
+        predictor_prop = predictor_prop
+      )
+    ),
+    metric
+  )
+
+  if (!(is.null(n_reps))) {
+    se_final <- NULL
+  }
+
+
   do.call(simulate_custom,
-          args = c(inputs,
-                   target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
-                   large_sample_performance = large_sample_performance,
-                   min_sample_size = min_sample_size,
-                   max_sample_size = max_sample_size,
-                   n_reps = n_reps,
-                   se_final = se_final,
-                   test_n = max(30000, 3*max_sample_size),
-                   ...))
+    args = c(inputs,
+      target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
+      large_sample_performance = large_sample_performance,
+      min_sample_size = min_sample_size,
+      max_sample_size = max_sample_size,
+      n_reps = n_reps,
+      se_final = se_final,
+      test_n = max(30000, 3 * max_sample_size),
+      ...
+    )
+  )
 }
 
 #' Calculate the minimum sample size required for a survival outcome
-#' 
+#'
 #' @inheritParams generate_survival_data
-#' 
+#'
 #' @return
 #' @export
 #'
@@ -347,36 +375,43 @@ simulate_survival <- function(signal_parameters,
                               min_sample_size,
                               max_sample_size,
                               se_final = 0.005, # this will give confidence intervals +/- 0.01
-                              n_reps = NULL, 
+                              n_reps = NULL,
                               ...) {
-  inputs <- parse_inputs(data_spec = list(type = "survival",
-                                          args = list(
-                                            signal_parameters = signal_parameters, 
-                                            noise_parameters = noise_parameters,
-                                            predictor_type = predictor_type,
-                                            predictor_prop = predictor_prop,
-                                            baseline_hazard = baseline_hazard,
-                                            censoring_rate = censoring_rate
-                                          )
-  ),
-  metric)
-  
-  if (!(is.null(n_reps))) {se_final <- NULL}
-  
+  inputs <- parse_inputs(
+    data_spec = list(
+      type = "survival",
+      args = list(
+        signal_parameters = signal_parameters,
+        noise_parameters = noise_parameters,
+        predictor_type = predictor_type,
+        predictor_prop = predictor_prop,
+        baseline_hazard = baseline_hazard,
+        censoring_rate = censoring_rate
+      )
+    ),
+    metric
+  )
+
+  if (!(is.null(n_reps))) {
+    se_final <- NULL
+  }
+
   do.call(simulate_custom,
-          args = c(inputs,
-                   target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
-                   large_sample_performance = large_sample_performance,
-                   min_sample_size = min_sample_size,
-                   max_sample_size = max_sample_size,
-                   se_final = se_final,
-                   n_reps = n_reps,
-                   test_n = max(30000, 3*max_sample_size),
-                   ...))
+    args = c(inputs,
+      target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
+      large_sample_performance = large_sample_performance,
+      min_sample_size = min_sample_size,
+      max_sample_size = max_sample_size,
+      se_final = se_final,
+      n_reps = n_reps,
+      test_n = max(30000, 3 * max_sample_size),
+      ...
+    )
+  )
 }
 
-#' Calculate the minimum sample size 
-#' 
+#' Calculate the minimum sample size
+#'
 
 crude_sample_size_calculation <- function(data_function,
                                           tune_param,
@@ -386,71 +421,73 @@ crude_sample_size_calculation <- function(data_function,
                                           min_sample_size,
                                           max_sample_size,
                                           n_sample_sizes,
-                                          target_performance
-                                          ){
+                                          target_performance) {
   # not allowing n_sample_sizes to be below 10
-  n_sample_sizes = max(10, n_sample_sizes)
-  
-  # sizes_to_check are 25 points between min and max_sample_size, 100 and 30000 
-  if (min_sample_size <= 100){
-    sizes_to_check <- 
-      c(round(seq(min_sample_size, max_sample_size, length.out=25)),
-        max(30000, 3*max_sample_size))
-  }else{
-    sizes_to_check <- 
-      c(100, round(seq(min_sample_size, max_sample_size, length.out=25)),
-        max(30000, 3*max_sample_size))
+  n_sample_sizes <- max(10, n_sample_sizes)
+
+  # sizes_to_check are 25 points between min and max_sample_size, 100 and 30000
+  if (min_sample_size <= 100) {
+    sizes_to_check <-
+      c(
+        round(seq(min_sample_size, max_sample_size, length.out = 25)),
+        max(30000, 3 * max_sample_size)
+      )
+  } else {
+    sizes_to_check <-
+      c(
+        100, round(seq(min_sample_size, max_sample_size, length.out = 25)),
+        max(30000, 3 * max_sample_size)
+      )
   }
-  
-  # generate data and compute metric for sizes_to_check, n_sample_sizes times  
-  performance_matrix = 
+
+  # generate data and compute metric for sizes_to_check, n_sample_sizes times
+  performance_matrix <-
     matrix(nrow = length(sizes_to_check), ncol = n_sample_sizes)
-  colnames(performance_matrix) = 1:n_sample_sizes
-  rownames(performance_matrix) = sizes_to_check
-  
-  test_n = max(3*max_sample_size,30000)
+  colnames(performance_matrix) <- 1:n_sample_sizes
+  rownames(performance_matrix) <- sizes_to_check
+
+  test_n <- max(3 * max_sample_size, 30000)
   test_data <- data_function(test_n, tune_param)
-  
+
   metric_calculation <- function(n) {
-    tryCatch({
-      train_data <- data_function(n, tune_param)
-      model <- model_function(train_data)
-      metric_function(test_data, model)
-    },
-    error = function(e) return(value_on_error)
+    tryCatch(
+      {
+        train_data <- data_function(n, tune_param)
+        model <- model_function(train_data)
+        metric_function(test_data, model)
+      },
+      error = function(e) {
+        return(value_on_error)
+      }
     )
   }
   # computing performance metrics across sizes and simulations
-  for (i in 1:length(sizes_to_check)){
-    for (j in 1:n_sample_sizes){  
-      performance_matrix[i,j] = metric_calculation(sizes_to_check[i])
+  for (i in seq_along(sizes_to_check)) {
+    for (j in seq_along(n_sample_sizes)) {
+      performance_matrix[i, j] <- metric_calculation(sizes_to_check[i])
     }
   }
-  
-    get_perf <- function(results, p) {
+
+  get_perf <- function(results, p) {
     apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
   }
-  
-    crude_summaries = data.frame(
-    median_performance = get_perf(performance_matrix,0.5),
-    quant20_performance = get_perf(performance_matrix,0.2),
-    quant5_performance = get_perf(performance_matrix,0.05),
-    quant95_performance = get_perf(performance_matrix,0.95)
-  )
-  
-  if(is.na(which(crude_summaries$quant20_performance>target_performance)[1])){
-    crude_min_n = NA
-    }else{
-      crude_min_n = 
-        sizes_to_check[
-          which(crude_summaries$quant20_performance>target_performance)[1]
-          ]
-      }
-  
-  output_crude = list()
-  output_crude$crude_summaries = crude_summaries
-  output_crude$crude_min_n = crude_min_n
-  
-  return(output_crude)
-}
 
+  crude_summaries <- data.frame(
+    median_performance = get_perf(performance_matrix, 0.5),
+    quant20_performance = get_perf(performance_matrix, 0.2),
+    quant5_performance = get_perf(performance_matrix, 0.05),
+    quant95_performance = get_perf(performance_matrix, 0.95)
+  )
+
+  if (is.na(which(crude_summaries$quant20_performance > target_performance)[1])) {
+    crude_min_n <- NA
+  } else {
+    crude_min_n <-
+      sizes_to_check[
+        which(crude_summaries$quant20_performance > target_performance)[1]
+      ]
+  }
+
+  return(list(crude_summaries = crude_summaries,
+              crude_min_n = crude_min_n))
+}
