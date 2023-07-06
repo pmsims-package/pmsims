@@ -40,6 +40,7 @@ simulate_custom <- function(data_function = NULL,
   if (is.null(data_function)) {
     stop("data_function missing")
   }
+  
   # Use a default model function if not supplied
   if (is.null(model_function)) {
     model_function <- default_model_generators(outcome = attr(data_function,
@@ -75,29 +76,31 @@ simulate_custom <- function(data_function = NULL,
     tune_param <- do.call(tune_generate_data, tune_args)
   }
 
-  # Create inputs for mlpwr ----------------------------------------------------
-  
-  # define a default metric value if calculations fail: 0.5 for default
-  metric_name = attr(metric_function, "metric")
-  value_on_error <-
-    ifelse((metric_name == "auc") | (metric_name == "cindex") ,
-           0.5,
-           ifelse((metric_name == "r2")| (metric_name == "brier_score_scaled"),
-                  0,
-                  ifelse((metric_name == "brier_score")| (metric_name == "IBS"),
-                         1,
-                         ifelse((metric_name == "calib_slope"),0, 0.5))))
-  
-  
+  # Create inputs for mlpwr
+  # Define a default metric value if calculations fail; 0.5 for default
+  metric_name <- attr(metric_function, "metric")
+  error_values <- list(
+    auc = 0.5,
+    cindex = 0.5,
+    r2 = 0,
+    brier_score_scaled = 0,
+    brier_score = 1,
+    IBS = 1,
+    calib_slope = 0
+  )
+  value_on_error <- ifelse(metric_name %in% names(error_values),
+                           error_values[[metric_name]],
+                           0.5)
+
   mlpwr_simulation_function <- function(n) {
     tryCatch({
       test_data <- data_function(test_n, tune_param)
       train_data <- data_function(n, tune_param)
       model <- model_function(train_data)
       metric_function(test_data, model)
-      },
-      error = function(e) return(value_on_error)
-    )
+    },
+    error = function(e)
+      return(value_on_error))
   }
 
   aggregate_fun <- function(x) quantile(x, probs = .2)
@@ -146,8 +149,7 @@ simulate_custom <- function(data_function = NULL,
       silent = !verbose
     )
 
-
-  # Process results from mlpwr -------------------------------------------------
+  # Process results from mlpwr
   dat <- ds$dat
   dat <- dat[order(sapply(dat, \(x)x$x))]
   maxlen <- max(sapply(dat, \(x) length(x$y)))
