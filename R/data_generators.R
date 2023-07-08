@@ -125,7 +125,7 @@ generate_survival_data <- function(
                                   beta_signal)
 
   # Generate survival times
-  T <- rexp(n, rate = baseline_hazard * exp(lp))
+  event_time <- rexp(n, rate = baseline_hazard * exp(lp))
 
   # Generate censoring indicators
   C <- ifelse(runif(n) < censoring_rate, 1, 0) # 20% censoring rate
@@ -133,7 +133,7 @@ generate_survival_data <- function(
   # Return survival data as a data frame
   return(data.frame(
     id = 1:n,
-    time = T,
+    time = event_time,
     event = 1 - C,
     X
   ))
