@@ -66,7 +66,6 @@ simulate_custom <- function(data_function = NULL,
   }
 
   # Set default tuning parameters
-
   if (is.null(tune_param)) {
     default_tuning <- list(
       min_tune_arg = 0,
@@ -409,7 +408,7 @@ calculate_crude <- function(
     )
   }
 
-  # computing performance metrics across sizes and simulations
+  # Compute performance metrics across sizes and simulations
   for (i in seq_along(sample_grid)) {
     for (j in seq_along(n_sample_sizes)) {
       performance_matrix[i, j] <- metric_calculation(sample_grid[i])
