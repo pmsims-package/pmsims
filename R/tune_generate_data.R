@@ -14,16 +14,17 @@
 #' @export
 #'
 #' @examples
-tune_generate_data <- function(data_function,
-                               large_n,
-                               min_tune_arg,
-                               max_tune_arg,
-                               model_function,
-                               metric_function,
-                               target_large_sample_performance,
-                               tolerance = target_large_sample_performance / 100,
-                               max_interval_expansion = 10,
-                               verbose = FALSE) {
+tune_generate_data <- function(
+  data_function,
+   large_n,
+   min_tune_arg,
+   max_tune_arg,
+   model_function,
+   metric_function,
+   target_large_sample_performance,
+   tolerance = target_large_sample_performance / 100,
+   max_interval_expansion = 10,
+   verbose = FALSE) {
   interval <- c(min_tune_arg, max_tune_arg)
 
   # Optimise
@@ -44,8 +45,8 @@ tune_generate_data <- function(data_function,
   while (abs(optimal_value - interval[1]) < max(abs(optimal_value - interval[1])) / 100 ||
     abs(optimal_value - interval[2]) < max(abs(optimal_value - interval[1])) / 100 ||
     result$objective > tolerance) {
-    # Interval is too narrow, expand the interval
 
+    # Interval is too narrow, expand the interval
     if (verbose) print("Expanding search for tuning parameter")
     expand_count <- expand_count + 1
     if (expand_count > max_interval_expansion) {

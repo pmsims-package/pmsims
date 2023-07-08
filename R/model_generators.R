@@ -9,15 +9,15 @@
 default_model_generators <- function(outcome) {
   if (outcome == "binary") {
     model_function <- function(data) {
-      logistic_model <- glm("y ~ .", data = data, family = "binomial")
+      glm("y ~ .", data = data, family = "binomial")
     }
   } else if (outcome == "continuous") {
     model_function <- function(data) {
-      linear_model <- glm("y ~ .", data = data, family = "gaussian")
+      glm("y ~ .", data = data, family = "gaussian")
     }
   } else if (outcome == "survival") {
     model_function <- function(data) {
-      formula = "survival::Surv(time, event) ~ ." |>  as.formula()
+      formula <- as.formula("survival::Surv(time, event) ~ .")
       survival::coxph(formula, data = data)
       }
     }

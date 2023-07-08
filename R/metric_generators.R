@@ -1,6 +1,5 @@
 default_metric_generator <- function(data_function, metric) {
   outcome <- attr(data_function, "outcome")
-
   if (outcome == "binary") {
     if (metric == "auc") {
       metric_function <- binary_auc_metric
@@ -11,7 +10,10 @@ default_metric_generator <- function(data_function, metric) {
     } else if (metric == "brier_score_scaled") {
       metric_function <- binary_brier_score_scaled
     } else {
-      stop(paste("Default metric", metric, "for", outcome, "outcomes does not exist."))
+      stop(paste(
+        "Default metric", metric, "for", outcome,
+        "outcomes does not exist."
+      ))
     }
   }
   if (outcome == "survival") {
@@ -22,7 +24,10 @@ default_metric_generator <- function(data_function, metric) {
     } else if (metric == "IBS") { # integrated Brier Score
       metric_function <- NULL # survival_ibs; not ready, placeholder
     } else {
-      stop(paste("Default metric", metric, "for", outcome, "outcomes does not exist."))
+      stop(paste(
+        "Default metric", metric, "for", outcome,
+        "outcomes does not exist."
+      ))
     }
   }
   if (outcome == "continuous") {
@@ -31,7 +36,10 @@ default_metric_generator <- function(data_function, metric) {
     } else if (metric == "something_else") { 
       metric_function <- NULL # placeholder
     } else {
-      stop(paste("Default metric", metric, "for", outcome, "outcomes does not exist."))
+      stop(paste(
+        "Default metric", metric, "for", outcome,
+        "outcomes does not exist."
+      ))
     } 
   }
   attr(metric_function, "metric") = metric

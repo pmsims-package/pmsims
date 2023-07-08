@@ -24,22 +24,31 @@ Imagine you are an analyst planning on developing a prediction model for Type 2 
 
 You are treating onset of Type 2 diabetes as a binary outcome. We will use the default data generator for binary outcome, which assumes 10 predictors and uses logistic regression to develop the model. You'd like the c-statistic to be within 0.02 of the model performance possible in a large dataset (ie. target performance of 0.78 vs large sample performance of 0.8).
 
-To use `pmsims::calculate_sample_size2` to get a sample size estimate you run:
+To use `pmsims::calculate_sample_size` to get a sample size estimate you run:
 
 ```{r}
 set.seed(42)
-data_options <- list(outcome = "binary",
-                     args = list(parameters = 50))
+s_mlpwr <- simulate_binary(
+  signal_parameters = 10,
+  baseline_prob = 0.1,
+  large_sample_performance = 0.8,
+  min_sample_size = 100,
+  max_sample_size = 5000,
+  method = "mlpwr"  # <----------
+)
 
-sample_size <- simulate_custom(data_spec = data_options,
-                               large_sample_performance = 0.8,
-                               target_performance = 0.78,
-                               min_sample_size = 100,
-                               max_sample_size = 3000,
-                               n_reps = 100,
-                               test_n = 1000)
+summary(s_mlpwr)
 
-summary(sample_size)
+s_crude <- simulate_binary(
+  signal_parameters = 10,
+  baseline_prob = 0.1,
+  large_sample_performance = 0.8,
+  min_sample_size = 100,
+  max_sample_size = 5000,
+  method = "crude"  # <----------
+)
+
+summary(s_crude)
 ```
 
 The minimum sample size is `r sample_size$min_n`.

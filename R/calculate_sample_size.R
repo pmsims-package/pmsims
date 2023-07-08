@@ -35,8 +35,8 @@ simulate_custom <- function(data_function = NULL,
                             se_final = NULL,
                             n_sample_sizes = 10,
                             n_init = 4,
+                            method = "mlpwr",
                             verbose = FALSE) {
-  # Parse input parameters
   if (is.null(data_function)) {
     stop("data_function missing")
   }
@@ -44,16 +44,20 @@ simulate_custom <- function(data_function = NULL,
   # Use a default model function if not supplied
   if (is.null(model_function)) {
     model_function <-
-      default_model_generators(
-        outcome = attr(data_function, "outcome")
+      default_model_generators(outcome = attr(data_function, "outcome")
       )
   }
 
-  if (sum(c(is.null(tune_param), is.null(large_sample_performance))) != 1) {
-    stop("Exactly one of 'tune_param' or 'large_sample_performance' must be specified.")
+  if (sum(c(is.null(tune_param),
+            is.null(large_sample_performance))) != 1) {
+    stop(paste(
+      "Exactly one of 'tune_param' or",
+      "'large_sample_performance' must be specified."
+    ))
   }
 
-  if (sum(c(is.null(n_reps), is.null(se_final))) != 1) {
+  if (sum(c(is.null(n_reps),
+            is.null(se_final))) != 1) {
     stop("Exactly one of 'n_reps' or 'se_final' must be specified.")
   }
 
@@ -61,26 +65,32 @@ simulate_custom <- function(data_function = NULL,
     stop("min_sample_size must be less than max_sample_size")
   }
 
-  # Set tuning arguments
+  # Set default tuning parameters
+
   if (is.null(tune_param)) {
-    # Use defaults if tuning parameters not specified
-    if (is.null(tune_args$min_tune_arg)) tune_args$min_tune_arg <- 0
-    if (is.null(tune_args$max_tune_arg)) tune_args$max_tune_arg <- 1
-    if (is.null(tune_args$large_n)) tune_args$large_n <- max(30000, 3 * max_sample_size)
-    if (is.null(tune_args$tolerance)) tune_args$tolerance <- large_sample_performance * 0.005
-    if (is.null(tune_args$max_interval_expansion)) tune_args$max_interval_expansion <- 10
-    default <- list(
-      data_function = data_function,
-      model_function = model_function,
-      metric_function = metric_function,
-      target_large_sample_performance = large_sample_performance,
-      verbose = verbose
+    default_tuning <- list(
+      min_tune_arg = 0,
+      max_tune_arg = 1,
+      large_n = max(30000, 3 * max_sample_size),
+      tolerance = large_sample_performance * 0.005,
+      max_interval_expansion = 10
     )
-    tune_args <- c(tune_args, default)
+    for (p in names(default_tuning)) {
+      if (is.null(tune_args[[p]])) tune_args[[p]] <- default_tuning[[p]]
+    }
+    tune_args <- c(
+      tune_args,
+      list(
+        data_function = data_function,
+        model_function = model_function,
+        metric_function = metric_function,
+        target_large_sample_performance = large_sample_performance,
+        verbose = verbose
+      )
+    )
     tune_param <- do.call(tune_generate_data, tune_args)
   }
 
-  # Create inputs for mlpwr
   # Define a default metric value if calculations fail; 0.5 for default
   metric_name <- attr(metric_function, "metric")
   error_values <- list(
@@ -97,110 +107,52 @@ simulate_custom <- function(data_function = NULL,
     0.5
   )
 
-  mlpwr_simulation_function <- function(n) {
-    tryCatch(
-      {
-        test_data <- data_function(test_n, tune_param)
-        train_data <- data_function(n, tune_param)
-        model <- model_function(train_data)
-        metric_function(test_data, model)
-      },
-      error = function(e) {
-        return(value_on_error)
-      }
+  if (method == "mlpwr") {
+    output <- calculate_mlpwr(
+      test_n,
+      tune_param,
+      n_sample_sizes,
+      n_reps,
+      se_final,
+      min_sample_size,
+      max_sample_size,
+      target_performance,
+      n_init,
+      verbose,
+      data_function,
+      model_function,
+      metric_function,
+      value_on_error
     )
-  }
-
-  aggregate_fun <- function(x) quantile(x, probs = .2)
-
-  # Use a bootstrap to estimate the variance of the estimated quantile
-  var_bootstrap <- function(x) {
-    var(replicate(20, aggregate_fun(sample(x, length(x), replace = TRUE))))
-  }
-
-  # Calculate bootstrapped quantile variance
-  noise_fun <- function(x) var_bootstrap(x$y)
-
-  # processing final_estimate_se
-  setsize <- n_reps / n_sample_sizes
-  if (!(is.null(se_final))) {
-    ci <- se_final * qnorm(0.975) * 2
-    n_reps <- 10000 # setting large nreps so ci dominates.
-    setsize <- 100 # fixing setsize so not driven by nreps
+  } else if (method == "crude") {
+    output <- calculate_crude(
+      data_function,
+      tune_param,
+      model_function,
+      metric_function,
+      value_on_error,
+      min_sample_size,
+      max_sample_size,
+      n_sample_sizes,
+      target_performance
+    )
   } else {
-    ci <- NULL
+    stop("Method not found")
   }
-  # Perform a crude search -----------------------------------------------------
-  crude_output <- crude_sample_size_calculation(
-    data_function,
-    tune_param,
-    model_function,
-    metric_function,
-    value_on_error,
-    min_sample_size,
-    max_sample_size,
-    n_sample_sizes,
-    target_performance
-  )
-
-  # Perform search using mlpwr -------------------------------------------------
-  ds <-
-    mlpwr::find.design(
-      simfun = mlpwr_simulation_function,
-      aggregate_fun = aggregate_fun,
-      noise_fun = noise_fun,
-      boundaries = c(min_sample_size, max_sample_size),
-      power = target_performance,
-      surrogate = "gpr",
-      setsize = setsize,
-      evaluations = n_reps,
-      ci = ci,
-      n.startsets = n_init,
-      silent = !verbose
-    )
-
-  # Process results from mlpwr
-  dat <- ds$dat
-  dat <- dat[order(sapply(dat, \(x) x$x))]
-  maxlen <- max(sapply(dat, \(x) length(x$y)))
-  results <- matrix(nrow = length(dat), ncol = maxlen)
-  rownames(results) <- sapply(dat, \(x) x$x)
-  for (i in seq_along(dat)) {
-    results[i, seq(length(dat[[i]]$y))] <- dat[[i]]$y
-  }
-
-  get_perf <- function(results, p) {
-    apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
-  }
-
-  median_performance <- get_perf(results, p = 0.5)
-  quant20_performance <- get_perf(results, p = 0.2)
-  quant5_performance <- get_perf(results, p = 0.05)
-  quant95_performance <- get_perf(results, p = 0.95)
-
-  min_n <- as.numeric(ds$final$design)
 
   results_list <- list(
     outcome = attr(data_function, "outcome"),
-    # parameters = data_spec$args$parameters, # TOFIX: This will fail if data_spec isn't provided.
     min_n = ifelse(
-      is.na(min_n),
+      is.na(output$min_n),
       "Not possible. Increase sample or lower performance",
-      min_n
+      output$min_n
     ),
     target_performance = target_performance,
-    summaries = data.frame(
-      median_performance = median_performance,
-      quant20_performance = quant20_performance,
-      quant5_performance = quant5_performance,
-      quant95_performance = quant95_performance
-    ),
-    data = results,
-    train_size = rownames(results),
+    summaries = output$summaries,
+    data = output$results,
+    train_size = rownames(output$results),
     tune_param = tune_param,
-    data_function = data_function,
-    summaries_crude = crude_output$crude_summaries,
-    min_n_crude = crude_output$crude_min_n
+    data_function = data_function
   )
 
   attr(results_list, "class") <- "pmsims"
@@ -413,38 +365,33 @@ simulate_survival <- function(signal_parameters,
 #' Calculate the minimum sample size
 #'
 
-crude_sample_size_calculation <- function(data_function,
-                                          tune_param,
-                                          model_function,
-                                          metric_function,
-                                          value_on_error,
-                                          min_sample_size,
-                                          max_sample_size,
-                                          n_sample_sizes,
-                                          target_performance) {
-  # not allowing n_sample_sizes to be below 10
+calculate_crude <- function(
+  data_function,
+  tune_param,
+  model_function,
+  metric_function,
+  value_on_error,
+  min_sample_size,
+  max_sample_size,
+  n_sample_sizes,
+  target_performance) {
+
+  # Make sure n_sample_sizes is 10 or over
   n_sample_sizes <- max(10, n_sample_sizes)
 
-  # sizes_to_check are 25 points between min and max_sample_size, 100 and 30000
-  if (min_sample_size <= 100) {
-    sizes_to_check <-
-      c(
-        round(seq(min_sample_size, max_sample_size, length.out = 25)),
-        max(30000, 3 * max_sample_size)
-      )
-  } else {
-    sizes_to_check <-
-      c(
-        100, round(seq(min_sample_size, max_sample_size, length.out = 25)),
-        max(30000, 3 * max_sample_size)
-      )
-  }
-
-  # generate data and compute metric for sizes_to_check, n_sample_sizes times
+  # Specify grid
+  sample_grid <- c(
+    round(seq(min_sample_size, max_sample_size, length.out = 25)),
+    max(30000, 3 * max_sample_size)
+  )
+  # Generate data and compute metric for sizes_to_check, n_sample_sizes times
   performance_matrix <-
-    matrix(nrow = length(sizes_to_check), ncol = n_sample_sizes)
+    matrix(
+      nrow = length(sample_grid),
+      ncol = n_sample_sizes
+    )
   colnames(performance_matrix) <- 1:n_sample_sizes
-  rownames(performance_matrix) <- sizes_to_check
+  rownames(performance_matrix) <- sample_grid
 
   test_n <- max(3 * max_sample_size, 30000)
   test_data <- data_function(test_n, tune_param)
@@ -461,10 +408,11 @@ crude_sample_size_calculation <- function(data_function,
       }
     )
   }
+
   # computing performance metrics across sizes and simulations
-  for (i in seq_along(sizes_to_check)) {
+  for (i in seq_along(sample_grid)) {
     for (j in seq_along(n_sample_sizes)) {
-      performance_matrix[i, j] <- metric_calculation(sizes_to_check[i])
+      performance_matrix[i, j] <- metric_calculation(sample_grid[i])
     }
   }
 
@@ -472,7 +420,7 @@ crude_sample_size_calculation <- function(data_function,
     apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
   }
 
-  crude_summaries <- data.frame(
+  crude_summaries <- list(
     median_performance = get_perf(performance_matrix, 0.5),
     quant20_performance = get_perf(performance_matrix, 0.2),
     quant5_performance = get_perf(performance_matrix, 0.05),
@@ -483,11 +431,103 @@ crude_sample_size_calculation <- function(data_function,
     crude_min_n <- NA
   } else {
     crude_min_n <-
-      sizes_to_check[
+      sample_grid[
         which(crude_summaries$quant20_performance > target_performance)[1]
       ]
   }
+  return(list(results = performance_matrix,
+              summaries = crude_summaries,
+              min_n = crude_min_n))
+}
 
-  return(list(crude_summaries = crude_summaries,
-              crude_min_n = crude_min_n))
+calculate_mlpwr <- function(
+    test_n,
+    tune_param,
+    n_sample_sizes,
+    n_reps,
+    se_final,
+    min_sample_size,
+    max_sample_size,
+    target_performance,
+    n_init,
+    verbose,
+    data_function,
+    model_function,
+    metric_function,
+    value_on_error) {
+  mlpwr_simulation_function <- function(n) {
+    tryCatch(
+      {
+        test_data <- data_function(test_n, tune_param)
+        train_data <- data_function(n, tune_param)
+        model <- model_function(train_data)
+        metric_function(test_data, model)
+      },
+      error = function(e) {
+        return(value_on_error)
+      }
+    )
+  }
+
+  aggregate_fun <- function(x) quantile(x, probs = .2)
+
+  # Use a bootstrap to estimate the variance of the estimated quantile
+  var_bootstrap <- function(x) {
+    var(replicate(20, aggregate_fun(sample(x, length(x), replace = TRUE))))
+  }
+
+  # Calculate bootstrapped quantile variance
+  noise_fun <- function(x) var_bootstrap(x$y)
+
+  # processing final_estimate_se
+  setsize <- n_reps / n_sample_sizes
+  if (!(is.null(se_final))) {
+    ci <- se_final * qnorm(0.975) * 2
+    n_reps <- 10000 # setting large nreps so ci dominates.
+    setsize <- 100 # fixing setsize so not driven by nreps
+  } else {
+    ci <- NULL
+  }
+  # Perform search using mlpwr
+  ds <-
+    mlpwr::find.design(
+      simfun = mlpwr_simulation_function,
+      aggregate_fun = aggregate_fun,
+      noise_fun = noise_fun,
+      boundaries = c(min_sample_size, max_sample_size),
+      power = target_performance,
+      surrogate = "gpr",
+      setsize = setsize,
+      evaluations = n_reps,
+      ci = ci,
+      n.startsets = n_init,
+      silent = !verbose
+    )
+
+  # Process results from mlpwr
+  perfs <- ds$dat
+  perfs <- perfs[order(sapply(perfs, "[[", "x"))]
+  max_len <- max(sapply(perfs, \(x) length(x$y)))
+  results <- matrix(nrow = length(perfs), ncol = max_len)
+  rownames(results) <- sapply(perfs, \(x) x$x)
+  for (i in seq_along(perfs)) {
+    results[i, seq(1, length(perfs[[i]]$y), 1)] <- perfs[[i]]$y
+  }
+
+  get_perf <- function(results, p) {
+    apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
+  }
+
+  mlpwr_summaries <- list(
+    median_performance = get_perf(results, 0.5),
+    quant20_performance = get_perf(results, 0.2),
+    quant5_performance = get_perf(results, 0.05),
+    quant95_performance = get_perf(results, 0.95)
+  )
+
+  return(list(
+    results = perfs,
+    summaries = mlpwr_summaries,
+    min_n = as.numeric(ds$final$design)
+  ))
 }
