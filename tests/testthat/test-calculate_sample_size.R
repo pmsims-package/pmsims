@@ -53,7 +53,7 @@ test_that("simulate_binary", {
       n_reps = 50,
       minimum_threshold = 0.05
   )
-  expect_equal(length(output), 6)
+  expect_equal(length(output), 8)
 })
 
 
@@ -68,7 +68,7 @@ test_that("simulate_continuous", {
     n_reps = 10,
     minimum_threshold = 0.05
   )
-  expect_equal(length(output), 6)
+  expect_equal(length(output), 8)
 })
 
 
@@ -85,5 +85,5 @@ test_that("simulate_survival", {
     minimum_threshold = 0.05,
     large_sample_performance = 0.7
   )
-  expect_equal(length(output), 6)
+  expect_equal(length(output), 8)
 })
