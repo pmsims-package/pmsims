@@ -31,7 +31,7 @@ opts <- expand_grid(expected_c = seq(0.6, 0.9, 0.1),
                     n_parameters = c(10, 50, 100))
 
 opts$pmsampsize <-
-  future_pmap_dbl(
+  future_pmap(
     opts,
     \(expected_c, prevalence, n_parameters) {
       pmsampsize(
@@ -40,15 +40,26 @@ opts$pmsampsize <-
         prevalence = prevalence,
         cstatistic = expected_c,
         seed = 42
-      )$sample_size
+      )
     },
     .options = furrr_options(seed = 42))
+
+
+opts$pmsampsize <- opts$pmsampsize |>
+  map(\(r) { 
+    x <- r$results_table[1:3, 1]
+    names(x) <- paste0("criteria", 1:3)
+    return(x)
+    })
+
+opts |>
+  unnest_wider(pmsampsize)
 
 ```
 
 ```{r}
 opts$pmsims <- 
-  future_pmap_dbl(
+  future_pmap(
     opts,
     \(expected_c, prevalence, n_parameters, ...) {
       print(c(expected_c, prevalence, n_parameters))
@@ -61,14 +72,19 @@ opts$pmsims <-
       if (class(r) == "try-error") {
         return(NA)
       } else {
-        return(r$min_n)
+        return(list(mlpwr = r$min_n,
+                    crude = r$min_n_crude))
       }
     },
     .options = furrr_options(seed = 42)
   )
+```
 
-opts$pmsims <- as.numeric(map_chr(opts$pmsims, 1))
-opts$diff <- opts$pmsampsize / opts$pmsims
+```{r}
+opts <- opts |>
+  unnest_wider(pmsims)
+
+print(opts, n = 100)
 ```
 
 ```{r}
