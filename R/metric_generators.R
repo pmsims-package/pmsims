@@ -5,6 +5,8 @@ default_metric_generator <- function(data_function, metric) {
       metric_function <- binary_auc_metric
     } else if (metric == "calib_slope") {
       metric_function <- binary_calib_slope
+    } else if (metric == "calib_itl") {
+      metric_function <- binary_calib_itl
     } else if (metric == "brier_score") {
       metric_function <- binary_brier_score
     } else if (metric == "brier_score_scaled") {
@@ -33,8 +35,10 @@ default_metric_generator <- function(data_function, metric) {
   if (outcome == "continuous") {
     if (metric == "r2") {
       metric_function <- continuous_r2
-    } else if (metric == "something_else") { 
-      metric_function <- NULL # placeholder
+    } else if (metric == "calib_slope") { 
+      metric_function <- continuous_calib_slope
+    } else if (metric == "calib_itl") { 
+      metric_function <- continuous_calib_itl
     } else {
       stop(paste(
         "Default metric", metric, "for", outcome,
@@ -71,6 +75,24 @@ binary_calib_slope <- function(data, model) {
   return(calib_slope)
 }
 
+binary_calib_itl <- function(data, model) {
+  # computes calibration slope for logistic regression
+  y <- data[, "y"]
+  x <- data[, names(data) != "y"]
+  y_link <- predict(model, x, type = "link")
+  # checks if regression converges first
+  if (class(try(glm(y ~ 1, offset=y_link, data=data, family="binomial"),
+                silent = TRUE
+  ))[1] == "try-error") {
+    calib <- NaN
+  } else {
+    calib_model <- glm(y ~ 1, offset=y_link, data=data, family="binomial")
+    calib<- as.numeric(coef(calib_model)[1])
+  }
+  return(calib)
+}
+
+
 binary_brier_score <- function(data, model) {
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
@@ -92,15 +114,50 @@ binary_brier_score_scaled <- function(data, model) {
 }
 
 continuous_r2 <- function(data, model) {
-  # this works for models being lm() models
-  # or those with predict(type = "response") giving continuous y_hat
+  # formula for out of sample r-squared taken from this: https://www.tandfonline.com/doi/full/10.1080/00031305.2023.2216252?journalCode=utas20
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
+  n <- length(y)
   y_hat <- predict(model, x, type = "response")
-  r2 <- cor(y, y_hat, method = "pearson")**2
+  mse <- sum((y_hat - y)^2)/n
+  mst <- var(y)*(n+1)/n
+  r2 <- 1 - (mse/mst)
   return(r2)
 }
 
+continuous_calib_slope <- function(data, model) {
+  # computes calibration slope for logistic regression
+  y <- data[, "y"]
+  x <- data[, names(data) != "y"]
+  y_hat <- predict(model, x, type = "response")
+  # checks if regression converges first
+  if (class(try(lm(y ~ y_hat, data = data),
+                silent = TRUE
+  ))[1] == "try-error") {
+    calib <- NaN
+  } else {
+    calib_model <- lm(y ~ y_hat, data = data)
+    calib <- as.numeric(coef(calib_model)[2])
+  }
+  return(calib)
+}
+
+continuous_calib_itl <- function(data, model) {
+  # computes calibration slope for logistic regression
+  y <- data[, "y"]
+  x <- data[, names(data) != "y"]
+  y_hat <- predict(model, x, type = "response")
+  # checks if regression converges first
+  if (class(try(lm(y ~ 1, offset=y_hat, data=data),
+                silent = TRUE
+  ))[1] == "try-error") {
+    calib <- NaN
+  } else {
+    calib_model <- lm(y ~ 1, offset=y_hat, data=data)
+    calib <- as.numeric(coef(calib_model)[1])
+  }
+  return(calib)
+}
 survival_cindex <- function(data, model) {
   # this works for models being the Cox models
   # or those with predict(type = "lp") giving some sort of a risk score,
