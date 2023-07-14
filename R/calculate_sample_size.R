@@ -16,7 +16,7 @@
 #' @param tune_metric_function The metric_function used when tuning the model. This may differ from the metric function used for determining the sample size.
 #' @param min_sample_size The minimum sample size used in simulations
 #' @param max_sample_size The maximum sample size used in simulations
-#' @param n_reps The number of simulation reps
+#' @param n_reps_totalThe number of simulation reps
 #' @param final_estimate_se The standard error for the estimate of model
 #'   performance at the minimum sample size. Either this or nreps should be
 #'   specified.
@@ -280,7 +280,7 @@ simulate_continuous <- function(
     min_sample_size,
     max_sample_size,
     se_final = 0.005, # this will give confidence intervals +/- 0.01
-    n_reps = NULL,
+    n_reps_total= NULL,
     ...) {
   inputs <- parse_inputs(
     data_spec = list(
@@ -295,7 +295,7 @@ simulate_continuous <- function(
     metric
   )
 
-  if (!(is.null(n_reps))) {
+  if (!(is.null(n_reps_total))) {
     se_final <- NULL
   }
 
@@ -306,7 +306,7 @@ simulate_continuous <- function(
       large_sample_performance = large_sample_performance,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
-      n_reps = n_reps,
+      n_reps_total = n_reps_total,
       se_final = se_final,
       test_n = set_test_n(max_sample_size),
       ...
@@ -334,7 +334,7 @@ simulate_survival <- function(signal_parameters,
                               min_sample_size,
                               max_sample_size,
                               se_final = 0.005, # this will give confidence intervals +/- 0.01
-                              n_reps = NULL,
+                              n_reps_total= NULL,
                               ...) {
   inputs <- parse_inputs(
     data_spec = list(
@@ -362,7 +362,7 @@ simulate_survival <- function(signal_parameters,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
       se_final = se_final,
-      n_reps = n_reps,
+      n_reps_total= n_reps,
       test_n = set_test_n(max_sample_size),
       ...
     )
@@ -490,7 +490,7 @@ calculate_mlpwr <- function(
   # Auto-stopping or not
   if (!(is.null(se_final))) {
     ci <- se_final * qnorm(0.975) * 2
-    n_reps <- 10000 # setting large nreps so ci dominates.
+    n_reps_total<- 10000 # setting large nreps so ci dominates.
   } else {
     ci <- NULL
   }
