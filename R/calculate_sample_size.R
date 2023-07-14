@@ -261,6 +261,95 @@ simulate_binary <- function(signal_parameters,
   )
 }
 
+#' Calculate the minimum sample size required for a binary outcome
+#'
+#' @inheritParams generate_binary_data
+#' @param ... Other options passed to [simulate_custom()]
+#'
+#' @return
+#' @export
+#'
+#' @examples
+simulate_binary_many_metrics <- function(
+                            signal_parameters,
+                            noise_parameters = 0,
+                            predictor_type = "continuous",
+                            predictor_prop = NULL,
+                            baseline_prob,
+                            metric = c("auc", "calib_slope"),
+                            large_sample_auc = 0.8, # only auc is used for tuning
+                            target_performance = c(0.72, 0.9), # Target performance given as values rather than deviation - saves confusing manipuation on the way to simulate custom
+                            min_sample_size,
+                            max_sample_size,
+                            se_final = 0.005,
+                            # this will give confidence intervals +/- 0.01
+                            n_reps_total = NULL,
+                            ...) {
+  inputs <- parse_inputs(
+    data_spec = list(
+      type = "binary",
+      args = list(
+        signal_parameters = signal_parameters,
+        noise_parameters = noise_parameters,
+        predictor_type = predictor_type,
+        predictor_prop = predictor_prop,
+        baseline_prob = baseline_prob
+      )
+    ),
+    metric
+  )
+  if (!(is.null(n_reps_total))) {
+    se_final <- NULL
+  }
+  
+  # TODO: Decide whether to include these lines
+  # if (!is.null(max_sample_size)) {
+  #   max_sample_size <- max(max_sample_size,
+  #                          min(max(1000, 50 * signal_parameters), 50000)
+  #   )
+  # }
+  
+  # Tune once:
+  
+  tune_param <- tune_generate_data(
+    min_tune_arg = 0,
+    max_tune_arg = 1,
+    large_n = set_test_n(max_sample_size),
+    tolerance = set_tolerance(large_sample_auc),
+    max_interval_expansion = 10,
+    data_function = inputs$data_function,
+    model_function = inputs$model_function,
+    metric_function = default_metric_generator("auc", inputs$data_function),
+    target_large_sample_performance = large_sample_auc,
+    verbose = TRUE
+  )
+  
+
+  args = c(data_function = inputs$data_function,
+      model_function = inputs$model_function,
+      min_sample_size = min_sample_size,
+      max_sample_size = max_sample_size,
+      se_final = se_final,
+      n_reps_total = n_reps_total,
+      test_n = set_test_n(max_sample_size),
+      tune_param = tune_param,
+      ...
+  )
+  metrics <- inputs$metric_function
+
+  simulate_1metric <- function(metric, target, other_args) {
+    my_args <- c(list(metric_function = metric, target_performance = target), other_args)
+    do.call(simulate_custom, my_args)
+  }
+  results <- mapply(simulate_1metric, metrics, target_performance, MoreArgs = list(other_args = args))
+  dimnames(results)[[2]] <- metric
+  return(results)
+  
+  
+  
+}
+
+
 #' Calculate the minimum sample size required for a continous outcome
 #'
 #' @inheritParams generate_continuous_data
