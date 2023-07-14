@@ -187,16 +187,13 @@ parse_inputs <- function(data_spec, metric) {
   )
   # Set a metric, based on outcome type
   if (is.null(metric)) stop("metric is missing")
-  metric_function <- default_metric_generator(
-    data_function,
-    metric
-  )
-
+  metric_functions <- lapply(metric, default_metric_generator, data_function = data_function)
+  if (length(metric_functions) == 1) metric_functions <- metric_functions[[1]]
   # Return
   return(list(
     data_function = data_function,
     model_function = model_function,
-    metric_function = metric_function
+    metric_function = metric_functions
   ))
 }
 
