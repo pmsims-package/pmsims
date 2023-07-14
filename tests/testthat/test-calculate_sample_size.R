@@ -51,14 +51,14 @@ test_that("simulate_binary", {
       min_sample_size = 100,
       max_sample_size = 3000,
       n_reps_total = 50,
-      minimum_threshold = 0.05
+      minimum_threshold = 0.05,
+      tune_param = 0.60
   )
   expect_equal(length(output), 8)
 })
 
 test_that("simulate_binary_many_metrics", {
   set.seed(1234)
-  
   output <- simulate_binary_many_metrics(
     signal_parameters = 5, 
     noise_parameters = 5, 
@@ -67,7 +67,8 @@ test_that("simulate_binary_many_metrics", {
     min_sample_size = 100,
     max_sample_size = 3000,
     n_reps_total = 50,
-    large_sample_auc = 0.8, # only auc is used for tuning
+    large_sample_auc = NULL,
+    tune_param =  -0.599631 ,
     target_performance = c(0.75, 0.9)
     )
   expect_equal(length(output), 16)
@@ -82,7 +83,8 @@ test_that("simulate_continuous", {
     min_sample_size = 100,
     max_sample_size = 3000,
     n_reps_total = 10,
-    minimum_threshold = 0.05
+    minimum_threshold = 0.05,
+    tune_param = 0.6353973
   )
   expect_equal(length(output), 8)
 })

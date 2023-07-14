@@ -243,10 +243,13 @@ simulate_binary <- function(signal_parameters,
   #                          min(max(1000, 50 * signal_parameters), 50000)
   #   )
   # }
-
+  target_performance = large_sample_performance - (minimum_threshold * large_sample_performance)
+  extra_args <- list(...)
+  if(!is.null(extra_args$tune_param)) large_sample_performance  <-  NULL
+  
   do.call(simulate_custom,
     args = c(inputs,
-      target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
+      target_performance = target_performance,
       large_sample_performance = large_sample_performance,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
@@ -281,6 +284,7 @@ simulate_binary_many_metrics <- function(
                             se_final = 0.005,
                             # this will give confidence intervals +/- 0.01
                             n_reps_total = NULL,
+                            tune_param =NULL,
                             ...) {
   inputs <- parse_inputs(
     data_spec = list(
@@ -307,20 +311,22 @@ simulate_binary_many_metrics <- function(
   # }
   
   # Tune once:
-  
-  tune_param <- tune_generate_data(
-    min_tune_arg = 0,
-    max_tune_arg = 1,
-    large_n = set_test_n(max_sample_size),
-    tolerance = set_tolerance(large_sample_auc),
-    max_interval_expansion = 10,
-    data_function = inputs$data_function,
-    model_function = inputs$model_function,
-    metric_function = default_metric_generator("auc", inputs$data_function),
-    target_large_sample_performance = large_sample_auc,
-    verbose = TRUE
-  )
-  
+  if(is.null(tune_param)){
+    tune_param <- tune_generate_data(
+      min_tune_arg = 0,
+      max_tune_arg = 1,
+      large_n = set_test_n(max_sample_size),
+      tolerance = set_tolerance(large_sample_auc),
+      max_interval_expansion = 10,
+      data_function = inputs$data_function,
+      model_function = inputs$model_function,
+      metric_function = default_metric_generator("auc", inputs$data_function),
+      target_large_sample_performance = large_sample_auc,
+      verbose = TRUE
+    )
+    
+  }
+
 
   args = c(data_function = inputs$data_function,
       model_function = inputs$model_function,
@@ -383,10 +389,13 @@ simulate_continuous <- function(
     se_final <- NULL
   }
 
+  target_performance = large_sample_performance - (minimum_threshold * large_sample_performance)
+  extra_args <- list(...)
+  if(!is.null(extra_args$tune_param)) large_sample_performance  <-  NULL
 
   do.call(simulate_custom,
     args = c(inputs,
-      target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
+      target_performance = target_performance,
       large_sample_performance = large_sample_performance,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
@@ -438,10 +447,14 @@ simulate_survival <- function(signal_parameters,
   if (!(is.null(n_reps))) {
     se_final <- NULL
   }
+  
+  target_performance = large_sample_performance - (minimum_threshold * large_sample_performance)
+  extra_args <- list(...)
+  if(!is.null(extra_args$tune_param)) large_sample_performance  <-  NULL
 
   do.call(simulate_custom,
     args = c(inputs,
-      target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
+      target_performance = target_performance,
       large_sample_performance = large_sample_performance,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
