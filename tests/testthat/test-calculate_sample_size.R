@@ -58,7 +58,7 @@ test_that("simulate_binary", {
 
 
 test_that("simulate_continuous", {
-  set.seed(1234)
+  set.seed(4321) 
   output <- simulate_continuous(
     signal_parameters = 10, 
     noise_parameters = 10, 
