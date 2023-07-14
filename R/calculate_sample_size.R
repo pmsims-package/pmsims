@@ -2,9 +2,12 @@
 #'
 #' Minimum working example using the mlpwr package
 #'
-#' @param data_generating_function A function of two parameters, n and a tuning parameter, that returns data for the model function
-#' @param model_function A function which takes the object returned by the data generating function and fits the analysis model of interest.
-#' @param metric_function A function which takes a a test dataset and model object as arguments and returns a performance metric
+#' @param data_generating_function A function of two parameters, n and a tuning
+#'   parameter, that returns data for the model function
+#' @param model_function A function which takes the object returned by the data
+#'   generating function and fits the analysis model of interest.
+#' @param metric_function A function which takes a a test dataset and model
+#'   object as arguments and returns a performance metricß
 #' @param target_performance The desired performance of the prediction model
 #' @param test_n The sample size used for testing model performance
 #' @param tune_param A tuning parameter to be passed to the data generating function
@@ -14,9 +17,13 @@
 #' @param min_sample_size The minimum sample size used in simulations
 #' @param max_sample_size The maximum sample size used in simulations
 #' @param n_reps The number of simulation reps
-#' @param final_estimate_se The standard error for the estimate of model performance at the minimum sample size. Either this or nreps should be specified.
-#' @param n_sample_sizes The number of different sample sizes simulations are carried out at each sample size
-#' @param n_init The number of different sample sizes for initialization (before updates)
+#' @param final_estimate_se The standard error for the estimate of model
+#'   performance at the minimum sample size. Either this or nreps should be
+#'   specified.
+#' @param n_sample_sizes The number of different sample sizes simulations are
+#'   carried out at each sample size
+#' @param n_init The number of different sample sizes for initialization
+#'   (before updates)
 #' @return A list of results form the simulation
 #' @export
 #'
@@ -33,9 +40,9 @@ simulate_custom <- function(data_function = NULL,
                             large_sample_performance = NULL,
                             min_sample_size,
                             max_sample_size,
-                            n_reps = NULL,
+                            n_reps_total = NULL,
+                            n_reps_per = 10,
                             se_final = NULL,
-                            n_sample_sizes = 10,
                             n_init = 4,
                             method = "mlpwr",
                             verbose = FALSE) {
@@ -58,9 +65,9 @@ simulate_custom <- function(data_function = NULL,
     ))
   }
 
-  if (sum(c(is.null(n_reps),
+  if (sum(c(is.null(n_reps_total),
             is.null(se_final))) != 1) {
-    stop("Exactly one of 'n_reps' or 'se_final' must be specified.")
+    stop("Exactly one of 'n_reps_total' or 'se_final' must be specified.")
   }
 
   if (min_sample_size > max_sample_size) {
@@ -72,8 +79,8 @@ simulate_custom <- function(data_function = NULL,
     default_tuning <- list(
       min_tune_arg = 0,
       max_tune_arg = 1,
-      large_n = max(30000, 3 * max_sample_size),
-      tolerance = large_sample_performance * 0.005,
+      large_n = set_test_n(max_sample_size),
+      tolerance = set_tolerance(large_sample_performance),
       max_interval_expansion = 10
     )
     for (p in names(default_tuning)) {
@@ -112,8 +119,8 @@ simulate_custom <- function(data_function = NULL,
     output <- calculate_mlpwr(
       test_n,
       tune_param,
-      n_sample_sizes,
-      n_reps,
+      n_reps_total,
+      n_reps_per,
       se_final,
       min_sample_size,
       max_sample_size,
@@ -126,6 +133,7 @@ simulate_custom <- function(data_function = NULL,
       value_on_error
     )
   } else if (method == "crude") {
+    n_sample_sizes <- n_reps_total / n_reps_per
     output <- calculate_crude(
       data_function,
       tune_param,
@@ -209,15 +217,13 @@ simulate_binary <- function(signal_parameters,
                             predictor_prop = NULL,
                             baseline_prob,
                             metric = "auc",
-                            large_sample_performance = 0.8,
-                            # e.g. 0.8
-                            minimum_threshold = 0.10,
-                            # Within 10% of 0.8
+                            large_sample_performance = 0.8, # e.g. 0.8
+                            minimum_threshold = 0.10, # Within 10% of 0.8
                             min_sample_size,
                             max_sample_size,
                             se_final = 0.005,
                             # this will give confidence intervals +/- 0.01
-                            n_reps = NULL,
+                            n_reps_total = NULL,
                             ...) {
   inputs <- parse_inputs(
     data_spec = list(
@@ -232,16 +238,16 @@ simulate_binary <- function(signal_parameters,
     ),
     metric
   )
-  if (!(is.null(n_reps))) {
+  if (!(is.null(n_reps_total))) {
     se_final <- NULL
   }
 
-  if (!is.null(max_sample_size)) {
-    max_sample_size <- max(
-      max_sample_size,
-      min(max(1000, 50 * signal_parameters), 50000)
-    )
-  }
+  # TODO: Decide whether to include these lines
+  # if (!is.null(max_sample_size)) {
+  #   max_sample_size <- max(max_sample_size,
+  #                          min(max(1000, 50 * signal_parameters), 50000)
+  #   )
+  # }
 
   do.call(simulate_custom,
     args = c(inputs,
@@ -250,8 +256,8 @@ simulate_binary <- function(signal_parameters,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
       se_final = se_final,
-      n_reps = n_reps,
-      test_n = max(30000, 3 * max_sample_size),
+      n_reps_total = n_reps_total,
+      test_n = set_test_n(max_sample_size),
       ...
     )
   )
@@ -302,7 +308,7 @@ simulate_continuous <- function(
       max_sample_size = max_sample_size,
       n_reps = n_reps,
       se_final = se_final,
-      test_n = max(30000, 3 * max_sample_size),
+      test_n = set_test_n(max_sample_size),
       ...
     )
   )
@@ -357,7 +363,7 @@ simulate_survival <- function(signal_parameters,
       max_sample_size = max_sample_size,
       se_final = se_final,
       n_reps = n_reps,
-      test_n = max(30000, 3 * max_sample_size),
+      test_n = set_test_n(max_sample_size),
       ...
     )
   )
@@ -444,8 +450,8 @@ calculate_crude <- function(
 calculate_mlpwr <- function(
     test_n,
     tune_param,
-    n_sample_sizes,
     n_reps,
+    n_reps_per,
     se_final,
     min_sample_size,
     max_sample_size,
@@ -481,11 +487,10 @@ calculate_mlpwr <- function(
   noise_fun <- function(x) var_bootstrap(x$y)
 
   # processing final_estimate_se
-  setsize <- n_reps / n_sample_sizes
+  # Auto-stopping or not
   if (!(is.null(se_final))) {
     ci <- se_final * qnorm(0.975) * 2
     n_reps <- 10000 # setting large nreps so ci dominates.
-    setsize <- 100 # fixing setsize so not driven by nreps
   } else {
     ci <- NULL
   }
@@ -498,7 +503,7 @@ calculate_mlpwr <- function(
       boundaries = c(min_sample_size, max_sample_size),
       power = target_performance,
       surrogate = "gpr",
-      setsize = setsize,
+      setsize = n_reps_per,
       evaluations = n_reps,
       ci = ci,
       n.startsets = n_init,
