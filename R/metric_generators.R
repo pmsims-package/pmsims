@@ -1,4 +1,4 @@
-default_metric_generator <- function(data_function, metric) {
+default_metric_generator <- function(metric, data_function) {
   outcome <- attr(data_function, "outcome")
   if (outcome == "binary") {
     if (metric == "auc") {
@@ -89,7 +89,7 @@ binary_calib_itl <- function(data, model) {
     calib_model <- glm(y ~ 1, offset=y_link, data=data, family="binomial")
     calib<- as.numeric(coef(calib_model)[1])
   }
-  return(calib)
+  return(abs(calib)) # returns the absolute value of calibraiton in the large as positve or negative is bad
 }
 
 
@@ -156,7 +156,7 @@ continuous_calib_itl <- function(data, model) {
     calib_model <- lm(y ~ 1, offset=y_hat, data=data)
     calib <- as.numeric(coef(calib_model)[1])
   }
-  return(calib)
+  return(abs(calib)) # returns the absolute value of calibration in the large as positive or negative is bad
 }
 survival_cindex <- function(data, model) {
   # this works for models being the Cox models
