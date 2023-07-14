@@ -50,7 +50,7 @@ test_that("simulate_binary", {
       baseline_prob = 0.1,
       min_sample_size = 100,
       max_sample_size = 3000,
-      n_reps = 50,
+      n_reps_total = 50,
       minimum_threshold = 0.05
   )
   expect_equal(length(output), 8)
@@ -65,7 +65,7 @@ test_that("simulate_continuous", {
     predictor_type = "continuous", 
     min_sample_size = 100,
     max_sample_size = 3000,
-    n_reps = 10,
+    n_reps_total = 10,
     minimum_threshold = 0.05
   )
   expect_equal(length(output), 8)
@@ -81,7 +81,7 @@ test_that("simulate_continuous", {
 #     predictor_type = "continuous", 
 #     min_sample_size = 100,
 #     max_sample_size = 3000,
-#     n_reps = 10,
+#     n_reps_total = 10,
 #     minimum_threshold = 0.05,
 #     large_sample_performance = 0.7
 #   )
