@@ -9,47 +9,62 @@ simulate_custom(
   model_function = NULL,
   metric_function = NULL,
   target_performance,
-  test_n = 10000,
+  test_n = 30000,
   tune_param = NULL,
   tune_args = list(),
   large_sample_performance = NULL,
   min_sample_size,
   max_sample_size,
-  n_reps = NULL,
+  n_reps_total = NULL,
+  n_reps_per = 10,
   se_final = NULL,
-  n_sample_sizes = 10,
   n_init = 4,
+  method = "mlpwr",
   verbose = FALSE
 )
 }
 \arguments{
-\item{model_function}{A function which takes the object returned by the data generating function and fits the analysis model of interest.}
+\item{model_function}{A function which takes the object returned by the data
+generating function and fits the analysis model of interest.}
 
-\item{metric_function}{A function which takes a a test dataset and model object as arguments and returns a performance metric}
+\item{metric_function}{A function which takes a a test dataset and model
+object as arguments and returns a performance metric}
 
 \item{target_performance}{The desired performance of the prediction model}
 
 \item{test_n}{The sample size used for testing model performance}
 
-\item{tune_param}{A tuning parameter to be passed to the data generating function}
+\item{tune_param}{A tuning parameter to be passed to the data generating
+function}
 
-\item{tune_args}{A named list of arguments to be passed to tune_generate_data.R. Possible arguments are large_n, min_tune_arg, max_tune_arg, max_interval_expansion, and tolerance. See \code{\link{tune_generate_data}} for more details.}
+\item{tune_args}{A named list of arguments to be passed to
+tune_generate_data.R. Possible arguments are large_n, min_tune_arg,
+max_tune_arg, max_interval_expansion, and tolerance. See
+\code{\link{tune_generate_data}} for more details.}
 
-\item{large_sample_performance}{The desired model performance in a large sample. This may be specified in place of tune_param. The data generating model is tuned so the desired performance is obtained when n is equal to the max_sample_size.}
+\item{large_sample_performance}{The desired model performance in a large
+sample. This may be specified in place of tune_param. The data generating
+model is tuned so the desired performance is obtained when n is equal to
+the max_sample_size.}
 
 \item{min_sample_size}{The minimum sample size used in simulations}
 
 \item{max_sample_size}{The maximum sample size used in simulations}
 
+\item{n_init}{The number of different sample sizes for initialization
+(before updates)}
+
+\item{data_generating_function}{A function of two parameters, n and a tuning
+parameter, that returns data for the model function}
+
 \item{n_reps}{The number of simulation reps}
 
-\item{n_sample_sizes}{The number of different sample sizes simulations are carried out at each sample size}
+\item{final_estimate_se}{The standard error for the estimate of model
+performance at the minimum sample size. Either this or nreps should be
+specified.}
 
-\item{n_init}{The number of different sample sizes for initialization (before updates)}
-
-\item{data_generating_function}{A function of two parameters, n and a tuning parameter, that returns data for the model function}
-
-\item{final_estimate_se}{The standard error for the estimate of model performance at the minimum sample size. Either this or nreps should be specified.}
+\item{n_sample_sizes}{The number of different sample sizes simulations are
+carried out at each sample size}
 }
 \value{
 A list of results form the simulation

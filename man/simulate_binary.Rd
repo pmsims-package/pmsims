@@ -16,7 +16,7 @@ simulate_binary(
   min_sample_size,
   max_sample_size,
   se_final = 0.005,
-  n_reps = NULL,
+  n_reps_total = NULL,
   ...
 )
 }
