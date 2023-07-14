@@ -8,8 +8,9 @@
 #' @param target_performance The desired performance of the prediction model
 #' @param test_n The sample size used for testing model performance
 #' @param tune_param A tuning parameter to be passed to the data generating function
-#' @param large_sample_performance The desired model performance in a large sample. This may be specified in place of tune_param. The data generating model is tuned so the desired performance is obtained when n is equal to the max_sample_size.
+#' @param large_sample_performance The desired performance in a large sample (for the metric defined by tune_metric_function). This may be specified in place of tune_param. The data generating model is tuned so the desired performance is obtained when n is equal to the max_sample_size.
 #' @param tune_args A named list of arguments to be passed to tune_generate_data.R. Possible arguments are large_n, min_tune_arg, max_tune_arg, max_interval_expansion, and tolerance. See \code{\link{tune_generate_data}} for more details.
+#' @param tune_metric_function The metric_function used when tuning the model. This may differ from the metric function used for determining the sample size.
 #' @param min_sample_size The minimum sample size used in simulations
 #' @param max_sample_size The maximum sample size used in simulations
 #' @param n_reps The number of simulation reps
@@ -28,6 +29,7 @@ simulate_custom <- function(data_function = NULL,
                             test_n = 30000,
                             tune_param = NULL,
                             tune_args = list(),
+                            tune_metric_function = metric_function,
                             large_sample_performance = NULL,
                             min_sample_size,
                             max_sample_size,
@@ -82,7 +84,7 @@ simulate_custom <- function(data_function = NULL,
       list(
         data_function = data_function,
         model_function = model_function,
-        metric_function = metric_function,
+        metric_function = tune_metric_function,
         target_large_sample_performance = large_sample_performance,
         verbose = verbose
       )
