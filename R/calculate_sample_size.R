@@ -222,12 +222,11 @@ simulate_binary <- function(signal_parameters,
                             predictor_prop = NULL,
                             baseline_prob,
                             metric = "auc",
-                            large_sample_performance = 0.8, # e.g. 0.8
-                            minimum_threshold = 0.10, # Within 10% of 0.8
+                            large_sample_performance = 0.8,
+                            minimum_threshold = 0.1,
                             min_sample_size,
                             max_sample_size,
-                            se_final = 0.005,
-                            # this will give confidence intervals +/- 0.01
+                            se_final = 0.005, # To give CIs of +/- 0.0
                             n_reps_total = NULL,
                             ...) {
   inputs <- parse_inputs(
@@ -247,16 +246,11 @@ simulate_binary <- function(signal_parameters,
     se_final <- NULL
   }
 
-  # TODO: Decide whether to include these lines
-  # if (!is.null(max_sample_size)) {
-  #   max_sample_size <- max(max_sample_size,
-  #                          min(max(1000, 50 * signal_parameters), 50000)
-  #   )
-  # }
-  target_performance = large_sample_performance - (minimum_threshold * large_sample_performance)
+  target_performance <- large_sample_performance - minimum_threshold
+
   extra_args <- list(...)
-  if(!is.null(extra_args$tune_param)) large_sample_performance  <-  NULL
-  
+  if (!is.null(extra_args$tune_param)) large_sample_performance <- NULL
+
   do.call(simulate_custom,
     args = c(inputs,
       target_performance = target_performance,
