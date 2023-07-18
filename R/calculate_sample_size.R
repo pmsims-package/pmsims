@@ -287,14 +287,17 @@ simulate_binary_many_metrics <- function(
                             predictor_prop = NULL,
                             baseline_prob,
                             metric = c("auc", "calib_slope"),
-                            large_sample_auc = 0.8, # only auc is used for tuning
-                            target_performance = c(0.72, 0.9), # Target performance given as values rather than deviation - saves confusing manipuation on the way to simulate custom
+                            target_performance = c(0.72, 0.9),
+                            # Target performance given as values rather than
+                            # deviation. This saves confusing manipuation on
+                            # the way to simulate custom.
+                            large_sample_auc = 0.8, # only use AUC for tuning
                             min_sample_size,
                             max_sample_size,
                             se_final = 0.005,
                             # this will give confidence intervals +/- 0.01
                             n_reps_total = NULL,
-                            tune_param =NULL,
+                            tune_param = NULL,
                             ...) {
   inputs <- parse_inputs(
     data_spec = list(
@@ -312,16 +315,9 @@ simulate_binary_many_metrics <- function(
   if (!(is.null(n_reps_total))) {
     se_final <- NULL
   }
-  
-  # TODO: Decide whether to include these lines
-  # if (!is.null(max_sample_size)) {
-  #   max_sample_size <- max(max_sample_size,
-  #                          min(max(1000, 50 * signal_parameters), 50000)
-  #   )
-  # }
-  
-  # Tune once:
-  if(is.null(tune_param)){
+
+  # Tune once
+  if (is.null(tune_param)) {
     tune_param <- tune_generate_data(
       min_tune_arg = 0,
       max_tune_arg = 1,
@@ -334,32 +330,35 @@ simulate_binary_many_metrics <- function(
       target_large_sample_performance = large_sample_auc,
       verbose = TRUE
     )
-    
   }
 
 
-  args = c(data_function = inputs$data_function,
-      model_function = inputs$model_function,
-      min_sample_size = min_sample_size,
-      max_sample_size = max_sample_size,
-      se_final = se_final,
-      n_reps_total = n_reps_total,
-      test_n = set_test_n(max_sample_size),
-      tune_param = tune_param,
-      ...
+  args <- c(
+    data_function = inputs$data_function,
+    model_function = inputs$model_function,
+    min_sample_size = min_sample_size,
+    max_sample_size = max_sample_size,
+    se_final = se_final,
+    n_reps_total = n_reps_total,
+    test_n = set_test_n(max_sample_size),
+    tune_param = tune_param,
+    ...
   )
   metrics <- inputs$metric_function
 
   simulate_1metric <- function(metric, target, other_args) {
-    my_args <- c(list(metric_function = metric, target_performance = target), other_args)
+    my_args <- c(list(metric_function = metric,
+                      target_performance = target),
+                 other_args)
     do.call(simulate_custom, my_args)
   }
-  results <- mapply(simulate_1metric, metrics, target_performance, MoreArgs = list(other_args = args))
+
+  results <- mapply(simulate_1metric,
+                    metrics,
+                    target_performance,
+                    MoreArgs = list(other_args = args))
   dimnames(results)[[2]] <- metric
   return(results)
-  
-  
-  
 }
 
 
