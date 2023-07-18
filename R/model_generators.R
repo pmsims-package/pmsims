@@ -23,4 +23,3 @@ default_model_generators <- function(outcome) {
     }
   return(model_function)
 }
-
