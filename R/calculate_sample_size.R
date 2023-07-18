@@ -13,7 +13,6 @@
 #' @param tune_param A tuning parameter to be passed to the data generating function
 #' @param large_sample_performance The desired performance in a large sample (for the metric defined by tune_metric_function). This may be specified in place of tune_param. The data generating model is tuned so the desired performance is obtained when n is equal to the max_sample_size.
 #' @param tune_args A named list of arguments to be passed to tune_generate_data.R. Possible arguments are large_n, min_tune_arg, max_tune_arg, max_interval_expansion, and tolerance. See \code{\link{tune_generate_data}} for more details.
-#' @param tune_metric_function The metric_function used when tuning the model. This may differ from the metric function used for determining the sample size.
 #' @param min_sample_size The minimum sample size used in simulations
 #' @param max_sample_size The maximum sample size used in simulations
 #' @param n_reps_totalThe number of simulation reps
@@ -36,7 +35,6 @@ simulate_custom <- function(data_function = NULL,
                             test_n = 30000,
                             tune_param = NULL,
                             tune_args = list(),
-                            tune_metric_function = metric_function,
                             large_sample_performance = NULL,
                             min_sample_size,
                             max_sample_size,
@@ -91,7 +89,7 @@ simulate_custom <- function(data_function = NULL,
       list(
         data_function = data_function,
         model_function = model_function,
-        metric_function = tune_metric_function,
+        metric_function = metric_function,
         target_large_sample_performance = large_sample_performance,
         verbose = verbose
       )
@@ -189,16 +187,13 @@ parse_inputs <- function(data_spec, metric) {
   )
   # Set a metric, based on outcome type
   if (is.null(metric)) stop("metric is missing")
-  metric_function <- default_metric_generator(
-    data_function,
-    metric
-  )
-
+  metric_functions <- lapply(metric, default_metric_generator, data_function = data_function)
+  if (length(metric_functions) == 1) metric_functions <- metric_functions[[1]]
   # Return
   return(list(
     data_function = data_function,
     model_function = model_function,
-    metric_function = metric_function
+    metric_function = metric_functions
   ))
 }
 
@@ -248,10 +243,13 @@ simulate_binary <- function(signal_parameters,
   #                          min(max(1000, 50 * signal_parameters), 50000)
   #   )
   # }
-
+  target_performance = large_sample_performance - (minimum_threshold * large_sample_performance)
+  extra_args <- list(...)
+  if(!is.null(extra_args$tune_param)) large_sample_performance  <-  NULL
+  
   do.call(simulate_custom,
     args = c(inputs,
-      target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
+      target_performance = target_performance,
       large_sample_performance = large_sample_performance,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
@@ -262,6 +260,98 @@ simulate_binary <- function(signal_parameters,
     )
   )
 }
+
+#' Calculate the minimum sample size required for a binary outcome
+#'
+#' @inheritParams generate_binary_data
+#' @param ... Other options passed to [simulate_custom()]
+#'
+#' @return
+#' @export
+#'
+#' @examples
+simulate_binary_many_metrics <- function(
+                            signal_parameters,
+                            noise_parameters = 0,
+                            predictor_type = "continuous",
+                            predictor_prop = NULL,
+                            baseline_prob,
+                            metric = c("auc", "calib_slope"),
+                            large_sample_auc = 0.8, # only auc is used for tuning
+                            target_performance = c(0.72, 0.9), # Target performance given as values rather than deviation - saves confusing manipuation on the way to simulate custom
+                            min_sample_size,
+                            max_sample_size,
+                            se_final = 0.005,
+                            # this will give confidence intervals +/- 0.01
+                            n_reps_total = NULL,
+                            tune_param =NULL,
+                            ...) {
+  inputs <- parse_inputs(
+    data_spec = list(
+      type = "binary",
+      args = list(
+        signal_parameters = signal_parameters,
+        noise_parameters = noise_parameters,
+        predictor_type = predictor_type,
+        predictor_prop = predictor_prop,
+        baseline_prob = baseline_prob
+      )
+    ),
+    metric
+  )
+  if (!(is.null(n_reps_total))) {
+    se_final <- NULL
+  }
+  
+  # TODO: Decide whether to include these lines
+  # if (!is.null(max_sample_size)) {
+  #   max_sample_size <- max(max_sample_size,
+  #                          min(max(1000, 50 * signal_parameters), 50000)
+  #   )
+  # }
+  
+  # Tune once:
+  if(is.null(tune_param)){
+    tune_param <- tune_generate_data(
+      min_tune_arg = 0,
+      max_tune_arg = 1,
+      large_n = set_test_n(max_sample_size),
+      tolerance = set_tolerance(large_sample_auc),
+      max_interval_expansion = 10,
+      data_function = inputs$data_function,
+      model_function = inputs$model_function,
+      metric_function = default_metric_generator("auc", inputs$data_function),
+      target_large_sample_performance = large_sample_auc,
+      verbose = TRUE
+    )
+    
+  }
+
+
+  args = c(data_function = inputs$data_function,
+      model_function = inputs$model_function,
+      min_sample_size = min_sample_size,
+      max_sample_size = max_sample_size,
+      se_final = se_final,
+      n_reps_total = n_reps_total,
+      test_n = set_test_n(max_sample_size),
+      tune_param = tune_param,
+      ...
+  )
+  metrics <- inputs$metric_function
+
+  simulate_1metric <- function(metric, target, other_args) {
+    my_args <- c(list(metric_function = metric, target_performance = target), other_args)
+    do.call(simulate_custom, my_args)
+  }
+  results <- mapply(simulate_1metric, metrics, target_performance, MoreArgs = list(other_args = args))
+  dimnames(results)[[2]] <- metric
+  return(results)
+  
+  
+  
+}
+
 
 #' Calculate the minimum sample size required for a continous outcome
 #'
@@ -299,10 +389,13 @@ simulate_continuous <- function(
     se_final <- NULL
   }
 
+  target_performance = large_sample_performance - (minimum_threshold * large_sample_performance)
+  extra_args <- list(...)
+  if(!is.null(extra_args$tune_param)) large_sample_performance  <-  NULL
 
   do.call(simulate_custom,
     args = c(inputs,
-      target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
+      target_performance = target_performance,
       large_sample_performance = large_sample_performance,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
@@ -354,10 +447,14 @@ simulate_survival <- function(signal_parameters,
   if (!(is.null(n_reps))) {
     se_final <- NULL
   }
+  
+  target_performance = large_sample_performance - (minimum_threshold * large_sample_performance)
+  extra_args <- list(...)
+  if(!is.null(extra_args$tune_param)) large_sample_performance  <-  NULL
 
   do.call(simulate_custom,
     args = c(inputs,
-      target_performance = large_sample_performance - (minimum_threshold * large_sample_performance),
+      target_performance = target_performance,
       large_sample_performance = large_sample_performance,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
