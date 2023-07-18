@@ -217,15 +217,15 @@ parse_inputs <- function(data_spec, metric) {
 #'
 #' @examples
 simulate_binary <- function(signal_parameters,
+                            min_sample_size,
+                            max_sample_size,
+                            baseline_prob,
                             noise_parameters = 0,
                             predictor_type = "continuous",
                             predictor_prop = NULL,
-                            baseline_prob,
                             metric = "auc",
                             large_sample_performance = 0.8,
                             minimum_threshold = 0.1,
-                            min_sample_size,
-                            max_sample_size,
                             se_final = 0.005, # To give CIs of +/- 0.0
                             n_reps_total = NULL,
                             ...) {
@@ -276,18 +276,18 @@ simulate_binary <- function(signal_parameters,
 #' @examples
 simulate_binary_many_metrics <- function(
                             signal_parameters,
+                            baseline_prob,
+                            min_sample_size,
+                            max_sample_size,
                             noise_parameters = 0,
                             predictor_type = "continuous",
                             predictor_prop = NULL,
-                            baseline_prob,
                             metric = c("auc", "calib_slope"),
                             target_performance = c(0.72, 0.9),
                             # Target performance given as values rather than
                             # deviation. This saves confusing manipuation on
                             # the way to simulate custom.
                             large_sample_auc = 0.8, # only use AUC for tuning
-                            min_sample_size,
-                            max_sample_size,
                             se_final = 0.005,
                             # this will give confidence intervals +/- 0.01
                             n_reps_total = NULL,
@@ -364,16 +364,16 @@ simulate_binary_many_metrics <- function(
 #' @examples
 simulate_continuous <- function(
     signal_parameters,
+    min_sample_size,
+    max_sample_size,
     noise_parameters = 0,
     predictor_type = "continuous",
     predictor_prop = NULL,
     metric = "r2",
-    large_sample_performance = 0.8, # e.g. 0.8
-    minimum_threshold = 0.10, # Within 10% of 0.8
-    min_sample_size,
-    max_sample_size,
-    se_final = 0.005, # this will give confidence intervals +/- 0.01
-    n_reps_total= NULL,
+    large_sample_performance = 0.8,
+    minimum_threshold = 0.10,
+    se_final = 0.005, # To give CIs of +/- 0.01
+    n_reps_total = NULL,
     ...) {
   inputs <- parse_inputs(
     data_spec = list(
@@ -392,9 +392,10 @@ simulate_continuous <- function(
     se_final <- NULL
   }
 
-  target_performance = large_sample_performance - (minimum_threshold * large_sample_performance)
+  target_performance <- large_sample_performance - minimum_threshold
+
   extra_args <- list(...)
-  if(!is.null(extra_args$tune_param)) large_sample_performance  <-  NULL
+  if (!is.null(extra_args$tune_param)) large_sample_performance <- NULL
 
   do.call(simulate_custom,
     args = c(inputs,
@@ -419,18 +420,18 @@ simulate_continuous <- function(
 #'
 #' @examples
 simulate_survival <- function(signal_parameters,
+                              min_sample_size,
+                              max_sample_size,
                               noise_parameters = 0,
                               predictor_type = "continuous",
                               predictor_prop = NULL,
                               baseline_hazard = 0.01,
                               censoring_rate = 0.2,
                               metric = "auc",
-                              large_sample_performance = 0.8, # e.g. 0.8
-                              minimum_threshold = 0.10, # Within 10% of 0.8
-                              min_sample_size,
-                              max_sample_size,
-                              se_final = 0.005, # this will give confidence intervals +/- 0.01
-                              n_reps_total= NULL,
+                              large_sample_performance = 0.8,
+                              minimum_threshold = 0.10,
+                              se_final = 0.005, # To give CIs of +/- 0.01
+                              n_reps_total = NULL,
                               ...) {
   inputs <- parse_inputs(
     data_spec = list(
@@ -447,13 +448,13 @@ simulate_survival <- function(signal_parameters,
     metric
   )
 
-  if (!(is.null(n_reps))) {
+  if (!(is.null(n_reps_total))) {
     se_final <- NULL
   }
-  
-  target_performance = large_sample_performance - (minimum_threshold * large_sample_performance)
+
+  target_performance <- large_sample_performance - minimum_threshold
   extra_args <- list(...)
-  if(!is.null(extra_args$tune_param)) large_sample_performance  <-  NULL
+  if (!is.null(extra_args$tune_param)) large_sample_performance <- NULL
 
   do.call(simulate_custom,
     args = c(inputs,
@@ -462,7 +463,7 @@ simulate_survival <- function(signal_parameters,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
       se_final = se_final,
-      n_reps_total= n_reps,
+      n_reps_total = n_reps_total,
       test_n = set_test_n(max_sample_size),
       ...
     )
@@ -534,7 +535,9 @@ calculate_crude <- function(
     quant95_performance = get_perf(performance_matrix, 0.95)
   )
 
-  if (is.na(which(crude_summaries$quant20_performance > target_performance)[1])) {
+  if (is.na(
+    which(crude_summaries$quant20_performance > target_performance)[1])
+  ) {
     crude_min_n <- NA
   } else {
     crude_min_n <-
