@@ -4,7 +4,7 @@
 \alias{default_model_generators}
 \title{default_model_generators}
 \usage{
-default_model_generators(outcome)
+default_model_generators(outcome, model)
 }
 \arguments{
 \item{outcome}{type of outcome, possible options are: "binary".}

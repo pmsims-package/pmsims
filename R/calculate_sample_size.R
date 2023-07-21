@@ -184,20 +184,27 @@ simulate_custom <- function(data_function = NULL,
 #' @export
 #'
 #' @examples
-parse_inputs <- function(data_spec, metric) {
+parse_inputs <- function(data_spec,
+                         metric,
+                         model = NULL) {
   # Set data generating function
   if (is.null(data_spec)) {
     stop("data_spec missing")
   } else {
     data_function <- default_data_generators(data_spec)
   }
-  # Set model function, based on outcome type
+  # Set model function, based on outcome type and chosen model
+  default_models <- list(binary = "glm")
+  outcome <- attr(data_function, "outcome")
   model_function <- default_model_generators(
-    outcome = attr(data_function, "outcome")
+    outcome = outcome,
+    model = ifelse(is.null(model), default_models[[outcome]], model)
   )
   # Set a metric, based on outcome type
   if (is.null(metric)) stop("metric is missing")
-  metric_functions <- lapply(metric, default_metric_generator, data_function = data_function)
+  metric_functions <- lapply(metric,
+                             default_metric_generator,
+                             data_function = data_function)
   if (length(metric_functions) == 1) metric_functions <- metric_functions[[1]]
   # Return
   return(list(
@@ -224,11 +231,13 @@ simulate_binary <- function(signal_parameters,
                             predictor_type = "continuous",
                             predictor_prop = NULL,
                             metric = "auc",
+                            model = "glm",
                             large_sample_performance = 0.8,
                             minimum_threshold = 0.1,
                             se_final = 0.005, # To give CIs of +/- 0.0
                             n_reps_total = NULL,
                             ...) {
+
   inputs <- parse_inputs(
     data_spec = list(
       type = "binary",
@@ -240,8 +249,14 @@ simulate_binary <- function(signal_parameters,
         baseline_prob = baseline_prob
       )
     ),
-    metric
+    metric,
+    model
   )
+
+  if (!(model %in% c("glm", "lasso"))) {
+        stop("Invalid model selection")
+  }
+
   if (!(is.null(n_reps_total))) {
     se_final <- NULL
   }
@@ -288,6 +303,7 @@ simulate_binary_many_metrics <- function(
                             # deviation. This saves confusing manipuation on
                             # the way to simulate custom.
                             large_sample_auc = 0.8, # only use AUC for tuning
+                            model = "glm",
                             se_final = 0.005,
                             # this will give confidence intervals +/- 0.01
                             n_reps_total = NULL,

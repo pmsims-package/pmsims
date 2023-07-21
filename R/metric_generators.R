@@ -53,7 +53,9 @@ default_metric_generator <- function(metric, data_function) {
 binary_auc_metric <- function(data, model) {
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
-  y_hat <- predict(model, x, type = "response")
+  y_hat <- predict(model,
+                   newx = as(x, "dgCMatrix"),
+                   type = "response")
   auc <- pROC::auc(y, as.numeric(y_hat), quiet = TRUE)
   return(auc[1])
 }
@@ -62,9 +64,13 @@ binary_calib_slope <- function(data, model) {
   # computes calibration slope for logistic regression
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
-  y_link <- predict(model, x, type = "link")
+  y_link <- predict(model,
+                    newx = as(x, "dgCMatrix"),
+                    type = "link")
   # checks if regression converges first
-  if (class(try(glm(y ~ y_link, data = data, family = "binomial"),
+  if (class(try(glm(y ~ y_link,
+                    data = data,
+                    family = "binomial"),
     silent = TRUE
   ))[1] == "try-error") {
     calib_slope <- NaN
@@ -79,10 +85,16 @@ binary_calib_itl <- function(data, model) {
   # computes calibration slope for logistic regression
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
-  y_link <- predict(model, x, type = "link")
+  y_link <- predict(model,
+                    newx = as(x, "dgCMatrix"),
+                    type = "link")
   # checks if regression converges first
-  if (class(try(glm(y ~ 1, offset=y_link, data=data, family="binomial"),
-                silent = TRUE
+  if (class(try(
+    glm(y ~ 1,
+        offset = y_link,
+        data = data,
+        family = "binomial"),
+    silent = TRUE
   ))[1] == "try-error") {
     calib <- NaN
   } else {

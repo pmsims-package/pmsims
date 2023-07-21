@@ -4,7 +4,7 @@
 \alias{parse_inputs}
 \title{Title}
 \usage{
-parse_inputs(data_spec, metric)
+parse_inputs(data_spec, metric, model = NULL)
 }
 \arguments{
 \item{...}{}
