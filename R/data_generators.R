@@ -7,7 +7,6 @@
 #' @export
 #'
 #' @examples
-
 default_data_generators <- function(opts) {
   type <- opts$type
   if (type == "binary") {
@@ -22,8 +21,6 @@ default_data_generators <- function(opts) {
   return(update_arguments(f, opts))
 }
 
-
-
 #' Simulate Continuous data
 #'
 #' @param n Sample size
@@ -36,24 +33,24 @@ default_data_generators <- function(opts) {
 #' @return A data frame with one outcome column and signal_parameters + noise_parameters predictor columns
 #' @export
 #'
-#' @examples generate_continuous_data(n = 100, signal_parameters = 10, noise_parameters = 10, predictor_type = "binary",predictor_prop = 0.1, beta_signal = 0.1)
-
+#' @examples generate_continuous_data(n = 100, signal_parameters = 10, noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1, beta_signal = 0.1)
 generate_continuous_data <- function(
     n,
     beta_signal,
     signal_parameters,
     noise_parameters,
     predictor_type,
-    predictor_prop  =NULL
-) {
+    predictor_prop = NULL) {
   parameters <- signal_parameters + noise_parameters
   intercept <- 0
   X <- generate_predictors(n, parameters, predictor_type, predictor_prop)
-  lp <- generate_linear_predictor(X,
-                                  signal_parameters,
-                                  noise_parameters,
-                                  intercept,
-                                  beta_signal)
+  lp <- generate_linear_predictor(
+    X,
+    signal_parameters,
+    noise_parameters,
+    intercept,
+    beta_signal
+  )
 
   y <- rnorm(n, lp, 1) # error variance is 1
   data <- cbind(y, X)
@@ -68,25 +65,25 @@ generate_continuous_data <- function(
 #' @return A data frame with one outcome column and signal_parameters + noise_parameters predictor columns
 #' @export
 #'
-#' @examples generate_binary_data(n = 100, signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1,baseline_prob = 0.1)
-
+#' @examples generate_binary_data(n = 100, signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 generate_binary_data <- function(
-   n,
-   beta_signal,
-   signal_parameters,
-   noise_parameters,
-   predictor_type,
-   predictor_prop,
-   baseline_prob
-   ) {
+    n,
+    beta_signal,
+    signal_parameters,
+    noise_parameters,
+    predictor_type,
+    predictor_prop,
+    baseline_prob) {
   parameters <- signal_parameters + noise_parameters
   intercept <- log(baseline_prob / (1 - baseline_prob))
   X <- generate_predictors(n, parameters, predictor_type, predictor_prop)
-  lp <- generate_linear_predictor(X,
-                                  signal_parameters,
-                                  noise_parameters,
-                                  intercept,
-                                  beta_signal)
+  lp <- generate_linear_predictor(
+    X,
+    signal_parameters,
+    noise_parameters,
+    intercept,
+    beta_signal
+  )
   y_prob <- 1 / (1 + exp(-lp))
   y <- rbinom(n, 1, y_prob)
   data <- cbind(y, X)
@@ -100,11 +97,11 @@ generate_binary_data <- function(
 #' @param baseline_hazard Baseline Hazard
 #' @param censoring_rate Censoring rate
 #'
-#' @return A data frame with a column for ID, Time, status (0 = censored, 1 = event), and signal_parameters + noise_parameters predictor columns
+#' @return A data frame with a column for ID, Time, status (0 = censored, 1 =
+#' event), and signal_parameters + noise_parameters predictor columns
 #' @export
 #'
-#' @examples generate_binary_data(n = 100, signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1,baseline_prob = 0.1)
-
+#' @examples generate_binary_data(n = 100, signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 generate_survival_data <- function(
     n,
     beta_signal,
@@ -113,16 +110,17 @@ generate_survival_data <- function(
     predictor_type,
     predictor_prop,
     baseline_hazard,
-    censoring_rate
-) {
+    censoring_rate) {
   parameters <- signal_parameters + noise_parameters
   intercept <- 0
   X <- generate_predictors(n, parameters, predictor_type, predictor_prop)
-  lp <- generate_linear_predictor(X,
-                                  signal_parameters,
-                                  noise_parameters,
-                                  intercept,
-                                  beta_signal)
+  lp <- generate_linear_predictor(
+    X,
+    signal_parameters,
+    noise_parameters,
+    intercept,
+    beta_signal
+  )
 
   # Generate survival times
   event_time <- rexp(n, rate = baseline_hazard * exp(lp))
@@ -152,7 +150,7 @@ update_arguments <- function(fn, opts) {
 generate_predictors <- function(n, parameters, type, predictor_prop) {
   if (type == "binary") {
     X <- rbinom(n * parameters, 1, predictor_prop)
-  } else if ( type == "continuous") {
+  } else if (type == "continuous") {
     X <- rnorm(n * parameters)
   } else {
     stop("type must be one of binary or continuous")
@@ -168,7 +166,6 @@ generate_linear_predictor <- function(
     noise_parameters,
     intercept,
     beta_signal) {
-
   W_ <- c(rep(beta_signal, signal_parameters), rep(0, noise_parameters))
   lp <- X %*% W_ + intercept
   return(lp)

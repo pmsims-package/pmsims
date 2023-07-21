@@ -33,5 +33,5 @@ A data frame with one outcome column and signal_parameters + noise_parameters pr
 Simulate Continuous data
 }
 \examples{
-generate_continuous_data(n = 100, signal_parameters = 10, noise_parameters = 10, predictor_type = "binary",predictor_prop = 0.1, beta_signal = 0.1)
+generate_continuous_data(n = 100, signal_parameters = 10, noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1, beta_signal = 0.1)
 }

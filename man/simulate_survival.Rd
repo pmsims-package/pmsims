@@ -6,6 +6,8 @@
 \usage{
 simulate_survival(
   signal_parameters,
+  min_sample_size,
+  max_sample_size,
   noise_parameters = 0,
   predictor_type = "continuous",
   predictor_prop = NULL,
@@ -14,10 +16,8 @@ simulate_survival(
   metric = "auc",
   large_sample_performance = 0.8,
   minimum_threshold = 0.1,
-  min_sample_size,
-  max_sample_size,
   se_final = 0.005,
-  n_reps = NULL,
+  n_reps_total = NULL,
   ...
 )
 }
