@@ -25,4 +25,5 @@ Suggests:
     covr,
     pmsampsize,
     rmarkdown,
-    glmnet
+    glmnet,
+    ranger

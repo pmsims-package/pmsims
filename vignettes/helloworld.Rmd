@@ -91,6 +91,15 @@ fit_lasso <- simulate_binary(
   model = "lasso"
 )
 
+fit_rf <- simulate_binary(
+  signal_parameters = 10,
+  baseline_prob = 0.1,
+  large_sample_performance = 0.8,
+  min_sample_size = 100,
+  max_sample_size = 5000,
+  model = "rf"
+)
+
 
 
 ```

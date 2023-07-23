@@ -17,12 +17,22 @@ default_model_generators <- function(outcome, model) {
           y,
           family = "binomial")
       }
-    } else {
+    } else if (model == "rf") {
+      model_function <- function(data) {
+        x <- data[, -1]
+        y <- data[, 1]
+        ranger::ranger(x = x,
+                       y = y,
+                       probability = TRUE)
+      }
+    } else if (model == "glm") {
       model_function <- function(data) {
         glm("y ~ .",
           data = data,
           family = "binomial")
       }
+    } else {
+      stop("Model not found")
     }
   } else if (outcome == "continuous") {
     model_function <- function(data) {
