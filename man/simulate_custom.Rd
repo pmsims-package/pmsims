@@ -28,7 +28,7 @@ simulate_custom(
 generating function and fits the analysis model of interest.}
 
 \item{metric_function}{A function which takes a a test dataset and model
-object as arguments and returns a performance metric}
+object as arguments and returns a performance metricß}
 
 \item{target_performance}{The desired performance of the prediction model}
 
@@ -42,10 +42,10 @@ tune_generate_data.R. Possible arguments are large_n, min_tune_arg,
 max_tune_arg, max_interval_expansion, and tolerance. See
 \code{\link{tune_generate_data}} for more details.}
 
-\item{large_sample_performance}{The desired model performance in a large
-sample. This may be specified in place of tune_param. The data generating
-model is tuned so the desired performance is obtained when n is equal to
-the max_sample_size.}
+\item{large_sample_performance}{The desired performance in a large sample
+(for the metric defined by tune_metric_function). This may be specified in
+place of tune_param. The data generating model is tuned so the desired
+performance is obtained when n is equal to the max_sample_size.}
 
 \item{min_sample_size}{The minimum sample size used in simulations}
 
@@ -57,7 +57,11 @@ the max_sample_size.}
 \item{data_generating_function}{A function of two parameters, n and a tuning
 parameter, that returns data for the model function}
 
-\item{n_reps}{The number of simulation reps}
+\item{tune_metric_function}{The metric_function used when tuning the model.
+This may differ from the metric function used for determining the sample
+size.}
+
+\item{n_reps_totalThe}{number of simulation reps}
 
 \item{final_estimate_se}{The standard error for the estimate of model
 performance at the minimum sample size. Either this or nreps should be

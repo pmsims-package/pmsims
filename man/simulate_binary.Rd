@@ -6,15 +6,16 @@
 \usage{
 simulate_binary(
   signal_parameters,
+  min_sample_size,
+  max_sample_size,
+  baseline_prob,
   noise_parameters = 0,
   predictor_type = "continuous",
   predictor_prop = NULL,
-  baseline_prob,
   metric = "auc",
+  model = "glm",
   large_sample_performance = 0.8,
   minimum_threshold = 0.1,
-  min_sample_size,
-  max_sample_size,
   se_final = 0.005,
   n_reps_total = NULL,
   ...
@@ -23,13 +24,13 @@ simulate_binary(
 \arguments{
 \item{signal_parameters}{Number of predictors that have a non zero assosaion with the outcome}
 
+\item{baseline_prob}{Baseline probability of outcome (ie. probability when all predicors are 0)}
+
 \item{noise_parameters}{Number of predictors with no assosiation with outcome}
 
 \item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
 
 \item{predictor_prop}{If predictor type is binary, the probability of a predictor taking value 1}
-
-\item{baseline_prob}{Baseline probability of outcome (ie. probability when all predicors are 0)}
 
 \item{...}{Other options passed to \code{\link[=simulate_custom]{simulate_custom()}}}
 }
