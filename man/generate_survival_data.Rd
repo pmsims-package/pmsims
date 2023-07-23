@@ -33,11 +33,12 @@ generate_survival_data(
 \item{censoring_rate}{Censoring rate}
 }
 \value{
-A data frame with a column for ID, Time, status (0 = censored, 1 = event), and signal_parameters + noise_parameters predictor columns
+A data frame with a column for ID, Time, status (0 = censored, 1 =
+event), and signal_parameters + noise_parameters predictor columns
 }
 \description{
 Title Simulate Survival Data
 }
 \examples{
-generate_binary_data(n = 100, signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1,baseline_prob = 0.1)
+generate_binary_data(n = 100, signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 }

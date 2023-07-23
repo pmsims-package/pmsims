@@ -24,4 +24,5 @@ Suggests:
     pROC,
     covr,
     pmsampsize,
-    rmarkdown
+    rmarkdown,
+    glmnet
