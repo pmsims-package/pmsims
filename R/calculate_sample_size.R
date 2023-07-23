@@ -58,13 +58,6 @@ simulate_custom <- function(data_function = NULL,
     stop("data_function missing")
   }
 
-  # Use a default model function if not supplied
-  if (is.null(model_function)) {
-    model_function <-
-      default_model_generators(outcome = attr(data_function, "outcome")
-      )
-  }
-
   if (sum(c(is.null(tune_param),
             is.null(large_sample_performance))) != 1) {
     stop(paste(
