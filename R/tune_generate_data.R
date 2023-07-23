@@ -1,19 +1,26 @@
 #' Title Tune generate data
 #'
-#' @param data_function A function of two parameters, n and a tuning parameter, that returns data for the model function
+#' @param data_function A function of two parameters, n and a tuning parameter,
+#' that returns data for the model function
 #' @param large_n A large sample size used for parameter tuning
 #' @param min_tune_arg The minimum valaue of the parameter to be tuned
 #' @param max_tune_arg The maximum valaue of the parameter to be tuned
-#' @param model_function A function which takes the object returned by the data generating function and fits the analysis model of interest.
-#' @param performance_function A function which takes a a test dataset and model object as argments and returns a performance metric
-#' @param target_large_sample_performance The desired model performance in a large sample
+#' @param model_function A function which takes the object returned by the data
+#' generating function and fits the analysis model of interest.
+#' @param performance_function A function which takes a a test dataset and
+#' model object as argments and returns a performance metric
+#' @param target_large_sample_performance The desired model performance in a
+#' large sample
 #' @param tolerance The tolerance in the large sample performance
-#' @param max_interval_expansion The maximum number of time the search interval will be expanded before tune gererate data quits looking. This prevents getting stuck in impossible searches.
+#' @param max_interval_expansion The maximum number of time the search interval
+#' will be expanded before tune gererate data quits looking. This prevents
+#' getting stuck in impossible searches.
 #'
 #' @return optimal value for second argument of the data generating function
 #' @export
 #'
 #' @examples
+
 tune_generate_data <- function(
   data_function,
    large_n,
@@ -39,12 +46,21 @@ tune_generate_data <- function(
     metric_function = metric_function,
     target_large_sample_performance = target_large_sample_performance
   )
+
   optimal_value <- result$minimum
   expand_count <- 1
+
   # Expand range if solution is close to limits
-  while (abs(optimal_value - interval[1]) < max(abs(optimal_value - interval[1])) / 100 ||
-    abs(optimal_value - interval[2]) < max(abs(optimal_value - interval[1])) / 100 ||
-    result$objective > tolerance) {
+  check_limits <- function(opt, int) {
+    any(
+      abs(opt - int[1]) < max(abs(opt - int[1])) / 100,
+      abs(opt - int[2]) < max(abs(opt - int[1])) / 100
+    )
+  }
+
+  while (any(check_limits(optimal_value, interval),
+             result$objective > tolerance))
+    {
 
     # Interval is too narrow, expand the interval
     if (verbose) print("Expanding search for tuning parameter")
