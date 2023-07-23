@@ -83,9 +83,11 @@ optimise_me <- function(tune_var,
                         metric_function,
                         target_large_sample_performance) {
   data <- data_function(n, tune_var) # TODO: update to allow choice of tuning parameter.
-  model <- model_function(data)
+  fit <- model_function(data)
   test_data <- data_function(n, tune_var)
-  performance <- metric_function(data = test_data, model = model)
+  performance <- metric_function(data = test_data,
+                                 fit = fit,
+                                 model = attr(model_function, "model"))
   delta <- abs(performance - target_large_sample_performance)
   return(delta)
 }

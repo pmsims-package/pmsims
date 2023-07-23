@@ -231,6 +231,10 @@ simulate_binary <- function(signal_parameters,
                             n_reps_total = NULL,
                             ...) {
 
+  if (!(model %in% c("glm", "lasso"))) {
+    stop("Invalid model selection")
+  }
+
   inputs <- parse_inputs(
     data_spec = list(
       type = "binary",
@@ -246,10 +250,6 @@ simulate_binary <- function(signal_parameters,
     model
   )
 
-  if (!(model %in% c("glm", "lasso"))) {
-        stop("Invalid model selection")
-  }
-
   if (!(is.null(n_reps_total))) {
     se_final <- NULL
   }
@@ -260,7 +260,8 @@ simulate_binary <- function(signal_parameters,
   if (!is.null(extra_args$tune_param)) large_sample_performance <- NULL
 
   do.call(simulate_custom,
-    args = c(inputs,
+    args = c(
+      inputs,
       target_performance = target_performance,
       large_sample_performance = large_sample_performance,
       min_sample_size = min_sample_size,
@@ -579,8 +580,9 @@ calculate_mlpwr <- function(
       {
         test_data <- data_function(test_n, tune_param)
         train_data <- data_function(n, tune_param)
-        model <- model_function(train_data)
-        metric_function(test_data, model)
+        fit <- model_function(train_data)
+        model <- attr(model_function, "model")
+        metric_function(test_data, fit, model)
       },
       error = function(e) {
         return(value_on_error)
@@ -602,7 +604,7 @@ calculate_mlpwr <- function(
   # Auto-stopping or not
   if (!(is.null(se_final))) {
     ci <- se_final * qnorm(0.975) * 2
-    n_reps_total<- 10000 # setting large nreps so ci dominates.
+    n_reps_total <- 10000 # setting large nreps so ci dominates.
   } else {
     ci <- NULL
   }

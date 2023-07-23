@@ -72,6 +72,7 @@ summary(sample_size)
 
 ```{r}
 set.seed(42)
+
 fit_glm <- simulate_binary(
   signal_parameters = 100,
   baseline_prob = 0.1,
@@ -89,6 +90,7 @@ fit_lasso <- simulate_binary(
   max_sample_size = 5000,
   model = "lasso"
 )
+
 
 
 ```
