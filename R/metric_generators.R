@@ -1,4 +1,5 @@
-default_metric_generator <- function(metric, data_function) {
+default_metric_generator <- function(metric,
+                                     data_function) {
   outcome <- attr(data_function, "outcome")
   if (outcome == "binary") {
     if (metric == "auc") {
@@ -55,7 +56,14 @@ predict_custom <- function(x, y, fit, model, type = "response") {
     predict(fit, x, type = type)
   } else if (model == "lasso") {
     x <- as.matrix(x)
-    predict(fit, newx = x, s = fit$lambda.1se)[, 1]
+    predict(fit, newx = x, s = fit$lambda.1se, type = type)[, 1]
+  } else if (model == "rf") {
+    response <- predict(fit, x, type = type)$predictions[, 1]
+    if (type == "response") {
+      return(response)
+    } else {
+      # TODO: calibration for random forest
+    }
   }
 }
 
