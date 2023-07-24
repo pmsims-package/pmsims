@@ -12,8 +12,8 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(pmsims)
 set.seed(42)
-# Note: currently requires
-# devtools::install_github("flxzimmer/mlpwr",ref="dev2")
+# devtools::install_github("flxzimmer/mlpwr", ref = "pmsims")
+
 ```
 
 # Hello World
@@ -73,13 +73,11 @@ summary(sample_size)
 ```{r}
 set.seed(42)
 
-fit_glm <- simulate_binary(
+fit_glm <- simulate_continuous(
   signal_parameters = 100,
-  baseline_prob = 0.1,
   large_sample_performance = 0.8,
   min_sample_size = 100,
-  max_sample_size = 5000,
-  model = "glm"
+  max_sample_size = 5000
 )
 
 fit_lasso <- simulate_binary(

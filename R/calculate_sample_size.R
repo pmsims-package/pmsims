@@ -177,7 +177,6 @@ simulate_custom <- function(data_function = NULL,
 #' @export
 #'
 #' @examples
-
 parse_inputs <- function(data_spec,
                          metric,
                          model) {
@@ -373,12 +372,14 @@ simulate_continuous <- function(
     noise_parameters = 0,
     predictor_type = "continuous",
     predictor_prop = NULL,
+    model = "lm",
     metric = "r2",
     large_sample_performance = 0.8,
     minimum_threshold = 0.10,
     se_final = 0.005, # To give CIs of +/- 0.01
     n_reps_total = NULL,
     ...) {
+  
   inputs <- parse_inputs(
     data_spec = list(
       type = "continuous",
@@ -389,7 +390,8 @@ simulate_continuous <- function(
         predictor_prop = predictor_prop
       )
     ),
-    metric
+    metric,
+    model
   )
 
   if (!(is.null(n_reps_total))) {

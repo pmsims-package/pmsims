@@ -34,6 +34,7 @@ default_data_generators <- function(opts) {
 #' @export
 #'
 #' @examples generate_continuous_data(n = 100, signal_parameters = 10, noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1, beta_signal = 0.1)
+
 generate_continuous_data <- function(
     n,
     beta_signal,

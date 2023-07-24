@@ -57,11 +57,8 @@ tune_generate_data <- function(
       abs(opt - int[2]) < max(abs(opt - int[1])) / 100
     )
   }
-
   while (any(check_limits(optimal_value, interval),
-             result$objective > tolerance))
-    {
-
+             result$objective > tolerance)) {
     # Interval is too narrow, expand the interval
     if (verbose) print("Expanding search for tuning parameter")
     expand_count <- expand_count + 1

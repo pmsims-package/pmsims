@@ -129,24 +129,24 @@ binary_brier_score_scaled <- function(data, fit, model) {
   # with y_hat being a probability of y=1 (not 1/0 prediction)
 }
 
-continuous_r2 <- function(data, model) {
+continuous_r2 <- function(data, fit, model) {
   # formula for out of sample r-squared taken from this:
   # https://www.tandfonline.com/doi/full/10.1080/00031305.2023.2216252
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
   n <- length(y)
-  y_hat <- predict(model, x, type = "response")
+  y_hat <- predict(fit, x, type = "response")
   mse <- sum((y_hat - y)^2) / n
   mst <- var(y) * (n + 1) / n
   r2 <- 1 - (mse / mst)
   return(r2)
 }
 
-continuous_calib_slope <- function(data, model) {
+continuous_calib_slope <- function(data, fit, model) {
   # computes calibration slope for logistic regression
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
-  y_hat <- predict(model, x, type = "response")
+  y_hat <- predict(fit, x, type = "response")
   slope <- try(lm(y ~ y_hat), silent = TRUE)
   if (class(slope)[1] == "try-error") {
     return(NaN)
@@ -155,14 +155,12 @@ continuous_calib_slope <- function(data, model) {
   }
 }
 
-continuous_calib_itl <- function(data, model) {
+continuous_calib_itl <- function(data, fit, model) {
   # computes calibration slope for logistic regression
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
-  y_hat <- predict(model, x, type = "response")
-  slope <- try(lm(y ~ 1,
-    offset = y_hat),
-  silent = TRUE)
+  y_hat <- predict(fit, x, type = "response")
+  slope <- try(lm(y ~ 1, offset = y_hat), silent = TRUE)
   if (class(slope)[1] == "try-error") {
     return(NaN)
   } else {
@@ -170,12 +168,12 @@ continuous_calib_itl <- function(data, model) {
   }
 }
 
-survival_cindex <- function(data, model) {
+survival_cindex <- function(data, fit, model) {
   # this works for models being the Cox models or those with predict(type =
   # "lp") giving some sort of a risk score, or linear predictor
   y_surv <- survival::Surv(data$time, data$event)
   x <- data[, names(data) != "time" & names(data) != "event"]
-  y_hat <- predict(model, x, type = "lp")
+  y_hat <- predict(fit, x, type = "lp")
   cf <- try(concordancefit(y_surv, -1 * y_hat), silent = TRUE)
   if (class(cf)[1] == "try-error") {
     cindex <- NaN
@@ -189,7 +187,7 @@ survival_cindex <- function(data, model) {
   return(cindex)
 }
 
-survival_auc <- function(data, model) {
+survival_auc <- function(data, fit, model) {
   # this works for models being the Cox models
   # or those with predict( type="lp") giving some sort of a risk score,
   # or linear predictor
@@ -197,7 +195,7 @@ survival_auc <- function(data, model) {
   # this function computes AUC for the latest event time available in the data
   y_surv <- survival::Surv(data$time, data$event)
   x <- data[, names(data) != "time" & names(data) != "event"]
-  y_hat <- predict(model, x, type = "lp")
+  y_hat <- predict(fit, x, type = "lp")
   if (class(try(
     survival::concordancefit(
       y_surv,
