@@ -53,7 +53,8 @@ simulate_custom <- function(data_function = NULL,
                             se_final = NULL,
                             n_init = 4,
                             method = "mlpwr",
-                            verbose = FALSE) {
+                            verbose = FALSE,
+                            ...) {
   if (is.null(data_function)) {
     stop("data_function missing")
   }
