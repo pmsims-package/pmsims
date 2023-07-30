@@ -9,15 +9,17 @@ editor_options:
 ```{r}
 library(pmsims)
 library(tidyverse)
-library(furrr)
 library(future.apply)
+library(furrr)
 plan(multisession, workers = 20)
 
-n_reps <- c(100, 200, 500, 1000)
-sample_sizes <- map(n_reps, \(r) {
-  print(r)
+opt <- expand_grid(n_reps = c(100, 200, 500, 1000),
+                   n_sample_sizes = c(10, 20, 50))
+
+opt$result <- pmap(opt, \(n_reps, n_sample_sizes) {
+  print(c(n_reps, n_sample_sizes))
   future_replicate(
-    100,
+    50,
     simulate_binary(
       signal_parameters = 10,
       baseline_prob = 0.1,
@@ -25,15 +27,59 @@ sample_sizes <- map(n_reps, \(r) {
       minimum_threshold = 0.05,
       min_sample_size = 100,
       max_sample_size = 5000,
-      n_reps = r
+      n_reps = n_reps,
+      n_sample_sizes = n_sample_sizes
     )$min_n
   )
 })
 ```
 
 ```{r}
-d <- tibble(n_reps, sample_sizes) |>
-  mutate(min = map_dbl(sample_sizes, min),
-         max = map_dbl(sample_sizes, max),
-         median = map_dbl(sample_sizes, median))
+opt <- opt |>
+  mutate(min = map_dbl(result, min),
+         max = map_dbl(result, max),
+         median = map_dbl(result, median),
+         across(c(min, max, median), round),
+         cell = str_glue("{median} [{min}-{max}]"))
+  
+opt |>
+  select(n_reps, n_sample_sizes, cell) |>
+  pivot_wider(names_from = n_sample_sizes,
+              values_from = cell)
+
+```
+
+```{r}
+opt |>
+  unnest_longer(result) |>
+  ggplot() +
+  aes(x = result,
+      color = factor(n_reps)) +
+  geom_histogram() +
+  facet_grid(~ n_sample_sizes)
+
+```
+
+```{r}
+reps100 <- simulate_binary(
+  signal_parameters = 10,
+  baseline_prob = 0.1,
+  large_sample_performance = 0.8,
+  minimum_threshold = 0.05,
+  min_sample_size = 100,
+  max_sample_size = 5000,
+  n_reps = 100,
+  n_sample_sizes = 50
+)
+
+reps500 <- simulate_binary(
+  signal_parameters = 10,
+  baseline_prob = 0.1,
+  large_sample_performance = 0.8,
+  minimum_threshold = 0.05,
+  min_sample_size = 100,
+  max_sample_size = 5000,
+  n_reps = 500,
+  n_sample_sizes = 50
+)
 ```
