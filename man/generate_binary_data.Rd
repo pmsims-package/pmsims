@@ -36,5 +36,5 @@ A data frame with one outcome column and signal_parameters + noise_parameters pr
 Title Simulate Binary Data
 }
 \examples{
-generate_binary_data(n = 100, signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1,baseline_prob = 0.1)
+generate_binary_data(n = 100, signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 }

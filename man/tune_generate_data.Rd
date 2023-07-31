@@ -18,7 +18,8 @@ tune_generate_data(
 )
 }
 \arguments{
-\item{data_function}{A function of two parameters, n and a tuning parameter, that returns data for the model function}
+\item{data_function}{A function of two parameters, n and a tuning parameter,
+that returns data for the model function}
 
 \item{large_n}{A large sample size used for parameter tuning}
 
@@ -26,15 +27,20 @@ tune_generate_data(
 
 \item{max_tune_arg}{The maximum valaue of the parameter to be tuned}
 
-\item{model_function}{A function which takes the object returned by the data generating function and fits the analysis model of interest.}
+\item{model_function}{A function which takes the object returned by the data
+generating function and fits the analysis model of interest.}
 
-\item{target_large_sample_performance}{The desired model performance in a large sample}
+\item{target_large_sample_performance}{The desired model performance in a
+large sample}
 
 \item{tolerance}{The tolerance in the large sample performance}
 
-\item{max_interval_expansion}{The maximum number of time the search interval will be expanded before tune gererate data quits looking. This prevents getting stuck in impossible searches.}
+\item{max_interval_expansion}{The maximum number of time the search interval
+will be expanded before tune gererate data quits looking. This prevents
+getting stuck in impossible searches.}
 
-\item{performance_function}{A function which takes a a test dataset and model object as argments and returns a performance metric}
+\item{performance_function}{A function which takes a a test dataset and
+model object as argments and returns a performance metric}
 }
 \value{
 optimal value for second argument of the data generating function

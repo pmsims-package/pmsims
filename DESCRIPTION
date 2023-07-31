@@ -17,10 +17,13 @@ Imports:
     graphics,
     mlpwr,
     stats,
-    survival
+    survival,
+    timeROC
 Suggests: 
     testthat,
     pROC,
     covr,
     pmsampsize,
-    rmarkdown
+    rmarkdown,
+    glmnet,
+    ranger
