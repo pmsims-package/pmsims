@@ -96,7 +96,7 @@ generate_binary_data <- function(
 #'
 #' @inheritParams generate_continuous_data
 #' @param baseline_hazard Baseline Hazard
-#' @param censoring_rate Censoring rate
+#' @param censoring_rate Early drop out/censoring rate
 #'
 #' @return A data frame with a column for ID, Time, status (0 = censored, 1 =
 #' event), and signal_parameters + noise_parameters predictor columns
@@ -125,15 +125,22 @@ generate_survival_data <- function(
 
   # Generate survival times
   event_time <- rexp(n, rate = baseline_hazard * exp(lp))
-
-  # Generate censoring indicators
-  C <- ifelse(runif(n) < censoring_rate, 1, 0) # 20% censoring rate
-
+  # introduce right-censoring at a median time
+  T_observe <- -log(0.5) / baseline_hazard
+  censor_time <- rep(T_observe, n)
+  # additional censoring or dropping out
+  censor_ids <-
+    sample(n, round(n * censoring_rate, 0), replace = FALSE)
+  censor_time[censor_ids] <- runif(length(censor_id), 0, T_observe)
+  
+  event <-  as.numeric(event_time <= censor_time)
+  survival_time <- pmin(event_time, censor_time)
+  
   # Return survival data as a data frame
   return(data.frame(
     id = 1:n,
-    time = event_time,
-    event = 1 - C,
+    time = survival_time,
+    event = event,
     X
   ))
 }
