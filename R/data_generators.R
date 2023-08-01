@@ -24,9 +24,9 @@ default_data_generators <- function(opts) {
 #' Simulate Continuous data
 #'
 #' @param n Sample size
-#' @param beta_signal Assosiation between signal predictors and the outcome
-#' @param signal_parameters Number of predictors that have a non zero assosaion with the outcome
-#' @param noise_parameters Number of predictors with no assosiation with outcome
+#' @param beta_signal Association between signal predictors and the outcome
+#' @param signal_parameters Number of predictors that have a non zero association with the outcome
+#' @param noise_parameters Number of predictors with no association with outcome
 #' @param predictor_type Type of predictor, can be "continuous" or "binary."
 #' @param predictor_prop If predictor type is binary, the probability of a predictor taking value 1
 #'
@@ -131,7 +131,7 @@ generate_survival_data <- function(
   # additional censoring or dropping out
   censor_ids <-
     sample(n, round(n * censoring_rate, 0), replace = FALSE)
-  censor_time[censor_ids] <- runif(length(censor_id), 0, T_observe)
+  censor_time[censor_ids] <- runif(length(censor_ids), 0, T_observe)
   
   event <-  as.numeric(event_time <= censor_time)
   survival_time <- pmin(event_time, censor_time)
