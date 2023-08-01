@@ -50,7 +50,7 @@ if (!require(mlpwr)) {
   devtools::install_github("flxzimmer/mlpwr",ref="dev2")
 } 
 library(mlpwr)
-
+library(pmsims)
 a2 = calculate_sample_size2(data_generating_function = generate_data,
                       model_function = fit_model,
                       performance_function = get_performance,

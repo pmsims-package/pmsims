@@ -174,7 +174,7 @@ survival_cindex <- function(data, fit, model) {
   y_surv <- survival::Surv(data$time, data$event)
   x <- data[, names(data) != "time" & names(data) != "event"]
   y_hat <- predict(fit, x, type = "lp")
-  cf <- try(concordancefit(y_surv, -1 * y_hat), silent = TRUE)
+  cf <- try(survival::concordancefit(y_surv, -1 * y_hat), silent = TRUE)
   if (class(cf)[1] == "try-error") {
     cindex <- NaN
   } else {
