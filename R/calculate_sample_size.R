@@ -135,7 +135,7 @@ simulate_custom <- function(data_function = NULL,
       value_on_error
     )
   } else if (method == "crude") {
-    n_sample_sizes <- n_reps_total / n_reps_per
+
     output <- calculate_crude(
       data_function,
       tune_param,
@@ -144,7 +144,7 @@ simulate_custom <- function(data_function = NULL,
       value_on_error,
       min_sample_size,
       max_sample_size,
-      n_sample_sizes,
+      n_reps_per,
       target_performance
     )
   } else {
@@ -434,7 +434,8 @@ simulate_survival <- function(signal_parameters,
                               predictor_prop = NULL,
                               baseline_hazard = 0.01,
                               censoring_rate = 0.2,
-                              metric = "auc",
+                              metric = "cindex",
+                              model="coxph",
                               large_sample_performance = 0.8,
                               minimum_threshold = 0.10,
                               se_final = 0.005, # To give CIs of +/- 0.01
@@ -452,7 +453,8 @@ simulate_survival <- function(signal_parameters,
         censoring_rate = censoring_rate
       )
     ),
-    metric
+    metric,
+    model
   )
 
   if (!(is.null(n_reps_total))) {

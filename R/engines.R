@@ -71,7 +71,7 @@ calculate_mlpwr <- function(
   for (i in seq_along(perfs)) {
     results[i, seq(1, length(perfs[[i]]$y), 1)] <- perfs[[i]]$y
   }
-
+ 
   get_perf <- function(results, p) {
     apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
   }
@@ -98,35 +98,36 @@ calculate_crude <- function(
   value_on_error,
   min_sample_size,
   max_sample_size,
-  n_sample_sizes,
+  n_reps_per,
   target_performance) {
 
-  # Make sure n_sample_sizes is 10 or over
-  n_sample_sizes <- max(10, n_sample_sizes)
+  # Make sure n_reps_per is 10 or over
+  n_reps_per <- pmax(10, n_reps_per)
 
   # Specify grid
   sample_grid <- c(
     round(seq(min_sample_size, max_sample_size, length.out = 25)),
     max(30000, 3 * max_sample_size)
   )
-  # Generate data and compute metric for sizes_to_check, n_sample_sizes times
+  # Generate data and compute metric for sizes_to_check, n_reps_per times
   performance_matrix <-
     matrix(
       nrow = length(sample_grid),
-      ncol = n_sample_sizes
+      ncol = n_reps_per
     )
-  colnames(performance_matrix) <- 1:n_sample_sizes
+  colnames(performance_matrix) <- 1:n_reps_per
   rownames(performance_matrix) <- sample_grid
 
-  test_n <- max(3 * max_sample_size, 30000)
+  test_n <- pmax(3 * max_sample_size, 30000)
   test_data <- data_function(test_n, tune_param)
 
   metric_calculation <- function(n) {
     tryCatch(
       {
         train_data <- data_function(n, tune_param)
-        model <- model_function(train_data)
-        metric_function(test_data, model)
+        fit <- model_function(train_data)
+        model <- attr(model_function, "model")
+        metric_function(test_data, fit, model)
       },
       error = function(e) {
         return(value_on_error)
@@ -136,7 +137,7 @@ calculate_crude <- function(
 
   # Compute performance metrics across sizes and simulations
   for (i in seq_along(sample_grid)) {
-    for (j in seq_along(n_sample_sizes)) {
+    for (j in 1:n_reps_per) {
       performance_matrix[i, j] <- metric_calculation(sample_grid[i])
     }
   }
