@@ -75,7 +75,8 @@ simulate_custom <- function(data_function = NULL,
   if (min_sample_size > max_sample_size) {
     stop("min_sample_size must be less than max_sample_size")
   }
-
+  time_0 <- Sys.time()
+  
   # Set default tuning parameters
   if (is.null(tune_param)) {
     default_tuning <- list(
@@ -100,7 +101,6 @@ simulate_custom <- function(data_function = NULL,
     )
     tune_param <- do.call(tune_generate_data, tune_args)
   }
-
   # Define a default metric value if calculations fail; 0.5 for default
   metric_name <- attr(metric_function, "metric")
   error_values <- list(
@@ -116,7 +116,8 @@ simulate_custom <- function(data_function = NULL,
     error_values[[metric_name]],
     0.5
   )
-
+  time_1 <- Sys.time()
+  
   if (method == "mlpwr") {
     output <- calculate_mlpwr(
       test_n,
@@ -150,7 +151,7 @@ simulate_custom <- function(data_function = NULL,
   } else {
     stop("Method not found")
   }
-
+  time_2 <- Sys.time()
   results_list <- list(
     outcome = attr(data_function, "outcome"),
     min_n = ifelse(
@@ -163,9 +164,12 @@ simulate_custom <- function(data_function = NULL,
     data = output$results,
     train_size = rownames(output$results),
     tune_param = tune_param,
-    data_function = data_function
+    data_function = data_function,
+    simulation_time = list(
+      "tuning" = difftime(time_1, time_0, units = "secs"),
+      "simulating" = difftime(time_2, time_1, units = "secs")
+    )
   )
-
   attr(results_list, "class") <- "pmsims"
   return(results_list)
 }

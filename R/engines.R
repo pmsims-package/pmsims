@@ -136,7 +136,7 @@ calculate_crude <- function(
   }
   
   #progress bar
-  pb <- utils::txtProgressBar(0, length(sample_grid)+1, style = 3)
+  pb <- utils::txtProgressBar(0, length(sample_grid)+2, style = 3)
   utils::setTxtProgressBar(pb, 1)
   
   # Compute performance metrics across sizes and simulations
@@ -146,6 +146,7 @@ calculate_crude <- function(
       performance_matrix[i, j] <- metric_calculation(sample_grid[i])
     }
   }
+  utils::setTxtProgressBar(pb, length(sample_grid)+2)
   close(pb)
   get_perf <- function(results, p) {
     apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
