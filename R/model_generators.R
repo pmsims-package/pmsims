@@ -39,9 +39,19 @@ default_models <- list(
   }),
   survival = list(
     coxph = function(d) {
-    formula <- as.formula("survival::Surv(time, event) ~ .")
-    survival::coxph(formula, data = d)
-  })
+      formula <- as.formula("survival::Surv(time, event) ~ .")
+      survival::coxph(formula, data = d)
+    },
+    coxlasso = function(d) {
+      d <- as.matrix(d)
+      x <- d[, 1:2]
+      y <- d[,-c(1, 2)]
+      glmnet::cv.glmnet(
+        x,
+        y,
+        family = "cox")
+    }
+  )
 )
 
 default_model_generators <- function(outcome, model) {
