@@ -18,7 +18,8 @@ Imports:
     mlpwr,
     stats,
     survival,
-    timeROC
+    timeROC,
+    utils
 Suggests: 
     testthat,
     pROC,

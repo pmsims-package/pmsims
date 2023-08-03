@@ -172,7 +172,7 @@ survival_cindex <- function(data, fit, model) {
   # this works for models being the Cox models or those with predict(type =
   # "lp") giving some sort of a risk score, or linear predictor
   y_surv <- survival::Surv(data$time, data$event)
-  x <- data[, names(data) != "time" & names(data) != "event"]
+  x <- data[, names(data) != "time" & names(data) != "event" & names(data)!="id"]
   y_hat <- predict(fit, x, type = "lp")
   cf <- try(survival::concordancefit(y_surv, -1 * y_hat), silent = TRUE)
   if (class(cf)[1] == "try-error") {
@@ -209,7 +209,7 @@ survival_auc <- function(data, fit, model) {
       delta = data$event,
       marker = y_hat,
       times = t_max * 0.9999999,
-      # 0.99... stabilizes in case t_max is final study time
+      # 0.99x stabilizes if t_max is final study time
       cause = 1,
       weighting = "marginal"
     )$AUC[2]
