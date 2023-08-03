@@ -136,7 +136,7 @@ calculate_crude <- function(
   }
   
   #progress bar
-  pb <- utils::txtProgressBar(0, length(sample_grid)+2, style = 3)
+  pb <- utils::txtProgressBar(0, length(sample_grid)+12, style = 3)
   utils::setTxtProgressBar(pb, 1)
   
   # Compute performance metrics across sizes and simulations
@@ -146,8 +146,7 @@ calculate_crude <- function(
       performance_matrix[i, j] <- metric_calculation(sample_grid[i])
     }
   }
-  utils::setTxtProgressBar(pb, length(sample_grid)+2)
-  close(pb)
+  
   get_perf <- function(results, p) {
     apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
   }
@@ -164,11 +163,36 @@ calculate_crude <- function(
   ) {
     crude_min_n <- NA
   } else {
-    crude_min_n <-
-      sample_grid[
-        which(crude_summaries$quant20_performance > target_performance)[1]
-      ]
+    n_min <- which(crude_summaries$quant20_performance > target_performance)[1]
+    if ( (n_min ==1) | (n_min == length(sample_grid))){
+      crude_min_n <- sample_grid[n_min]
+    }else{
+      # adding more granularity in the target region to fine-tune crude_n_min
+      fine_grid <- seq(sample_grid[n_min-1], sample_grid[n_min +1], length.out = 10)
+      fine_matrix <- matrix(nrow = length(fine_grid), ncol = n_reps_per)
+      for (i in seq_along(fine_grid)) {
+        utils::setTxtProgressBar(pb, length(sample_grid)+1+i)
+        for (j in 1:n_reps_per) {
+          fine_matrix[i, j] <- metric_calculation(fine_grid[i])
+        }
+      }
+      fine_summaries <- list(
+        median_performance = get_perf(fine_matrix, 0.5),
+        quant20_performance = get_perf(fine_matrix, 0.2),
+        quant5_performance = get_perf(fine_matrix, 0.05),
+        quant95_performance = get_perf(fine_matrix, 0.95)
+      )
+      if (is.na(which(fine_summaries$quant20_performance > target_performance)[1])) {
+        crude_min_n <- sample_grid[n_min]
+      } else{
+        crude_min_n <-
+          fine_grid[which(fine_summaries$quant20_performance > target_performance)[1]]
+      }
+    }
   }
+  utils::setTxtProgressBar(pb, length(sample_grid)+12)
+  close(pb)
+  
   return(list(results = performance_matrix,
               summaries = crude_summaries,
               min_n = crude_min_n))
