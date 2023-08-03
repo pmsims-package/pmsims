@@ -98,8 +98,8 @@ generate_binary_data <- function(
 #' @param baseline_hazard Baseline Hazard
 #' @param censoring_rate Early drop out/censoring rate
 #'
-#' @return A data frame with a column for ID, Time, status (0 = censored, 1 =
-#' event), and signal_parameters + noise_parameters predictor columns
+#' @return A data frame with a time ("time"), event status ("event") (0 = censored, 1 =
+#' event), and signal_parameters + noise_parameters predictor columns ("x1", "x2", ... .)
 #' @export
 #'
 #' @examples generate_binary_data(n = 100, signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
@@ -138,7 +138,6 @@ generate_survival_data <- function(
   
   # Return survival data as a data frame
   return(data.frame(
-    id = 1:n,
     time = survival_time,
     event = event,
     X
