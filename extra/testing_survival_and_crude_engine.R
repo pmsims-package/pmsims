@@ -21,36 +21,30 @@ summary(m) #ok, the first 5 params are estimated at 0.5 as modeled with beta = 0
 
 test_survival <-
   simulate_survival(
-    signal_parameters = 50,   min_sample_size = 500,    max_sample_size= 2000,
-    noise_parameters = 5,    predictor_type = "continuous",    predictor_prop = NULL,
-    baseline_hazard = 0.01,    censoring_rate = 0.2,    metric = "cindex",
-    large_sample_performance = 0.8,    minimum_threshold = 0.10,    se_final = 0.005,
-    n_reps_total = NULL
-  )
-test_survival$min_n #1103
-test_survival$tune_param #0.211 - beta for 0.8 large performance
-
-a1 <-
-  simulate_survival(
-    signal_parameters = 50,   min_sample_size = 500,    max_sample_size= 2000,
+    signal_parameters = 50,   min_sample_size = 10,    max_sample_size= 1000,
     noise_parameters = 5,    predictor_type = "continuous",    predictor_prop = NULL,
     baseline_hazard = 0.01,    censoring_rate = 0.2,    metric = "cindex",
     large_sample_performance = 0.8,    minimum_threshold = 0.10,    se_final = 0.005,
     n_reps_total = NULL, tune_param = 0.211
   )
+test_survival$min_n #153
+test_survival$tune_param #0.211 - beta for 0.8 large performance
+test_survival$summaries
+
+# adding tune_param=0.211 from previous calculations 
 
 test_survival_crude <-
   simulate_survival(
-    signal_parameters = 50,    min_sample_size = 300,    max_sample_size= 1000,
+    signal_parameters = 50,    min_sample_size = 10,    max_sample_size= 1000,
     noise_parameters = 5,    predictor_type = "continuous",    predictor_prop = NULL,
     baseline_hazard = 0.01,    censoring_rate = 0.2,    metric = "cindex",
     large_sample_performance = 0.8,    minimum_threshold = 0.10,    se_final = 0.005,
-    n_reps_total = NULL,
+    n_reps_total = NULL,tune_param = 0.211,
     method="crude"
   )
 
 #test_survival_crude$data
-test_survival_crude$min_n #854
+test_survival_crude$min_n #175
 test_survival_crude$summaries
 test_survival_crude$tune_param #0.2139
 
@@ -112,19 +106,19 @@ test_bin$summaries$quant20_performance
 
 test_bin_crude <- simulate_binary(
   signal_parameters = 100,  noise_parameters = 5, 
-  min_sample_size = 200,  max_sample_size = 800,
+  min_sample_size = 300,  max_sample_size = 800,
   baseline_prob = 0.1,   predictor_type = "continuous",  predictor_prop = NULL,  
   metric = "auc",  model = "glm",  large_sample_performance = 0.8,
   minimum_threshold = 0.1,  se_final = 0.005,n_reps_total = NULL,
-  method = "crude"
+  method = "crude", tune_param = 0.136
 )
 test_bin_crude$data
+test_bin_crude$summaries
 test_bin_crude$min_n #635
-test_bin_crude$tune_param #0.13676
+test_bin_crude$tune_param #0.136
 pls(test_bin_crude)
 
 #################################################
-
 
 test_bin_lasso <- simulate_binary( 
   signal_parameters = 100, noise_parameters = 5,
@@ -134,7 +128,7 @@ test_bin_lasso <- simulate_binary(
   minimum_threshold = 0.1,  se_final = 0.005,  n_reps_total = NULL
 )
 
-
+ 
 
 
 
