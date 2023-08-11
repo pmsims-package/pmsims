@@ -76,7 +76,7 @@ simulate_custom <- function(data_function = NULL,
     stop("min_sample_size must be less than max_sample_size")
   }
   time_0 <- Sys.time()
-  
+
   # Set default tuning parameters
   if (is.null(tune_param)) {
     default_tuning <- list(
@@ -117,7 +117,7 @@ simulate_custom <- function(data_function = NULL,
     0.5
   )
   time_1 <- Sys.time()
-  
+
   if (method == "mlpwr") {
     output <- calculate_mlpwr(
       test_n,
@@ -312,7 +312,8 @@ simulate_binary_many_metrics <- function(
         baseline_prob = baseline_prob
       )
     ),
-    metric
+    metric,
+    model
   )
   if (!(is.null(n_reps_total))) {
     se_final <- NULL
@@ -334,8 +335,13 @@ simulate_binary_many_metrics <- function(
     )
   }
 
+  # Run for each metric
+  list_of_metrics <- lapply(metric, \(m) {
+    default_metric_generator(m, inputs$data_function)
+  })
 
-  args <- c(
+
+  common_arguments <- c(
     data_function = inputs$data_function,
     model_function = inputs$model_function,
     min_sample_size = min_sample_size,
@@ -343,26 +349,28 @@ simulate_binary_many_metrics <- function(
     se_final = se_final,
     n_reps_total = n_reps_total,
     test_n = set_test_n(max_sample_size),
-    tune_param = tune_param,
-    ...
+    tune_param = tune_param
   )
-  metrics <- inputs$metric_function
 
-  simulate_1metric <- function(metric, target, other_args) {
-    my_args <- c(list(metric_function = metric,
-                      target_performance = target),
-                 other_args)
-    do.call(simulate_custom, my_args)
-  }
+  stopifnot(length(list_of_metrics) == length(target_performance))
 
-  results <- mapply(simulate_1metric,
-                    metrics,
-                    target_performance,
-                    MoreArgs = list(other_args = args))
+  results <- mapply(function(m, p) {
+    do.call(
+      simulate_custom,
+      args = c(
+        common_arguments,
+        metric_function = m,
+        target_performance = p
+      )
+    )
+  },
+  m = list_of_metrics,
+  p = target_performance
+  )
+
   dimnames(results)[[2]] <- metric
   return(results)
 }
-
 
 #' Calculate the minimum sample size required for a continous outcome
 #'
@@ -384,7 +392,7 @@ simulate_continuous <- function(
     se_final = 0.005, # To give CIs of +/- 0.01
     n_reps_total = NULL,
     ...) {
-  
+
   inputs <- parse_inputs(
     data_spec = list(
       type = "continuous",
@@ -439,7 +447,7 @@ simulate_survival <- function(signal_parameters,
                               baseline_hazard = 0.01,
                               censoring_rate = 0.2,
                               metric = "cindex",
-                              model="coxph",
+                              model = "coxph",
                               large_sample_performance = 0.8,
                               minimum_threshold = 0.10,
                               se_final = 0.005, # To give CIs of +/- 0.01
