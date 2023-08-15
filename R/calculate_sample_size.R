@@ -310,13 +310,11 @@ simulate_binary <- function(
       baseline_prob = baseline_prob
     )
   )
-  
+
   data_function <- default_data_generators(data_spec)
-  model_function <- default_model_generators(
-    attr(data_function, "outcome"),
-    model
-  )
-    
+  outcome_type <- attr(data_function, "outcome")
+  model_function <- default_model_generators(outcome_type, model)
+
   # Tune data function
   if (is.null(tune_param)) {
     tune_param <- tune_generate_data(
@@ -328,7 +326,7 @@ simulate_binary <- function(
       model_function = model_function,
       metric_function = default_metric_generator(metric,
                                                  data_function),
-      target_performance = large_sample_discrimination - minimum_threshold,
+      target_performance = large_sample_discrimination,
       verbose = TRUE
     )
   }
