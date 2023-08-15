@@ -49,7 +49,7 @@ simulate_custom <- function(data_function = NULL,
                             min_sample_size,
                             max_sample_size,
                             n_reps_total = NULL,
-                            n_reps_per = 10,
+                            n_reps_per = 50,
                             se_final = NULL,
                             n_init = 4,
                             method = "mlpwr",
@@ -80,8 +80,7 @@ simulate_custom <- function(data_function = NULL,
   # Set default tuning parameters
   if (is.null(tune_param)) {
     default_tuning <- list(
-      min_tune_arg = 0,
-      max_tune_arg = 1,
+      interval = c(0, 1),
       large_n = set_test_n(max_sample_size),
       tolerance = set_tolerance(large_sample_performance),
       max_interval_expansion = 10
@@ -214,63 +213,63 @@ parse_inputs <- function(data_spec,
 #' @export
 #'
 #' @examples
-simulate_binary <- function(signal_parameters,
-                            min_sample_size,
-                            max_sample_size,
-                            baseline_prob,
-                            noise_parameters = 0,
-                            predictor_type = "continuous",
-                            predictor_prop = NULL,
-                            metric = "auc",
-                            model = "glm",
-                            large_sample_performance = 0.8,
-                            minimum_threshold = 0.1,
-                            se_final = 0.005, # To give CIs of +/- 0.0
-                            n_reps_total = NULL,
-                            ...) {
+# simulate_binary <- function(signal_parameters,
+#                             min_sample_size,
+#                             max_sample_size,
+#                             baseline_prob,
+#                             noise_parameters = 0,
+#                             predictor_type = "continuous",
+#                             predictor_prop = NULL,
+#                             metric = "auc",
+#                             model = "glm",
+#                             large_sample_performance = 0.8,
+#                             minimum_threshold = 0.1,
+#                             se_final = 0.005, # To give CIs of +/- 0.0
+#                             n_reps_total = NULL,
+#                             ...) {
 
-  if (!(model %in% c("glm", "lasso", "rf"))) {
-    stop("Invalid model selection")
-  }
+#   if (!(model %in% c("glm", "lasso", "rf"))) {
+#     stop("Invalid model selection")
+#   }
 
-  inputs <- parse_inputs(
-    data_spec = list(
-      type = "binary",
-      args = list(
-        signal_parameters = signal_parameters,
-        noise_parameters = noise_parameters,
-        predictor_type = predictor_type,
-        predictor_prop = predictor_prop,
-        baseline_prob = baseline_prob
-      )
-    ),
-    metric,
-    model
-  )
+#   inputs <- parse_inputs(
+#     data_spec = list(
+#       type = "binary",
+#       args = list(
+#         signal_parameters = signal_parameters,
+#         noise_parameters = noise_parameters,
+#         predictor_type = predictor_type,
+#         predictor_prop = predictor_prop,
+#         baseline_prob = baseline_prob
+#       )
+#     ),
+#     metric,
+#     model
+#   )
 
-  if (!(is.null(n_reps_total))) {
-    se_final <- NULL
-  }
+#   if (!(is.null(n_reps_total))) {
+#     se_final <- NULL
+#   }
 
-  target_performance <- large_sample_performance - minimum_threshold
+#   target_performance <- large_sample_performance - minimum_threshold
 
-  extra_args <- list(...)
-  if (!is.null(extra_args$tune_param)) large_sample_performance <- NULL
+#   extra_args <- list(...)
+#   if (!is.null(extra_args$tune_param)) large_sample_performance <- NULL
 
-  do.call(simulate_custom,
-    args = c(
-      inputs,
-      target_performance = target_performance,
-      large_sample_performance = large_sample_performance,
-      min_sample_size = min_sample_size,
-      max_sample_size = max_sample_size,
-      se_final = se_final,
-      n_reps_total = n_reps_total,
-      test_n = set_test_n(max_sample_size),
-      ...
-    )
-  )
-}
+#   do.call(simulate_custom,
+#     args = c(
+#       inputs,
+#       target_performance = target_performance,
+#       large_sample_performance = large_sample_performance,
+#       min_sample_size = min_sample_size,
+#       max_sample_size = max_sample_size,
+#       se_final = se_final,
+#       n_reps_total = n_reps_total,
+#       test_n = set_test_n(max_sample_size),
+#       ...
+#     )
+#   )
+# }
 
 #' Calculate the minimum sample size required for a binary outcome
 #'
@@ -281,95 +280,95 @@ simulate_binary <- function(signal_parameters,
 #' @export
 #'
 #' @examples
-simulate_binary_many_metrics <- function(
-                            signal_parameters,
-                            baseline_prob,
-                            min_sample_size,
-                            max_sample_size,
-                            noise_parameters = 0,
-                            predictor_type = "continuous",
-                            predictor_prop = NULL,
-                            metric = c("auc", "calib_slope"),
-                            target_performance = c(0.72, 0.9),
-                            # Target performance given as values rather than
-                            # deviation. This saves confusing manipuation on
-                            # the way to simulate custom.
-                            large_sample_auc = 0.8, # only use AUC for tuning
-                            model = "glm",
-                            se_final = 0.005,
-                            # this will give confidence intervals +/- 0.01
-                            n_reps_total = NULL,
-                            tune_param = NULL,
-                            ...) {
-  inputs <- parse_inputs(
-    data_spec = list(
-      type = "binary",
-      args = list(
-        signal_parameters = signal_parameters,
-        noise_parameters = noise_parameters,
-        predictor_type = predictor_type,
-        predictor_prop = predictor_prop,
-        baseline_prob = baseline_prob
-      )
-    ),
-    metric,
+
+simulate_binary <- function(
+  signal_parameters,
+  baseline_prob,
+  min_sample_size,
+  max_sample_size,
+  large_sample_discrimination,
+  minimum_threshold = 0.1,
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  predictor_prop = NULL,
+  metric = "auc",
+  model = "glm",
+  se_final = 0.005,
+  n_reps_total = NULL,
+  tune_param = NULL,
+  ...
+  ) {
+
+  # Set model/data functions
+  data_spec <- list(
+    type = "binary",
+    args = list(
+      signal_parameters = signal_parameters,
+      noise_parameters = noise_parameters,
+      predictor_type = predictor_type,
+      predictor_prop = predictor_prop,
+      baseline_prob = baseline_prob
+    )
+  )
+  
+  data_function <- default_data_generators(data_spec)
+  model_function <- default_model_generators(
+    attr(data_function, "outcome"),
     model
   )
-  if (!(is.null(n_reps_total))) {
-    se_final <- NULL
-  }
-
-  # Tune once
+    
+  # Tune data function
   if (is.null(tune_param)) {
     tune_param <- tune_generate_data(
-      min_tune_arg = 0,
-      max_tune_arg = 1,
+      interval = c(0, 1),
       large_n = set_test_n(max_sample_size),
-      tolerance = set_tolerance(large_sample_auc),
+      tolerance = set_tolerance(large_sample_discrimination),
       max_interval_expansion = 10,
-      data_function = inputs$data_function,
-      model_function = inputs$model_function,
-      metric_function = default_metric_generator("auc", inputs$data_function),
-      target_large_sample_performance = large_sample_auc,
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = default_metric_generator(metric,
+                                                 data_function),
+      target_performance = large_sample_discrimination - minimum_threshold,
       verbose = TRUE
     )
   }
 
-  # Run for each metric
-  list_of_metrics <- lapply(metric, \(m) {
-    default_metric_generator(m, inputs$data_function)
-  })
+  if (!(is.null(n_reps_total))) {
+    se_final <- NULL
+  }
 
-
-  common_arguments <- c(
-    data_function = inputs$data_function,
-    model_function = inputs$model_function,
-    min_sample_size = min_sample_size,
-    max_sample_size = max_sample_size,
-    se_final = se_final,
-    n_reps_total = n_reps_total,
-    test_n = set_test_n(max_sample_size),
-    tune_param = tune_param
+  # Make a list containing (a) parameters for the discrimination metric
+  # (typically AUC); (b) parameters for the calibration metric (slope).
+  criteria <- list(
+    discrim = c(
+      metric = default_metric_generator(metric, data_function),
+      target = large_sample_discrimination - minimum_threshold
+    ),
+    calib = c(
+      metric = default_metric_generator("calib_slope", data_function),
+      target = 0.9
+    )
   )
 
-  stopifnot(length(list_of_metrics) == length(target_performance))
-
-  results <- mapply(function(m, p) {
+  lapply(criteria, function(p) {
     do.call(
       simulate_custom,
       args = c(
-        common_arguments,
-        metric_function = m,
-        target_performance = p
+        metric_function = p$metric,
+        target_performance = p$target,
+        # Common arguments
+        data_function = data_function,
+        model_function = model_function,
+        min_sample_size = min_sample_size,
+        max_sample_size = max_sample_size,
+        se_final = se_final,
+        n_reps_total = n_reps_total,
+        test_n = set_test_n(max_sample_size),
+        tune_param = tune_param
       )
     )
-  },
-  m = list_of_metrics,
-  p = target_performance
+  }
   )
-
-  dimnames(results)[[2]] <- metric
-  return(results)
 }
 
 #' Calculate the minimum sample size required for a continous outcome
@@ -490,3 +489,4 @@ simulate_survival <- function(signal_parameters,
     )
   )
 }
+
