@@ -51,6 +51,7 @@ default_metric_generator <- function(metric,
   return(metric_function)
 }
 
+#' @export
 predict_custom <- function(x, y, fit, model, type = "response") {
   if (model == "glm") {
     predict(fit, x, type = type)
