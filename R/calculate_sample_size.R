@@ -277,7 +277,7 @@ simulate_binary <- function(
     ),
     calib = c(
       metric = default_metric_generator("calib_slope", data_function),
-      target = 0.9
+      target = -0.1
     )
   )
 
