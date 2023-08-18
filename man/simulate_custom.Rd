@@ -16,11 +16,12 @@ simulate_custom(
   min_sample_size,
   max_sample_size,
   n_reps_total = NULL,
-  n_reps_per = 10,
+  n_reps_per = 50,
   se_final = NULL,
   n_init = 4,
   method = "mlpwr",
-  verbose = FALSE
+  verbose = FALSE,
+  ...
 )
 }
 \arguments{

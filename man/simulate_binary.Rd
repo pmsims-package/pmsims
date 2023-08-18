@@ -6,27 +6,28 @@
 \usage{
 simulate_binary(
   signal_parameters,
+  baseline_prob,
   min_sample_size,
   max_sample_size,
-  baseline_prob,
+  large_sample_discrimination,
+  minimum_threshold = 0.1,
   noise_parameters = 0,
   predictor_type = "continuous",
   predictor_prop = NULL,
   metric = "auc",
   model = "glm",
-  large_sample_performance = 0.8,
-  minimum_threshold = 0.1,
   se_final = 0.005,
   n_reps_total = NULL,
+  tune_param = NULL,
   ...
 )
 }
 \arguments{
-\item{signal_parameters}{Number of predictors that have a non zero assosaion with the outcome}
+\item{signal_parameters}{Number of predictors that have a non zero association with the outcome}
 
 \item{baseline_prob}{Baseline probability of outcome (ie. probability when all predicors are 0)}
 
-\item{noise_parameters}{Number of predictors with no assosiation with outcome}
+\item{noise_parameters}{Number of predictors with no association with outcome}
 
 \item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
 

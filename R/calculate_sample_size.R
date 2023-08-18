@@ -94,7 +94,7 @@ simulate_custom <- function(data_function = NULL,
         data_function = data_function,
         model_function = model_function,
         metric_function = metric_function,
-        target_large_sample_performance = large_sample_performance,
+        target_performance = large_sample_performance,
         verbose = verbose
       )
     )
@@ -119,23 +119,22 @@ simulate_custom <- function(data_function = NULL,
 
   if (method == "mlpwr") {
     output <- calculate_mlpwr(
-      test_n,
-      tune_param,
-      n_reps_total,
-      n_reps_per,
-      se_final,
-      min_sample_size,
-      max_sample_size,
-      target_performance,
-      n_init,
-      verbose,
-      data_function,
-      model_function,
-      metric_function,
-      value_on_error
+      test_n = test_n,
+      tune_param = tune_param,
+      n_reps_total = n_reps_total,
+      n_reps_per = n_reps_per,
+      se_final = se_final,
+      min_sample_size = min_sample_size,
+      max_sample_size = min_sample_size,
+      target_performance = target_performance,
+      n_init = n_init,
+      verbose = verbose,
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      value_on_error = value_on_error
     )
   } else if (method == "crude") {
-
     output <- calculate_crude(
       data_function,
       tune_param,
@@ -145,7 +144,8 @@ simulate_custom <- function(data_function = NULL,
       min_sample_size,
       max_sample_size,
       n_reps_per,
-      target_performance
+      target_performance,
+      ...
     )
   } else {
     stop("Method not found")
@@ -203,73 +203,6 @@ parse_inputs <- function(data_spec,
     metric_function = metric_function
   ))
 }
-
-#' Calculate the minimum sample size required for a binary outcome
-#'
-#' @inheritParams generate_binary_data
-#' @param ... Other options passed to [simulate_custom()]
-#'
-#' @return
-#' @export
-#'
-#' @examples
-# simulate_binary <- function(signal_parameters,
-#                             min_sample_size,
-#                             max_sample_size,
-#                             baseline_prob,
-#                             noise_parameters = 0,
-#                             predictor_type = "continuous",
-#                             predictor_prop = NULL,
-#                             metric = "auc",
-#                             model = "glm",
-#                             large_sample_performance = 0.8,
-#                             minimum_threshold = 0.1,
-#                             se_final = 0.005, # To give CIs of +/- 0.0
-#                             n_reps_total = NULL,
-#                             ...) {
-
-#   if (!(model %in% c("glm", "lasso", "rf"))) {
-#     stop("Invalid model selection")
-#   }
-
-#   inputs <- parse_inputs(
-#     data_spec = list(
-#       type = "binary",
-#       args = list(
-#         signal_parameters = signal_parameters,
-#         noise_parameters = noise_parameters,
-#         predictor_type = predictor_type,
-#         predictor_prop = predictor_prop,
-#         baseline_prob = baseline_prob
-#       )
-#     ),
-#     metric,
-#     model
-#   )
-
-#   if (!(is.null(n_reps_total))) {
-#     se_final <- NULL
-#   }
-
-#   target_performance <- large_sample_performance - minimum_threshold
-
-#   extra_args <- list(...)
-#   if (!is.null(extra_args$tune_param)) large_sample_performance <- NULL
-
-#   do.call(simulate_custom,
-#     args = c(
-#       inputs,
-#       target_performance = target_performance,
-#       large_sample_performance = large_sample_performance,
-#       min_sample_size = min_sample_size,
-#       max_sample_size = max_sample_size,
-#       se_final = se_final,
-#       n_reps_total = n_reps_total,
-#       test_n = set_test_n(max_sample_size),
-#       ...
-#     )
-#   )
-# }
 
 #' Calculate the minimum sample size required for a binary outcome
 #'
@@ -362,7 +295,8 @@ simulate_binary <- function(
         se_final = se_final,
         n_reps_total = n_reps_total,
         test_n = set_test_n(max_sample_size),
-        tune_param = tune_param
+        tune_param = tune_param,
+        ...
       )
     )
   }

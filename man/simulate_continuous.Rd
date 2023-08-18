@@ -11,6 +11,7 @@ simulate_continuous(
   noise_parameters = 0,
   predictor_type = "continuous",
   predictor_prop = NULL,
+  model = "lm",
   metric = "r2",
   large_sample_performance = 0.8,
   minimum_threshold = 0.1,
@@ -20,9 +21,9 @@ simulate_continuous(
 )
 }
 \arguments{
-\item{signal_parameters}{Number of predictors that have a non zero assosaion with the outcome}
+\item{signal_parameters}{Number of predictors that have a non zero association with the outcome}
 
-\item{noise_parameters}{Number of predictors with no assosiation with outcome}
+\item{noise_parameters}{Number of predictors with no association with outcome}
 
 \item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
 
