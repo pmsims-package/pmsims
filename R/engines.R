@@ -130,7 +130,7 @@ calculate_crude <- function(
     )
   }
   if (parallel) {
-    cat("Running in parallel...")
+    cat("\nRunning in parallel...")
     require(foreach)
     cl <- parallel::makeCluster(cores)
     doParallel::registerDoParallel(cl)
