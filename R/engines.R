@@ -13,7 +13,7 @@ calculate_mlpwr <- function(
     model_function,
     metric_function,
     value_on_error) {
-  mlpwr_simulation_function <- function(n) {
+   mlpwr_simulation_function <- function(n) {
     tryCatch(
       {
         test_data <- data_function(test_n, tune_param)
@@ -192,7 +192,9 @@ calculate_crude <- function(
   }
   utils::setTxtProgressBar(pb, length(sample_grid)+12)
   close(pb)
-  
+  print (fine_grid)
+  print(fine_summaries)
+  print(crude_min_n)
   return(list(results = performance_matrix,
               summaries = crude_summaries,
               min_n = crude_min_n))
