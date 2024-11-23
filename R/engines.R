@@ -28,7 +28,7 @@ calculate_mlpwr <- function(
     )
   }
 
-  aggregate_fun <- function(x) quantile(x, probs = .2)
+  aggregate_fun <- function(x) quantile(x, probs = .2, na.rm = TRUE)
 
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
@@ -103,12 +103,14 @@ calculate_crude <- function(
   parallel = FALSE,
   cores = 20) {
 
+  n_steps <- 50
+
   # Make sure n_reps_per is 10 or over
   n_reps_per <- pmax(10, n_reps_per)
 
   # Specify grid
   sample_grid <- c(
-    round(seq(min_sample_size, max_sample_size, length.out = 25)),
+    round(seq(min_sample_size, max_sample_size, length.out = n_steps)),
     max(30000, 3 * max_sample_size)
   )
 

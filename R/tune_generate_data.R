@@ -85,19 +85,19 @@ tune_generate_data <- function(
 }
 
 # Update to allow spec. of tuning parameter.
-
 optimise_me <- function(tune_var,
                         n,
                         data_function,
                         model_function,
                         metric_function,
                         target_performance) {
-  data <- data_function(n, tune_var) # TODO: update to allow choice of tuning parameter.
+  # TODO: update to allow choice of tuning parameter.
+  data <- data_function(n, tune_var)
   fit <- model_function(data)
   test_data <- data_function(n, tune_var)
   performance <- metric_function(data = test_data,
-                                 fit = fit,
-                                 model = attr(model_function, "model"))
+    fit = fit,
+    model = attr(model_function, "model"))
   delta <- abs(performance - target_performance)
   return(delta)
 }
