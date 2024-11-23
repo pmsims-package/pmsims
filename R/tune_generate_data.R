@@ -3,17 +3,17 @@
 #' @param data_function A function of two parameters, n and a tuning parameter,
 #' that returns data for the model function
 #' @param large_n A large sample size used for parameter tuning
-#' @param min_tune_arg The minimum valaue of the parameter to be tuned
-#' @param max_tune_arg The maximum valaue of the parameter to be tuned
+#' @param min_tune_arg The minimum value of the parameter to be tuned
+#' @param max_tune_arg The maximum value of the parameter to be tuned
 #' @param model_function A function which takes the object returned by the data
 #' generating function and fits the analysis model of interest.
 #' @param performance_function A function which takes a a test dataset and
-#' model object as argments and returns a performance metric
-#' @param target_large_sample_performance The desired model performance in a
+#' model object as arguments and returns a performance metric
+#' @param target_performance The desired model performance in a
 #' large sample
 #' @param tolerance The tolerance in the large sample performance
 #' @param max_interval_expansion The maximum number of time the search interval
-#' will be expanded before tune gererate data quits looking. This prevents
+#' will be expanded before tune generate data quits looking. This prevents
 #' getting stuck in impossible searches.
 #'
 #' @return optimal value for second argument of the data generating function
@@ -24,17 +24,14 @@
 tune_generate_data <- function(
   data_function,
    large_n,
-   min_tune_arg,
-   max_tune_arg,
+   interval,
    model_function,
    metric_function,
-   target_large_sample_performance,
-   tolerance = target_large_sample_performance / 100,
+   target_performance,
+   tolerance = target_performance / 100,
    max_interval_expansion = 10,
    verbose = FALSE) {
-  interval <- c(min_tune_arg, max_tune_arg)
 
-  # Optimise
   result <- stats::optimise(
     optimise_me, # function defined below
     interval = interval,
@@ -44,7 +41,7 @@ tune_generate_data <- function(
     data_function = data_function,
     model_function = model_function,
     metric_function = metric_function,
-    target_large_sample_performance = target_large_sample_performance
+    target_performance = target_performance
   )
 
   optimal_value <- result$minimum
@@ -77,7 +74,7 @@ tune_generate_data <- function(
       data_function = data_function,
       model_function = model_function,
       metric_function = metric_function,
-      target_large_sample_performance = target_large_sample_performance
+      target_performance = target_performance
     )
 
     # Extract the optimal value and its corresponding objective function value
@@ -88,19 +85,19 @@ tune_generate_data <- function(
 }
 
 # Update to allow spec. of tuning parameter.
-
 optimise_me <- function(tune_var,
                         n,
                         data_function,
                         model_function,
                         metric_function,
-                        target_large_sample_performance) {
-  data <- data_function(n, tune_var) # TODO: update to allow choice of tuning parameter.
+                        target_performance) {
+  # TODO: update to allow choice of tuning parameter.
+  data <- data_function(n, tune_var)
   fit <- model_function(data)
   test_data <- data_function(n, tune_var)
   performance <- metric_function(data = test_data,
-                                 fit = fit,
-                                 model = attr(model_function, "model"))
-  delta <- abs(performance - target_large_sample_performance)
+    fit = fit,
+    model = attr(model_function, "model"))
+  delta <- abs(performance - target_performance)
   return(delta)
 }

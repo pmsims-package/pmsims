@@ -17,11 +17,11 @@ generate_binary_data(
 \arguments{
 \item{n}{Sample size}
 
-\item{beta_signal}{Assosiation between signal predictors and the outcome}
+\item{beta_signal}{Association between signal predictors and the outcome}
 
-\item{signal_parameters}{Number of predictors that have a non zero assosaion with the outcome}
+\item{signal_parameters}{Number of predictors that have a non zero association with the outcome}
 
-\item{noise_parameters}{Number of predictors with no assosiation with outcome}
+\item{noise_parameters}{Number of predictors with no association with outcome}
 
 \item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
 

@@ -28,7 +28,7 @@ calculate_mlpwr <- function(
     )
   }
 
-  aggregate_fun <- function(x) quantile(x, probs = .2)
+  aggregate_fun <- function(x) quantile(x, probs = .2, na.rm = TRUE)
 
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
@@ -71,7 +71,7 @@ calculate_mlpwr <- function(
   for (i in seq_along(perfs)) {
     results[i, seq(1, length(perfs[[i]]$y), 1)] <- perfs[[i]]$y
   }
- 
+
   get_perf <- function(results, p) {
     apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
   }
@@ -99,25 +99,22 @@ calculate_crude <- function(
   min_sample_size,
   max_sample_size,
   n_reps_per,
-  target_performance) {
+  target_performance,
+  parallel = FALSE,
+  cores = 20) {
+
+  n_steps <- 50
 
   # Make sure n_reps_per is 10 or over
   n_reps_per <- pmax(10, n_reps_per)
 
   # Specify grid
   sample_grid <- c(
-    round(seq(min_sample_size, max_sample_size, length.out = 25)),
+    round(seq(min_sample_size, max_sample_size, length.out = n_steps)),
     max(30000, 3 * max_sample_size)
   )
-  # Generate data and compute metric for sizes_to_check, n_reps_per times
-  performance_matrix <-
-    matrix(
-      nrow = length(sample_grid),
-      ncol = n_reps_per
-    )
-  colnames(performance_matrix) <- 1:n_reps_per
-  rownames(performance_matrix) <- sample_grid
 
+  # Generate data and compute metric for sizes_to_check, n_reps_per times
   test_n <- pmax(3 * max_sample_size, 30000)
   test_data <- data_function(test_n, tune_param)
 
@@ -127,29 +124,55 @@ calculate_crude <- function(
         train_data <- data_function(n, tune_param)
         fit <- model_function(train_data)
         model <- attr(model_function, "model")
-        metric_function(test_data, fit, model)
+        return(metric_function(test_data, fit, model))
       },
       error = function(e) {
         return(value_on_error)
       }
     )
   }
-  
-  #progress bar
-  pb <- utils::txtProgressBar(0, length(sample_grid)+2, style = 3)
-  utils::setTxtProgressBar(pb, 1)
-  
-  # Compute performance metrics across sizes and simulations
-  for (i in seq_along(sample_grid)) {
-    utils::setTxtProgressBar(pb, 1+i)
-    for (j in 1:n_reps_per) {
-      performance_matrix[i, j] <- metric_calculation(sample_grid[i])
+  if (parallel) {
+    cat("\nRunning in parallel...")
+    require(foreach)
+    cl <- parallel::makeCluster(cores)
+    doParallel::registerDoParallel(cl)
+    performance_matrix <-
+      foreach(a = sample_grid, .combine = rbind) %:%
+        foreach(b = 1:n_reps_per, .combine = c) %dopar% {
+          return(metric_calculation(a))
+        }
+    colnames(performance_matrix) <- 1:n_reps_per
+    rownames(performance_matrix) <- sample_grid
+    parallel::stopCluster(cl)
+  } else {
+    performance_matrix <-
+      matrix(
+        nrow = length(sample_grid),
+        ncol = n_reps_per
+      )
+    colnames(performance_matrix) <- 1:n_reps_per
+    rownames(performance_matrix) <- sample_grid
+    #progress bar
+    pb <- utils::txtProgressBar(0, length(sample_grid) + 2, style = 3)
+    utils::setTxtProgressBar(pb, 1)
+
+    # Compute performance metrics across sizes and simulations
+    for (i in seq_along(sample_grid)) {
+      utils::setTxtProgressBar(pb, 1 + i)
+      for (j in 1:n_reps_per) {
+        performance_matrix[i, j] <- metric_calculation(sample_grid[i])
+      }
     }
+    utils::setTxtProgressBar(pb, length(sample_grid) + 2)
+    close(pb)
   }
-  utils::setTxtProgressBar(pb, length(sample_grid)+2)
-  close(pb)
+
   get_perf <- function(results, p) {
-    apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
+    apply(results,
+          FUN = stats::quantile,
+          MARGIN = 1,
+          probs = p,
+          na.rm = TRUE)
   }
 
   crude_summaries <- list(

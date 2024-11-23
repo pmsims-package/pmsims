@@ -13,7 +13,8 @@ simulate_survival(
   predictor_prop = NULL,
   baseline_hazard = 0.01,
   censoring_rate = 0.2,
-  metric = "auc",
+  metric = "cindex",
+  model = "coxph",
   large_sample_performance = 0.8,
   minimum_threshold = 0.1,
   se_final = 0.005,
@@ -22,9 +23,9 @@ simulate_survival(
 )
 }
 \arguments{
-\item{signal_parameters}{Number of predictors that have a non zero assosaion with the outcome}
+\item{signal_parameters}{Number of predictors that have a non zero association with the outcome}
 
-\item{noise_parameters}{Number of predictors with no assosiation with outcome}
+\item{noise_parameters}{Number of predictors with no association with outcome}
 
 \item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
 
@@ -32,7 +33,7 @@ simulate_survival(
 
 \item{baseline_hazard}{Baseline Hazard}
 
-\item{censoring_rate}{Censoring rate}
+\item{censoring_rate}{Early drop out/censoring rate}
 }
 \description{
 Calculate the minimum sample size required for a survival outcome

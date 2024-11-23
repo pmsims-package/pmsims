@@ -51,6 +51,7 @@ default_metric_generator <- function(metric,
   return(metric_function)
 }
 
+#' @export
 predict_custom <- function(x, y, fit, model, type = "response") {
   if (model == "glm") {
     predict(fit, x, type = type)
@@ -88,7 +89,7 @@ binary_calib_slope <- function(data, fit, model) {
   } else {
     calib_slope <- as.numeric(coef(slope)[2])
   }
-  return(calib_slope)
+  return(-abs(1 - calib_slope))
 }
 
 binary_calib_itl <- function(data, fit, model) {

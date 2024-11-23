@@ -18,11 +18,11 @@ generate_survival_data(
 \arguments{
 \item{n}{Sample size}
 
-\item{beta_signal}{Assosiation between signal predictors and the outcome}
+\item{beta_signal}{Association between signal predictors and the outcome}
 
-\item{signal_parameters}{Number of predictors that have a non zero assosaion with the outcome}
+\item{signal_parameters}{Number of predictors that have a non zero association with the outcome}
 
-\item{noise_parameters}{Number of predictors with no assosiation with outcome}
+\item{noise_parameters}{Number of predictors with no association with outcome}
 
 \item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
 
@@ -30,11 +30,11 @@ generate_survival_data(
 
 \item{baseline_hazard}{Baseline Hazard}
 
-\item{censoring_rate}{Censoring rate}
+\item{censoring_rate}{Early drop out/censoring rate}
 }
 \value{
-A data frame with a column for ID, Time, status (0 = censored, 1 =
-event), and signal_parameters + noise_parameters predictor columns
+A data frame with a time ("time"), event status ("event") (0 = censored, 1 =
+event), and signal_parameters + noise_parameters predictor columns ("x1", "x2", ... .)
 }
 \description{
 Title Simulate Survival Data
