@@ -1,7 +1,7 @@
 test_that("survival_auc", {
   inputs <- parse_inputs(data_spec = list(type = "survival",
                                           args = list(
-                                            signal_parameters = 5, 
+                                            n_signal_parameters = 5, 
                                             noise_parameters = 5, 
                                             predictor_type = "continuous", 
                                             beta_signal = 0.1,
@@ -9,7 +9,8 @@ test_that("survival_auc", {
                                             censoring_rate = 0.2
                                           )
   ),
-  metric="auc")
+  metric="auc",
+  model = "coxph")
   set.seed(1234)
   data <- inputs$data_function(1000)
   test_data <- inputs$data_function(1000)
@@ -23,13 +24,14 @@ test_that("survival_auc", {
 test_that("continuous_r2", {
   inputs <- parse_inputs(data_spec = list(type = "continuous",
                                           args = list(
-                                            signal_parameters = 5, 
+                                            n_signal_parameters = 5, 
                                             noise_parameters = 5, 
                                             predictor_type = "continuous", 
                                             beta_signal = 0.1
                                           )
   ),
-  metric="r2")
+  metric="r2",
+  model = "lm")
   set.seed(1234)
   data <- inputs$data_function(1000)
   test_data <- inputs$data_function(1000)
@@ -42,13 +44,14 @@ test_that("continuous_r2", {
 test_that("continuous_calib_slope", {
   inputs <- parse_inputs(data_spec = list(type = "continuous",
                                           args = list(
-                                            signal_parameters = 5, 
+                                            n_signal_parameters = 5, 
                                             noise_parameters = 5, 
                                             predictor_type = "continuous", 
                                             beta_signal = 0.1
                                           )
   ),
-  metric="calib_slope")
+  metric="calib_slope",
+  model = "lm")
   set.seed(1234)
   data <- inputs$data_function(1000)
   test_data <- inputs$data_function(1000)
@@ -61,13 +64,14 @@ test_that("continuous_calib_slope", {
 test_that("continuous_calib_itl", {
   inputs <- parse_inputs(data_spec = list(type = "continuous",
                                           args = list(
-                                            signal_parameters = 5, 
+                                            n_signal_parameters = 5, 
                                             noise_parameters = 5, 
                                             predictor_type = "continuous", 
                                             beta_signal = 0.1
                                           )
   ),
-  metric="calib_itl")
+  metric="calib_itl",
+  model = "lm")
   set.seed(1234)
   data <- inputs$data_function(1000)
   test_data <- inputs$data_function(1000)
