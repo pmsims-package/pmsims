@@ -23,14 +23,14 @@
 
 tune_generate_data <- function(
   data_function,
-   large_n,
-   interval,
-   model_function,
-   metric_function,
-   target_performance,
-   tolerance = target_performance / 100,
-   max_interval_expansion = 10,
-   verbose = FALSE) {
+  large_n,
+  interval,
+  model_function,
+  metric_function,
+  target_performance,
+  tolerance = set_tolerance(target_performance),
+  max_interval_expansion = 10,
+  verbose = FALSE) {
 
   result <- stats::optimise(
     optimise_me, # function defined below
@@ -95,7 +95,8 @@ optimise_me <- function(tune_var,
   data <- data_function(n, tune_var)
   fit <- model_function(data)
   test_data <- data_function(n, tune_var)
-  performance <- metric_function(data = test_data,
+  performance <- metric_function(
+    data = test_data,
     fit = fit,
     model = attr(model_function, "model"))
   delta <- abs(performance - target_performance)
