@@ -20,7 +20,7 @@ test_that("generate_linear_predictor", {
                               parameters = 10,
                               type = "continuous")
   lp <- generate_linear_predictor(X,
-                                  signal_parameters = 5, 
+                                  n_signal_parameters = 5, 
                                   noise_parameters = 5,
                                   intercept = 1,
                                   beta_signal = 0.5)
@@ -29,26 +29,13 @@ test_that("generate_linear_predictor", {
   
 })
 
-test_that("generate_linear_predictor", {
-  X <- generate_predictors(n = 100,
-                           parameters = 10,
-                           type = "continuous")
-  lp <- generate_linear_predictor(X,
-                                  signal_parameters = 5, 
-                                  noise_parameters = 5,
-                                  intercept = 1,
-                                  beta_signal = 0.5)
-  expect_equal(length(lp), 100)
-  
-  
-})
 
 test_that("generate_continuous_data", {
  signal_parameters <- 5
    noise_parameters <- 5
   data <- generate_continuous_data(
    n = 100, 
-   signal_parameters = signal_parameters, 
+   n_signal_parameters = signal_parameters, 
    noise_parameters = noise_parameters, 
    predictor_type = "binary",
    predictor_prop = 0.1, 
@@ -64,7 +51,7 @@ test_that("generate_binary_data", {
   noise_parameters <- 5
   data <- generate_binary_data(
     n = 100, 
-    signal_parameters = signal_parameters, 
+    n_signal_parameters = signal_parameters, 
     noise_parameters = noise_parameters, 
     predictor_type = "continuous", 
     beta_signal = 0.1,
@@ -80,7 +67,7 @@ test_that("generate_survival_data", {
   noise_parameters <- 5
   data <- generate_survival_data(
     n = 100, 
-    signal_parameters = signal_parameters, 
+    n_signal_parameters = signal_parameters, 
     noise_parameters = noise_parameters, 
     predictor_type = "continuous", 
     beta_signal = 0.1,
@@ -88,8 +75,8 @@ test_that("generate_survival_data", {
     censoring_rate = 0.3)
   
   expect_equal(nrow(data), 100)
-  expect_equal(ncol(data), signal_parameters+noise_parameters+3) 
-  expect_equal(colnames(data),c("id", "time", "event", paste0("x", 1:(signal_parameters+signal_parameters))))
+  expect_equal(ncol(data), signal_parameters+noise_parameters+2) 
+  expect_equal(colnames(data), c("time", "event", paste0("x", 1:(signal_parameters+noise_parameters))))
 })
 
 
@@ -98,7 +85,7 @@ test_that("update_arguments", {
   noise_parameters <- 5
   opts <- list(
     args = list(
-       signal_parameters = signal_parameters, 
+      n_signal_parameters = signal_parameters, 
        noise_parameters = noise_parameters, 
        predictor_type = "binary",
        predictor_prop = 0.1, 
@@ -122,7 +109,7 @@ test_that("default_data_generators", {
   opts <- list(
     type = "continuous",
     args = list(
-      signal_parameters = signal_parameters, 
+      n_signal_parameters = signal_parameters, 
       noise_parameters = noise_parameters, 
       predictor_type = "binary",
       predictor_prop = 0.1, 

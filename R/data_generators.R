@@ -111,7 +111,7 @@ generate_binary_data <- function(
 generate_survival_data <- function(
     n,
     beta_signal,
-    n_nsignal_parameters,
+    n_signal_parameters,
     noise_parameters,
     predictor_type,
     predictor_prop,
