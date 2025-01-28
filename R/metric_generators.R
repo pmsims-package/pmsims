@@ -81,9 +81,12 @@ binary_calib_slope <- function(data, fit, model) {
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
   y_link <- predict_custom(x, y, fit, model, type = "link")
-  slope <- try(glm(y ~ y_link,
-    family = binomial()),
-  silent = TRUE)
+  slope <- try(
+    glm(y ~ y_link,
+      family = binomial()
+    ),
+    silent = TRUE
+  )
   if (class(slope)[1] == "try-error") {
     calib_slope <- NaN
   } else {
@@ -98,7 +101,9 @@ binary_calib_itl <- function(data, fit, model) {
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
   y_link <- predict_custom(x, y, fit, model, type = "link")
-  slope_itl <- try(glm(y ~ 1, offset = y_link,
+  slope_itl <- try(
+    glm(y ~ 1,
+      offset = y_link,
       data = data,
       family = "binomial"
     ),
@@ -173,7 +178,7 @@ survival_cindex <- function(data, fit, model) {
   # this works for models being the Cox models or those with predict(type =
   # "lp") giving some sort of a risk score, or linear predictor
   y_surv <- survival::Surv(data$time, data$event)
-  x <- data[, names(data) != "time" & names(data) != "event" & names(data)!="id"]
+  x <- data[, names(data) != "time" & names(data) != "event" & names(data) != "id"]
   y_hat <- predict(fit, x, type = "lp")
   cf <- try(survival::concordancefit(y_surv, -1 * y_hat), silent = TRUE)
   if (class(cf)[1] == "try-error") {
@@ -200,8 +205,10 @@ survival_auc <- function(data, fit, model) {
   if (class(try(
     survival::concordancefit(
       y_surv,
-      y_hat),
-    silent = TRUE))[1] == "try-error") {
+      y_hat
+    ),
+    silent = TRUE
+  ))[1] == "try-error") {
     auc_survival <- NaN
   } else {
     t_max <- max(data[data$event == 1, "time"])

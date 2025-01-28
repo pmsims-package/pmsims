@@ -91,18 +91,17 @@ calculate_mlpwr <- function(
 }
 
 calculate_crude <- function(
-  data_function,
-  tune_param,
-  model_function,
-  metric_function,
-  value_on_error,
-  min_sample_size,
-  max_sample_size,
-  n_reps_per,
-  target_performance,
-  parallel = FALSE,
-  cores = 20) {
-
+    data_function,
+    tune_param,
+    model_function,
+    metric_function,
+    value_on_error,
+    min_sample_size,
+    max_sample_size,
+    n_reps_per,
+    target_performance,
+    parallel = FALSE,
+    cores = 20) {
   n_steps <- 50
 
   # Make sure n_reps_per is 10 or over
@@ -138,9 +137,9 @@ calculate_crude <- function(
     doParallel::registerDoParallel(cl)
     performance_matrix <-
       foreach(a = sample_grid, .combine = rbind) %:%
-        foreach(b = 1:n_reps_per, .combine = c) %dopar% {
-          return(metric_calculation(a))
-        }
+      foreach(b = 1:n_reps_per, .combine = c) %dopar% {
+        return(metric_calculation(a))
+      }
     colnames(performance_matrix) <- 1:n_reps_per
     rownames(performance_matrix) <- sample_grid
     parallel::stopCluster(cl)
@@ -152,7 +151,7 @@ calculate_crude <- function(
       )
     colnames(performance_matrix) <- 1:n_reps_per
     rownames(performance_matrix) <- sample_grid
-    #progress bar
+    # progress bar
     pb <- utils::txtProgressBar(0, length(sample_grid) + 2, style = 3)
     utils::setTxtProgressBar(pb, 1)
 
@@ -169,10 +168,11 @@ calculate_crude <- function(
 
   get_perf <- function(results, p) {
     apply(results,
-          FUN = stats::quantile,
-          MARGIN = 1,
-          probs = p,
-          na.rm = TRUE)
+      FUN = stats::quantile,
+      MARGIN = 1,
+      probs = p,
+      na.rm = TRUE
+    )
   }
 
   crude_summaries <- list(
@@ -183,7 +183,8 @@ calculate_crude <- function(
   )
 
   if (is.na(
-    which(crude_summaries$quant20_performance > target_performance)[1])
+    which(crude_summaries$quant20_performance > target_performance)[1]
+  )
   ) {
     crude_min_n <- NA
   } else {
@@ -192,7 +193,9 @@ calculate_crude <- function(
         which(crude_summaries$quant20_performance > target_performance)[1]
       ]
   }
-  return(list(results = performance_matrix,
-              summaries = crude_summaries,
-              min_n = crude_min_n))
+  return(list(
+    results = performance_matrix,
+    summaries = crude_summaries,
+    min_n = crude_min_n
+  ))
 }

@@ -25,29 +25,34 @@ default_data_generators <- function(opts) {
 #'
 #' @param n Sample size
 #' @param beta_signal Association between signal predictors and the outcome
-#' @param signal_parameters Number of predictors that have a non zero association with the outcome
-#' @param noise_parameters Number of predictors with no association with outcome
+#' @param n_signal_parameters Number of predictors that have a non zero
+#' association with the outcome @param noise_parameters Number of predictors
+#' with no association with outcome
 #' @param predictor_type Type of predictor, can be "continuous" or "binary."
-#' @param predictor_prop If predictor type is binary, the probability of a predictor taking value 1
+#' @param predictor_prop If predictor type is binary, the probability of a
+#' predictor taking value 1
 #'
-#' @return A data frame with one outcome column and signal_parameters + noise_parameters predictor columns
+#' @return A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 #' @export
 #'
-#' @examples generate_continuous_data(n = 100, signal_parameters = 10, noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1, beta_signal = 0.1)
-
+#' @examples generate_continuous_data(
+#'   n = 100, n_signal_parameters = 10,
+#'   noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1,
+#'   beta_signal = 0.1
+#' )
 generate_continuous_data <- function(
     n,
     beta_signal,
-    signal_parameters,
+    n_signal_parameters,
     noise_parameters,
     predictor_type,
     predictor_prop = NULL) {
-  parameters <- signal_parameters + noise_parameters
+  parameters <- n_signal_parameters + noise_parameters
   intercept <- 0
   X <- generate_predictors(n, parameters, predictor_type, predictor_prop)
   lp <- generate_linear_predictor(
     X,
-    signal_parameters,
+    n_signal_parameters,
     noise_parameters,
     intercept,
     beta_signal
@@ -63,24 +68,24 @@ generate_continuous_data <- function(
 #' @inheritParams generate_continuous_data
 #' @param baseline_prob Baseline probability of outcome (ie. probability when all predicors are 0)
 #'
-#' @return A data frame with one outcome column and signal_parameters + noise_parameters predictor columns
+#' @return A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 #' @export
 #'
-#' @examples generate_binary_data(n = 100, signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
+#' @examples generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 generate_binary_data <- function(
     n,
     beta_signal,
-    signal_parameters,
+    n_signal_parameters,
     noise_parameters,
     predictor_type,
     predictor_prop,
     baseline_prob) {
-  parameters <- signal_parameters + noise_parameters
+  parameters <- n_signal_parameters + noise_parameters
   intercept <- log(baseline_prob / (1 - baseline_prob))
   X <- generate_predictors(n, parameters, predictor_type, predictor_prop)
   lp <- generate_linear_predictor(
     X,
-    signal_parameters,
+    n_signal_parameters,
     noise_parameters,
     intercept,
     beta_signal
@@ -99,25 +104,25 @@ generate_binary_data <- function(
 #' @param censoring_rate Early drop out/censoring rate
 #'
 #' @return A data frame with a time ("time"), event status ("event") (0 = censored, 1 =
-#' event), and signal_parameters + noise_parameters predictor columns ("x1", "x2", ... .)
+#' event), and n_signal_parameters + noise_parameters predictor columns ("x1", "x2", ... .)
 #' @export
 #'
-#' @examples generate_binary_data(n = 100, signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
+#' @examples generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 generate_survival_data <- function(
     n,
     beta_signal,
-    signal_parameters,
+    n_nsignal_parameters,
     noise_parameters,
     predictor_type,
     predictor_prop,
     baseline_hazard,
     censoring_rate) {
-  parameters <- signal_parameters + noise_parameters
+  parameters <- n_signal_parameters + noise_parameters
   intercept <- 0
   X <- generate_predictors(n, parameters, predictor_type, predictor_prop)
   lp <- generate_linear_predictor(
     X,
-    signal_parameters,
+    n_signal_parameters,
     noise_parameters,
     intercept,
     beta_signal
@@ -132,10 +137,10 @@ generate_survival_data <- function(
   censor_ids <-
     sample(n, round(n * censoring_rate, 0), replace = FALSE)
   censor_time[censor_ids] <- runif(length(censor_ids), 0, T_observe)
-  
-  event <-  as.numeric(event_time <= censor_time)
+
+  event <- as.numeric(event_time <= censor_time)
   survival_time <- pmin(event_time, censor_time)
-  
+
   # Return survival data as a data frame
   return(data.frame(
     time = survival_time,
@@ -169,11 +174,11 @@ generate_predictors <- function(n, parameters, type, predictor_prop) {
 
 generate_linear_predictor <- function(
     X,
-    signal_parameters,
+    n_signal_parameters,
     noise_parameters,
     intercept,
     beta_signal) {
-  W_ <- c(rep(beta_signal, signal_parameters), rep(0, noise_parameters))
+  W_ <- c(rep(beta_signal, n_signal_parameters), rep(0, noise_parameters))
   lp <- X %*% W_ + intercept
   return(lp)
 }

@@ -1,0 +1,171 @@
+simulate_custom <- function(data_function = NULL,
+                            model_function = NULL,
+                            metric_function = NULL,
+                            target_performance,
+                            test_n = 30000,
+                            tune_param = NULL,
+                            tune_args = list(),
+                            large_sample_performance = NULL,
+                            min_sample_size,
+                            max_sample_size,
+                            n_reps_total = NULL,
+                            n_reps_per = 50,
+                            se_final = NULL,
+                            n_init = 4,
+                            method = "mlpwr",
+                            verbose = FALSE,
+                            ...) {
+  if (is.null(data_function)) {
+    stop("data_function missing")
+  }
+
+  if (is.null(tune_param) && is.null(large_sample_performance)) {
+    stop(paste(
+      "One of 'tune_param' or 'large_sample_performance' must be specified"
+    ))
+  }
+
+  if ((!is.null(tune_param)) && (!is.null(large_sample_performance))) {
+    stop(paste(
+      "You can't specify both 'tune_param' and 'large_sample_performance'; pick one."
+    ))
+  }
+
+  if (sum(c(
+    is.null(n_reps_total),
+    is.null(se_final)
+  )) != 1) {
+    stop("Exactly one of 'n_reps_total' or 'se_final' must be specified.")
+  }
+
+  if (min_sample_size > max_sample_size) {
+    stop("min_sample_size must be less than max_sample_size")
+  }
+  time_0 <- Sys.time()
+
+  # Set default tuning parameters
+  if (is.null(tune_param)) {
+    default_tuning <- list(
+      interval = c(0, 1),
+      large_n = set_test_n(max_sample_size),
+      tolerance = set_tolerance(large_sample_performance),
+      max_interval_expansion = 10
+    )
+    for (p in names(default_tuning)) {
+      if (is.null(tune_args[[p]])) tune_args[[p]] <- default_tuning[[p]]
+    }
+    tune_args <- c(
+      tune_args,
+      list(
+        data_function = data_function,
+        model_function = model_function,
+        metric_function = metric_function,
+        target_performance = large_sample_performance,
+        verbose = verbose
+      )
+    )
+    tune_param <- do.call(tune_generate_data, tune_args)
+  }
+  # Define a default metric value if calculations fail; 0.5 for default
+  metric_name <- attr(metric_function, "metric")
+  error_values <- list(
+    auc = 0.5,
+    cindex = 0.5,
+    r2 = 0,
+    brier_score_scaled = 0,
+    brier_score = 1,
+    IBS = 1,
+    calib_slope = 0
+  )
+  value_on_error <- ifelse(metric_name %in% names(error_values),
+    error_values[[metric_name]],
+    0.5
+  )
+  time_1 <- Sys.time()
+
+  if (method == "mlpwr") {
+    output <- calculate_mlpwr(
+      test_n = test_n,
+      tune_param = tune_param,
+      n_reps_total = n_reps_total,
+      n_reps_per = n_reps_per,
+      se_final = se_final,
+      min_sample_size = min_sample_size,
+      max_sample_size = max_sample_size,
+      target_performance = target_performance,
+      n_init = n_init,
+      verbose = verbose,
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      value_on_error = value_on_error
+    )
+  } else if (method == "crude") {
+    output <- calculate_crude(
+      data_function,
+      tune_param,
+      model_function,
+      metric_function,
+      value_on_error,
+      min_sample_size,
+      max_sample_size,
+      n_reps_per,
+      target_performance,
+      ...
+    )
+  } else {
+    stop("Method not found")
+  }
+  time_2 <- Sys.time()
+  results_list <- list(
+    outcome = attr(data_function, "outcome"),
+    min_n = ifelse(
+      is.na(output$min_n),
+      "Not possible. Increase sample or lower performance",
+      output$min_n
+    ),
+    target_performance = target_performance,
+    summaries = output$summaries,
+    data = output$results,
+    train_size = rownames(output$results),
+    tune_param = tune_param,
+    data_function = data_function,
+    simulation_time = list(
+      "tuning" = difftime(time_1, time_0, units = "secs"),
+      "simulating" = difftime(time_2, time_1, units = "secs")
+    )
+  )
+  attr(results_list, "class") <- "pmsims"
+  return(results_list)
+}
+
+#' Title
+#'
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+parse_inputs <- function(data_spec,
+                         metric,
+                         model) {
+  if (is.null(metric)) stop("metric is missing")
+  if (is.null(data_spec)) stop("data_spec missing")
+  # Set data generating function
+  data_function <- default_data_generators(data_spec)
+  # Set model function, based on outcome type and chosen model
+  model_function <- default_model_generators(
+    attr(data_function, "outcome"),
+    model
+  )
+  # Set a metric, based on outcome type
+  # TODO: handle multiple metrics. Currently selecting first element in
+  # 'metric' only.
+  metric_function <- default_metric_generator(metric[[1]], data_function)
+  return(list(
+    data_function = data_function,
+    model_function = model_function,
+    metric_function = metric_function
+  ))
+}
