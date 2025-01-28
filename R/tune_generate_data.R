@@ -3,8 +3,7 @@
 #' @param data_function A function of two parameters, n and a tuning parameter,
 #' that returns data for the model function
 #' @param large_n A large sample size used for parameter tuning
-#' @param min_tune_arg The minimum value of the parameter to be tuned
-#' @param max_tune_arg The maximum value of the parameter to be tuned
+#' @param interval 	A vector containing the end-points of the interval to be searched
 #' @param model_function A function which takes the object returned by the data
 #' generating function and fits the analysis model of interest.
 #' @param performance_function A function which takes a a test dataset and

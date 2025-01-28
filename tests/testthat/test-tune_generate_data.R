@@ -20,35 +20,25 @@ generate_data <- function(n, beta_signal) {
   return(data)
 }
 
-fit_model <- function(data) {
-  logistic_model <- glm("y ~ .", data = data, family = "binomial")
-}
+fit_model <- default_model_generators(outcome = "binary", model = "glm")
 
-# Get performance must be a function of data and a model objedt
-get_performance <- function(data, model) {
-  y <- data[, 1]
-  x <- data[, -1]
-  y_hat <- predict(model, x, type = "response")
-  auc <- pROC::auc(y, as.numeric(y_hat), quiet = TRUE)
-  return(auc[1])
-}
+# Get performance must be a function of data and a model object
 
 test_that("tune_generate_data works", {
   tune_param <- tune_generate_data(
     data_function = generate_data,
     large_n = 10000,
-    min_tune_arg = 0,
-    max_tune_arg = 1,
+    interval = c(0,1),
     model_function = fit_model,
-    metric_function = get_performance,
-    target_large_sample_performance = 0.7
+    metric_function = binary_auc_metric,
+    target_performance = 0.7
   )
   expect_equal(length(tune_param), 1)
 
   train_data <- generate_data(10000, tune_param)
   test_data <- generate_data(10000, tune_param)
   model <- fit_model(train_data)
-  performance <- get_performance(test_data, model)
+  performance <- binary_auc_metric(test_data,fit =  model, model = "glm")
 
   expect_equal(performance, 0.7, tol = 0.1)
 })
@@ -57,18 +47,17 @@ test_that("interval_expansion works", {
   tune_param <- tune_generate_data(
     data_function = generate_data,
     large_n = 10000,
-    min_tune_arg = 0,
-    max_tune_arg = 0.1,
+    interval = c(0,0.1),
     model_function = fit_model,
-    metric_function = get_performance,
-    target_large_sample_performance = 0.7
+    metric_function = binary_auc_metric,
+    target_performance = 0.7
   )
   expect_equal(length(tune_param), 1)
   
   train_data <- generate_data(10000, tune_param)
   test_data <- generate_data(10000, tune_param)
   model <- fit_model(train_data)
-  performance <- get_performance(test_data, model)
+  performance <- binary_auc_metric(test_data,fit =  model, model = "glm")
   
   expect_equal(performance, 0.7, tol = 0.1)
 })
