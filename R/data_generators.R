@@ -25,16 +25,21 @@ default_data_generators <- function(opts) {
 #'
 #' @param n Sample size
 #' @param beta_signal Association between signal predictors and the outcome
-#' @param n_signal_parameters Number of predictors that have a non zero association with the outcome
-#' @param noise_parameters Number of predictors with no association with outcome
+#' @param n_signal_parameters Number of predictors that have a non zero
+#' association with the outcome @param noise_parameters Number of predictors
+#' with no association with outcome
 #' @param predictor_type Type of predictor, can be "continuous" or "binary."
-#' @param predictor_prop If predictor type is binary, the probability of a predictor taking value 1
+#' @param predictor_prop If predictor type is binary, the probability of a
+#' predictor taking value 1
 #'
 #' @return A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 #' @export
 #'
-#' @examples generate_continuous_data(n = 100, n_signal_parameters = 10, noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1, beta_signal = 0.1)
-
+#' @examples generate_continuous_data(
+#'   n = 100, n_signal_parameters = 10,
+#'   noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1,
+#'   beta_signal = 0.1
+#' )
 generate_continuous_data <- function(
     n,
     beta_signal,
@@ -133,7 +138,7 @@ generate_survival_data <- function(
     sample(n, round(n * censoring_rate, 0), replace = FALSE)
   censor_time[censor_ids] <- runif(length(censor_ids), 0, T_observe)
 
-  event <-  as.numeric(event_time <= censor_time)
+  event <- as.numeric(event_time <= censor_time)
   survival_time <- pmin(event_time, censor_time)
 
   # Return survival data as a data frame

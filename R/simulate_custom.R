@@ -19,16 +19,22 @@ simulate_custom <- function(data_function = NULL,
     stop("data_function missing")
   }
 
-  if (sum(c(is.null(tune_param),
-            is.null(large_sample_performance))) != 1) {
+  if (is.null(tune_param) && is.null(large_sample_performance)) {
     stop(paste(
-      "Exactly one of 'tune_param' or",
-      "'large_sample_performance' must be specified."
+      "One of 'tune_param' or 'large_sample_performance' must be specified"
     ))
   }
 
-  if (sum(c(is.null(n_reps_total),
-            is.null(se_final))) != 1) {
+  if ((!is.null(tune_param)) && (!is.null(large_sample_performance))) {
+    stop(paste(
+      "You can't specify both 'tune_param' and 'large_sample_performance'; pick one."
+    ))
+  }
+
+  if (sum(c(
+    is.null(n_reps_total),
+    is.null(se_final)
+  )) != 1) {
     stop("Exactly one of 'n_reps_total' or 'se_final' must be specified.")
   }
 
@@ -163,4 +169,3 @@ parse_inputs <- function(data_spec,
     metric_function = metric_function
   ))
 }
-
