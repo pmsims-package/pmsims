@@ -48,25 +48,22 @@
 #' @export
 #'
 #' @examples
-
 simulate_binary <- function(
-  n_signal_parameters,
-  baseline_prob,
-  min_sample_size,
-  max_sample_size,
-  large_sample_performance,
-  minimum_threshold = 0.1,
-  noise_parameters = 0,
-  predictor_type = "continuous",
-  predictor_prop = NULL,
-  metric = "auc",
-  model = "glm",
-  se_final = 0.005,
-  n_reps_total = NULL,
-  tune_param = NULL,
-  ...
-) {
-
+    n_signal_parameters,
+    baseline_prob,
+    min_sample_size,
+    max_sample_size,
+    large_sample_performance,
+    minimum_threshold = 0.1,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    predictor_prop = NULL,
+    metric = "auc",
+    model = "glm",
+    se_final = 0.005,
+    n_reps_total = NULL,
+    tune_param = NULL,
+    ...) {
   data_spec <- list(
     type = "binary",
     args = list(
@@ -92,8 +89,10 @@ simulate_binary <- function(
       max_interval_expansion = 10,
       data_function = data_function,
       model_function = model_function,
-      metric_function = default_metric_generator(metric,
-                                                 data_function),
+      metric_function = default_metric_generator(
+        metric,
+        data_function
+      ),
       target_performance = large_sample_performance,
       verbose = TRUE
     )
@@ -140,7 +139,6 @@ simulate_continuous <- function(
     se_final = 0.005, # To give CIs of +/- 0.01
     n_reps_total = NULL,
     ...) {
-
   inputs <- parse_inputs(
     data_spec = list(
       type = "continuous",
@@ -238,4 +236,3 @@ simulate_survival <- function(n_signal_parameters,
     )
   )
 }
-

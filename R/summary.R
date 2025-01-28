@@ -10,4 +10,3 @@ summary.pmsims <- function(result) {
     "---------------------------------", "\n"
   )
 }
-

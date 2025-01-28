@@ -56,9 +56,11 @@ default_model_generators <- function(outcome, model) {
     attr(model_function, "model") <- model
     return(model_function)
   } else {
-    stop(paste0("Model \"",
-                model,
-                "\" not found for outcome \"",
-                outcome, "\""))
+    stop(paste0(
+      "Model \"",
+      model,
+      "\" not found for outcome \"",
+      outcome, "\""
+    ))
   }
 }

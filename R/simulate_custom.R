@@ -22,7 +22,7 @@ simulate_custom <- function(data_function = NULL,
   if (is.null(tune_param) && is.null(large_sample_performance)) {
     stop(paste(
       "One of 'tune_param' or 'large_sample_performance' must be specified"
-      ))
+    ))
   }
 
   if ((!is.null(tune_param)) && (!is.null(large_sample_performance))) {
@@ -31,8 +31,10 @@ simulate_custom <- function(data_function = NULL,
     ))
   }
 
-  if (sum(c(is.null(n_reps_total),
-            is.null(se_final))) != 1) {
+  if (sum(c(
+    is.null(n_reps_total),
+    is.null(se_final)
+  )) != 1) {
     stop("Exactly one of 'n_reps_total' or 'se_final' must be specified.")
   }
 

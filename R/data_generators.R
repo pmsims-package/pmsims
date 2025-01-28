@@ -35,10 +35,11 @@ default_data_generators <- function(opts) {
 #' @return A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 #' @export
 #'
-#' @examples generate_continuous_data(n = 100, n_signal_parameters = 10,
-#' noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1,
-#' beta_signal = 0.1)
-
+#' @examples generate_continuous_data(
+#'   n = 100, n_signal_parameters = 10,
+#'   noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1,
+#'   beta_signal = 0.1
+#' )
 generate_continuous_data <- function(
     n,
     beta_signal,
@@ -71,7 +72,6 @@ generate_continuous_data <- function(
 #' @export
 #'
 #' @examples generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
-
 generate_binary_data <- function(
     n,
     beta_signal,
@@ -138,7 +138,7 @@ generate_survival_data <- function(
     sample(n, round(n * censoring_rate, 0), replace = FALSE)
   censor_time[censor_ids] <- runif(length(censor_ids), 0, T_observe)
 
-  event <-  as.numeric(event_time <= censor_time)
+  event <- as.numeric(event_time <= censor_time)
   survival_time <- pmin(event_time, censor_time)
 
   # Return survival data as a data frame
