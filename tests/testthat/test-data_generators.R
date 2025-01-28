@@ -75,8 +75,8 @@ test_that("generate_survival_data", {
     censoring_rate = 0.3)
   
   expect_equal(nrow(data), 100)
-  expect_equal(ncol(data), signal_parameters+noise_parameters+3) 
-  expect_equal(colnames(data),c("id", "time", "event", paste0("x", 1:(signal_parameters+signal_parameters))))
+  expect_equal(ncol(data), signal_parameters+noise_parameters+2) 
+  expect_equal(colnames(data), c("time", "event", paste0("x", 1:(signal_parameters+noise_parameters))))
 })
 
 
