@@ -92,7 +92,7 @@ binary_calib_slope <- function(data, fit, model) {
   } else {
     calib_slope <- as.numeric(coef(slope)[2])
   }
-  return(-abs(1 - calib_slope))
+  return(calib_slope)
 }
 
 binary_calib_itl <- function(data, fit, model) {
