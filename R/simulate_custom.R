@@ -27,7 +27,6 @@ simulate_custom <- function(data_function = NULL,
   if (min_sample_size > max_sample_size) {
     stop("min_sample_size must be less than max_sample_size")
   }
-  time_0 <- Sys.time()
 
 
   # Define a default metric value if calculations fail; 0.5 for default
@@ -91,10 +90,7 @@ simulate_custom <- function(data_function = NULL,
     data = output$results,
     train_size = rownames(output$results),
     data_function = data_function,
-    simulation_time = list(
-      "tuning" = difftime(time_1, time_0, units = "secs"),
-      "simulating" = difftime(time_2, time_1, units = "secs")
-    )
+    simulation_time = difftime(time_2, time_1, units = "secs")
   )
   attr(results_list, "class") <- "pmsims"
   return(results_list)
