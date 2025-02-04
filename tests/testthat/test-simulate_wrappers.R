@@ -12,7 +12,7 @@ test_that("simulate_binary", {
     tune_param = 0.60,
     large_sample_performance = 0.7,
   )
-  expect_equal(length(output), 9)
+  expect_equal(length(output), 8)
 })
 
 
@@ -28,7 +28,7 @@ test_that("simulate_continuous", {
     minimum_threshold = 0.05,
     tune_param = 0.6353973
   )
-  expect_equal(length(output), 9)
+  expect_equal(length(output), 8)
 })
 
 

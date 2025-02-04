@@ -61,3 +61,50 @@ test_that("interval_expansion works", {
   
   expect_equal(performance, 0.7, tol = 0.1)
 })
+
+test_that("default_tune", {
+  set.seed(1234)
+  
+  large_sample_performance <- 0.8
+  
+  data_opts <- list(type = "binary", 
+                    args = list(
+                      n_signal_parameters = 5,
+                      noise_parameters = 5,
+                      predictor_type = "continuous",
+                      baseline_prob = 0.2
+                    ))
+  data_function <- default_data_generators(data_opts)
+  outcome_type <- attr(data_function, "outcome")
+  model_function <- default_model_generators(outcome_type, model = "glm")
+  
+  metric_function = default_metric_generator(
+    "auc",
+    data_function
+  )
+  
+  tuning_parameter <- default_tune(tune_param = beta_signal, 
+                                   max_sample_size = 10000,
+                                   large_sample_performance = large_sample_performance,
+                                   data_function = data_function,
+                                   model_function = model_function,
+                                   metric_function = metric_function)
+  tuned_data_opts <- list(type = "binary", 
+                          args = list(
+                            n_signal_parameters = 5,
+                            noise_parameters = 5,
+                            predictor_type = "continuous",
+                            baseline_prob = 0.2,
+                            beta_signal = tuning_parameter
+                          ))
+  
+  tuned_data_function <- default_data_generators(tuned_data_opts)
+  
+  
+  large_sample <- tuned_data_function(n = 10000)
+  fitted_model <- model_function(large_sample)
+  performance <- metric_function(large_sample, fit = fitted_model, model = "glm")
+  expect_equal(performance, large_sample_performance, tolerance = 0.02)
+  
+})
+  

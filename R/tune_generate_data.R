@@ -1,3 +1,40 @@
+#' Title
+#'
+#' @param tune_param The name of the tuning parameter in the data generating model
+#' @param max_sample_size The maximum sample size used in simulations
+#' @param large_sample_performance The target large sample performance
+#' @param data_function The data generating funciton
+#' @param model_function The estimation model function
+#' @param metric_function The performance metric function the model is to be tuned with.
+#' @param tune_args A list of arguments which may include interval, large_n, tolerance, and max_interval_expansion. These will overide defaults
+
+#' @returns The optimal value for the tuning parameter
+#' @export
+#'
+#' @examples
+default_tune <- function(tune_param, max_sample_size, large_sample_performance, data_function, model_function, metric_function, tune_args = NULL, verbose = TRUE) {
+  default_tuning_set_up <- list(
+    interval = c(0, 1),
+    large_n = set_test_n(max_sample_size),
+    tolerance = set_tolerance(large_sample_performance),
+    max_interval_expansion = 10
+  )
+  for (p in names(default_tuning_set_up)) {
+    if (is.null(tune_args[[p]])) tune_args[[p]] <- default_tuning_set_up[[p]]
+  }
+  tune_args <- c(
+    tune_args,
+    list(
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      target_performance = large_sample_performance,
+      verbose = verbose
+    )
+  )
+  tune_param <- do.call(tune_generate_data, tune_args)
+}
+
 #' Title Tune generate data
 #'
 #' @param data_function A function of two parameters, n and a tuning parameter,

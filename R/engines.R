@@ -1,6 +1,5 @@
 calculate_mlpwr <- function(
     test_n,
-    tune_param,
     n_reps_total,
     n_reps_per,
     se_final,
@@ -16,8 +15,8 @@ calculate_mlpwr <- function(
   mlpwr_simulation_function <- function(n) {
     tryCatch(
       {
-        test_data <- data_function(test_n, tune_param)
-        train_data <- data_function(n, tune_param)
+        test_data <- data_function(test_n)
+        train_data <- data_function(n)
         fit <- model_function(train_data)
         model <- attr(model_function, "model")
         metric_function(test_data, fit, model)
@@ -92,7 +91,6 @@ calculate_mlpwr <- function(
 
 calculate_crude <- function(
     data_function,
-    tune_param,
     model_function,
     metric_function,
     value_on_error,
@@ -115,12 +113,12 @@ calculate_crude <- function(
 
   # Generate data and compute metric for sizes_to_check, n_reps_per times
   test_n <- pmax(3 * max_sample_size, 30000)
-  test_data <- data_function(test_n, tune_param)
+  test_data <- data_function(test_n)
 
   metric_calculation <- function(n) {
     tryCatch(
       {
-        train_data <- data_function(n, tune_param)
+        train_data <- data_function(n)
         fit <- model_function(train_data)
         model <- attr(model_function, "model")
         return(metric_function(test_data, fit, model))
