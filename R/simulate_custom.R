@@ -3,9 +3,6 @@ simulate_custom <- function(data_function = NULL,
                             metric_function = NULL,
                             target_performance,
                             test_n = 30000,
-                            tune_param = NULL,
-                            tune_args = list(),
-                            large_sample_performance = NULL,
                             min_sample_size,
                             max_sample_size,
                             n_reps_total = NULL,
@@ -19,17 +16,6 @@ simulate_custom <- function(data_function = NULL,
     stop("data_function missing")
   }
 
-  if (is.null(tune_param) && is.null(large_sample_performance)) {
-    stop(paste(
-      "One of 'tune_param' or 'large_sample_performance' must be specified"
-    ))
-  }
-
-  if ((!is.null(tune_param)) && (!is.null(large_sample_performance))) {
-    stop(paste(
-      "You can't specify both 'tune_param' and 'large_sample_performance'; pick one."
-    ))
-  }
 
   if (sum(c(
     is.null(n_reps_total),
@@ -43,29 +29,7 @@ simulate_custom <- function(data_function = NULL,
   }
   time_0 <- Sys.time()
 
-  # Set default tuning parameters
-  if (is.null(tune_param)) {
-    default_tuning <- list(
-      interval = c(0, 1),
-      large_n = set_test_n(max_sample_size),
-      tolerance = set_tolerance(large_sample_performance),
-      max_interval_expansion = 10
-    )
-    for (p in names(default_tuning)) {
-      if (is.null(tune_args[[p]])) tune_args[[p]] <- default_tuning[[p]]
-    }
-    tune_args <- c(
-      tune_args,
-      list(
-        data_function = data_function,
-        model_function = model_function,
-        metric_function = metric_function,
-        target_performance = large_sample_performance,
-        verbose = verbose
-      )
-    )
-    tune_param <- do.call(tune_generate_data, tune_args)
-  }
+
   # Define a default metric value if calculations fail; 0.5 for default
   metric_name <- attr(metric_function, "metric")
   error_values <- list(
@@ -86,7 +50,6 @@ simulate_custom <- function(data_function = NULL,
   if (method == "mlpwr") {
     output <- calculate_mlpwr(
       test_n = test_n,
-      tune_param = tune_param,
       n_reps_total = n_reps_total,
       n_reps_per = n_reps_per,
       se_final = se_final,
@@ -103,7 +66,6 @@ simulate_custom <- function(data_function = NULL,
   } else if (method == "crude") {
     output <- calculate_crude(
       data_function,
-      tune_param,
       model_function,
       metric_function,
       value_on_error,
@@ -128,7 +90,6 @@ simulate_custom <- function(data_function = NULL,
     summaries = output$summaries,
     data = output$results,
     train_size = rownames(output$results),
-    tune_param = tune_param,
     data_function = data_function,
     simulation_time = list(
       "tuning" = difftime(time_1, time_0, units = "secs"),
