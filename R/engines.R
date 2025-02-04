@@ -1,6 +1,5 @@
 calculate_mlpwr <- function(
     test_n,
-    tune_param,
     n_reps_total,
     n_reps_per,
     se_final,
@@ -16,8 +15,8 @@ calculate_mlpwr <- function(
   mlpwr_simulation_function <- function(n) {
     tryCatch(
       {
-        test_data <- data_function(test_n, tune_param)
-        train_data <- data_function(n, tune_param)
+        test_data <- data_function(test_n)
+        train_data <- data_function(n)
         fit <- model_function(train_data)
         model <- attr(model_function, "model")
         metric_function(test_data, fit, model)
