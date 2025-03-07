@@ -98,9 +98,11 @@ simulate_custom <- function(data_function = NULL,
 
 #' Title
 #'
-#' @param ...
-#'
-#' @return
+#' @param data_spec A list of arguments which get parsed to the datagenerating fucntion generator.
+#' @param metric A string indicating the metric to be used.
+#' @ param model A string indicating the model to be used.
+#' 
+#' @return A list containing a data function, a model function, and a metric function.
 #' @export
 #'
 #' @examples
