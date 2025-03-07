@@ -78,7 +78,7 @@ generate_binary_data <- function(
     n_signal_parameters,
     noise_parameters,
     predictor_type,
-    predictor_prop,
+    predictor_prop = NULL,
     baseline_prob) {
   parameters <- n_signal_parameters + noise_parameters
   intercept <- log(baseline_prob / (1 - baseline_prob))
