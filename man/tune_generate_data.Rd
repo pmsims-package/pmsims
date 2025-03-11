@@ -11,7 +11,7 @@ tune_generate_data(
   model_function,
   metric_function,
   target_performance,
-  tolerance = target_performance/100,
+  tolerance = set_tolerance(target_performance),
   max_interval_expansion = 10,
   verbose = FALSE
 )
@@ -21,6 +21,8 @@ tune_generate_data(
 that returns data for the model function}
 
 \item{large_n}{A large sample size used for parameter tuning}
+
+\item{interval}{A vector containing the end-points of the interval to be searched}
 
 \item{model_function}{A function which takes the object returned by the data
 generating function and fits the analysis model of interest.}
@@ -33,10 +35,6 @@ large sample}
 \item{max_interval_expansion}{The maximum number of time the search interval
 will be expanded before tune generate data quits looking. This prevents
 getting stuck in impossible searches.}
-
-\item{min_tune_arg}{The minimum value of the parameter to be tuned}
-
-\item{max_tune_arg}{The maximum value of the parameter to be tuned}
 
 \item{performance_function}{A function which takes a a test dataset and
 model object as arguments and returns a performance metric}

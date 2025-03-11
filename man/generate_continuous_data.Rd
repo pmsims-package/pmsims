@@ -7,7 +7,7 @@
 generate_continuous_data(
   n,
   beta_signal,
-  signal_parameters,
+  n_signal_parameters,
   noise_parameters,
   predictor_type,
   predictor_prop = NULL
@@ -18,20 +18,25 @@ generate_continuous_data(
 
 \item{beta_signal}{Association between signal predictors and the outcome}
 
-\item{signal_parameters}{Number of predictors that have a non zero association with the outcome}
-
-\item{noise_parameters}{Number of predictors with no association with outcome}
+\item{n_signal_parameters}{Number of predictors that have a non zero
+association with the outcome @param noise_parameters Number of predictors
+with no association with outcome}
 
 \item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
 
-\item{predictor_prop}{If predictor type is binary, the probability of a predictor taking value 1}
+\item{predictor_prop}{If predictor type is binary, the probability of a
+predictor taking value 1}
 }
 \value{
-A data frame with one outcome column and signal_parameters + noise_parameters predictor columns
+A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 }
 \description{
 Simulate Continuous data
 }
 \examples{
-generate_continuous_data(n = 100, signal_parameters = 10, noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1, beta_signal = 0.1)
+generate_continuous_data(
+  n = 100, n_signal_parameters = 10,
+  noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1,
+  beta_signal = 0.1
+)
 }

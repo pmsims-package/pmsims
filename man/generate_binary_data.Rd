@@ -7,10 +7,10 @@
 generate_binary_data(
   n,
   beta_signal,
-  signal_parameters,
+  n_signal_parameters,
   noise_parameters,
   predictor_type,
-  predictor_prop,
+  predictor_prop = NULL,
   baseline_prob
 )
 }
@@ -19,22 +19,23 @@ generate_binary_data(
 
 \item{beta_signal}{Association between signal predictors and the outcome}
 
-\item{signal_parameters}{Number of predictors that have a non zero association with the outcome}
-
-\item{noise_parameters}{Number of predictors with no association with outcome}
+\item{n_signal_parameters}{Number of predictors that have a non zero
+association with the outcome @param noise_parameters Number of predictors
+with no association with outcome}
 
 \item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
 
-\item{predictor_prop}{If predictor type is binary, the probability of a predictor taking value 1}
+\item{predictor_prop}{If predictor type is binary, the probability of a
+predictor taking value 1}
 
 \item{baseline_prob}{Baseline probability of outcome (ie. probability when all predicors are 0)}
 }
 \value{
-A data frame with one outcome column and signal_parameters + noise_parameters predictor columns
+A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 }
 \description{
 Title Simulate Binary Data
 }
 \examples{
-generate_binary_data(n = 100, signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
+generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 }

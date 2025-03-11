@@ -3,6 +3,7 @@
 S3method(summary,pmsims)
 export(default_data_generators)
 export(default_models)
+export(default_tune)
 export(generate_binary_data)
 export(generate_continuous_data)
 export(generate_survival_data)

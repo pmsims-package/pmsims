@@ -1,3 +1,25 @@
+#' Simulate Custom
+#' 'simulate_custom' is the interface for pmsims at the most basic level. It performs no processing of arguments and allows all possible options to be customised.
+#' 
+#' @param data_function A function that returns datasets. Must have a single argmument, n, which controls the sample size.
+#' @param model_function A function that fits models to the data. Take the data object returned by data_funciton as only argument. 
+#' @param metric_function A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.
+#' @param target_performance The minimum desired model performance
+#' @param test_n The sample size used for test datasets. This should be a large number.
+#' @param min_sample_size The minimum sample size assessed. This sets the lower bound of the search region for sample size.
+#' @param max_sample_size The maximum sample size assessed. This sets the upper bound of the search region for sample size.
+#' @param n_reps_total The total number of simulation reps run by pmsims.
+#' @param n_reps_per The number of reps run at each sample size. 
+#' @param se_final A standard error which can be used as a stopping criteria. Either n_reps_total or se_final should be given.
+#' @param n_init The number of initial sample sizes to be used in the search before the alorithm passed in method is used
+#' @param method The method used to search for the minimum sample size. Options are "mlpwr" and "crude".
+#' @param verbose A logical controlling output
+#' @param ... Other argments passed to the method function.
+#'
+#' @returns
+#' @export
+#'
+#' @examples
 simulate_custom <- function(data_function = NULL,
                             model_function = NULL,
                             metric_function = NULL,
