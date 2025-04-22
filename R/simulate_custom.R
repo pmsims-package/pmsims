@@ -12,7 +12,7 @@
 #' @param n_reps_per The number of reps run at each sample size. 
 #' @param se_final A standard error which can be used as a stopping criteria. Either n_reps_total or se_final should be given.
 #' @param n_init The number of initial sample sizes to be used in the search before the alorithm passed in method is used
-#' @param method The method used to search for the minimum sample size. Options are "mlpwr" and "crude".
+#' @param method The method used to search for the minimum sample size. Options are "mlpwr", "crude" and "ga".
 #' @param verbose A logical controlling output
 #' @param ... Other argments passed to the method function.
 #'
@@ -98,7 +98,23 @@ simulate_custom <- function(data_function = NULL,
       target_performance,
       ...
     )
-  } else {
+  } else if (method == "ga") {
+    output <- calculate_ga(
+      data_function,
+      model_function,
+      metric_function,
+      test_n = test_n,
+      value_on_error,
+      min_sample_size = min_sample_size,
+      max_sample_size = max_sample_size,
+      target_performance = target_performance,
+      popSize = 30,
+      maxiter = 50,
+      penalty_weight = 0.3,
+      seed = 123,
+      ...
+    )
+  }else {
     stop("Method not found")
   }
   time_2 <- Sys.time()

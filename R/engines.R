@@ -12,20 +12,9 @@ calculate_mlpwr <- function(
     model_function,
     metric_function,
     value_on_error) {
-  mlpwr_simulation_function <- function(n) {
-    tryCatch(
-      {
-        test_data <- data_function(test_n)
-        train_data <- data_function(n)
-        fit <- model_function(train_data)
-        model <- attr(model_function, "model")
-        metric_function(test_data, fit, model)
-      },
-      error = function(e) {
-        return(value_on_error)
-      }
-    )
-  }
+  
+  # calculate the metrics for a sample size n
+  mlpwr_simulation_function <- calcuate_metrics_perf(n)
 
   aggregate_fun <- function(x) quantile(x, probs = .2, na.rm = TRUE)
 
@@ -117,19 +106,9 @@ calculate_crude <- function(
   # Generate data and compute metric for sizes_to_check, n_reps_per times
   test_data <- data_function(test_n)
 
-  metric_calculation <- function(n) {
-    tryCatch(
-      {
-        train_data <- data_function(n)
-        fit <- model_function(train_data)
-        model <- attr(model_function, "model")
-        return(metric_function(test_data, fit, model))
-      },
-      error = function(e) {
-        return(value_on_error)
-      }
-    )
-  }
+  metric_calculation <- calculate_metrics_perf(n) 
+    
+    
   if (parallel) {
     cat("\nRunning in parallel...")
     require(foreach)
@@ -198,4 +177,67 @@ calculate_crude <- function(
     summaries = crude_summaries,
     min_n = crude_min_n
   ))
+}
+
+calculate_ga <- function(
+    data_function,
+    model_function,
+    metric_function,
+    value_on_error,
+    min_sample_size,
+    max_sample_size,
+    test_n,
+    popSize = 30,
+    maxiter = 50,
+    target_performance,
+    penalty_weight = 0.3,
+    seed = 123) {
+  
+  # Set seed for reproducibility
+  set.seed(seed)
+  
+  # Generate test data once
+  test_data <- data_function(test_n)
+  
+  # Define the objective function for the genetic algorithm
+  calc_objective_function <- objective_function(n,penalty_weight,
+                                           target_performance,
+                                           min_sample_size,
+                                           max_sample_size,
+                                           value_on_error)
+  
+  # Configure and run genetic algorithm
+
+  ga_result <- GA::ga(
+    type = "real-valued",
+    fitness = calc_objective_function,
+    lower = min_sample_size,
+    upper = max_sample_size,
+    popSize = popSize,
+    maxiter = maxiter,
+    keepBest = TRUE,
+    parallel = FALSE,
+    seed = seed
+  )
+  
+  # Extract results
+  best_n <- round(ga_result@solution[1])
+  best_performance <- calculate_metrics_perf(best_n,value_on_error)
+  
+  # Process results from ga
+  sample_size_iterations <- round(unlist(lapply(ga_result@bestSol,mean)))
+  perfs = sapply(sample_size_iterations,function(x) calcuate_metrics_perf(x,value_on_error))
+  ga_summaries <- list(
+    median_performance = quantile(perfs, 0.5),
+    quant20_performance = quantile(perfs, 0.2),
+    quant5_performance = quantile(perfs, 0.05),
+    quant95_performance = quantile(perfs, 0.95)
+  )
+  
+  return(list(
+    results = perfs,
+    summaries = ga_summaries,
+    min_n = as.numeric(best_n)
+  ))
+  
 }
