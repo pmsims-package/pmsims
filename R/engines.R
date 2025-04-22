@@ -96,11 +96,14 @@ calculate_crude <- function(
     value_on_error,
     min_sample_size,
     max_sample_size,
+    test_n,
+    n_reps_total,
     n_reps_per,
     target_performance,
     parallel = FALSE,
     cores = 20) {
-  n_steps <- 50
+  
+  n_steps <- round(n_reps_total / n_reps_per)
 
   # Make sure n_reps_per is 10 or over
   n_reps_per <- pmax(10, n_reps_per)
@@ -112,7 +115,6 @@ calculate_crude <- function(
   )
 
   # Generate data and compute metric for sizes_to_check, n_reps_per times
-  test_n <- pmax(3 * max_sample_size, 30000)
   test_data <- data_function(test_n)
 
   metric_calculation <- function(n) {
