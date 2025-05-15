@@ -108,9 +108,9 @@ simulate_custom <- function(data_function = NULL,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
       target_performance = target_performance,
-      popSize = 30,
-      maxiter = 50,
-      penalty_weight = 0.3,
+      n_reps_total,
+      n_reps_per,
+      penalty_weight = 1,
       seed = 123,
       ...
     )

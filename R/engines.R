@@ -232,12 +232,15 @@ calculate_ga <- function(
     min_sample_size,
     max_sample_size,
     test_n,
-    popSize = 30,
-    maxiter = 10,
+    n_reps_total,
+    n_reps_per,
     target_performance,
     penalty_weight = 1,
     seed = 123) {
   
+    maxiter = n_reps_per
+    popSize = round(n_reps_total / n_reps_per)
+    
   # Set seed for reproducibility
   #set.seed(seed)
   
