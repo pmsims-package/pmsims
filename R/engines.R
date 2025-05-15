@@ -14,7 +14,20 @@ calculate_mlpwr <- function(
     value_on_error) {
   
   # calculate the metrics for a sample size n
-  mlpwr_simulation_function <- calcuate_metrics_perf(n, value_on_error)
+  mlpwr_simulation_function <- function(n) {
+    tryCatch(
+      {
+        test_data <- data_function(test_n)
+        train_data <- data_function(n)
+        fit <- model_function(train_data)
+        model <- attr(model_function, "model")
+        metric_function(test_data, fit, model)
+      },
+      error = function(e) {
+        return(value_on_error)
+      }
+    )
+  }
 
   aggregate_fun <- function(x) quantile(x, probs = .2, na.rm = TRUE)
 
@@ -106,7 +119,19 @@ calculate_crude <- function(
   # Generate data and compute metric for sizes_to_check, n_reps_per times
   test_data <- data_function(test_n)
 
-  metric_calculation <- calculate_metrics_perf(n, value_on_error) 
+  metric_calculation <- function(n) {
+    tryCatch(
+      {
+        train_data <- data_function(n)
+        fit <- model_function(train_data)
+        model <- attr(model_function, "model")
+        return(metric_function(test_data, fit, model))
+      },
+      error = function(e) {
+        return(value_on_error)
+      }
+    )
+  }
     
     
   if (parallel) {
@@ -200,11 +225,35 @@ calculate_ga <- function(
   test_data <- data_function(test_n)
   
   # Define the objective function for the genetic algorithm
-  calc_objective_function <- objective_function(n,penalty_weight,
-                                           target_performance,
-                                           min_sample_size,
-                                           max_sample_size,
-                                           value_on_error)
+  calc_objective_function <- function(n) {
+    n <- round(n)
+    if (n < min_sample_size) return(-Inf)  # Enforce minimum sample size
+    
+    tryCatch(
+      {
+        # Generate training data
+        train_data <- data_function(n)
+        
+        # Fit model
+        fit <- model_function(train_data)
+        model <- attr(model_function, "model")
+        
+        # Calculate performance metric
+        performance <- metric_function(test_data, fit, model)
+        
+        # Calculate penalty term (normalized by max sample size)
+        penalty <- penalty_weight * (n / max_sample_size)
+        
+        # Objective value (minimize difference between performance and target while minimizing sample size)
+        objective_value <- -abs(performance - target_performance  - penalty)
+        
+        return(objective_value)
+      },
+      error = function(e) {
+        return(value_on_error)
+      }
+    )
+  }
   
   # Configure and run genetic algorithm
 
