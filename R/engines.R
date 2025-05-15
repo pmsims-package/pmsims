@@ -14,7 +14,7 @@ calculate_mlpwr <- function(
     value_on_error) {
   
   # calculate the metrics for a sample size n
-  mlpwr_simulation_function <- calcuate_metrics_perf(n)
+  mlpwr_simulation_function <- calcuate_metrics_perf(n, value_on_error)
 
   aggregate_fun <- function(x) quantile(x, probs = .2, na.rm = TRUE)
 
@@ -106,7 +106,7 @@ calculate_crude <- function(
   # Generate data and compute metric for sizes_to_check, n_reps_per times
   test_data <- data_function(test_n)
 
-  metric_calculation <- calculate_metrics_perf(n) 
+  metric_calculation <- calculate_metrics_perf(n, value_on_error) 
     
     
   if (parallel) {
