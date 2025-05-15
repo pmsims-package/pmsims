@@ -24,7 +24,7 @@ objective_function <- function(n,
     {
      
       # Calculate performance metric
-      performance <- calcuate_metrics_perf(n)
+      performance <- calcuate_metrics_perf(n,value_on_error)
       
       # Calculate penalty term (normalized by max sample size)
       penalty <- penalty_weight * (n / max_sample_size)
