@@ -269,13 +269,30 @@ calculate_ga <- function(
     seed = seed
   )
   
+  
+  
+  metric_calculation <- function(n) {
+    tryCatch(
+      {
+        train_data <- data_function(n)
+        fit <- model_function(train_data)
+        model <- attr(model_function, "model")
+        return(metric_function(test_data, fit, model))
+      },
+      error = function(e) {
+        return(value_on_error)
+      }
+    )
+  }
+  
+  
   # Extract results
   best_n <- round(ga_result@solution[1])
-  best_performance <- calculate_metrics_perf(best_n,value_on_error)
+  best_performance <- metric_calculation(best_n)
   
   # Process results from ga
   sample_size_iterations <- round(unlist(lapply(ga_result@bestSol,mean)))
-  perfs = sapply(sample_size_iterations,function(x) calcuate_metrics_perf(x,value_on_error))
+  perfs = sapply(sample_size_iterations,function(x) metric_calculation(x))
   ga_summaries <- list(
     median_performance = quantile(perfs, 0.5),
     quant20_performance = quantile(perfs, 0.2),
