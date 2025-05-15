@@ -266,7 +266,8 @@ calculate_ga <- function(
     maxiter = maxiter,
     keepBest = TRUE,
     parallel = FALSE,
-    seed = seed
+    seed = seed,
+    monitor = FALSE
   )
   
   
