@@ -1,3 +1,13 @@
+#' MLPWR Engine
+#' @inheritParams simulate_custom
+#' @param n_init The number of initial sample sizes simualted before the gausian process search begins.
+#' @param verbose Whether to run mlpwr with verbose output
+#' @param value_on_error The value used if there is an error in fitting the model or calculating performance.
+#'
+#' @returns
+#' @export
+#'
+#' @examples
 calculate_mlpwr <- function(
     test_n,
     n_reps_total,
@@ -91,6 +101,16 @@ calculate_mlpwr <- function(
   ))
 }
 
+#' The Crude Engine
+#' @inheritParams calculate_mlpwr
+#' @param value_on_error 
+#' @param parallel Whether to use parallel processing. Default is FALSE
+#' @param cores If parallel processing, how many cores to pass to parallel::makeCluster(cores) Default is 20.
+#'
+#' @returns
+#' @export
+#'
+#' @examples
 calculate_crude <- function(
     data_function,
     model_function,
