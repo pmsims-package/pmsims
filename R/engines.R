@@ -242,7 +242,7 @@ calculate_ga <- function(
     popSize = round(n_reps_total / n_reps_per)
     
   # Set seed for reproducibility
-  #set.seed(seed)
+  set.seed(seed)
   
   # Generate test data once
   test_data <- data_function(test_n)

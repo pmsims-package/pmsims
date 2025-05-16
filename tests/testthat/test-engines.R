@@ -35,9 +35,33 @@ test_that("calculate_crude", {
     min_sample_size = 50,
     max_sample_size = 200,
     test_n = 1000,
-    n_reps_total =  20,
-    n_reps_per = 5,
+    n_reps_total =  100,
+    n_reps_per = 10,
     target_performance = 0.72) 
+  
+  expect_true(is.numeric(output$min_n))
+  
+})
+
+
+test_that("calculate_ga", {
+  
+  functions <- get_binary_data_model_metric()
+  
+
+  output <- calculate_ga(
+    data_function = functions$data_function,
+    model_function = functions$model_function,
+    metric_function = functions$metric_function,
+    value_on_error = 0.5,
+    min_sample_size = 50,
+    max_sample_size = 200,
+    test_n = 1000,
+    n_reps_total =  100,
+    n_reps_per = 10,
+    target_performance = 0.72,
+    penalty_weight = 1,
+    seed = 123) 
   
   expect_true(is.numeric(output$min_n))
   
