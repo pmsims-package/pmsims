@@ -14,6 +14,7 @@
 #' @param n_init The number of initial sample sizes to be used in the search before the alorithm passed in method is used
 #' @param method The method used to search for the minimum sample size. Options are "mlpwr", "crude" and "ga".
 #' @param verbose A logical controlling output
+#' @param penalty_weight This is the weight that balances the objective and the cost of large sample size for the "ga" engine. Value 0 implies the focus is to minimize the abs difference.
 #' @param ... Other argments passed to the method function.
 #'
 #' @returns
