@@ -1,4 +1,4 @@
-#' Calculate performance metrics 
+#' Calculate performance metrics
 #' 'calculate_metrics_perf' calculates the performetrics for a model given a sample size n.
 #' @param n is the sample size.
 #' @param value_on_error value to return if error.
@@ -8,7 +8,7 @@
 #' @export
 #'
 #' @examples
-calcuate_metrics_perf <- function(n,value_on_error) {
+calcuate_metrics_perf <- function(n, value_on_error) {
   tryCatch(
     {
       test_data <- data_function(test_n)
@@ -22,3 +22,4 @@ calcuate_metrics_perf <- function(n,value_on_error) {
     }
   )
 }
+
