@@ -9,20 +9,20 @@
 #'
 #' @examples
 calculate_mlpwr <- function(
-    test_n,
-    n_reps_total,
-    n_reps_per,
-    se_final,
-    min_sample_size,
-    max_sample_size,
-    target_performance,
-    n_init,
-    verbose,
-    data_function,
-    model_function,
-    metric_function,
-    value_on_error) {
-  
+  test_n,
+  n_reps_total,
+  n_reps_per,
+  se_final,
+  min_sample_size,
+  max_sample_size,
+  target_performance,
+  n_init,
+  verbose,
+  data_function,
+  model_function,
+  metric_function,
+  value_on_error
+) {
   # calculate the metrics for a sample size n
   mlpwr_simulation_function <- function(n) {
     tryCatch(
@@ -103,7 +103,7 @@ calculate_mlpwr <- function(
 
 #' The Crude Engine
 #' @inheritParams calculate_mlpwr
-#' @param value_on_error 
+#' @param value_on_error
 #' @param parallel Whether to use parallel processing. Default is FALSE
 #' @param cores If parallel processing, how many cores to pass to parallel::makeCluster(cores) Default is 20.
 #'
@@ -112,19 +112,19 @@ calculate_mlpwr <- function(
 #'
 #' @examples
 calculate_crude <- function(
-    data_function,
-    model_function,
-    metric_function,
-    value_on_error,
-    min_sample_size,
-    max_sample_size,
-    test_n,
-    n_reps_total,
-    n_reps_per,
-    target_performance,
-    parallel = FALSE,
-    cores = 20) {
-  
+  data_function,
+  model_function,
+  metric_function,
+  value_on_error,
+  min_sample_size,
+  max_sample_size,
+  test_n,
+  n_reps_total,
+  n_reps_per,
+  target_performance,
+  parallel = FALSE,
+  cores = 20
+) {
   n_steps <- round(n_reps_total / n_reps_per)
 
   # Make sure n_reps_per is 10 or over
@@ -152,8 +152,7 @@ calculate_crude <- function(
       }
     )
   }
-    
-    
+
   if (parallel) {
     cat("\nRunning in parallel...")
     require(foreach)
@@ -161,7 +160,8 @@ calculate_crude <- function(
     doParallel::registerDoParallel(cl)
     performance_matrix <-
       foreach(a = sample_grid, .combine = rbind) %:%
-      foreach(b = 1:n_reps_per, .combine = c) %dopar% {
+      foreach(b = 1:n_reps_per, .combine = c) %dopar%
+      {
         return(metric_calculation(a))
       }
     colnames(performance_matrix) <- 1:n_reps_per
@@ -191,12 +191,7 @@ calculate_crude <- function(
   }
 
   get_perf <- function(results, p) {
-    apply(results,
-      FUN = stats::quantile,
-      MARGIN = 1,
-      probs = p,
-      na.rm = TRUE
-    )
+    apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
   }
 
   crude_summaries <- list(
@@ -206,9 +201,10 @@ calculate_crude <- function(
     quant95_performance = get_perf(performance_matrix, 0.95)
   )
 
-  if (is.na(
-    which(crude_summaries$quant20_performance > target_performance)[1]
-  )
+  if (
+    is.na(
+      which(crude_summaries$quant20_performance > target_performance)[1]
+    )
   ) {
     crude_min_n <- NA
   } else {
@@ -225,51 +221,53 @@ calculate_crude <- function(
 }
 
 calculate_ga <- function(
-    data_function,
-    model_function,
-    metric_function,
-    value_on_error,
-    min_sample_size,
-    max_sample_size,
-    test_n,
-    n_reps_total,
-    n_reps_per,
-    target_performance,
-    penalty_weight = 1,
-    seed = 123) {
-  
-    maxiter = n_reps_per
-    popSize = round(n_reps_total / n_reps_per)
-    
+  data_function,
+  model_function,
+  metric_function,
+  value_on_error,
+  min_sample_size,
+  max_sample_size,
+  test_n,
+  n_reps_total,
+  n_reps_per,
+  target_performance,
+  penalty_weight = 1,
+  seed = 123
+) {
+  maxiter <- n_reps_per
+  popSize <- round(n_reps_total / n_reps_per)
+
   # Set seed for reproducibility
   set.seed(seed)
-  
+
   # Generate test data once
   test_data <- data_function(test_n)
-  
+
   # Define the objective function for the genetic algorithm
   calc_objective_function <- function(n) {
     n <- round(n)
-    if (n < min_sample_size) return(-Inf)  # Enforce minimum sample size
-    
+    if (n < min_sample_size) return(-Inf) # Enforce minimum sample size
+
     tryCatch(
       {
         # Generate training data
         train_data <- data_function(n)
-        
+
         # Fit model
         fit <- model_function(train_data)
         model <- attr(model_function, "model")
-        
+
         # Calculate performance metric
         performance <- metric_function(test_data, fit, model)
-        
+
         # Calculate penalty term (normalized by max sample size)
         penalty <- penalty_weight * (n / max_sample_size)
-        
+
         # Objective value (minimize difference between performance and target while minimizing sample size)
-        #objective_value <- -abs(performance - target_performance  - penalty)
-        objective_value <- 1/(abs(performance - target_performance) + 1) - penalty
+        # objective_value <- -abs(performance - target_performance  - penalty)
+        objective_value <- 1 /
+          (abs(performance - target_performance) + 1) -
+          penalty
         return(objective_value)
       },
       error = function(e) {
@@ -277,9 +275,10 @@ calculate_ga <- function(
       }
     )
   }
-  
-  # Configure and run genetic algorithm
 
+  # Configure and run genetic algorithm
+  # Load GA package
+  require(GA)
   ga_result <- GA::ga(
     type = "real-valued",
     fitness = calc_objective_function,
@@ -292,9 +291,7 @@ calculate_ga <- function(
     seed = seed,
     monitor = FALSE
   )
-  
-  
-  
+
   metric_calculation <- function(n) {
     tryCatch(
       {
@@ -308,26 +305,24 @@ calculate_ga <- function(
       }
     )
   }
-  
-  
+
   # Extract results
   best_n <- round(ga_result@solution[1])
   best_performance <- metric_calculation(best_n)
-  
-  # Process results from ga
-  sample_size_iterations <- round(unlist(lapply(ga_result@bestSol,mean)))
-  perfs = sapply(sample_size_iterations,function(x) metric_calculation(x))
+
+  # Process results from GA
+  sample_size_iterations <- round(unlist(lapply(ga_result@bestSol, mean)))
+  perfs <- sapply(sample_size_iterations, function(x) metric_calculation(x))
   ga_summaries <- list(
     median_performance = quantile(perfs, 0.5),
     quant20_performance = quantile(perfs, 0.2),
     quant5_performance = quantile(perfs, 0.05),
     quant95_performance = quantile(perfs, 0.95)
   )
-  
+
   return(list(
     results = perfs,
     summaries = ga_summaries,
     min_n = as.numeric(best_n)
   ))
-  
 }
