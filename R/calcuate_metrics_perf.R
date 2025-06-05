@@ -8,15 +8,13 @@
 #' @export
 #'
 #' @examples
-<<<<<<< HEAD
+
 calcuate_metrics_perf <- function(n,
                                   data_function,
                                   model_function,
                                   metric_function,
                                   value_on_error) {
-=======
-calcuate_metrics_perf <- function(n, value_on_error) {
->>>>>>> 4e93d588f2e77d9bfd30ef7d3b956c9571f7c982
+
   tryCatch(
     {
       test_data <- data_function(n)
