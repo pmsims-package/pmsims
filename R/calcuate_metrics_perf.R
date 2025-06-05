@@ -8,10 +8,14 @@
 #' @export
 #'
 #' @examples
-calcuate_metrics_perf <- function(n,value_on_error) {
+calcuate_metrics_perf <- function(n,
+                                  data_function,
+                                  model_function,
+                                  metric_function,
+                                  value_on_error) {
   tryCatch(
     {
-      test_data <- data_function(test_n)
+      test_data <- data_function(n)
       train_data <- data_function(n)
       fit <- model_function(train_data)
       model <- attr(model_function, "model")
