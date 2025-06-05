@@ -41,12 +41,13 @@ default_data_generators <- function(opts) {
 #'   beta_signal = 0.1
 #' )
 generate_continuous_data <- function(
-    n,
-    beta_signal,
-    n_signal_parameters,
-    noise_parameters,
-    predictor_type,
-    predictor_prop = NULL) {
+  n,
+  beta_signal,
+  n_signal_parameters,
+  noise_parameters,
+  predictor_type,
+  predictor_prop = NULL
+) {
   parameters <- n_signal_parameters + noise_parameters
   intercept <- 0
   X <- generate_predictors(n, parameters, predictor_type, predictor_prop)
@@ -73,13 +74,14 @@ generate_continuous_data <- function(
 #'
 #' @examples generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 generate_binary_data <- function(
-    n,
-    beta_signal,
-    n_signal_parameters,
-    noise_parameters,
-    predictor_type,
-    predictor_prop = NULL,
-    baseline_prob) {
+  n,
+  beta_signal,
+  n_signal_parameters,
+  noise_parameters,
+  predictor_type,
+  predictor_prop = NULL,
+  baseline_prob
+) {
   parameters <- n_signal_parameters + noise_parameters
   intercept <- log(baseline_prob / (1 - baseline_prob))
   X <- generate_predictors(n, parameters, predictor_type, predictor_prop)
@@ -96,7 +98,6 @@ generate_binary_data <- function(
   return(as.data.frame(data))
 }
 
-
 #' Title Simulate Survival Data
 #'
 #' @inheritParams generate_continuous_data
@@ -109,14 +110,15 @@ generate_binary_data <- function(
 #'
 #' @examples generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 generate_survival_data <- function(
-    n,
-    beta_signal,
-    n_signal_parameters,
-    noise_parameters,
-    predictor_type,
-    predictor_prop,
-    baseline_hazard,
-    censoring_rate) {
+  n,
+  beta_signal,
+  n_signal_parameters,
+  noise_parameters,
+  predictor_type,
+  predictor_prop,
+  baseline_hazard,
+  censoring_rate
+) {
   parameters <- n_signal_parameters + noise_parameters
   intercept <- 0
   X <- generate_predictors(n, parameters, predictor_type, predictor_prop)
@@ -173,11 +175,12 @@ generate_predictors <- function(n, parameters, type, predictor_prop) {
 }
 
 generate_linear_predictor <- function(
-    X,
-    n_signal_parameters,
-    noise_parameters,
-    intercept,
-    beta_signal) {
+  X,
+  n_signal_parameters,
+  noise_parameters,
+  intercept,
+  beta_signal
+) {
   W_ <- c(rep(beta_signal, n_signal_parameters), rep(0, noise_parameters))
   lp <- X %*% W_ + intercept
   return(lp)
