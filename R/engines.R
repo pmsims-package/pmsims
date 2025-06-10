@@ -254,6 +254,14 @@ calculate_crude <- function(
   ))
 }
 
+#' The Crude Engine
+#' @inheritParams calculate_mlpwr
+#' @param value_on_error
+#'
+#' @returns
+#' @export
+#'
+#' @examples
 calculate_ga <- function(
   data_function,
   model_function,
@@ -279,30 +287,34 @@ calculate_ga <- function(
   test_data <- data_function(test_n)
 
   # Define the objective function for the genetic algorithm
-  calc_objective_function <- function(n) {
+  calc_objective_function <- function(n) { 
     n <- round(n)
-    if (n < min_sample_size) return(-Inf) # Enforce minimum sample size
-
+    if (n < min_sample_size) return(-Inf)  # Enforce minimum sample size
+    
     tryCatch(
       {
-        # Generate training data
-        train_data <- data_function(n)
-
-        # Fit model
-        fit <- model_function(train_data)
-        model <- attr(model_function, "model")
-
-        # Calculate performance metric
-        performance <- metric_function(test_data, fit, model)
-
+        # Use replicate to generate multiple performance values efficiently
+        performance_values <- replicate(n_reps_per, {
+          train_data <- data_function(n)
+          fit <- model_function(train_data)
+          model <- attr(model_function, "model")
+          metric_function(test_data, fit, model)
+        })
+        
+        # Choose performance aggregation method
+        performance <- switch(
+          mean_or_assurance,
+          mean = mean(performance_values, na.rm = TRUE),
+          assurance = quantile(performance_values, probs = 0.20, na.rm = TRUE),
+          stop("Invalid value for mean_or_assurance. Must be 'mean' or 'assurance'.")
+        )
+        
         # Calculate penalty term (normalized by max sample size)
         penalty <- penalty_weight * (n / max_sample_size)
-
-        # Objective value (minimize difference between performance and target while minimizing sample size)
-        # objective_value <- -abs(performance - target_performance  - penalty)
-        objective_value <- 1 /
-          (abs(performance - target_performance) + 1) -
-          penalty
+        
+        # Objective value: reward closeness to target, penalize large sample size
+        objective_value <- 1 / (abs(performance - target_performance) + 1) - penalty
+        
         return(objective_value)
       },
       error = function(e) {
@@ -310,7 +322,7 @@ calculate_ga <- function(
       }
     )
   }
-
+  
   # Configure and run genetic algorithm
   # Load GA package
   require(GA)
@@ -348,8 +360,14 @@ calculate_ga <- function(
   # Process results from GA
   sample_size_iterations <- round(unlist(lapply(ga_result@bestSol, mean)))
   perfs <- sapply(sample_size_iterations, function(x) metric_calculation(x))
-  ga_summaries <- get_summaries(perf)
-
+  #ga_summaries <- get_summaries(perfs)
+  ga_summaries <- list(
+    mean_performance = mean(perfs, na.rm=TRUE),
+    median_performance = quantile(perfs, 0.5, na.rm=TRUE),
+    quant20_performance = quantile(perfs, 0.2, na.rm=TRUE),
+    quant5_performance = quantile(perfs, 0.05, na.rm=TRUE),
+    quant95_performance = quantile(perfs, 0.95, na.rm=TRUE)
+)
   return(list(
     results = perfs,
     summaries = ga_summaries,

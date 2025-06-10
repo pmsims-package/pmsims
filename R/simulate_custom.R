@@ -5,7 +5,7 @@
 #' @param model_function A function that fits models to the data. Take the data object returned by data_funciton as only argument.
 #' @param metric_function A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.
 #' @param target_performance The minimum desired model performance
-#' @param mean_or_assurance Can be either "mean" or "assurance". If mean, sample size is calcualted so that average model performance is greater than target_performance. If assurance model performance is greater than target performance 80% of the time.
+#' @param mean_or_assurance Can be either "mean" or "assurance". If mean, sample size is calculated so that average model performance is greater than target_performance. If assurance model performance is greater than target performance 80% of the time.
 #' @param test_n The sample size used for test datasets. This should be a large number.
 #' @param min_sample_size The minimum sample size assessed. This sets the lower bound of the search region for sample size.
 #' @param max_sample_size The maximum sample size assessed. This sets the upper bound of the search region for sample size.
