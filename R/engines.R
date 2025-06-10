@@ -66,8 +66,14 @@ calculate_mlpwr <- function(
       }
     )
   }
-
-  aggregate_fun <- function(x) quantile(x, probs = .2, na.rm = TRUE)
+  
+  if(mean_or_assurance == "mean"){
+    aggregate_fun <- function(x) mean(x, na.rm = TRUE)
+  } else if(mean_or_assurance == "assurance"){
+    aggregate_fun <- function(x) quantile(x, probs = .2, na.rm = TRUE)
+  } else {
+    stop("mean_or_assurance must be either 'mean' or 'assurance'")
+  }
 
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
@@ -342,12 +348,7 @@ calculate_ga <- function(
   # Process results from GA
   sample_size_iterations <- round(unlist(lapply(ga_result@bestSol, mean)))
   perfs <- sapply(sample_size_iterations, function(x) metric_calculation(x))
-  ga_summaries <- list(
-    median_performance = quantile(perfs, 0.5),
-    quant20_performance = quantile(perfs, 0.2),
-    quant5_performance = quantile(perfs, 0.05),
-    quant95_performance = quantile(perfs, 0.95)
-  )
+  ga_summaries <- get_summaries(perf)
 
   return(list(
     results = perfs,
