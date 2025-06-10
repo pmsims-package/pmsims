@@ -1,6 +1,3 @@
-get_perf <- function(results, p) {
-  apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
-}
 
 sm_linear_extrapolation <- function(
     results,
