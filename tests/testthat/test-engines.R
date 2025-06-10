@@ -37,9 +37,25 @@ test_that("calculate_crude", {
     test_n = 1000,
     n_reps_total =  100,
     n_reps_per = 10,
-    target_performance = 0.72) 
   
   expect_true(is.numeric(output$min_n))
+  
+  
+  output <- calculate_crude(
+    data_function = functions$data_function,
+    model_function = functions$model_function,
+    metric_function = functions$metric_function,
+    value_on_error = 0.5,
+    min_sample_size = 50,
+    max_sample_size = 200,
+    test_n = 1000,
+    n_reps_total =  100,
+    n_reps_per = 10,
+    target_performance = 0.72,
+    mean_or_assurance = "assurance") 
+  
+  expect_true(is.numeric(output$min_n))
+  
   
 })
 

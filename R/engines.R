@@ -16,6 +16,7 @@ calculate_mlpwr <- function(
   min_sample_size,
   max_sample_size,
   target_performance,
+  mean_or_assurance,
   n_init,
   verbose,
   data_function,
@@ -122,6 +123,7 @@ calculate_crude <- function(
   n_reps_total,
   n_reps_per,
   target_performance,
+  mean_or_assurance,
   parallel = FALSE,
   cores = 20
 ) {
@@ -190,27 +192,41 @@ calculate_crude <- function(
     close(pb)
   }
 
-  get_perf <- function(results, p) {
-    apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
+  get_perf <- function(results, p = NULL, mean = FALSE) {
+    if (mean) {
+      results <- apply(results, FUN = mean, MARGIN = 1, na.rm = TRUE)
+    } else {
+      results <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
+    }
+    return(results)
   }
 
   crude_summaries <- list(
-    median_performance = get_perf(performance_matrix, 0.5),
-    quant20_performance = get_perf(performance_matrix, 0.2),
-    quant5_performance = get_perf(performance_matrix, 0.05),
-    quant95_performance = get_perf(performance_matrix, 0.95)
+    mean_performance = get_perf(performance_matrix, mean = TRUE),
+    median_performance = get_perf(performance_matrix, p = 0.5),
+    quant20_performance = get_perf(performance_matrix,p = 0.2),
+    quant5_performance = get_perf(performance_matrix, p = 0.05),
+    quant95_performance = get_perf(performance_matrix,p = 0.95)
   )
+  
+  if(mean_or_assurance == "mean"){
+    target_summaries <- crude_summaries$mean_performance
+  } else if(mean_or_assurance == "assurance"){
+    target_summaries <- crude_summaries$quant20_performance
+  } else {
+    stop("mean_or_assurance must be either 'mean' or 'assurance'")
+  }
 
   if (
     is.na(
-      which(crude_summaries$quant20_performance > target_performance)[1]
+      which(target_summaries > target_performance)[1]
     )
   ) {
     crude_min_n <- NA
   } else {
     crude_min_n <-
       sample_grid[
-        which(crude_summaries$quant20_performance > target_performance)[1]
+        which(target_summaries > target_performance)[1]
       ]
   }
   return(list(
@@ -231,6 +247,7 @@ calculate_ga <- function(
   n_reps_total,
   n_reps_per,
   target_performance,
+  mean_or_assurance,
   penalty_weight = 1,
   seed = 123
 ) {
