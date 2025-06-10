@@ -1,3 +1,30 @@
+
+get_perf <- function(results, p = NULL, mean = FALSE) {
+  if( is.null(p) && !mean) {
+    stop("Either p or mean must be specified")
+  }
+  if (mean) {
+    results <- apply(results, FUN = mean, MARGIN = 1, na.rm = TRUE)
+  } else {
+    results <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
+  }
+  return(results)
+}
+
+
+get_summaries <- function(performance_matrix) {
+  list(
+    mean_performance = get_perf(results = performance_matrix, mean = TRUE),
+    median_performance = get_perf(performance_matrix, p = 0.5),
+    quant20_performance = get_perf(performance_matrix,p = 0.2),
+    quant5_performance = get_perf(performance_matrix, p = 0.05),
+    quant95_performance = get_perf(performance_matrix,p = 0.95)
+  )
+}
+
+
+
+
 #' MLPWR Engine
 #' @inheritParams simulate_custom
 #' @param n_init The number of initial sample sizes simualted before the gausian process search begins.
@@ -84,16 +111,16 @@ calculate_mlpwr <- function(
     results[i, seq(1, length(perfs[[i]]$y), 1)] <- perfs[[i]]$y
   }
 
-  get_perf <- function(results, p) {
-    apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
-  }
+  
 
-  mlpwr_summaries <- list(
-    median_performance = get_perf(results, 0.5),
-    quant20_performance = get_perf(results, 0.2),
-    quant5_performance = get_perf(results, 0.05),
-    quant95_performance = get_perf(results, 0.95)
-  )
+  mlpwr_summaries <- get_summaries(results)
+  
+  # list(
+  #   median_performance = get_perf(results, 0.5),
+  #   quant20_performance = get_perf(results, 0.2),
+  #   quant5_performance = get_perf(results, 0.05),
+  #   quant95_performance = get_perf(results, 0.95)
+  # )
 
   return(list(
     results = perfs,
@@ -192,22 +219,7 @@ calculate_crude <- function(
     close(pb)
   }
 
-  get_perf <- function(results, p = NULL, mean = FALSE) {
-    if (mean) {
-      results <- apply(results, FUN = mean, MARGIN = 1, na.rm = TRUE)
-    } else {
-      results <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
-    }
-    return(results)
-  }
-
-  crude_summaries <- list(
-    mean_performance = get_perf(performance_matrix, mean = TRUE),
-    median_performance = get_perf(performance_matrix, p = 0.5),
-    quant20_performance = get_perf(performance_matrix,p = 0.2),
-    quant5_performance = get_perf(performance_matrix, p = 0.05),
-    quant95_performance = get_perf(performance_matrix,p = 0.95)
-  )
+  crude_summaries <- get_summaries(performance_matrix)
   
   if(mean_or_assurance == "mean"){
     target_summaries <- crude_summaries$mean_performance
@@ -343,3 +355,8 @@ calculate_ga <- function(
     min_n = as.numeric(best_n)
   ))
 }
+
+
+  
+  
+
