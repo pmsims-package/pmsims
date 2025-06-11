@@ -9,10 +9,7 @@
 default_models <- list(
   binary = list(
     glm = function(d) {
-      glm("y ~ .",
-        data = d,
-        family = "binomial"
-      )
+      glm("y ~ .", data = d, family = "binomial")
     },
     lasso = function(d) {
       d <- as.matrix(d)
@@ -36,10 +33,7 @@ default_models <- list(
   ),
   continuous = list(
     lm = function(d) {
-      glm("y ~ .",
-        data = d,
-        family = "gaussian"
-      )
+      glm("y ~ .", data = d, family = "gaussian")
     }
   ),
   survival = list(
@@ -60,7 +54,8 @@ default_model_generators <- function(outcome, model) {
       "Model \"",
       model,
       "\" not found for outcome \"",
-      outcome, "\""
+      outcome,
+      "\""
     ))
   }
 }

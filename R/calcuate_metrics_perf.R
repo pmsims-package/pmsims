@@ -9,12 +9,13 @@
 #'
 #' @examples
 
-calcuate_metrics_perf <- function(n,
-                                  data_function,
-                                  model_function,
-                                  metric_function,
-                                  value_on_error) {
-
+calcuate_metrics_perf <- function(
+  n,
+  data_function,
+  model_function,
+  metric_function,
+  value_on_error
+) {
   tryCatch(
     {
       test_data <- data_function(n)
@@ -28,4 +29,3 @@ calcuate_metrics_perf <- function(n,
     }
   )
 }
-

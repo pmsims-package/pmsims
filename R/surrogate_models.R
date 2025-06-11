@@ -1,8 +1,8 @@
-
 sm_linear_extrapolation <- function(
-    results,
-    simulation_parameters,
-    target_performance) {
+  results,
+  simulation_parameters,
+  target_performance
+) {
   median_performance <- get_perf(results, p = 0.5)
   quant20_performance <- get_perf(results, p = 0.2)
   quant5_performance <- get_perf(results, p = 0.05)
@@ -12,7 +12,8 @@ sm_linear_extrapolation <- function(
   # We linearly approximate values between the train sizes and get the min_n
   # from there:
 
-  min_size_func <- stats::approxfun(quant20_performance,
+  min_size_func <- stats::approxfun(
+    quant20_performance,
     simulation_parameters$train_size,
     method = "linear"
   )
@@ -34,4 +35,5 @@ sm_linear_extrapolation <- function(
   return(return_list)
 }
 
-sm_qgam <- function(results, simulation_parameters, target_performance) { }
+sm_qgam <- function(results, simulation_parameters, target_performance) {
+}
