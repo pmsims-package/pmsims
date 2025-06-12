@@ -49,21 +49,22 @@
 #'
 #' @examples
 simulate_binary <- function(
-    n_signal_parameters,
-    baseline_prob,
-    min_sample_size,
-    max_sample_size,
-    large_sample_performance,
-    minimum_threshold = 0.1,
-    noise_parameters = 0,
-    predictor_type = "continuous",
-    predictor_prop = NULL,
-    metric = "auc",
-    model = "glm",
-    se_final = 0.005,
-    n_reps_total = NULL,
-    tune_param = NULL,
-    ...) {
+  n_signal_parameters,
+  baseline_prob,
+  min_sample_size,
+  max_sample_size,
+  large_sample_performance,
+  minimum_threshold = 0.1,
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  predictor_prop = NULL,
+  metric = "auc",
+  model = "glm",
+  se_final = 0.005,
+  n_reps_total = NULL,
+  tune_param = NULL,
+  ...
+) {
   data_spec <- list(
     type = "binary",
     args = list(
@@ -126,19 +127,20 @@ simulate_binary <- function(
 #'
 #' @examples
 simulate_continuous <- function(
-    n_signal_parameters,
-    min_sample_size,
-    max_sample_size,
-    noise_parameters = 0,
-    predictor_type = "continuous",
-    predictor_prop = NULL,
-    model = "lm",
-    metric = "r2",
-    large_sample_performance = 0.8,
-    minimum_threshold = 0.10,
-    se_final = 0.005, # To give CIs of +/- 0.01
-    n_reps_total = NULL,
-    ...) {
+  n_signal_parameters,
+  min_sample_size,
+  max_sample_size,
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  predictor_prop = NULL,
+  model = "lm",
+  metric = "r2",
+  large_sample_performance = 0.8,
+  minimum_threshold = 0.10,
+  se_final = 0.005, # To give CIs of +/- 0.01
+  n_reps_total = NULL,
+  ...
+) {
   inputs <- parse_inputs(
     data_spec = list(
       type = "continuous",
@@ -162,8 +164,10 @@ simulate_continuous <- function(
   extra_args <- list(...)
   if (!is.null(extra_args$tune_param)) large_sample_performance <- NULL
 
-  do.call(simulate_custom,
-    args = c(inputs,
+  do.call(
+    simulate_custom,
+    args = c(
+      inputs,
       target_performance = target_performance,
       large_sample_performance = large_sample_performance,
       min_sample_size = min_sample_size,
@@ -184,21 +188,23 @@ simulate_continuous <- function(
 #' @export
 #'
 #' @examples
-simulate_survival <- function(n_signal_parameters,
-                              min_sample_size,
-                              max_sample_size,
-                              noise_parameters = 0,
-                              predictor_type = "continuous",
-                              predictor_prop = NULL,
-                              baseline_hazard = 0.01,
-                              censoring_rate = 0.2,
-                              metric = "cindex",
-                              model = "coxph",
-                              large_sample_performance = 0.8,
-                              minimum_threshold = 0.10,
-                              se_final = 0.005, # To give CIs of +/- 0.01
-                              n_reps_total = NULL,
-                              ...) {
+simulate_survival <- function(
+  n_signal_parameters,
+  min_sample_size,
+  max_sample_size,
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  predictor_prop = NULL,
+  baseline_hazard = 0.01,
+  censoring_rate = 0.2,
+  metric = "cindex",
+  model = "coxph",
+  large_sample_performance = 0.8,
+  minimum_threshold = 0.10,
+  se_final = 0.005, # To give CIs of +/- 0.01
+  n_reps_total = NULL,
+  ...
+) {
   inputs <- parse_inputs(
     data_spec = list(
       type = "survival",
@@ -223,8 +229,10 @@ simulate_survival <- function(n_signal_parameters,
   extra_args <- list(...)
   if (!is.null(extra_args$tune_param)) large_sample_performance <- NULL
 
-  do.call(simulate_custom,
-    args = c(inputs,
+  do.call(
+    simulate_custom,
+    args = c(
+      inputs,
       target_performance = target_performance,
       large_sample_performance = large_sample_performance,
       min_sample_size = min_sample_size,

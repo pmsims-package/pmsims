@@ -12,7 +12,16 @@
 #' @export
 #'
 #' @examples
-default_tune <- function(tune_param, max_sample_size, large_sample_performance, data_function, model_function, metric_function, tune_args = NULL, verbose = TRUE) {
+default_tune <- function(
+  tune_param,
+  max_sample_size,
+  large_sample_performance,
+  data_function,
+  model_function,
+  metric_function,
+  tune_args = NULL,
+  verbose = TRUE
+) {
   default_tuning_set_up <- list(
     interval = c(0, 1),
     large_n = set_test_n(max_sample_size),
@@ -57,15 +66,16 @@ default_tune <- function(tune_param, max_sample_size, large_sample_performance, 
 #'
 #' @examples
 tune_generate_data <- function(
-    data_function,
-    large_n,
-    interval,
-    model_function,
-    metric_function,
-    target_performance,
-    tolerance = set_tolerance(target_performance),
-    max_interval_expansion = 10,
-    verbose = FALSE) {
+  data_function,
+  large_n,
+  interval,
+  model_function,
+  metric_function,
+  target_performance,
+  tolerance = set_tolerance(target_performance),
+  max_interval_expansion = 10,
+  verbose = FALSE
+) {
   result <- stats::optimise(
     optimise_me, # function defined below
     interval = interval,
@@ -88,10 +98,12 @@ tune_generate_data <- function(
       abs(opt - int[2]) < max(abs(opt - int[1])) / 100
     )
   }
-  while (any(
-    check_limits(optimal_value, interval),
-    result$objective > tolerance
-  )) {
+  while (
+    any(
+      check_limits(optimal_value, interval),
+      result$objective > tolerance
+    )
+  ) {
     # Interval is too narrow, expand the interval
     if (verbose) print("Expanding search for tuning parameter")
     expand_count <- expand_count + 1
@@ -121,12 +133,14 @@ tune_generate_data <- function(
 }
 
 # Update to allow spec. of tuning parameter.
-optimise_me <- function(tune_var,
-                        n,
-                        data_function,
-                        model_function,
-                        metric_function,
-                        target_performance) {
+optimise_me <- function(
+  tune_var,
+  n,
+  data_function,
+  model_function,
+  metric_function,
+  target_performance
+) {
   # TODO: update to allow choice of tuning parameter.
   data <- data_function(n, tune_var)
   fit <- model_function(data)

@@ -16,16 +16,8 @@ plot.pmsims <- function(results) {
     main = "AUC by train size with  20th percentile, 5th percentile, & 95th percentile"
   )
   graphics::lines(train_size, median_performance, col = "black")
-  graphics::lines(train_size,
-    quant5_performance,
-    col = "grey",
-    lty = 1
-  )
-  graphics::lines(train_size,
-    quant95_performance,
-    col = "grey",
-    lty = 1
-  )
+  graphics::lines(train_size, quant5_performance, col = "grey", lty = 1)
+  graphics::lines(train_size, quant95_performance, col = "grey", lty = 1)
   abline(h = results$target_performance, col = 3)
   graphics::abline(
     h = results$target,

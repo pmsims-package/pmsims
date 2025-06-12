@@ -1,12 +1,17 @@
-
 get_perf <- function(results, p = NULL, mean = FALSE) {
-  if( is.null(p) && !mean) {
+  if (is.null(p) && !mean) {
     stop("Either p or mean must be specified")
   }
   if (mean) {
     results <- apply(results, FUN = mean, MARGIN = 1, na.rm = TRUE)
   } else {
-    results <- apply(results, FUN = stats::quantile, MARGIN = 1, probs = p, na.rm = TRUE)
+    results <- apply(
+      results,
+      FUN = stats::quantile,
+      MARGIN = 1,
+      probs = p,
+      na.rm = TRUE
+    )
   }
   return(results)
 }
@@ -16,13 +21,11 @@ get_summaries <- function(performance_matrix) {
   list(
     mean_performance = get_perf(results = performance_matrix, mean = TRUE),
     median_performance = get_perf(performance_matrix, p = 0.5),
-    quant20_performance = get_perf(performance_matrix,p = 0.2),
+    quant20_performance = get_perf(performance_matrix, p = 0.2),
     quant5_performance = get_perf(performance_matrix, p = 0.05),
-    quant95_performance = get_perf(performance_matrix,p = 0.95)
+    quant95_performance = get_perf(performance_matrix, p = 0.95)
   )
 }
-
-
 
 
 #' MLPWR Engine
@@ -66,10 +69,10 @@ calculate_mlpwr <- function(
       }
     )
   }
-  
-  if(mean_or_assurance == "mean"){
+
+  if (mean_or_assurance == "mean") {
     aggregate_fun <- function(x) mean(x, na.rm = TRUE)
-  } else if(mean_or_assurance == "assurance"){
+  } else if (mean_or_assurance == "assurance") {
     aggregate_fun <- function(x) quantile(x, probs = .2, na.rm = TRUE)
   } else {
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
@@ -117,10 +120,8 @@ calculate_mlpwr <- function(
     results[i, seq(1, length(perfs[[i]]$y), 1)] <- perfs[[i]]$y
   }
 
-  
-
   mlpwr_summaries <- get_summaries(results)
-  
+
   # list(
   #   median_performance = get_perf(results, 0.5),
   #   quant20_performance = get_perf(results, 0.2),
@@ -226,10 +227,10 @@ calculate_crude <- function(
   }
 
   crude_summaries <- get_summaries(performance_matrix)
-  
-  if(mean_or_assurance == "mean"){
+
+  if (mean_or_assurance == "mean") {
     target_summaries <- crude_summaries$mean_performance
-  } else if(mean_or_assurance == "assurance"){
+  } else if (mean_or_assurance == "assurance") {
     target_summaries <- crude_summaries$quant20_performance
   } else {
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
@@ -286,10 +287,10 @@ calculate_ga <- function(
   test_data <- data_function(test_n)
 
   # Define the objective function for the genetic algorithm
-  calc_objective_function <- function(n) { 
+  calc_objective_function <- function(n) {
     n <- round(n)
-    if (n < min_sample_size) return(-Inf)  # Enforce minimum sample size
-    
+    if (n < min_sample_size) return(-Inf) # Enforce minimum sample size
+
     tryCatch(
       {
         # Use replicate to generate multiple performance values efficiently
@@ -299,21 +300,25 @@ calculate_ga <- function(
           model <- attr(model_function, "model")
           metric_function(test_data, fit, model)
         })
-        
+
         # Choose performance aggregation method
         performance <- switch(
           mean_or_assurance,
           mean = mean(performance_values, na.rm = TRUE),
           assurance = quantile(performance_values, probs = 0.20, na.rm = TRUE),
-          stop("Invalid value for mean_or_assurance. Must be 'mean' or 'assurance'.")
+          stop(
+            "Invalid value for mean_or_assurance. Must be 'mean' or 'assurance'."
+          )
         )
-        
+
         # Calculate penalty term (normalized by max sample size)
         penalty <- penalty_weight * (n / max_sample_size)
-        
+
         # Objective value: reward closeness to target, penalize large sample size
-        objective_value <- 1 / (abs(performance - target_performance) + 1) - penalty
-        
+        objective_value <- 1 /
+          (abs(performance - target_performance) + 1) -
+          penalty
+
         return(objective_value)
       },
       error = function(e) {
@@ -321,7 +326,7 @@ calculate_ga <- function(
       }
     )
   }
-  
+
   # Configure and run genetic algorithm
   # Load GA package
   require(GA)
@@ -361,20 +366,15 @@ calculate_ga <- function(
   perfs <- sapply(sample_size_iterations, function(x) metric_calculation(x))
   #ga_summaries <- get_summaries(perfs)
   ga_summaries <- list(
-    mean_performance = mean(perfs, na.rm=TRUE),
-    median_performance = quantile(perfs, 0.5, na.rm=TRUE),
-    quant20_performance = quantile(perfs, 0.2, na.rm=TRUE),
-    quant5_performance = quantile(perfs, 0.05, na.rm=TRUE),
-    quant95_performance = quantile(perfs, 0.95, na.rm=TRUE)
-)
+    mean_performance = mean(perfs, na.rm = TRUE),
+    median_performance = quantile(perfs, 0.5, na.rm = TRUE),
+    quant20_performance = quantile(perfs, 0.2, na.rm = TRUE),
+    quant5_performance = quantile(perfs, 0.05, na.rm = TRUE),
+    quant95_performance = quantile(perfs, 0.95, na.rm = TRUE)
+  )
   return(list(
     results = perfs,
     summaries = ga_summaries,
     min_n = as.numeric(best_n)
   ))
 }
-
-
-  
-  
-

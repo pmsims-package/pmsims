@@ -56,7 +56,7 @@ simulate_custom <- function(
   if (min_sample_size > max_sample_size) {
     stop("min_sample_size must be less than max_sample_size")
   }
-  
+
   if ((mean_or_assurance %in% c("mean", "assurance")) == FALSE) {
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
   }
