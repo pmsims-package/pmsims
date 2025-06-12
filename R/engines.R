@@ -254,7 +254,7 @@ calculate_crude <- function(
   ))
 }
 
-#' The Crude Engine
+#' The GA Engine
 #' @inheritParams calculate_mlpwr
 #' @param value_on_error
 #'
@@ -263,25 +263,24 @@ calculate_crude <- function(
 #'
 #' @examples
 calculate_ga <- function(
-  data_function,
-  model_function,
-  metric_function,
-  value_on_error,
-  min_sample_size,
-  max_sample_size,
-  test_n,
-  n_reps_total,
-  n_reps_per,
-  target_performance,
-  mean_or_assurance,
-  penalty_weight = 1,
-  seed = 123
+  data_function=data_function,
+  model_function=model_function,
+  metric_function=metric_function,
+  value_on_error=value_on_error,
+  min_sample_size=min_sample_size,
+  max_sample_size=max_sample_size,
+  test_n=test_n,
+  n_reps_total=n_reps_total,
+  n_reps_per=n_reps_per,
+  target_performance=target_performance,
+  mean_or_assurance=mean_or_assurance,
+  penalty_weight = 1
 ) {
   maxiter <- n_reps_per
   popSize <- round(n_reps_total / n_reps_per)
 
   # Set seed for reproducibility
-  set.seed(seed)
+  #set.seed(seed)
 
   # Generate test data once
   test_data <- data_function(test_n)
@@ -335,7 +334,7 @@ calculate_ga <- function(
     maxiter = maxiter,
     keepBest = TRUE,
     parallel = FALSE,
-    seed = seed,
+    seed = NULL,
     monitor = FALSE
   )
 
