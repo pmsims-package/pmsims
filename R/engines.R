@@ -27,6 +27,35 @@ get_summaries <- function(performance_matrix) {
   )
 }
 
+get_ga_solution <- function(gaobject, mean_or_assurance = c("mean", "assurance")) {
+  mean_or_assurance <- match.arg(mean_or_assurance)
+  
+  # Select fitness threshold based on mean or assurance (20th percentile)
+  fitness_threshold <- if (mean_or_assurance == "mean") {
+    mean(gaobject@fitness, na.rm = TRUE)
+  } else {
+    quantile(gaobject@fitness, probs = 0.20, na.rm = TRUE)
+  }
+  
+  # Get indices where fitness meets/exceeds threshold
+  valid_idx <- which(gaobject@fitness >= fitness_threshold)
+  candidate_population <- gaobject@population[valid_idx, , drop = FALSE]
+  
+  # If multiple rows, compute summary statistic based on context
+  if (nrow(candidate_population) > 1) {
+    solution_values <- rowMeans(candidate_population, na.rm = TRUE)
+    if (mean_or_assurance == "mean") {
+      solution <- mean(solution_values, na.rm = TRUE)
+    } else {
+      solution <- quantile(solution_values, probs = 0.2, na.rm = TRUE)
+    }
+  } else {
+    solution <- candidate_population
+  }
+  
+  return(round(as.numeric(solution)))
+}
+
 
 #' MLPWR Engine
 #' @inheritParams simulate_custom
@@ -290,35 +319,27 @@ calculate_ga <- function(
   calc_objective_function <- function(n) {
     n <- round(n)
     if (n < min_sample_size) return(-Inf) # Enforce minimum sample size
-
+    
     tryCatch(
       {
-        # Use replicate to generate multiple performance values efficiently
-        performance_values <- replicate(n_reps_per, {
-          train_data <- data_function(n)
-          fit <- model_function(train_data)
-          model <- attr(model_function, "model")
-          metric_function(test_data, fit, model)
-        })
-
-        # Choose performance aggregation method
-        performance <- switch(
-          mean_or_assurance,
-          mean = mean(performance_values, na.rm = TRUE),
-          assurance = quantile(performance_values, probs = 0.20, na.rm = TRUE),
-          stop(
-            "Invalid value for mean_or_assurance. Must be 'mean' or 'assurance'."
-          )
-        )
-
+        # Generate training data
+        train_data <- data_function(n)
+        
+        # Fit model
+        fit <- model_function(train_data)
+        model <- attr(model_function, "model")
+        
+        # Calculate performance metric
+        performance <- metric_function(test_data, fit, model)
+        
         # Calculate penalty term (normalized by max sample size)
         penalty <- penalty_weight * (n / max_sample_size)
-
-        # Objective value: reward closeness to target, penalize large sample size
+        
+        # Objective value (minimize difference between performance and target while minimizing sample size)
+        # objective_value <- -abs(performance - target_performance  - penalty)
         objective_value <- 1 /
           (abs(performance - target_performance) + 1) -
           penalty
-
         return(objective_value)
       },
       error = function(e) {
@@ -326,7 +347,7 @@ calculate_ga <- function(
       }
     )
   }
-
+  
   # Configure and run genetic algorithm
   # Load GA package
   require(GA)
@@ -356,9 +377,12 @@ calculate_ga <- function(
       }
     )
   }
+  
 
+  
   # Extract results
-  best_n <- round(ga_result@solution[1])
+  #best_n <- round(ga_result@solution[1]) This returns n that maximizes the max fitness value
+  best_n <- get_ga_solution(ga_result,mean_or_assurance) # This returns n that maximizes the mean/q20 fitness value
   best_performance <- metric_calculation(best_n)
 
   # Process results from GA
@@ -375,6 +399,6 @@ calculate_ga <- function(
   return(list(
     results = perfs,
     summaries = ga_summaries,
-    min_n = as.numeric(best_n)
+    min_n = best_n
   ))
 }
