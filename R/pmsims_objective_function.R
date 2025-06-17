@@ -20,12 +20,14 @@ objective_function <- function(
   value_on_error
 ) {
   n <- round(n)
-  if (n < min_sample_size) return(-Inf) # Enforce minimum sample size
+  if (n < min_sample_size) {
+    return(-Inf)
+  } # Enforce minimum sample size
 
   tryCatch(
     {
       # Calculate performance metric
-      performance <- calcuate_metrics_perf(n, value_on_error)
+      performance <- calculate_metrics_perf(n, value_on_error)
 
       # Calculate penalty term (normalized by max sample size)
       penalty <- penalty_weight * (n / max_sample_size)
