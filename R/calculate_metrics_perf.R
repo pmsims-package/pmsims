@@ -9,7 +9,7 @@
 #'
 #' @examples
 
-calcuate_metrics_perf <- function(
+calculate_metrics_perf <- function(
   n,
   data_function,
   model_function,
