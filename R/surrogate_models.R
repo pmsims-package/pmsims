@@ -35,5 +35,4 @@ sm_linear_extrapolation <- function(
   return(return_list)
 }
 
-sm_qgam <- function(results, simulation_parameters, target_performance) {
-}
+sm_qgam <- function(results, simulation_parameters, target_performance) {}

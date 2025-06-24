@@ -162,7 +162,9 @@ simulate_continuous <- function(
   target_performance <- large_sample_performance - minimum_threshold
 
   extra_args <- list(...)
-  if (!is.null(extra_args$tune_param)) large_sample_performance <- NULL
+  if (!is.null(extra_args$tune_param)) {
+    large_sample_performance <- NULL
+  }
 
   do.call(
     simulate_custom,
@@ -227,7 +229,9 @@ simulate_survival <- function(
 
   target_performance <- large_sample_performance - minimum_threshold
   extra_args <- list(...)
-  if (!is.null(extra_args$tune_param)) large_sample_performance <- NULL
+  if (!is.null(extra_args$tune_param)) {
+    large_sample_performance <- NULL
+  }
 
   do.call(
     simulate_custom,

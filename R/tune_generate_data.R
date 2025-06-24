@@ -105,7 +105,9 @@ tune_generate_data <- function(
     )
   ) {
     # Interval is too narrow, expand the interval
-    if (verbose) print("Expanding search for tuning parameter")
+    if (verbose) {
+      print("Expanding search for tuning parameter")
+    }
     expand_count <- expand_count + 1
     if (expand_count > max_interval_expansion) {
       stop("cannot find interval containing tuning parameter")

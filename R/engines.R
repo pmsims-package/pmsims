@@ -27,20 +27,23 @@ get_summaries <- function(performance_matrix) {
   )
 }
 
-get_ga_solution <- function(gaobject, mean_or_assurance = c("mean", "assurance")) {
+get_ga_solution <- function(
+  gaobject,
+  mean_or_assurance = c("mean", "assurance")
+) {
   mean_or_assurance <- match.arg(mean_or_assurance)
-  
+
   # Select fitness threshold based on mean or assurance (20th percentile)
   fitness_threshold <- if (mean_or_assurance == "mean") {
     mean(gaobject@fitness, na.rm = TRUE)
   } else {
     quantile(gaobject@fitness, probs = 0.20, na.rm = TRUE)
   }
-  
+
   # Get indices where fitness meets/exceeds threshold
   valid_idx <- which(gaobject@fitness >= fitness_threshold)
   candidate_population <- gaobject@population[valid_idx, , drop = FALSE]
-  
+
   # If multiple rows, compute summary statistic based on context
   if (nrow(candidate_population) > 1) {
     solution_values <- rowMeans(candidate_population, na.rm = TRUE)
@@ -52,7 +55,7 @@ get_ga_solution <- function(gaobject, mean_or_assurance = c("mean", "assurance")
   } else {
     solution <- candidate_population
   }
-  
+
   return(round(as.numeric(solution)))
 }
 
@@ -293,17 +296,17 @@ calculate_crude <- function(
 #'
 #' @examples
 calculate_ga <- function(
-  data_function=data_function,
-  model_function=model_function,
-  metric_function=metric_function,
-  value_on_error=value_on_error,
-  min_sample_size=min_sample_size,
-  max_sample_size=max_sample_size,
-  test_n=test_n,
-  n_reps_total=n_reps_total,
-  n_reps_per=n_reps_per,
-  target_performance=target_performance,
-  mean_or_assurance=mean_or_assurance,
+  data_function = data_function,
+  model_function = model_function,
+  metric_function = metric_function,
+  value_on_error = value_on_error,
+  min_sample_size = min_sample_size,
+  max_sample_size = max_sample_size,
+  test_n = test_n,
+  n_reps_total = n_reps_total,
+  n_reps_per = n_reps_per,
+  target_performance = target_performance,
+  mean_or_assurance = mean_or_assurance,
   penalty_weight = 1
 ) {
   maxiter <- n_reps_per
@@ -318,23 +321,24 @@ calculate_ga <- function(
   # Define the objective function for the genetic algorithm
   calc_objective_function <- function(n) {
     n <- round(n)
-    if (n < min_sample_size) return(-Inf) # Enforce minimum sample size
-    
+    if (n < min_sample_size) {
+      return(-Inf)
+    } # Enforce minimum sample size
     tryCatch(
       {
         # Generate training data
         train_data <- data_function(n)
-        
+
         # Fit model
         fit <- model_function(train_data)
         model <- attr(model_function, "model")
-        
+
         # Calculate performance metric
         performance <- metric_function(test_data, fit, model)
-        
+
         # Calculate penalty term (normalized by max sample size)
         penalty <- penalty_weight * (n / max_sample_size)
-        
+
         # Objective value (minimize difference between performance and target while minimizing sample size)
         # objective_value <- -abs(performance - target_performance  - penalty)
         objective_value <- 1 /
@@ -347,7 +351,7 @@ calculate_ga <- function(
       }
     )
   }
-  
+
   # Configure and run genetic algorithm
   # Load GA package
   require(GA)
@@ -377,18 +381,15 @@ calculate_ga <- function(
       }
     )
   }
-  
 
-  
   # Extract results
-  #best_n <- round(ga_result@solution[1]) This returns n that maximizes the max fitness value
-  best_n <- get_ga_solution(ga_result,mean_or_assurance) # This returns n that maximizes the mean/q20 fitness value
+  # This returns n that maximizes the mean/q20 fitness value
+  best_n <- get_ga_solution(ga_result, mean_or_assurance)
   best_performance <- metric_calculation(best_n)
 
   # Process results from GA
   sample_size_iterations <- round(unlist(lapply(ga_result@bestSol, mean)))
   perfs <- sapply(sample_size_iterations, function(x) metric_calculation(x))
-  #ga_summaries <- get_summaries(perfs)
   ga_summaries <- list(
     mean_performance = mean(perfs, na.rm = TRUE),
     median_performance = quantile(perfs, 0.5, na.rm = TRUE),

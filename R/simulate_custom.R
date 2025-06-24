@@ -114,17 +114,17 @@ simulate_custom <- function(
     )
   } else if (method == "ga") {
     output <- calculate_ga(
-      data_function=data_function,
-      model_function=model_function,
-      metric_function=metric_function,
-      value_on_error=value_on_error,
-      min_sample_size=min_sample_size,
-      max_sample_size=max_sample_size,
-      test_n=test_n,
-      n_reps_total=n_reps_total,
-      n_reps_per=n_reps_per,
-      target_performance=target_performance,
-      mean_or_assurance=mean_or_assurance,
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      value_on_error = value_on_error,
+      min_sample_size = min_sample_size,
+      max_sample_size = max_sample_size,
+      test_n = test_n,
+      n_reps_total = n_reps_total,
+      n_reps_per = n_reps_per,
+      target_performance = target_performance,
+      mean_or_assurance = mean_or_assurance,
       penalty_weight = 1,
       ...
     )
@@ -172,15 +172,19 @@ simulate_custom <- function(
 #'
 #' @param data_spec A list with two items. The first named type which indicates the type of outcome. The second named args which is a list of arguments to be passed to the data generating function.
 #' @param metric A string indicating the metric to be used.
-#' @ param model A string indicating the model to be used.
+#' @param model A string indicating the model to be used.
 #'
 #' @return A list containing a data function, a model function, and a metric function.
 #' @export
 #'
 #' @examples
 parse_inputs <- function(data_spec, metric, model) {
-  if (is.null(metric)) stop("metric is missing")
-  if (is.null(data_spec)) stop("data_spec missing")
+  if (is.null(metric)) {
+    stop("metric is missing")
+  }
+  if (is.null(data_spec)) {
+    stop("data_spec missing")
+  }
   # Set data generating function
   data_function <- default_data_generators(data_spec)
   # Set model function, based on outcome type and chosen model
