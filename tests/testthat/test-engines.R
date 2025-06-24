@@ -97,8 +97,7 @@ test_that("calculate_ga", {
     n_reps_per = 10,
     target_performance = 0.75,
     mean_or_assurance = "mean",
-    penalty_weight = 1,
-    seed = 123) 
+    penalty_weight = 1) 
   
   expect_true(is.numeric(output$min_n))
   
@@ -114,8 +113,51 @@ test_that("calculate_ga", {
     n_reps_per = 10,
     target_performance = 0.75,
     mean_or_assurance = "assurance",
-    penalty_weight = 1,
-    seed = 123) 
+    penalty_weight = 1) 
+  
+  expect_true(is.numeric(output$min_n))
+  
+})
+
+test_that("calculate_bisection", {
+  
+  functions <- get_binary_data_model_metric()
+  
+  
+  output <- calculate_bisection(
+    data_function = functions$data_function,
+    model_function = functions$model_function,
+    metric_function = functions$metric_function,
+    value_on_error = 0.5,
+    min_sample_size = 50,
+    max_sample_size = 200,
+    test_n = 1000,
+    n_reps_total =  100,
+    n_reps_per = 10,
+    target_performance = 0.75,
+    mean_or_assurance = "mean",
+    tol                = 1e-3,
+    parallel           = FALSE,
+    cores              = 20
+) 
+  
+  expect_true(is.numeric(output$min_n))
+  
+  output <- calculate_bisection(
+    data_function = functions$data_function,
+    model_function = functions$model_function,
+    metric_function = functions$metric_function,
+    value_on_error = 0.5,
+    min_sample_size = 50,
+    max_sample_size = 200,
+    test_n = 1000,
+    n_reps_total =  100,
+    n_reps_per = 10,
+    target_performance = 0.75,
+    mean_or_assurance = "assurance",
+    tol                = 1e-3,
+    parallel           = FALSE,
+    cores              = 20) 
   
   expect_true(is.numeric(output$min_n))
   

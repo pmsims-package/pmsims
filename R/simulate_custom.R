@@ -12,10 +12,11 @@
 #' @param n_reps_total The total number of simulation reps run by pmsims.
 #' @param n_reps_per The number of reps run at each sample size.
 #' @param se_final A standard error which can be used as a stopping criteria. Either n_reps_total or se_final should be given.
-#' @param n_init The number of initial sample sizes to be used in the search before the alorithm passed in method is used
+#' @param n_init The number of initial sample sizes to be used in the search before the algorithm passed in method is used
 #' @param method The method used to search for the minimum sample size. Options are "mlpwr", "crude" and "ga".
 #' @param verbose A logical controlling output
 #' @param penalty_weight This is the weight that balances the objective and the cost of large sample size for the "ga" engine. Value 0 implies the focus is to minimize the abs difference.
+#' @param tol This is the minimum difference between performance at i and i+1 for the "bisection" engine, default is 1e-3.
 #' @param ... Other argments passed to the method function.
 #'
 #' @returns
@@ -125,6 +126,24 @@ simulate_custom <- function(
       target_performance=target_performance,
       mean_or_assurance=mean_or_assurance,
       penalty_weight = 1,
+      ...
+    )
+  }else if (method == "bisection") {
+    output <- calculate_bisection(
+      data_function=data_function,
+      model_function=model_function,
+      metric_function=metric_function,
+      value_on_error=value_on_error,
+      min_sample_size=min_sample_size,
+      max_sample_size=max_sample_size,
+      test_n=test_n,
+      n_reps_total=n_reps_total,
+      n_reps_per=n_reps_per,
+      target_performance=target_performance,
+      mean_or_assurance=mean_or_assurance,
+      tol                = 1e-3,
+      parallel           = FALSE,
+      cores              = 20,
       ...
     )
   } else {
