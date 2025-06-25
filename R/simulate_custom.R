@@ -144,6 +144,7 @@ simulate_custom <- function(
       tol                = 1e-3,
       parallel           = FALSE,
       cores              = 20,
+      verbose = FALSE,
       ...
     )
   } else {

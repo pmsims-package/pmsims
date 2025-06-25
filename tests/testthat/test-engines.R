@@ -138,7 +138,8 @@ test_that("calculate_bisection", {
     mean_or_assurance = "mean",
     tol                = 1e-3,
     parallel           = FALSE,
-    cores              = 20
+    cores              = 20,
+    verbose = FALSE
 ) 
   
   expect_true(is.numeric(output$min_n))
@@ -157,7 +158,8 @@ test_that("calculate_bisection", {
     mean_or_assurance = "assurance",
     tol                = 1e-3,
     parallel           = FALSE,
-    cores              = 20) 
+    cores              = 20,
+    verbose = FALSE) 
   
   expect_true(is.numeric(output$min_n))
   

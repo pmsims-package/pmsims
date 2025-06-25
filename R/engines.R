@@ -415,26 +415,28 @@ calculate_ga <- function(
 #' @examples
 
 calculate_bisection <- function(
-    data_function=data_function,
-    model_function=model_function,
-    metric_function=metric_function,
-    value_on_error=value_on_error,
-    min_sample_size=min_sample_size,
-    max_sample_size=max_sample_size,
-    test_n=test_n,
-    n_reps_total=n_reps_total,
-    n_reps_per=n_reps_per,
-    target_performance=target_performance,
-    mean_or_assurance=mean_or_assurance,
-    tol                = 1e-3,
-    parallel           = FALSE,
-    cores              = 20
+    data_function = data_function,
+    model_function = model_function,
+    metric_function = metric_function,
+    value_on_error = value_on_error,
+    min_sample_size = min_sample_size,
+    max_sample_size = max_sample_size,
+    test_n = test_n,
+    n_reps_total = n_reps_total,
+    n_reps_per = n_reps_per,
+    target_performance = target_performance,
+    mean_or_assurance = mean_or_assurance,
+    tol = 1e-3,
+    parallel = FALSE,
+    cores = 20,
+    verbose = FALSE
 ) {
+  max_iter <- round(n_reps_total / n_reps_per)
   
-  max_iter <- round(n_reps_total/n_reps_per)
+  # Generate fixed test set once
+  test_data <- data_function(test_n)
   
-  #mean_or_assurance <- match.arg(mean_or_assurance)
-  # helper to simulate & compute one replicate of the metric at size n
+  # Helper: run 1 simulation
   single_run <- function(n) {
     tryCatch({
       dat <- data_function(n)
@@ -443,20 +445,17 @@ calculate_bisection <- function(
     }, error = function(e) value_on_error)
   }
   
-  # wrapper to get the summary metric (mean or 20th percentile) at size n
+  # Helper: summary of metric for n_reps_per repetitions
   summary_at_n <- function(n) {
-    # run n_reps_per times (in serial or parallel)
     if (parallel) {
       require(foreach); require(doParallel)
-      cl <- makeCluster(cores); registerDoParallel(cl)
-      vals <- foreach(i = 1:n_reps_per, .combine = c) %dopar%
-        single_run(n, test_data)
-      stopCluster(cl)
+      cl <- parallel::makeCluster(cores); doParallel::registerDoParallel(cl)
+      vals <- foreach(i = 1:n_reps_per, .combine = c) %dopar% single_run(n)
+      parallel::stopCluster(cl)
     } else {
-      vals <- vapply(seq_len(n_reps_per), function(i) single_run(n),
-                     FUN.VALUE = numeric(1))
+      vals <- vapply(seq_len(n_reps_per), function(i) single_run(n), FUN.VALUE = numeric(1))
     }
-    s <- get_summaries(matrix(vals, nrow = 1))  # assume get_summaries handles 1×n_reps
+    s <- get_summaries(matrix(vals, nrow = 1))
     if (mean_or_assurance == "mean") {
       s$mean_performance
     } else {
@@ -464,41 +463,46 @@ calculate_bisection <- function(
     }
   }
   
-  # generate fixed test set once
-  test_data <- data_function(test_n)
-  
-  # check initial bounds
+  # Initial bounds
   p_lo <- summary_at_n(min_sample_size)
   p_hi <- summary_at_n(max_sample_size)
-  #if (p_lo >= target_performance) stop("min_sample_size bound already ≥ target.")
-  #if (p_hi  < target_performance) stop("max_sample_size bound < target.  Increase `max_sample_size`.")
   
   iter <- 0
-  #while ((max_sample_size - min_sample_size) > tol && iter < max_iter) {
+  history <- list()  # Store mid and p_mid at each iteration
+  
   while ((p_hi - p_lo) >= tol && iter < max_iter) {
     mid <- floor((min_sample_size + max_sample_size) / 2)
     p_mid <- summary_at_n(mid)
     
+    # Track iteration
+    if (verbose) {
+      history[[iter + 1]] <- list(iter = iter + 1, mid = mid, p_mid = p_mid)
+    }
+    
     if (p_mid >= target_performance) {
-      # mid is sufficient: tighten max_sample_size
       max_sample_size <- mid
-      p_hi  <- p_mid
+      p_hi <- p_mid
     } else {
-      # mid too small: raise min_sample_size
       min_sample_size <- mid
-      p_lo  <- p_mid
+      p_lo <- p_mid
     }
     
     iter <- iter + 1
   }
   
-  list(
-    min_n        = max_sample_size,
-    performance  = p_hi,
-    min_sample_size_bound  = min_sample_size,
-    min_sample_size_perf   = p_lo,
-    max_sample_size_bound  = max_sample_size,
-    max_sample_size_perf   = p_hi,
-    iterations   = iter
+  result <- list(
+    min_n = max_sample_size,
+    performance = p_hi,
+    min_sample_size_bound = min_sample_size,
+    min_sample_size_perf = p_lo,
+    max_sample_size_bound = max_sample_size,
+    max_sample_size_perf = p_hi,
+    iterations = iter
   )
+  
+  if (verbose) {
+    result$history <- history
+  }
+  
+  return(result)
 }
