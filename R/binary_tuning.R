@@ -73,7 +73,11 @@ binary_tuning <- function(target_prevalence,
 }
 
 # Check
-round(binary_tuning(0.05, 0.75, tolerance=0.0001),4)
+
+#round(binary_tuning(0.05, 0.75, tolerance=0.0001),4)
+
+#round(binary_tuning(0.05, 0.75, tolerance=0.0001),4)
+
 
 #round(binary_tuning(0.05, 0.7, tolerance=0.00001),4)
 
