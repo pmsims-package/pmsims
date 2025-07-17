@@ -614,7 +614,7 @@ calculate_mlpwr_bs <- function(
       setsize = n_reps_per,
       evaluations = ceiling(0.6*n_reps_total),
       ci = ci,
-      n.startsets = 0,
+      n.startsets = n_init,
       silent = !verbose,
       dat = prev$track_bisection
     )

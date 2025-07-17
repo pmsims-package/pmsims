@@ -157,7 +157,7 @@ simulate_custom <- function(
       max_sample_size = max_sample_size,
       target_performance = target_performance,
       mean_or_assurance,
-      n_init = n_init,
+      n_init = 0,
       verbose = verbose,
       data_function = data_function,
       model_function = model_function,
