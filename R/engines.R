@@ -607,7 +607,7 @@ calculate_mlpwr_bs <- function(
       simfun = mlpwr_simulation_function,
       aggregate_fun = aggregate_fun,
       noise_fun = noise_fun,
-      boundaries = c(3*npar, max_sample_size),
+      boundaries = c(1, max_sample_size),
       power = target_performance,
       surrogate = "gpr",
       setsize = n_reps_per,
