@@ -555,7 +555,7 @@ calculate_mlpwr_bs <- function(
     n_reps_per = n_reps_per,
     mean_or_assurance = mean_or_assurance, 
     value_on_error = value_on_error, 
-    verbose = TRUE,
+    verbose = FALSE,
     test_n = test_n
   )
   
