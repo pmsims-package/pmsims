@@ -471,8 +471,8 @@ calculate_bisection <- function(
   history <- list()  # Store mid and p_mid at each iteration
   track_bisection <- list()  # Store mid and all  p_mid at each iteration
   
- # while ((p_hi - p_lo) >= tol && iter < max_iter) { # auto stopping
-    while (iter < max_iter) { # budget stopping
+  while ((p_hi - p_lo) >= tol && iter < max_iter) { # auto stopping
+    #while (iter < max_iter) { # budget stopping
     mid <- floor((min_sample_size + max_sample_size) / 2)
     p_mid <- summary_at_n(mid)$y_summary
     
@@ -614,7 +614,7 @@ calculate_mlpwr_bs <- function(
       setsize = n_reps_per,
       evaluations = ceiling(0.6*n_reps_total),
       ci = ci,
-      n.startsets = n_init,
+      n.startsets = 0,
       silent = !verbose,
       dat = prev$track_bisection
     )
