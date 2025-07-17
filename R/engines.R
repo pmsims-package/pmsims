@@ -457,22 +457,25 @@ calculate_bisection <- function(
     }
     s <- get_summaries(matrix(vals, nrow = 1))
     if (mean_or_assurance == "mean") {
-      s$mean_performance
+      list(y_summary=s$mean_performance, y=vals)
     } else {
-      s$quant20_performance
+      list(y_summary=s$quant20_performance,y=vals)
     }
   }
   
   # Initial bounds
-  p_lo <- summary_at_n(min_sample_size)
-  p_hi <- summary_at_n(max_sample_size)
+  p_lo <- summary_at_n(min_sample_size)$y_summary
+  p_hi <- summary_at_n(max_sample_size)$y_summary
   
   iter <- 0
   history <- list()  # Store mid and p_mid at each iteration
+  track_bisection <- list()  # Store mid and all  p_mid at each iteration
   
   while ((p_hi - p_lo) >= tol && iter < max_iter) {
     mid <- floor((min_sample_size + max_sample_size) / 2)
-    p_mid <- summary_at_n(mid)
+    p_mid <- summary_at_n(mid)$y_summary
+    
+    track_bisection[[iter + 1]] = list(x=mid, y=summary_at_n(mid)$y)
     
     # Track iteration
     if (verbose) {
@@ -497,7 +500,8 @@ calculate_bisection <- function(
     min_sample_size_perf = p_lo,
     max_sample_size_bound = max_sample_size,
     max_sample_size_perf = p_hi,
-    iterations = iter
+    iterations = iter,
+    track_bisection = track_bisection
   )
   
   if (verbose) {
@@ -505,4 +509,137 @@ calculate_bisection <- function(
   }
   
   return(result)
+}
+
+
+#' MLPWR_BS (MLPWR with Bisection for initial) Engine
+#' @inheritParams simulate_custom
+#' @param n_init The number of initial sample sizes simualted before the gausian process search begins.
+#' @param verbose Whether to run mlpwr with verbose output
+#' @param value_on_error The value used if there is an error in fitting the model or calculating performance.
+#'
+#' @returns
+#' @export
+#'
+#' @examples
+calculate_mlpwr_bs <- function(
+    test_n,
+    n_reps_total,
+    n_reps_per,
+    se_final,
+    min_sample_size,
+    max_sample_size,
+    target_performance,
+    mean_or_assurance,
+    n_init,
+    verbose,
+    data_function,
+    model_function,
+    metric_function,
+    value_on_error
+) {
+  
+  # calculate the first stage bisection
+  
+  npar <- dim(data_function(1))[2]-1
+  
+  
+  prev <- calculate_bisection(
+    data_function = data_function,
+    model_function = model_function,
+    metric_function = metric_function,
+    target_performance = target_performance,
+    min_sample_size = 3*npar,
+    max_sample_size = 50*npar,
+    n_reps_total = floor(0.4*n_reps_total),
+    n_reps_per = n_reps_per,
+    mean_or_assurance = mean_or_assurance, 
+    value_on_error = value_on_error, 
+    verbose = TRUE,
+    test_n = test_n
+  )
+  
+  # calculate the second stage mlpwr
+  
+  # calculate the metrics for a sample size n
+  mlpwr_simulation_function <- function(n) {
+    tryCatch(
+      {
+        test_data <- data_function(test_n)
+        train_data <- data_function(n)
+        fit <- model_function(train_data)
+        model <- attr(model_function, "model")
+        metric_function(test_data, fit, model)
+      },
+      error = function(e) {
+        return(value_on_error)
+      }
+    )
+  }
+  
+  if (mean_or_assurance == "mean") {
+    aggregate_fun <- function(x) mean(x, na.rm = TRUE)
+  } else if (mean_or_assurance == "assurance") {
+    aggregate_fun <- function(x) quantile(x, probs = .2, na.rm = TRUE)
+  } else {
+    stop("mean_or_assurance must be either 'mean' or 'assurance'")
+  }
+  
+  # Use a bootstrap to estimate the variance of the estimated quantile
+  var_bootstrap <- function(x) {
+    var(replicate(20, aggregate_fun(sample(x, length(x), replace = TRUE))))
+  }
+  
+  # Calculate bootstrapped quantile variance
+  noise_fun <- function(x) var_bootstrap(x$y)
+  
+  # processing final_estimate_se
+  # Auto-stopping or not
+  if (!(is.null(se_final))) {
+    ci <- se_final * qnorm(0.975) * 2
+    n_reps_total <- 10000 # setting large nreps so ci dominates.
+  } else {
+    ci <- NULL
+  }
+  # Perform search using mlpwr
+  ds <-
+    mlpwr::find.design(
+      simfun = mlpwr_simulation_function,
+      aggregate_fun = aggregate_fun,
+      noise_fun = noise_fun,
+      boundaries = c(3*npar, max_sample_size),
+      power = target_performance,
+      surrogate = "gpr",
+      setsize = n_reps_per,
+      evaluations = ceiling(0.6*n_reps_total),
+      ci = ci,
+      n.startsets = n_init,
+      silent = !verbose,
+      dat = prev$track_bisection
+    )
+  
+  # Process results from mlpwr
+  perfs <- ds$dat
+  perfs <- perfs[order(sapply(perfs, "[[", "x"))]
+  max_len <- max(sapply(perfs, \(x) length(x$y)))
+  results <- matrix(nrow = length(perfs), ncol = max_len)
+  rownames(results) <- sapply(perfs, \(x) x$x)
+  for (i in seq_along(perfs)) {
+    results[i, seq(1, length(perfs[[i]]$y), 1)] <- perfs[[i]]$y
+  }
+  
+  mlpwr_summaries <- get_summaries(results)
+  
+  # list(
+  #   median_performance = get_perf(results, 0.5),
+  #   quant20_performance = get_perf(results, 0.2),
+  #   quant5_performance = get_perf(results, 0.05),
+  #   quant95_performance = get_perf(results, 0.95)
+  # )
+  
+  return(list(
+    results = perfs,
+    summaries = mlpwr_summaries,
+    min_n = as.numeric(ds$final$design)
+  ))
 }

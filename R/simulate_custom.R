@@ -147,7 +147,23 @@ simulate_custom <- function(
       verbose = FALSE,
       ...
     )
-  } else {
+  }else if (method == "mlpwr_bs") {
+    output <- calculate_mlpwr_bs(
+      test_n = test_n,
+      n_reps_total = n_reps_total,
+      n_reps_per = n_reps_per,
+      se_final = se_final,
+      min_sample_size = min_sample_size,
+      max_sample_size = max_sample_size,
+      target_performance = target_performance,
+      mean_or_assurance,
+      n_init = n_init,
+      verbose = verbose,
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      value_on_error = value_on_error
+    )} else {
     stop("Method not found")
   }
   time_2 <- Sys.time()
