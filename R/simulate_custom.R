@@ -147,7 +147,7 @@ simulate_custom <- function(
       verbose = FALSE,
       ...
     )
-  }else if (method == "mlpwr_bs") {
+  }else if (method == "mlpwr-bs") {
     output <- calculate_mlpwr_bs(
       test_n = test_n,
       n_reps_total = n_reps_total,
