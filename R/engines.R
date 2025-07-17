@@ -532,7 +532,6 @@ calculate_mlpwr_bs <- function(
     max_sample_size,
     target_performance,
     mean_or_assurance,
-    n_init,
     verbose,
     data_function,
     model_function,
@@ -614,7 +613,7 @@ calculate_mlpwr_bs <- function(
       setsize = n_reps_per,
       evaluations = ceiling(0.6*n_reps_total),
       ci = ci,
-      n.startsets = n_init,
+      n.startsets = 0,
       silent = !verbose,
       dat = prev$track_bisection
     )
