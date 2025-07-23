@@ -429,8 +429,10 @@ calculate_bisection <- function(
     tol = 1e-3,
     parallel = FALSE,
     cores = 20,
-    verbose = FALSE
+    verbose = FALSE,
+    track  = FALSE
 ) {
+  
   max_iter <- round(n_reps_total / n_reps_per)
   
   # Generate fixed test set once
@@ -463,6 +465,7 @@ calculate_bisection <- function(
     }
   }
   
+
   # Initial bounds
   p_lo <- summary_at_n(min_sample_size)$y_summary
   p_hi <- summary_at_n(max_sample_size)$y_summary
@@ -471,29 +474,59 @@ calculate_bisection <- function(
   history <- list()  # Store mid and p_mid at each iteration
   track_bisection <- list()  # Store mid and all  p_mid at each iteration
   
-  while ((p_hi - p_lo) >= tol && iter < max_iter) { # auto stopping
-    #while (iter < max_iter) { # budget stopping
-    mid <- floor((min_sample_size + max_sample_size) / 2)
-    p_mid <- summary_at_n(mid)$y_summary
-    
-    track_bisection[[iter + 1]] = list(x=mid, y=summary_at_n(mid)$y)
-    
-    # Track iteration
-    if (verbose) {
-      history[[iter + 1]] <- list(iter = iter + 1, mid = mid, p_mid = p_mid)
+  if(track){
+    max_iter_track <- 4
+    while (iter < max_iter_track) { # auto stopping
+      #while (iter < max_iter) { # budget stopping
+      mid <- floor((min_sample_size + max_sample_size) / 2)
+      p_mid <- summary_at_n(mid)$y_summary
+      
+      track_bisection[[iter + 1]] = list(x=mid, y=summary_at_n(mid)$y)
+      
+      # Track iteration
+      if (verbose) {
+        history[[iter + 1]] <- list(iter = iter + 1, mid = mid, p_mid = p_mid)
+      }
+      
+      if (p_mid >= target_performance) {
+        max_sample_size <- mid
+        p_hi <- p_mid
+      } else {
+        min_sample_size <- mid
+        p_lo <- p_mid
+      }
+      
+      iter <- iter + 1
     }
     
-    if (p_mid >= target_performance) {
-      max_sample_size <- mid
-      p_hi <- p_mid
-    } else {
-      min_sample_size <- mid
-      p_lo <- p_mid
+  }else{
+    
+    while ((p_hi - p_lo) >= tol && iter < max_iter) { # auto stopping
+      #while (iter < max_iter) { # budget stopping
+      mid <- floor((min_sample_size + max_sample_size) / 2)
+      p_mid <- summary_at_n(mid)$y_summary
+      
+      track_bisection[[iter + 1]] = list(x=mid, y=summary_at_n(mid)$y)
+      
+      # Track iteration
+      if (verbose) {
+        history[[iter + 1]] <- list(iter = iter + 1, mid = mid, p_mid = p_mid)
+      }
+      
+      if (p_mid >= target_performance) {
+        max_sample_size <- mid
+        p_hi <- p_mid
+      } else {
+        min_sample_size <- mid
+        p_lo <- p_mid
+      }
+      
+      iter <- iter + 1
     }
     
-    iter <- iter + 1
   }
   
+    
   result <- list(
     min_n = max_sample_size,
     performance = p_hi,
@@ -551,11 +584,13 @@ calculate_mlpwr_bs <- function(
     target_performance = target_performance,
     min_sample_size = 3*npar,
     max_sample_size = max_sample_size,
-    n_reps_total = floor(0.4*n_reps_total),
+    #n_reps_total = floor(0.4*n_reps_total),
+    n_reps_total = n_reps_total,
     n_reps_per = n_reps_per,
     mean_or_assurance = mean_or_assurance, 
     value_on_error = value_on_error, 
     verbose = FALSE,
+    track = TRUE,
     test_n = test_n
   )
   

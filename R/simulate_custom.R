@@ -145,6 +145,7 @@ simulate_custom <- function(
       parallel           = FALSE,
       cores              = 20,
       verbose = FALSE,
+      track = FALSE,
       ...
     )
   }else if (method == "mlpwr-bs") {
