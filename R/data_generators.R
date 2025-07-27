@@ -75,6 +75,7 @@ generate_continuous_data <- function(
 #' @examples generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 generate_binary_data <- function(
   n,
+  mu_lp,
   beta_signal,
   n_signal_parameters,
   noise_parameters,
@@ -84,7 +85,7 @@ generate_binary_data <- function(
 ) {
   parameters <- n_signal_parameters + noise_parameters
   #intercept <- log(baseline_prob / (1 - baseline_prob))
-  intercept <- baseline_prob
+  intercept <- mu_lp
   X <- generate_predictors(n, parameters, predictor_type, predictor_prop)
   lp <- generate_linear_predictor(
     X,
