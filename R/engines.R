@@ -86,6 +86,11 @@ calculate_mlpwr <- function(
   metric_function,
   value_on_error
 ) {
+  
+  npar <- dim(data_function(1))[2]-1
+  
+  min_sample_size <- 3*npar
+  
   # calculate the metrics for a sample size n
   mlpwr_simulation_function <- function(n) {
     tryCatch(
@@ -430,8 +435,12 @@ calculate_bisection <- function(
     parallel = FALSE,
     cores = 20,
     verbose = FALSE,
-    track  = FALSE
+    budget = FALSE  # <- new parameter
 ) {
+  
+  npar <- dim(data_function(1))[2]-1
+  
+  min_sample_size <- 3*npar
   
   max_iter <- round(n_reps_total / n_reps_per)
   
@@ -459,74 +468,44 @@ calculate_bisection <- function(
     }
     s <- get_summaries(matrix(vals, nrow = 1))
     if (mean_or_assurance == "mean") {
-      list(y_summary=s$mean_performance, y=vals)
+      list(y_summary = s$mean_performance, y = vals)
     } else {
-      list(y_summary=s$quant20_performance,y=vals)
+      list(y_summary = s$quant20_performance, y = vals)
     }
   }
   
-
   # Initial bounds
   p_lo <- summary_at_n(min_sample_size)$y_summary
   p_hi <- summary_at_n(max_sample_size)$y_summary
   
   iter <- 0
-  history <- list()  # Store mid and p_mid at each iteration
-  track_bisection <- list()  # Store mid and all  p_mid at each iteration
+  history <- list()
+  track_bisection <- list()
   
-  if(track){
-    max_iter_track <- 4
-    while (iter < max_iter_track) { # auto stopping
-      #while (iter < max_iter) { # budget stopping
-      mid <- floor((min_sample_size + max_sample_size) / 2)
-      p_mid <- summary_at_n(mid)$y_summary
-      
-      track_bisection[[iter + 1]] = list(x=mid, y=summary_at_n(mid)$y)
-      
-      # Track iteration
-      if (verbose) {
-        history[[iter + 1]] <- list(iter = iter + 1, mid = mid, p_mid = p_mid)
-      }
-      
-      if (p_mid >= target_performance) {
-        max_sample_size <- mid
-        p_hi <- p_mid
-      } else {
-        min_sample_size <- mid
-        p_lo <- p_mid
-      }
-      
-      iter <- iter + 1
+  # Bisection loop with condition depending on 'budget'
+  while ((budget && iter < max_iter) || (!budget && (p_hi - p_lo) >= tol && iter < max_iter)) {
+    
+    mid <- floor((min_sample_size + max_sample_size) / 2)
+    mid_result <- summary_at_n(mid)
+    p_mid <- mid_result$y_summary
+    
+    track_bisection[[iter + 1]] <- list(x = mid, y = mid_result$y)
+    
+    if (verbose) {
+      history[[iter + 1]] <- list(iter = iter + 1, mid = mid, p_mid = p_mid)
     }
     
-  }else{
-    
-    while ((p_hi - p_lo) >= tol && iter < max_iter) { # auto stopping
-      #while (iter < max_iter) { # budget stopping
-      mid <- floor((min_sample_size + max_sample_size) / 2)
-      p_mid <- summary_at_n(mid)$y_summary
-      
-      track_bisection[[iter + 1]] = list(x=mid, y=summary_at_n(mid)$y)
-      
-      # Track iteration
-      if (verbose) {
-        history[[iter + 1]] <- list(iter = iter + 1, mid = mid, p_mid = p_mid)
-      }
-      
-      if (p_mid >= target_performance) {
-        max_sample_size <- mid
-        p_hi <- p_mid
-      } else {
-        min_sample_size <- mid
-        p_lo <- p_mid
-      }
-      
-      iter <- iter + 1
+    if (p_mid >= target_performance) {
+      max_sample_size <- mid
+      p_hi <- p_mid
+    } else {
+      min_sample_size <- mid
+      p_lo <- p_mid
     }
     
+    iter <- iter + 1
   }
   
-    
   result <- list(
     min_n = max_sample_size,
     performance = p_hi,
@@ -585,12 +564,12 @@ calculate_mlpwr_bs <- function(
     min_sample_size = 3*npar,
     max_sample_size = max_sample_size,
     #n_reps_total = floor(0.4*n_reps_total),
-    n_reps_total = n_reps_total,
+    n_reps_total = 4*n_reps_per,
     n_reps_per = n_reps_per,
     mean_or_assurance = mean_or_assurance, 
     value_on_error = value_on_error, 
     verbose = FALSE,
-    track = TRUE,
+    budget = TRUE,
     test_n = test_n
   )
   
