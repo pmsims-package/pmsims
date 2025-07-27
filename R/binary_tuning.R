@@ -18,7 +18,10 @@ binary_tuning <- function(target_prevalence,
                           target_performance, 
                           min.opt = c(-10,0), 
                           max.opt = c(0.02,5), 
-                          tolerance = 0.00001){
+                          tolerance = 0.00001,
+                          proportion_noise_features, 
+                          candidate_features
+                          ){
   
   
   pcfun <- function(x){
@@ -69,7 +72,12 @@ binary_tuning <- function(target_prevalence,
   y        <- stats::rbinom(N, 1, prob = p)
   prev     <- mean(y)
   c        <- quickcstat(y, lp)
-  c(out[1], out[2], prev, c)
+  
+  non_noise_predictors = candidate_features - round(candidate_features*proportion_noise_features)
+  beta_init <- 1/non_noise_predictors
+  beta_signal <- beta_init*sqrt(out[2] / beta_init) 
+  
+  c(out[1], out[2], beta_signal, prev, c)
 }
 
 # Check
@@ -85,8 +93,8 @@ binary_tuning <- function(target_prevalence,
 
 
 #–– REQUIREMENTS ––
-# install.packages("statmod")
-# quickcstat() must be on your path (as in your original script)
+# 
+# quickcstat() 
 
 
 quickcstat <- function(y, pred){

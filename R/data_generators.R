@@ -83,7 +83,8 @@ generate_binary_data <- function(
   baseline_prob
 ) {
   parameters <- n_signal_parameters + noise_parameters
-  intercept <- log(baseline_prob / (1 - baseline_prob))
+  #intercept <- log(baseline_prob / (1 - baseline_prob))
+  intercept <- baseline_prob
   X <- generate_predictors(n, parameters, predictor_type, predictor_prop)
   lp <- generate_linear_predictor(
     X,
