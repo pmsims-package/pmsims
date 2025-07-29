@@ -128,27 +128,27 @@ simulate_custom <- function(
       penalty_weight = 1,
       ...
     )
-  }else if (method == "bisection") {
+  } else if (method == "bisection") {
     output <- calculate_bisection(
-      data_function=data_function,
-      model_function=model_function,
-      metric_function=metric_function,
-      value_on_error=value_on_error,
-      min_sample_size=min_sample_size,
-      max_sample_size=max_sample_size,
-      test_n=test_n,
-      n_reps_total=n_reps_total,
-      n_reps_per=n_reps_per,
-      target_performance=target_performance,
-      mean_or_assurance=mean_or_assurance,
-      tol                = 1e-3,
-      parallel           = FALSE,
-      cores              = 20,
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      value_on_error = value_on_error,
+      min_sample_size = min_sample_size,
+      max_sample_size = max_sample_size,
+      test_n = test_n,
+      n_reps_total = n_reps_total,
+      n_reps_per = n_reps_per,
+      target_performance = target_performance,
+      mean_or_assurance = mean_or_assurance,
+      tol = 1e-3,
+      parallel = FALSE,
+      cores = 20,
       verbose = FALSE,
       budget = FALSE,
       ...
     )
-  }else if (method == "mlpwr-bs") {
+  } else if (method == "mlpwr-bs") {
     output <- calculate_mlpwr_bs(
       test_n = test_n,
       n_reps_total = n_reps_total,
@@ -163,7 +163,8 @@ simulate_custom <- function(
       model_function = model_function,
       metric_function = metric_function,
       value_on_error = value_on_error
-    )} else {
+    )
+  } else {
     stop("Method not found")
   }
   time_2 <- Sys.time()

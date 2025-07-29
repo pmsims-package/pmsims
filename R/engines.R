@@ -16,7 +16,6 @@ get_perf <- function(results, p = NULL, mean = FALSE) {
   return(results)
 }
 
-
 get_summaries <- function(performance_matrix) {
   list(
     mean_performance = get_perf(results = performance_matrix, mean = TRUE),
@@ -59,8 +58,7 @@ get_ga_solution <- function(
   return(round(as.numeric(solution)))
 }
 
-
-#' MLPWR Engine
+#' mlpwr engine
 #' @inheritParams simulate_custom
 #' @param n_init The number of initial sample sizes simualted before the gausian process search begins.
 #' @param verbose Whether to run mlpwr with verbose output
@@ -86,11 +84,10 @@ calculate_mlpwr <- function(
   metric_function,
   value_on_error
 ) {
-  
-  npar <- dim(data_function(1))[2]-1
-  
-  min_sample_size <- 3*npar
-  
+  npar <- dim(data_function(1))[2] - 1
+
+  min_sample_size <- 3 * npar
+
   # calculate the metrics for a sample size n
   mlpwr_simulation_function <- function(n) {
     tryCatch(
@@ -420,51 +417,59 @@ calculate_ga <- function(
 #' @examples
 
 calculate_bisection <- function(
-    data_function = data_function,
-    model_function = model_function,
-    metric_function = metric_function,
-    value_on_error = value_on_error,
-    min_sample_size = min_sample_size,
-    max_sample_size = max_sample_size,
-    test_n = test_n,
-    n_reps_total = n_reps_total,
-    n_reps_per = n_reps_per,
-    target_performance = target_performance,
-    mean_or_assurance = mean_or_assurance,
-    tol = 1e-3,
-    parallel = FALSE,
-    cores = 20,
-    verbose = FALSE,
-    budget = FALSE  # <- new parameter
+  data_function = data_function,
+  model_function = model_function,
+  metric_function = metric_function,
+  value_on_error = value_on_error,
+  min_sample_size = min_sample_size,
+  max_sample_size = max_sample_size,
+  test_n = test_n,
+  n_reps_total = n_reps_total,
+  n_reps_per = n_reps_per,
+  target_performance = target_performance,
+  mean_or_assurance = mean_or_assurance,
+  tol = 1e-3,
+  parallel = FALSE,
+  cores = 20,
+  verbose = FALSE,
+  budget = FALSE # <- new parameter
 ) {
-  
-  npar <- dim(data_function(1))[2]-1
-  
-  min_sample_size <- 3*npar
-  
+  npar <- dim(data_function(1))[2] - 1
+
+  min_sample_size <- 3 * npar
+
   max_iter <- round(n_reps_total / n_reps_per)
-  
+
   # Generate fixed test set once
   test_data <- data_function(test_n)
-  
+
   # Helper: run 1 simulation
   single_run <- function(n) {
-    tryCatch({
-      dat <- data_function(n)
-      fit <- model_function(dat)
-      metric_function(test_data, fit, attr(model_function, "model"))
-    }, error = function(e) value_on_error)
+    tryCatch(
+      {
+        dat <- data_function(n)
+        fit <- model_function(dat)
+        metric_function(test_data, fit, attr(model_function, "model"))
+      },
+      error = function(e) value_on_error
+    )
   }
-  
+
   # Helper: summary of metric for n_reps_per repetitions
   summary_at_n <- function(n) {
     if (parallel) {
-      require(foreach); require(doParallel)
-      cl <- parallel::makeCluster(cores); doParallel::registerDoParallel(cl)
+      require(foreach)
+      require(doParallel)
+      cl <- parallel::makeCluster(cores)
+      doParallel::registerDoParallel(cl)
       vals <- foreach(i = 1:n_reps_per, .combine = c) %dopar% single_run(n)
       parallel::stopCluster(cl)
     } else {
-      vals <- vapply(seq_len(n_reps_per), function(i) single_run(n), FUN.VALUE = numeric(1))
+      vals <- vapply(
+        seq_len(n_reps_per),
+        function(i) single_run(n),
+        FUN.VALUE = numeric(1)
+      )
     }
     s <- get_summaries(matrix(vals, nrow = 1))
     if (mean_or_assurance == "mean") {
@@ -473,28 +478,30 @@ calculate_bisection <- function(
       list(y_summary = s$quant20_performance, y = vals)
     }
   }
-  
+
   # Initial bounds
   p_lo <- summary_at_n(min_sample_size)$y_summary
   p_hi <- summary_at_n(max_sample_size)$y_summary
-  
+
   iter <- 0
   history <- list()
   track_bisection <- list()
-  
+
   # Bisection loop with condition depending on 'budget'
-  while ((budget && iter < max_iter) || (!budget && (p_hi - p_lo) >= tol && iter < max_iter)) {
-    
+  while (
+    (budget && iter < max_iter) ||
+      (!budget && (p_hi - p_lo) >= tol && iter < max_iter)
+  ) {
     mid <- floor((min_sample_size + max_sample_size) / 2)
     mid_result <- summary_at_n(mid)
     p_mid <- mid_result$y_summary
-    
+
     track_bisection[[iter + 1]] <- list(x = mid, y = mid_result$y)
-    
+
     if (verbose) {
       history[[iter + 1]] <- list(iter = iter + 1, mid = mid, p_mid = p_mid)
     }
-    
+
     if (p_mid >= target_performance) {
       max_sample_size <- mid
       p_hi <- p_mid
@@ -502,10 +509,10 @@ calculate_bisection <- function(
       min_sample_size <- mid
       p_lo <- p_mid
     }
-    
+
     iter <- iter + 1
   }
-  
+
   result <- list(
     min_n = max_sample_size,
     performance = p_hi,
@@ -516,11 +523,11 @@ calculate_bisection <- function(
     iterations = iter,
     track_bisection = track_bisection
   )
-  
+
   if (verbose) {
     result$history <- history
   }
-  
+
   return(result)
 }
 
@@ -536,45 +543,43 @@ calculate_bisection <- function(
 #'
 #' @examples
 calculate_mlpwr_bs <- function(
-    test_n,
-    n_reps_total,
-    n_reps_per,
-    se_final,
-    min_sample_size,
-    max_sample_size,
-    target_performance,
-    mean_or_assurance,
-    verbose,
-    data_function,
-    model_function,
-    metric_function,
-    value_on_error
+  test_n,
+  n_reps_total,
+  n_reps_per,
+  se_final,
+  min_sample_size,
+  max_sample_size,
+  target_performance,
+  mean_or_assurance,
+  verbose,
+  data_function,
+  model_function,
+  metric_function,
+  value_on_error
 ) {
-  
   # calculate the first stage bisection
-  
-  npar <- dim(data_function(1))[2]-1
-  
-  
+
+  npar <- dim(data_function(1))[2] - 1
+
   prev <- calculate_bisection(
     data_function = data_function,
     model_function = model_function,
     metric_function = metric_function,
     target_performance = target_performance,
-    min_sample_size = 3*npar,
+    min_sample_size = 3 * npar,
     max_sample_size = max_sample_size,
-    #n_reps_total = floor(0.4*n_reps_total),
-    n_reps_total = 4*n_reps_per,
+    # n_reps_total = floor(0.4*n_reps_total),
+    n_reps_total = 4 * n_reps_per,
     n_reps_per = n_reps_per,
-    mean_or_assurance = mean_or_assurance, 
-    value_on_error = value_on_error, 
+    mean_or_assurance = mean_or_assurance,
+    value_on_error = value_on_error,
     verbose = FALSE,
     budget = TRUE,
     test_n = test_n
   )
-  
+
   # calculate the second stage mlpwr
-  
+
   # calculate the metrics for a sample size n
   mlpwr_simulation_function <- function(n) {
     tryCatch(
@@ -590,7 +595,7 @@ calculate_mlpwr_bs <- function(
       }
     )
   }
-  
+
   if (mean_or_assurance == "mean") {
     aggregate_fun <- function(x) mean(x, na.rm = TRUE)
   } else if (mean_or_assurance == "assurance") {
@@ -598,15 +603,15 @@ calculate_mlpwr_bs <- function(
   } else {
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
   }
-  
+
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
     var(replicate(20, aggregate_fun(sample(x, length(x), replace = TRUE))))
   }
-  
+
   # Calculate bootstrapped quantile variance
   noise_fun <- function(x) var_bootstrap(x$y)
-  
+
   # processing final_estimate_se
   # Auto-stopping or not
   if (!(is.null(se_final))) {
@@ -621,18 +626,18 @@ calculate_mlpwr_bs <- function(
       simfun = mlpwr_simulation_function,
       aggregate_fun = aggregate_fun,
       noise_fun = noise_fun,
-      boundaries = c(3*npar, max_sample_size),
+      boundaries = c(3 * npar, max_sample_size),
       power = target_performance,
       surrogate = "gpr",
       setsize = n_reps_per,
-      #evaluations = ceiling(0.6*n_reps_total),
-      evaluations = n_reps_total - (4*n_reps_per),
+      # evaluations = ceiling(0.6*n_reps_total),
+      evaluations = n_reps_total - (4 * n_reps_per),
       ci = ci,
       n.startsets = 0,
       silent = !verbose,
       dat = prev$track_bisection
     )
-  
+
   # Process results from mlpwr
   perfs <- ds$dat
   perfs <- perfs[order(sapply(perfs, "[[", "x"))]
@@ -642,16 +647,16 @@ calculate_mlpwr_bs <- function(
   for (i in seq_along(perfs)) {
     results[i, seq(1, length(perfs[[i]]$y), 1)] <- perfs[[i]]$y
   }
-  
+
   mlpwr_summaries <- get_summaries(results)
-  
+
   # list(
   #   median_performance = get_perf(results, 0.5),
   #   quant20_performance = get_perf(results, 0.2),
   #   quant5_performance = get_perf(results, 0.05),
   #   quant95_performance = get_perf(results, 0.95)
   # )
-  
+
   return(list(
     results = perfs,
     summaries = mlpwr_summaries,

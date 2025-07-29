@@ -82,7 +82,7 @@ simulate_binary <- function(
 
   # Tune data function
   if (is.null(tune_param)) {
-    print("Tuning data function")
+    print("Tuning data function...")
     tune_param <- tune_generate_data(
       interval = c(0, 1),
       large_n = set_test_n(max_sample_size),
