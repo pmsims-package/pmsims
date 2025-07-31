@@ -58,6 +58,75 @@ get_ga_solution <- function(
   return(round(as.numeric(solution)))
 }
 
+
+#' get_min_sample_size: Heuristic starting-n for binary/continuous/survival prediction
+#'
+#' @param npar             Integer. Number of predictors in the model.
+#' @param prevalence       Numeric [0,1]. Event rate or case‐fraction (binary/survival).
+#'                         (optional; used for EPV calculations)
+#' @param c_stat           Numeric >0.5. Anticipated c‐statistic (discrimination).
+#'                         (optional; factor >1/c_stat)
+#' @param calib_slope      Numeric. Anticipated calibration slope.
+#'                         (optional; factor 1/calib_slope if <1)
+#' @param outcome_type     One of "binary", "survival", or "continuous".
+#' @return Integer: recommended starting minimum sample size.
+#' @examples
+#' get_min_sample_size(npar = 5, prevalence = 0.2, c_stat = 0.75,
+#'                     calib_slope = 0.9, outcome_type = "binary")
+get_min_sample_size <- function(npar,
+                                prevalence     = NULL,
+                                c_stat         = NULL,
+                                calib_slope    = NULL,
+                                outcome_type   = c("binary","survival","continuous")) {
+  outcome_type <- match.arg(outcome_type)
+  
+  # 1) Base rule: 3*npar (absolute minimum)
+  n0 <- 3 * npar
+  
+  # 2) EPV / per-predictor rules
+  if (outcome_type == "binary") {
+    # Aim for ≥10 EPV (Riley et al., 2020)
+    epv <- 2
+    if (!is.null(prevalence) && prevalence > 0) {
+      n_epv <- ceiling(epv * npar / prevalence)
+    } else {
+      # assume ~50% events if prevalence unknown
+      n_epv <- epv * npar * 2
+    }
+    n0 <- max(n0, n_epv)
+    
+  } else if (outcome_type == "survival") {
+    # Aim for ≥20 EPV in time-to-event (Riley et al., 2020)
+    epv <- 2
+    if (!is.null(prevalence) && prevalence > 0) {
+      n_epv <- ceiling(epv * npar / prevalence)
+    } else {
+      # fallback
+      n_epv <- epv * npar * 2
+    }
+    n0 <- max(n0, n_epv)
+    
+  } else {
+    # continuous: ≥20 obs per predictor (Steyerberg, 2019)
+    n_cont <- 3 * npar # we feel the 3 * npar works for continuous
+    n0    <- max(n0, n_cont)
+  }
+  
+  # 3) Adjust by discrimination (c-statistic)
+  #if (!is.null(c_stat) && c_stat > 0) {
+    # poorer c‐statistic → require larger N
+  #  n0 <- ceiling(n0 / c_stat)
+ # }
+  
+  # 4) Adjust by calibration slope
+  #if (!is.null(calib_slope) && calib_slope > 0 && calib_slope < 1) {
+ #   n0 <- ceiling(n0 / calib_slope)
+ # }
+  
+  return(n0)
+}
+
+
 #' mlpwr engine
 #' @inheritParams simulate_custom
 #' @param n_init The number of initial sample sizes simualted before the gausian process search begins.
@@ -84,9 +153,46 @@ calculate_mlpwr <- function(
   metric_function,
   value_on_error
 ) {
+  # Determine number of predictors (excluding outcome column)
   npar <- dim(data_function(1))[2] - 1
-
-  min_sample_size <- 3 * npar
+  
+  # Infer the outcome type and compute data-driven minimum sample size
+  if (length(formals(data_function)) == 6) {
+    
+    # Assume continuous outcome
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = NULL,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "continuous"
+    )
+    
+  } else if (length(formals(data_function)) == 8 && formals(data_function)[["baseline_prob"]] > 0) {
+    
+    # Assume binary outcome (requires baseline_prob argument)
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = formals(data_function)[["baseline_prob"]],
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "binary"
+    )
+    
+  } else if (length(formals(data_function)) == 8 && formals(data_function)[["censoring_rate"]] > 0) {
+    
+    # Assume survival outcome (requires censoring_rate argument)
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = 1 - formals(data_function)[["censoring_rate"]],
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "survival"
+    )
+  }
+  
+  
+  
 
   # calculate the metrics for a sample size n
   mlpwr_simulation_function <- function(n) {
@@ -434,9 +540,45 @@ calculate_bisection <- function(
   verbose = FALSE,
   budget = FALSE # <- new parameter
 ) {
+  
+  # Determine number of predictors (excluding outcome column)
   npar <- dim(data_function(1))[2] - 1
-
-  min_sample_size <- 3 * npar
+  
+  # Infer the outcome type and compute data-driven minimum sample size
+  if (length(formals(data_function)) == 6) {
+    
+    # Assume continuous outcome
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = NULL,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "continuous"
+    )
+    
+  } else if (length(formals(data_function)) == 8 && formals(data_function)[["baseline_prob"]] > 0) {
+    
+    # Assume binary outcome (requires baseline_prob argument)
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = formals(data_function)[["baseline_prob"]],
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "binary"
+    )
+    
+  } else if (length(formals(data_function)) == 8 && formals(data_function)[["censoring_rate"]] > 0) {
+    
+    # Assume survival outcome (requires censoring_rate argument)
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = 1 - formals(data_function)[["censoring_rate"]],
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "survival"
+    )
+  }
+  
 
   max_iter <- round(n_reps_total / n_reps_per)
 
@@ -559,15 +701,53 @@ calculate_mlpwr_bs <- function(
 ) {
   # calculate the first stage bisection
 
+  # Determine number of predictors (excluding outcome column)
   npar <- dim(data_function(1))[2] - 1
+  
+  # Infer the outcome type and compute data-driven minimum sample size
+  if (length(formals(data_function)) == 6) {
+    
+    # Assume continuous outcome
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = NULL,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "continuous"
+    )
+    
+  } else if (length(formals(data_function)) == 8 && formals(data_function)[["baseline_prob"]] > 0) {
+    
+    # Assume binary outcome (requires baseline_prob argument)
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = formals(data_function)[["baseline_prob"]],
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "binary"
+    )
+    
+  } else if (length(formals(data_function)) == 8 && formals(data_function)[["censoring_rate"]] > 0) {
+    
+    # Assume survival outcome (requires censoring_rate argument)
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = 1 - formals(data_function)[["censoring_rate"]],
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "survival"
+    )
+  }
+  
 
   prev <- calculate_bisection(
     data_function = data_function,
     model_function = model_function,
     metric_function = metric_function,
     target_performance = target_performance,
-    min_sample_size = 3 * npar,
-    max_sample_size = max_sample_size,
+    min_sample_size = min_sample_size,
+    #max_sample_size = max_sample_size,
+    max_sample_size = 5 * min_sample_size,
     # n_reps_total = floor(0.4*n_reps_total),
     n_reps_total = 4 * n_reps_per,
     n_reps_per = n_reps_per,
@@ -626,7 +806,7 @@ calculate_mlpwr_bs <- function(
       simfun = mlpwr_simulation_function,
       aggregate_fun = aggregate_fun,
       noise_fun = noise_fun,
-      boundaries = c(3 * npar, max_sample_size),
+      boundaries = c(min_sample_size, max_sample_size),
       power = target_performance,
       surrogate = "gpr",
       setsize = n_reps_per,
