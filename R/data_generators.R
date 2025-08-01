@@ -113,6 +113,7 @@ generate_binary_data <- function(
 #' @examples generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 generate_survival_data <- function(
   n,
+  mu_lp,
   beta_signal,
   n_signal_parameters,
   noise_parameters,
@@ -133,7 +134,7 @@ generate_survival_data <- function(
   )
 
   # Generate survival times
-  event_time <- rexp(n, rate = baseline_hazard * exp(lp))
+  event_time <- rexp(n, rate = baseline_hazard * exp(mu_lp+lp))
   # introduce right-censoring at a median time
   T_observe <- -log(0.5) / baseline_hazard
   censor_time <- rep(T_observe, n)
