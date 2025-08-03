@@ -157,37 +157,35 @@ calculate_mlpwr <- function(
   npar <- dim(data_function(1))[2] - 1
   
   # Infer the outcome type and compute data-driven minimum sample size
-  if (length(formals(data_function)) == 6) {
-    
-    # Assume continuous outcome
+  # Determine which outcome type applies
+  formals_list <- formals(data_function)
+  args_names <- names(formals_list)
+  
+  if ("censoring_rate" %in% args_names) {
+    censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = 1 - censoring_rate,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "survival"
+    )
+  } else if ("baseline_prob" %in% args_names) {
+    baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = baseline_prob,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "binary"
+    )
+  } else {
     min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = NULL,
       c_stat        = target_performance,
       calib_slope   = NULL,
       outcome_type  = "continuous"
-    )
-    
-  } else if (length(formals(data_function)) == 8 && formals(data_function)[["baseline_prob"]] > 0) {
-    
-    # Assume binary outcome (requires baseline_prob argument)
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = formals(data_function)[["baseline_prob"]],
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "binary"
-    )
-    
-  } else if (length(formals(data_function)) == 8 && formals(data_function)[["censoring_rate"]] > 0) {
-    
-    # Assume survival outcome (requires censoring_rate argument)
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = 1 - formals(data_function)[["censoring_rate"]],
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "survival"
     )
   }
   
@@ -545,9 +543,29 @@ calculate_bisection <- function(
   npar <- dim(data_function(1))[2] - 1
   
   # Infer the outcome type and compute data-driven minimum sample size
-  if (length(formals(data_function)) == 6) {
-    
-    # Assume continuous outcome
+  # Determine which outcome type applies
+  formals_list <- formals(data_function)
+  args_names <- names(formals_list)
+  
+  if ("censoring_rate" %in% args_names) {
+    censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = 1 - censoring_rate,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "survival"
+    )
+  } else if ("baseline_prob" %in% args_names) {
+    baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = baseline_prob,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "binary"
+    )
+  } else {
     min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = NULL,
@@ -555,29 +573,8 @@ calculate_bisection <- function(
       calib_slope   = NULL,
       outcome_type  = "continuous"
     )
-    
-  } else if (length(formals(data_function)) == 8 && formals(data_function)[["baseline_prob"]] > 0) {
-    
-    # Assume binary outcome (requires baseline_prob argument)
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = formals(data_function)[["baseline_prob"]],
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "binary"
-    )
-    
-  } else if (length(formals(data_function)) == 8 && formals(data_function)[["censoring_rate"]] > 0) {
-    
-    # Assume survival outcome (requires censoring_rate argument)
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = 1 - formals(data_function)[["censoring_rate"]],
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "survival"
-    )
   }
+  
   
 
   max_iter <- round(n_reps_total / n_reps_per)
@@ -705,9 +702,29 @@ calculate_mlpwr_bs <- function(
   npar <- dim(data_function(1))[2] - 1
   
   # Infer the outcome type and compute data-driven minimum sample size
-  if (length(formals(data_function)) == 6) {
-    
-    # Assume continuous outcome
+  # Determine which outcome type applies
+  formals_list <- formals(data_function)
+  args_names <- names(formals_list)
+  
+  if ("censoring_rate" %in% args_names) {
+    censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = 1 - censoring_rate,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "survival"
+    )
+  } else if ("baseline_prob" %in% args_names) {
+    baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = baseline_prob,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "binary"
+    )
+  } else {
     min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = NULL,
@@ -715,29 +732,8 @@ calculate_mlpwr_bs <- function(
       calib_slope   = NULL,
       outcome_type  = "continuous"
     )
-    
-  } else if (length(formals(data_function)) == 8 && formals(data_function)[["baseline_prob"]] > 0) {
-    
-    # Assume binary outcome (requires baseline_prob argument)
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = formals(data_function)[["baseline_prob"]],
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "binary"
-    )
-    
-  } else if (length(formals(data_function)) == 8 && formals(data_function)[["censoring_rate"]] > 0) {
-    
-    # Assume survival outcome (requires censoring_rate argument)
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = 1 - formals(data_function)[["censoring_rate"]],
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "survival"
-    )
   }
+  
   
 
   prev <- calculate_bisection(
