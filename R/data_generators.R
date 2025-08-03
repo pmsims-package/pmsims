@@ -140,9 +140,9 @@ generate_survival_data <- function(
   T_observe <- stats::quantile(event_time, 1 - censoring_rate)
   censor_time <- rep(T_observe, n)
   # additional censoring or dropping out
-  censor_ids <-
-    sample(n, round(n * censoring_rate, 0), replace = FALSE)
-  censor_time[censor_ids] <- runif(length(censor_ids), 0, T_observe)
+  #censor_ids <-
+  #  sample(n, round(n * censoring_rate, 0), replace = FALSE)
+  #censor_time[censor_ids] <- runif(length(censor_ids), 0, T_observe)
 
   event <- as.numeric(event_time <= censor_time)
   survival_time <- pmin(event_time, censor_time)
