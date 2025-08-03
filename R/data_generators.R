@@ -136,7 +136,8 @@ generate_survival_data <- function(
   # Generate survival times
   event_time <- rexp(n, rate = baseline_hazard * exp(mu_lp+lp))
   # introduce right-censoring at a median time
-  T_observe <- -log(0.5) / baseline_hazard
+  #T_observe <- -log(0.5) / baseline_hazard
+  T_observe <- stats::quantile(event_time, 1 - censoring_rate)
   censor_time <- rep(T_observe, n)
   # additional censoring or dropping out
   censor_ids <-
