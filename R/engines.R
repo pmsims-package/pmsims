@@ -179,7 +179,7 @@ calculate_mlpwr <- function(
       outcome_type  = "binary"
     )
     
-  } else if (length(formals(data_function)) == 9 && formals(data_function)[["censoring_rate"]] > 0) {
+  } else if (length(formals(data_function)) == 8 && formals(data_function)[["censoring_rate"]] > 0) {
     
     # Assume survival outcome (requires censoring_rate argument)
     min_sample_size <- get_min_sample_size(
@@ -567,7 +567,7 @@ calculate_bisection <- function(
       outcome_type  = "binary"
     )
     
-  } else if (length(formals(data_function)) == 9 && formals(data_function)[["censoring_rate"]] > 0) {
+  } else if (length(formals(data_function)) == 8 && formals(data_function)[["censoring_rate"]] > 0) {
     
     # Assume survival outcome (requires censoring_rate argument)
     min_sample_size <- get_min_sample_size(
@@ -727,7 +727,7 @@ calculate_mlpwr_bs <- function(
       outcome_type  = "binary"
     )
     
-  } else if (length(formals(data_function)) == 9 && formals(data_function)[["censoring_rate"]] > 0) {
+  } else if (length(formals(data_function)) == 8 && formals(data_function)[["censoring_rate"]] > 0) {
     
     # Assume survival outcome (requires censoring_rate argument)
     min_sample_size <- get_min_sample_size(
