@@ -744,8 +744,8 @@ calculate_mlpwr_bs <- function(
     min_sample_size = min_sample_size,
     max_sample_size = max_sample_size,
     #max_sample_size = 5 * min_sample_size,
-    # n_reps_total = floor(0.1*n_reps_total),
-    n_reps_total = 4 * n_reps_per,
+     n_reps_total = floor(0.2*n_reps_total),
+    #n_reps_total = 4 * n_reps_per,
     n_reps_per = n_reps_per,
     mean_or_assurance = mean_or_assurance,
     value_on_error = value_on_error,
@@ -782,7 +782,7 @@ calculate_mlpwr_bs <- function(
 
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
-    var(replicate(50, aggregate_fun(sample(x, length(x), replace = TRUE))))
+    var(replicate(100, aggregate_fun(sample(x, length(x), replace = TRUE))))
   }
 
   # Calculate bootstrapped quantile variance
@@ -806,8 +806,8 @@ calculate_mlpwr_bs <- function(
       power = target_performance,
       surrogate = "gpr",
       setsize = n_reps_per,
-      #evaluations = ceiling(0.9*n_reps_total),
-      evaluations = n_reps_total - (4 * n_reps_per),
+      evaluations = ceiling(0.8*n_reps_total),
+      #evaluations = n_reps_total - (4 * n_reps_per),
       ci = ci,
       n.startsets = 0,
       silent = !verbose,
