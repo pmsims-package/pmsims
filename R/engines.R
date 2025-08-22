@@ -742,10 +742,11 @@ calculate_mlpwr_bs <- function(
     metric_function = metric_function,
     target_performance = target_performance,
     min_sample_size = min_sample_size,
-    #max_sample_size = max_sample_size,
-    max_sample_size = 10 * min_sample_size,
-     n_reps_total = floor(0.2*n_reps_total),
+    max_sample_size = 10000,
+    #max_sample_size = 10 * min_sample_size,
+    #n_reps_total = floor(0.2*n_reps_total),
     #n_reps_total = 4 * n_reps_per,
+    n_reps_total = 200,
     n_reps_per = n_reps_per,
     mean_or_assurance = mean_or_assurance,
     value_on_error = value_on_error,
@@ -797,21 +798,26 @@ calculate_mlpwr_bs <- function(
     ci <- NULL
   }
   # Perform search using mlpwr
+  
+  # get starting min_sample from previous bisection in stage 1
+  a.lo = prev$track_bisection[length(prev$track_bisection)][[1]]$x
+  
   ds <-
     mlpwr::find.design(
       simfun = mlpwr_simulation_function,
       aggregate_fun = aggregate_fun,
       noise_fun = noise_fun,
-      boundaries = c(min_sample_size, max_sample_size),
+      boundaries = c(a.lo, max_sample_size),
       power = target_performance,
       surrogate = "gpr",
       setsize = n_reps_per,
-      evaluations = ceiling(0.8*n_reps_total),
+      #evaluations = ceiling(0.8*n_reps_total),
       #evaluations = n_reps_total - (4 * n_reps_per),
+      evaluations = n_reps_total,
       ci = ci,
-      n.startsets = 0,
-      silent = !verbose,
-      dat = prev$track_bisection
+      n.startsets = 4,
+      silent = !verbose #,
+      #dat = prev$track_bisection
     )
 
   # Process results from mlpwr
