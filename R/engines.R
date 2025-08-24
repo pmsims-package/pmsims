@@ -742,7 +742,7 @@ calculate_mlpwr_bs <- function(
     metric_function = metric_function,
     target_performance = target_performance,
     min_sample_size = min_sample_size,
-    max_sample_size = 20000,
+    max_sample_size = 10000,
     #max_sample_size = 10 * min_sample_size,
     #n_reps_total = floor(0.2*n_reps_total),
     #n_reps_total = 4 * n_reps_per,
