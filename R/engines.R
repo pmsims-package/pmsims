@@ -86,7 +86,7 @@ get_min_sample_size <- function(npar,
   # 2) EPV / per-predictor rules
   if (outcome_type == "binary") {
     # Aim for ≥10 EPV (Riley et al., 2020)
-    epv <- 2
+    epv <- 5
     if (!is.null(prevalence) && prevalence > 0) {
       n_epv <- ceiling(epv * npar / prevalence)
     } else {
@@ -742,7 +742,7 @@ calculate_mlpwr_bs <- function(
     metric_function = metric_function,
     target_performance = target_performance,
     min_sample_size = min_sample_size,
-    max_sample_size = 10000,
+    max_sample_size = 20000,
     #max_sample_size = 10 * min_sample_size,
     #n_reps_total = floor(0.2*n_reps_total),
     #n_reps_total = 4 * n_reps_per,
