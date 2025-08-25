@@ -734,7 +734,22 @@ calculate_mlpwr_bs <- function(
     )
   }
   
-  
+  if ("baseline_prob" %in% args_names){
+    baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
+    if (baseline_prob >= 0.05){
+      prev_max_sample_size <- 2 * min_sample_size
+      mlpwrbs_max_sample_size <- max_sample_size 
+    }else{
+      prev_max_sample_size <- 1.5 * min_sample_size
+      mlpwrbs_max_sample_size <- 2 * max_sample_size 
+    }
+
+  }else{
+    
+    prev_max_sample_size <- 10000
+    mlpwrbs_max_sample_size <- max_sample_size 
+    
+  }
 
   prev <- calculate_bisection(
     data_function = data_function,
@@ -742,7 +757,7 @@ calculate_mlpwr_bs <- function(
     metric_function = metric_function,
     target_performance = target_performance,
     min_sample_size = min_sample_size,
-    max_sample_size = 20000,
+    max_sample_size = prev_max_sample_size,
     #max_sample_size = 10 * min_sample_size,
     #n_reps_total = floor(0.2*n_reps_total),
     #n_reps_total = 4 * n_reps_per,
@@ -807,7 +822,7 @@ calculate_mlpwr_bs <- function(
       simfun = mlpwr_simulation_function,
       aggregate_fun = aggregate_fun,
       noise_fun = noise_fun,
-      boundaries = c(a.lo, max_sample_size),
+      boundaries = c(a.lo, mlpwrbs_max_sample_size),
       power = target_performance,
       surrogate = "gpr",
       setsize = n_reps_per,
