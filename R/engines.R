@@ -299,6 +299,43 @@ calculate_crude <- function(
   parallel = FALSE,
   cores = 20
 ) {
+  
+  # Determine number of predictors (excluding outcome column)
+  npar <- dim(data_function(1))[2] - 1
+  
+  # Infer the outcome type and compute data-driven minimum sample size
+  # Determine which outcome type applies
+  formals_list <- formals(data_function)
+  args_names <- names(formals_list)
+  
+  if ("censoring_rate" %in% args_names) {
+    censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = 1 - censoring_rate,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "survival"
+    )
+  } else if ("baseline_prob" %in% args_names) {
+    baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = baseline_prob,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "binary"
+    )
+  } else {
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = NULL,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "continuous"
+    )
+  }
+  
   n_steps <- round(n_reps_total / n_reps_per)
 
   # Make sure n_reps_per is 10 or over
@@ -417,7 +454,43 @@ calculate_ga <- function(
 ) {
   maxiter <- n_reps_per
   popSize <- round(n_reps_total / n_reps_per)
-
+  
+  # Determine number of predictors (excluding outcome column)
+  npar <- dim(data_function(1))[2] - 1
+  
+  # Infer the outcome type and compute data-driven minimum sample size
+  # Determine which outcome type applies
+  formals_list <- formals(data_function)
+  args_names <- names(formals_list)
+  
+  if ("censoring_rate" %in% args_names) {
+    censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = 1 - censoring_rate,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "survival"
+    )
+  } else if ("baseline_prob" %in% args_names) {
+    baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = baseline_prob,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "binary"
+    )
+  } else {
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = NULL,
+      c_stat        = target_performance,
+      calib_slope   = NULL,
+      outcome_type  = "continuous"
+    )
+  }
+  
   # Set seed for reproducibility
   #set.seed(seed)
 
@@ -738,12 +811,12 @@ calculate_mlpwr_bs <- function(
     baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
     if (baseline_prob >= 0.05){
       #prev_max_sample_size <- 2 * min_sample_size
-      prev_max_sample_size <- max_sample_size
+      prev_max_sample_size <- round(1.01 * max_sample_size)
       mlpwrbs_max_sample_size <- max_sample_size 
     }else{
      # prev_max_sample_size <- 1.5 * min_sample_size
      # mlpwrbs_max_sample_size <- 2 * max_sample_size 
-      prev_max_sample_size <- 2 * min_sample_size
+      prev_max_sample_size <- round(1.01 * max_sample_size)
       mlpwrbs_max_sample_size <- max_sample_size 
     }
 
