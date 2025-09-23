@@ -807,23 +807,25 @@ calculate_mlpwr_bs <- function(
     )
   }
   
+  # adjust stage 1 bisection min_sample_size based on outcome type 
   if ("baseline_prob" %in% args_names){
     baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
     if (baseline_prob >= 0.05){
       #prev_max_sample_size <- 2 * min_sample_size
-      prev_max_sample_size <- round(1.01 * min_sample_size)
-      mlpwrbs_max_sample_size <- max_sample_size 
+      prev_max_sample_size <- round(2 * min_sample_size)
+      #mlpwrbs_max_sample_size <- max_sample_size 
     }else{
-     # prev_max_sample_size <- 1.5 * min_sample_size
-     # mlpwrbs_max_sample_size <- 2 * max_sample_size 
-      prev_max_sample_size <- round(1.01 * min_sample_size)
-      mlpwrbs_max_sample_size <- max_sample_size 
+      # prev_max_sample_size <- 1.5 * min_sample_size
+      # mlpwrbs_max_sample_size <- 2 * max_sample_size 
+      prev_max_sample_size <- round(2 * min_sample_size)
+      #mlpwrbs_max_sample_size <- max_sample_size 
     }
-
+    
   }else{
     
-    prev_max_sample_size <- 10000
-    mlpwrbs_max_sample_size <- max_sample_size 
+    #prev_max_sample_size <- 10000
+    prev_max_sample_size <- 2 * min_sample_size
+    #mlpwrbs_max_sample_size <- max_sample_size 
     
   }
 
@@ -845,8 +847,12 @@ calculate_mlpwr_bs <- function(
     budget = TRUE,
     test_n = test_n
   )
+  
+
+  
 
   # calculate the second stage mlpwr
+  
   test_data <- data_function(test_n)
   # calculate the metrics for a sample size n
   mlpwr_simulation_function <- function(n) {
@@ -897,12 +903,16 @@ calculate_mlpwr_bs <- function(
   # get starting min_sample from previous bisection in stage 1
   a.lo = prev$track_bisection[length(prev$track_bisection)][[1]]$x
   
+  # get stage 2 mlpwr min and max sample_sizes
+    mlpwrbs_max_sample_size <- 2 * a.lo
+    mlpwrbs_min_sample_size <- round(0.8 * a.lo)
+  
   ds <-
     mlpwr::find.design(
       simfun = mlpwr_simulation_function,
       aggregate_fun = aggregate_fun,
       noise_fun = noise_fun,
-      boundaries = c(a.lo, mlpwrbs_max_sample_size),
+      boundaries = c(mlpwrbs_min_sample_size, mlpwrbs_max_sample_size),
       power = target_performance,
       surrogate = "gpr",
       setsize = n_reps_per,
