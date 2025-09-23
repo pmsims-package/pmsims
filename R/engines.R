@@ -811,12 +811,12 @@ calculate_mlpwr_bs <- function(
     baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
     if (baseline_prob >= 0.05){
       #prev_max_sample_size <- 2 * min_sample_size
-      prev_max_sample_size <- round(1.01 * max_sample_size)
+      prev_max_sample_size <- round(1.01 * min_sample_size)
       mlpwrbs_max_sample_size <- max_sample_size 
     }else{
      # prev_max_sample_size <- 1.5 * min_sample_size
      # mlpwrbs_max_sample_size <- 2 * max_sample_size 
-      prev_max_sample_size <- round(1.01 * max_sample_size)
+      prev_max_sample_size <- round(1.01 * min_sample_size)
       mlpwrbs_max_sample_size <- max_sample_size 
     }
 
