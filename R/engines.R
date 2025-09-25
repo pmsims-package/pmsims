@@ -86,7 +86,7 @@ get_min_sample_size <- function(npar,
   # 2) EPV / per-predictor rules
   if (outcome_type == "binary") {
     # Aim for ≥10 EPV (Riley et al., 2020)
-    epv <- 5
+    epv <- 2
     if (!is.null(prevalence) && prevalence > 0) {
       n_epv <- ceiling(epv * npar / prevalence)
     } else {
