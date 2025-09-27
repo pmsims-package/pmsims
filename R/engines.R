@@ -97,7 +97,7 @@ get_min_sample_size <- function(npar,
     
   } else if (outcome_type == "survival") {
     # Aim for ≥20 EPV in time-to-event (Riley et al., 2020)
-    epv <- 2
+    epv <- 5
     if (!is.null(prevalence) && prevalence > 0) {
       n_epv <- ceiling(epv * npar / prevalence)
     } else {
@@ -824,7 +824,7 @@ calculate_mlpwr_bs <- function(
   }else{
     
     #prev_max_sample_size <- 10000
-    prev_max_sample_size <- 2 * min_sample_size
+    prev_max_sample_size <- 10 * min_sample_size
     #mlpwrbs_max_sample_size <- max_sample_size 
     
   }
