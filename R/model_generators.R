@@ -16,7 +16,7 @@ default_models <- list(
       fastglm::fastglm(
         x,
         y,
-        family = "binomial",
+        family = binomial(), 
         method = 2
       )
     },

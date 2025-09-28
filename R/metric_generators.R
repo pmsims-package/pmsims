@@ -67,7 +67,7 @@ default_metric_generator <- function(metric, data_function) {
 #' @export
 predict_custom <- function(x, y, fit, model, type = "response") {
   if (model == "glm") {
-    predict(fit, x, type = type)
+    predict(fit, newdata=x, type = type)
   } else if (model == "lasso") {
     x <- as.matrix(x)
     predict(fit, newx = x, s = fit$lambda.1se, type = type)[, 1]
@@ -83,7 +83,8 @@ predict_custom <- function(x, y, fit, model, type = "response") {
 
 binary_auc_metric <- function(data, fit, model) {
   y <- data[, "y"]
-  x <- data[, names(data) != "y"]
+  #x <- data[, names(data) != "y"]
+  x = model.matrix(y~., data)[,-1]
   y_hat <- predict_custom(x, y, fit, model, type = "response")
   auc <- pROC::auc(y, as.numeric(y_hat), quiet = TRUE)
   return(auc[1])
@@ -92,7 +93,8 @@ binary_auc_metric <- function(data, fit, model) {
 binary_calib_slope <- function(data, fit, model) {
   # Computes calibration slope for logistic regression
   y <- data[, "y"]
-  x <- data[, names(data) != "y"]
+  #x <- data[, names(data) != "y"]
+  x = model.matrix(y~., data)[,-1]
   y_link <- predict_custom(x, y, fit, model, type = "link")
   slope <- try(
     glm(y ~ y_link, family = binomial()),
