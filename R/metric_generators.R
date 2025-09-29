@@ -83,8 +83,8 @@ predict_custom <- function(x, y, fit, model, type = "response") {
 
 binary_auc_metric <- function(data, fit, model) {
   y <- data[, "y"]
-  #x <- data[, names(data) != "y"]
-  x = model.matrix(y~., data)[,-1]
+  x <- data[, names(data) != "y"]
+  #x = model.matrix(y~., data)[,-1]
   y_hat <- predict_custom(x, y, fit, model, type = "response")
   auc <- pROC::auc(y, as.numeric(y_hat), quiet = TRUE)
   return(auc[1])
@@ -93,8 +93,8 @@ binary_auc_metric <- function(data, fit, model) {
 binary_calib_slope <- function(data, fit, model) {
   # Computes calibration slope for logistic regression
   y <- data[, "y"]
-  #x <- data[, names(data) != "y"]
-  x = model.matrix(y~., data)[,-1]
+  x <- data[, names(data) != "y"]
+  #x = model.matrix(y~., data)[,-1]
   y_link <- predict_custom(x, y, fit, model, type = "link")
   slope <- try(
     glm(y ~ y_link, family = binomial()),

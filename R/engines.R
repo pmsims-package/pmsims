@@ -73,58 +73,71 @@ get_ga_solution <- function(
 #' @examples
 #' get_min_sample_size(npar = 5, prevalence = 0.2, c_stat = 0.75,
 #'                     calib_slope = 0.9, outcome_type = "binary")
-get_min_sample_size <- function(npar,
-                                prevalence     = NULL,
-                                c_stat         = NULL,
-                                calib_slope    = NULL,
-                                outcome_type   = c("binary","survival","continuous")) {
+get_min_sample_size <- function(
+    npar,
+    prevalence   = NULL,
+    c_stat       = NULL,
+    calib_slope  = NULL,
+    outcome_type = c("binary","survival","continuous")
+) {
   outcome_type <- match.arg(outcome_type)
   
-  # 1) Base rule: 3*npar (absolute minimum)
+  # --- 1) Base rule: 3 * npar (absolute minimum)
   n0 <- 3 * npar
   
-  # 2) EPV / per-predictor rules
+  # --- 2) Outcome-specific rules ---
   if (outcome_type == "binary") {
-    # Aim for ≥10 EPV (Riley et al., 2020)
-    epv <- 2
-    if (!is.null(prevalence) && prevalence > 0) {
-      n_epv <- ceiling(epv * npar / prevalence)
+    # Recommended: ≥10 EPV (Riley et al., 2020)
+    epv <- 10
+    if (!is.null(prevalence) && prevalence > 0 && prevalence < 1) {
+      n_epv <- round(epv * npar / prevalence)
     } else {
-      # assume ~50% events if prevalence unknown
-      n_epv <- epv * npar * 2
+      warning("Prevalence not provided or invalid; assuming 50% events.")
+      n_epv <- round(epv * npar / 0.5)
     }
     n0 <- max(n0, n_epv)
     
   } else if (outcome_type == "survival") {
-    # Aim for ≥20 EPV in time-to-event (Riley et al., 2020)
-    epv <- 5
-    if (!is.null(prevalence) && prevalence > 0) {
-      n_epv <- ceiling(epv * npar / prevalence)
+    # Recommended: ≥20 EPV (Riley et al., 2020)
+    epv <- 20
+    if (!is.null(prevalence) && prevalence > 0 && prevalence < 1) {
+      n_epv <- round(epv * npar / prevalence)
     } else {
-      # fallback
-      n_epv <- epv * npar * 2
+      warning("Event proportion not provided; assuming 50% events.")
+      n_epv <- round(epv * npar / 0.5)
     }
     n0 <- max(n0, n_epv)
     
-  } else {
-    # continuous: ≥20 obs per predictor (Steyerberg, 2019)
-    n_cont <- 3 * npar # we feel the 3 * npar works for continuous
-    n0    <- max(n0, n_cont)
+  } else if (outcome_type == "continuous") {
+    # Continuous outcome: ≥20 obs per predictor (Steyerberg, 2019)
+    n_cont <- 20 * npar
+    
+    # Optional adjustments:
+    if (!is.null(c_stat)) {
+      if (c_stat <= 0 || c_stat > 1) warning("c_stat should be between 0 and 1.")
+      # Lower c-statistic → require more data (simple heuristic)
+      adj <- 1 / max(c_stat, 0.2)  # avoid extreme inflation
+      n_cont <- round(n_cont * adj)
+    }
+    
+    if (!is.null(calib_slope)) {
+      if (calib_slope > 0 && calib_slope < 1) {
+        # Lower slope means more shrinkage needed → increase N slightly
+        if( npar > 10){
+          adj <- 1 + (1 - calib_slope)
+        }else{
+          adj <- 1 / (1 - calib_slope)
+        }
+        n_cont <- round(n_cont * adj)
+      }
+    }
+    
+    n0 <- max(n0, n_cont)
   }
   
-  # 3) Adjust by discrimination (c-statistic)
-  #if (!is.null(c_stat) && c_stat > 0) {
-    # poorer c‐statistic → require larger N
-  #  n0 <- ceiling(n0 / c_stat)
- # }
-  
-  # 4) Adjust by calibration slope
-  #if (!is.null(calib_slope) && calib_slope > 0 && calib_slope < 1) {
- #   n0 <- ceiling(n0 / calib_slope)
- # }
-  
-  return(n0)
+  return(as.integer(n0))
 }
+
 
 
 #' mlpwr engine
@@ -798,6 +811,19 @@ calculate_mlpwr_bs <- function(
       outcome_type  = "binary"
     )
   } else {
+  
+  metric_used <- attr(metric_function, "metric")
+  if(metric_used == calib_slope){
+    min_sample_size <- get_min_sample_size(
+      npar          = npar,
+      prevalence    = NULL,
+      c_stat        = NULL,
+      calib_slope   = target_performance,
+      outcome_type  = "continuous"
+    )
+    
+  }else{
+    
     min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = NULL,
@@ -805,6 +831,9 @@ calculate_mlpwr_bs <- function(
       calib_slope   = NULL,
       outcome_type  = "continuous"
     )
+    
+  }
+    
   }
   
   # adjust stage 1 bisection min_sample_size based on outcome type 
@@ -904,8 +933,10 @@ calculate_mlpwr_bs <- function(
   a.lo = prev$track_bisection[length(prev$track_bisection)][[1]]$x
   
   # get stage 2 mlpwr min and max sample_sizes
-    mlpwrbs_max_sample_size <- 2 * a.lo
+    #mlpwrbs_max_sample_size <- 2 * a.lo # works for survival
+    mlpwrbs_max_sample_size <- 1.2 * a.lo # will test for survival
     mlpwrbs_min_sample_size <- round(0.8 * a.lo)
+    
   
   ds <-
     mlpwr::find.design(
