@@ -99,7 +99,7 @@ get_min_sample_size <- function(
     
   } else if (outcome_type == "survival") {
     # Recommended: ≥20 EPV (Riley et al., 2020)
-    epv <- 20
+    epv <- 10
     if (!is.null(prevalence) && prevalence > 0 && prevalence < 1) {
       n_epv <- round(epv * npar / prevalence)
     } else {
@@ -110,7 +110,7 @@ get_min_sample_size <- function(
     
   } else if (outcome_type == "continuous") {
     # Continuous outcome: ≥20 obs per predictor (Steyerberg, 2019)
-    n_cont <- 20 * npar
+    n_cont <- 10 * npar
     
     # Optional adjustments:
     if (!is.null(c_stat)) {
@@ -126,8 +126,8 @@ get_min_sample_size <- function(
         if( npar > 10){
           adj <- 1 + (1 - calib_slope)
         }else{
-          adj <- 1 / (1 - calib_slope)
-          #adj <- 1 + (1 - calib_slope)
+          #adj <- 1 / (1 - calib_slope)
+          adj <- 1 + (1 - calib_slope)
         }
         n_cont <- round(n_cont * adj)
       }
@@ -138,6 +138,67 @@ get_min_sample_size <- function(
   
   return(as.integer(n0))
 }
+
+
+#' adaptive_startvalues
+#'
+#' @param output 
+#' @param aggregate_fun 
+#' @param var_bootstrap 
+#' @param target 
+#' @param ci_q 
+#' 
+adaptive_startvalues <- function(output, aggregate_fun, var_bootstrap, target, ci_q = 0.975) {
+  bisection_output <- output$track_bisection
+  n_iter <- length(bisection_output)
+  
+  # Matrix: n, est, se, ll, ul
+  bisection_summary <- matrix(NA, nrow = n_iter, ncol = 5,
+                              dimnames = list(NULL, c("n", "est", "se", "ll", "ul")))
+  
+  for (i in seq_len(n_iter)) {
+    results <- bisection_output[[i]]
+    n <- results$x
+    performance_data <- results$y
+    
+    est <- aggregate_fun(performance_data)
+    se <- sqrt(var_bootstrap(performance_data))
+    
+    ll <- est - se * qnorm(ci_q)
+    ul <- est + se * qnorm(ci_q)
+    
+    bisection_summary[i, ] <- c(n, est, se, ll, ul)
+  }
+  
+  ## --- Find min value ---
+  ordered_by_ul <- bisection_summary[order(bisection_summary[, "ul"], decreasing = TRUE), ]
+  below_target  <- ordered_by_ul[ordered_by_ul[, "ul"] < target, , drop = FALSE]
+  
+  if (nrow(below_target) == 0) {
+    min_value <- min(bisection_summary[, "n"] * 0.8)
+  } else {
+    min_value <- max(below_target[, "n"])
+  }
+  
+  ## --- Find max value ---
+  ordered_by_ll <- bisection_summary[order(bisection_summary[, "ll"], decreasing = TRUE), ]
+  above_target  <- ordered_by_ll[ordered_by_ll[, "ll"] > target, , drop = FALSE]
+  
+  if (nrow(above_target) == 0) {
+    max_value <- max(bisection_summary[, "n"] * 1.2)
+  } else {
+    max_value <- min(above_target[, "n"])
+  }
+  
+  return(list(
+    summary = bisection_summary,
+    min_value = min_value,
+    max_value = max_value
+  ))
+}
+
+
+
 
 
 
@@ -931,55 +992,18 @@ calculate_mlpwr_bs <- function(
   # Perform search using mlpwr
   
   # get starting min_sample from previous bisection in stage 1
-  a.lo = prev$track_bisection[length(prev$track_bisection)][[1]]$x
+  #a.lo = prev$track_bisection[length(prev$track_bisection)][[1]]$x
   
-  # get stage 2 mlpwr min and max sample_sizes
-    #mlpwrbs_max_sample_size <- 2 * a.lo # works for survival
-    #mlpwrbs_max_sample_size <- 1.2 * a.lo # will test for survival
-    #mlpwrbs_min_sample_size <- round(0.8 * a.lo)
   
-  set_sample_size_bounds <- function(a.lo, npar, args_names, data_function, metric_function,
-                                     factor_surv_max = 2, factor_surv_min = 0.8,
-                                     factor_bin_max  = 1.2, factor_bin_min  = 0.8,
-                                     factor_calib_max = 2, factor_calib_min = 1.8) {
-    
-    if ("censoring_rate" %in% args_names) {
-      # Survival outcome
-      censoring_rate <- formals(data_function)$censoring_rate
-      mlpwrbs_max_sample_size <- round(factor_surv_max * a.lo)
-      mlpwrbs_min_sample_size <- round(factor_surv_min * a.lo)
-      
-    } else if ("baseline_prob" %in% args_names) {
-      # Binary outcome
-      mlpwrbs_max_sample_size <- round(factor_bin_max * a.lo)
-      mlpwrbs_min_sample_size <- round(factor_bin_min * a.lo)
-      
-    } else {
-      # Other outcomes (continuous)
-      metric_used <- attr(metric_function, "metric")
-      
-      if (npar < 10 && identical(metric_used, "calib_slope")) {
-        mlpwrbs_max_sample_size <- round(factor_calib_max * a.lo)
-        mlpwrbs_min_sample_size <- round(factor_calib_min * a.lo)
-      } else {
-        mlpwrbs_max_sample_size <- round(factor_bin_max * a.lo)
-        mlpwrbs_min_sample_size <- round(factor_bin_min * a.lo)
-      }
-    }
-    
-    list(
-      max = mlpwrbs_max_sample_size,
-      min = mlpwrbs_min_sample_size
-    )
-  }
+  get_start_bounds = adaptive_startvalues(output = prev, 
+                                          aggregate_fun = aggregate_fun,
+                                          var_bootstrap = var_bootstrap,
+                                          target = grid_row$target_performance,
+                                          ci_q = 0.975)
   
-  get_bounds <- set_sample_size_bounds(a.lo = a.lo , 
-                                       npar = npar, 
-                                       args_names = args_names, 
-                                        data_function = data_function,
-                                        metric_function = metric_function)
-  mlpwrbs_min_sample_size <- get_bounds$min
-  mlpwrbs_max_sample_size <- get_bounds$max
+
+  mlpwrbs_min_sample_size <- get_start_bounds$min_value
+  mlpwrbs_max_sample_size <- get_start_bounds$max_value
   
   ds <-
     mlpwr::find.design(
