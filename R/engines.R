@@ -998,7 +998,7 @@ calculate_mlpwr_bs <- function(
   get_start_bounds = adaptive_startvalues(output = prev, 
                                           aggregate_fun = aggregate_fun,
                                           var_bootstrap = var_bootstrap,
-                                          target = grid_row$target_performance,
+                                          target = target_performance,
                                           ci_q = 0.975)
   
 
