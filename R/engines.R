@@ -116,7 +116,7 @@ get_min_sample_size <- function(
     if (!is.null(c_stat)) {
       if (c_stat <= 0 || c_stat > 1) warning("c_stat should be between 0 and 1.")
       # Lower c-statistic → require more data (simple heuristic)
-      adj <- 1 / max(c_stat, 0.2)  # avoid extreme inflation
+      adj <- 1 / max(c_stat, 0.5)  # avoid extreme inflation
       n_cont <- round(n_cont * adj)
     }
     
@@ -127,6 +127,7 @@ get_min_sample_size <- function(
           adj <- 1 + (1 - calib_slope)
         }else{
           adj <- 1 / (1 - calib_slope)
+          #adj <- 1 + (1 - calib_slope)
         }
         n_cont <- round(n_cont * adj)
       }
@@ -813,7 +814,7 @@ calculate_mlpwr_bs <- function(
   } else {
   
   metric_used <- attr(metric_function, "metric")
-  if(metric_used == calib_slope){
+  if(metric_used == "calib_slope"){
     min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = NULL,
@@ -934,9 +935,51 @@ calculate_mlpwr_bs <- function(
   
   # get stage 2 mlpwr min and max sample_sizes
     #mlpwrbs_max_sample_size <- 2 * a.lo # works for survival
-    mlpwrbs_max_sample_size <- 1.2 * a.lo # will test for survival
-    mlpwrbs_min_sample_size <- round(0.8 * a.lo)
+    #mlpwrbs_max_sample_size <- 1.2 * a.lo # will test for survival
+    #mlpwrbs_min_sample_size <- round(0.8 * a.lo)
+  
+  set_sample_size_bounds <- function(a.lo, npar, args_names, data_function, metric_function,
+                                     factor_surv_max = 2, factor_surv_min = 0.8,
+                                     factor_bin_max  = 1.2, factor_bin_min  = 0.8,
+                                     factor_calib_max = 2, factor_calib_min = 1.8) {
     
+    if ("censoring_rate" %in% args_names) {
+      # Survival outcome
+      censoring_rate <- formals(data_function)$censoring_rate
+      mlpwrbs_max_sample_size <- round(factor_surv_max * a.lo)
+      mlpwrbs_min_sample_size <- round(factor_surv_min * a.lo)
+      
+    } else if ("baseline_prob" %in% args_names) {
+      # Binary outcome
+      mlpwrbs_max_sample_size <- round(factor_bin_max * a.lo)
+      mlpwrbs_min_sample_size <- round(factor_bin_min * a.lo)
+      
+    } else {
+      # Other outcomes (continuous)
+      metric_used <- attr(metric_function, "metric")
+      
+      if (npar < 10 && identical(metric_used, "calib_slope")) {
+        mlpwrbs_max_sample_size <- round(factor_calib_max * a.lo)
+        mlpwrbs_min_sample_size <- round(factor_calib_min * a.lo)
+      } else {
+        mlpwrbs_max_sample_size <- round(factor_bin_max * a.lo)
+        mlpwrbs_min_sample_size <- round(factor_bin_min * a.lo)
+      }
+    }
+    
+    list(
+      max = mlpwrbs_max_sample_size,
+      min = mlpwrbs_min_sample_size
+    )
+  }
+  
+  get_bounds <- set_sample_size_bounds(a.lo = a.lo , 
+                                       npar = npar, 
+                                       args_names = args_names, 
+                                        data_function = data_function,
+                                        metric_function = metric_function)
+  mlpwrbs_min_sample_size <- get_bounds$min
+  mlpwrbs_max_sample_size <- get_bounds$max
   
   ds <-
     mlpwr::find.design(
