@@ -96,7 +96,7 @@ get_min_sample_size <- function(
         if (c_stat <= 0 || c_stat > 1) warning("c_stat should be between 0 and 1.")
         # Lower c-statistic → require more data (simple heuristic)
         adj <- 1 / max(c_stat, 0.5)  # avoid extreme inflation
-        n_cont <- round(n_cont * adj)
+        n_epv <- round(n_epv * adj)
       }
     } else {
       warning("Prevalence not provided or invalid; assuming 50% events.")
@@ -106,7 +106,7 @@ get_min_sample_size <- function(
         if (c_stat <= 0 || c_stat > 1) warning("c_stat should be between 0 and 1.")
         # Lower c-statistic → require more data (simple heuristic)
         adj <- 1 / max(c_stat, 0.5)  # avoid extreme inflation
-        n_cont <- round(n_cont * adj)
+        n_epv <- round(n_epv * adj)
       }
     }
     n0 <- max(n0, n_epv)
@@ -133,7 +133,7 @@ get_min_sample_size <- function(
         if (c_stat <= 0 || c_stat > 1) warning("c_stat should be between 0 and 1.")
         # Lower c-statistic → require more data (simple heuristic)
         adj <- 1 / max(c_stat, 0.5)  # avoid extreme inflation
-        n_cont <- round(n_cont * adj)
+        n_epv <- round(n_epv * adj)
       }
     }
     
