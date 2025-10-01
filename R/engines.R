@@ -91,9 +91,23 @@ get_min_sample_size <- function(
     epv <- 10
     if (!is.null(prevalence) && prevalence > 0 && prevalence < 1) {
       n_epv <- round(epv * npar / prevalence)
+      # Optional adjustments:
+      if (!is.null(c_stat)) {
+        if (c_stat <= 0 || c_stat > 1) warning("c_stat should be between 0 and 1.")
+        # Lower c-statistic → require more data (simple heuristic)
+        adj <- 1 / max(c_stat, 0.5)  # avoid extreme inflation
+        n_cont <- round(n_cont * adj)
+      }
     } else {
       warning("Prevalence not provided or invalid; assuming 50% events.")
       n_epv <- round(epv * npar / 0.5)
+      # Optional adjustments:
+      if (!is.null(c_stat)) {
+        if (c_stat <= 0 || c_stat > 1) warning("c_stat should be between 0 and 1.")
+        # Lower c-statistic → require more data (simple heuristic)
+        adj <- 1 / max(c_stat, 0.5)  # avoid extreme inflation
+        n_cont <- round(n_cont * adj)
+      }
     }
     n0 <- max(n0, n_epv)
     
@@ -102,10 +116,28 @@ get_min_sample_size <- function(
     epv <- 10
     if (!is.null(prevalence) && prevalence > 0 && prevalence < 1) {
       n_epv <- round(epv * npar / prevalence)
+      
+      # Optional adjustments:
+      if (!is.null(c_stat)) {
+        if (c_stat <= 0 || c_stat > 1) warning("c_stat should be between 0 and 1.")
+        # Lower c-statistic → require more data (simple heuristic)
+        adj <- 1 / max(c_stat, 0.5)  # avoid extreme inflation
+        n_epv <- round(n_epv * adj)
+      }
+      
     } else {
       warning("Event proportion not provided; assuming 50% events.")
       n_epv <- round(epv * npar / 0.5)
+      # Optional adjustments:
+      if (!is.null(c_stat)) {
+        if (c_stat <= 0 || c_stat > 1) warning("c_stat should be between 0 and 1.")
+        # Lower c-statistic → require more data (simple heuristic)
+        adj <- 1 / max(c_stat, 0.5)  # avoid extreme inflation
+        n_cont <- round(n_cont * adj)
+      }
     }
+    
+    
     n0 <- max(n0, n_epv)
     
   } else if (outcome_type == "continuous") {
