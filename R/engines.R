@@ -142,13 +142,13 @@ get_min_sample_size <- function(
     
   } else if (outcome_type == "continuous") {
     # Continuous outcome: ≥20 obs per predictor (Steyerberg, 2019)
-    n_cont <- 10 * npar
+    n_cont <- 3 * npar
     
     # Optional adjustments:
     if (!is.null(c_stat)) {
       if (c_stat <= 0 || c_stat > 1) warning("c_stat should be between 0 and 1.")
       # Lower c-statistic → require more data (simple heuristic)
-      adj <- 1 / max(c_stat, 0.5)  # avoid extreme inflation
+      adj <- 1 / max(c_stat, 0.2)  # avoid extreme inflation
       n_cont <- round(n_cont * adj)
     }
     
@@ -895,6 +895,8 @@ calculate_mlpwr_bs <- function(
       calib_slope   = NULL,
       outcome_type  = "survival"
     )
+    
+    prev_max_sample_size <- 10 * min_sample_size
   } else if ("baseline_prob" %in% args_names) {
     baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
     min_sample_size <- get_min_sample_size(
@@ -904,6 +906,8 @@ calculate_mlpwr_bs <- function(
       calib_slope   = NULL,
       outcome_type  = "binary"
     )
+    
+    prev_max_sample_size <- 10 * min_sample_size
   } else {
   
   metric_used <- attr(metric_function, "metric")
@@ -916,6 +920,8 @@ calculate_mlpwr_bs <- function(
       outcome_type  = "continuous"
     )
     
+    prev_max_sample_size <- 100 * npar
+    
   }else{
     
     min_sample_size <- get_min_sample_size(
@@ -925,32 +931,16 @@ calculate_mlpwr_bs <- function(
       calib_slope   = NULL,
       outcome_type  = "continuous"
     )
-    
+    if(target_performance <= 0.5){
+    prev_max_sample_size <- 200 * npar
+    } else {
+    prev_max_sample_size <- 100 * npar 
+    }
   }
     
   }
   
-  # adjust stage 1 bisection min_sample_size based on outcome type 
-  if ("baseline_prob" %in% args_names){
-    baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
-    if (baseline_prob >= 0.05){
-      #prev_max_sample_size <- 2 * min_sample_size
-      prev_max_sample_size <- round(2 * min_sample_size)
-      #mlpwrbs_max_sample_size <- max_sample_size 
-    }else{
-      # prev_max_sample_size <- 1.5 * min_sample_size
-      # mlpwrbs_max_sample_size <- 2 * max_sample_size 
-      prev_max_sample_size <- round(2 * min_sample_size)
-      #mlpwrbs_max_sample_size <- max_sample_size 
-    }
-    
-  }else{
-    
-    #prev_max_sample_size <- 10000
-    prev_max_sample_size <- 10 * min_sample_size
-    #mlpwrbs_max_sample_size <- max_sample_size 
-    
-  }
+ 
 
   prev <- calculate_bisection(
     data_function = data_function,
