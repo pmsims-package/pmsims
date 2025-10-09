@@ -73,11 +73,26 @@ get_ga_solution <- function(
 #' @examples
 #' get_min_sample_size(npar = 5, prevalence = 0.2, c_stat = 0.75,
 #'                     calib_slope = 0.9, outcome_type = "binary")
+#' get_min_sample_size: Heuristic starting-n for binary/continuous/survival prediction
+#'
+#' @param npar             Integer. Number of predictors in the model.
+#' @param prevalence       Numeric [0,1]. Event rate or case‐fraction (binary/survival).
+#'                         (optional; used for EPV calculations)
+#' @param c_stat           Numeric >0.5. Anticipated c‐statistic (discrimination).
+#'                         (optional; factor >1/c_stat)
+#' @param calib_slope      Numeric. Anticipated calibration slope.
+#'                         (optional; factor 1/calib_slope if <1)
+#' @param outcome_type     One of "binary", "survival", or "continuous".
+#' @return Integer: recommended starting minimum sample size.
+#' @examples
+#' get_min_sample_size(npar = 5, prevalence = 0.2, c_stat = 0.75,
+#'                     calib_slope = 0.9, outcome_type = "binary")
 get_min_sample_size <- function(
     npar,
     prevalence   = NULL,
     c_stat       = NULL,
     calib_slope  = NULL,
+    survival_epv = NULL,
     outcome_type = c("binary","survival","continuous")
 ) {
   outcome_type <- match.arg(outcome_type)
@@ -113,9 +128,11 @@ get_min_sample_size <- function(
     
   } else if (outcome_type == "survival") {
     # Recommended: ≥20 EPV (Riley et al., 2020)
-    epv <- 10
+    
+    epv <- survival_epv
     if (!is.null(prevalence) && prevalence > 0 && prevalence < 1) {
       n_epv <- round(epv * npar / prevalence)
+      
       
       # Optional adjustments:
       if (!is.null(c_stat)) {
@@ -224,8 +241,8 @@ adaptive_startvalues <- function(output, aggregate_fun, var_bootstrap, target, c
   
   return(list(
     summary = bisection_summary,
-    min_value = min_value,
-    max_value = max_value
+    min_value = round(min_value),
+    max_value = round(max_value)
   ))
 }
 
@@ -888,15 +905,36 @@ calculate_mlpwr_bs <- function(
   
   if ("censoring_rate" %in% args_names) {
     censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = 1 - censoring_rate,
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "survival"
-    )
     
-    prev_max_sample_size <- 10 * min_sample_size
+    metric_used <- attr(metric_function, "metric")
+    if(metric_used == "cindex"){
+      min_sample_size <- get_min_sample_size(
+        npar          = npar,
+        prevalence    = 1 - censoring_rate,
+        c_stat        = target_performance,
+        calib_slope   = NULL,
+        survival_epv = 3 * (1 - censoring_rate),
+        outcome_type  = "survival"
+      )
+      
+      prev_max_sample_size <- 100 * npar
+      }else {
+        
+        min_sample_size <- get_min_sample_size(
+          npar          = npar,
+          prevalence    = 1 - censoring_rate,
+          c_stat        = target_performance,
+          calib_slope   = NULL,
+          survival_epv = 10,
+          outcome_type  = "survival"
+        )
+        
+        prev_max_sample_size <- 10 * min_sample_size 
+        
+      }
+      
+      
+    
   } else if ("baseline_prob" %in% args_names) {
     baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
     min_sample_size <- get_min_sample_size(
