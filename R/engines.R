@@ -92,7 +92,7 @@ get_min_sample_size <- function(
     prevalence   = NULL,
     c_stat       = NULL,
     calib_slope  = NULL,
-    survival_epv = NULL,
+    epv_value    = NULL,
     outcome_type = c("binary","survival","continuous")
 ) {
   outcome_type <- match.arg(outcome_type)
@@ -103,7 +103,7 @@ get_min_sample_size <- function(
   # --- 2) Outcome-specific rules ---
   if (outcome_type == "binary") {
     # Recommended: ≥10 EPV (Riley et al., 2020)
-    epv <- 10
+    epv <- epv_value
     if (!is.null(prevalence) && prevalence > 0 && prevalence < 1) {
       n_epv <- round(epv * npar / prevalence)
       # Optional adjustments:
@@ -129,7 +129,7 @@ get_min_sample_size <- function(
   } else if (outcome_type == "survival") {
     # Recommended: ≥20 EPV (Riley et al., 2020)
     
-    epv <- survival_epv
+    epv <- epv_value
     if (!is.null(prevalence) && prevalence > 0 && prevalence < 1) {
       n_epv <- round(epv * npar / prevalence)
       
@@ -913,7 +913,7 @@ calculate_mlpwr_bs <- function(
         prevalence    = 1 - censoring_rate,
         c_stat        = target_performance,
         calib_slope   = NULL,
-        survival_epv = 3 * (1 - censoring_rate),
+        epv_value     = 3 * (1 - censoring_rate),
         outcome_type  = "survival"
       )
       
@@ -925,7 +925,7 @@ calculate_mlpwr_bs <- function(
           prevalence    = 1 - censoring_rate,
           c_stat        = target_performance,
           calib_slope   = NULL,
-          survival_epv = 10,
+          epv_value     = 10,
           outcome_type  = "survival"
         )
         
@@ -937,15 +937,34 @@ calculate_mlpwr_bs <- function(
     
   } else if ("baseline_prob" %in% args_names) {
     baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = baseline_prob,
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "binary"
-    )
+
+    metric_used <- attr(metric_function, "metric")
+    if(metric_used == "auc"){
+      min_sample_size <- get_min_sample_size(
+        npar          = npar,
+        prevalence    = baseline_prob,
+        c_stat        = target_performance,
+        calib_slope   = NULL,
+        epv_value     = 3 * baseline_prob,
+        outcome_type  = "binary"
+      )
+      
+      prev_max_sample_size <- 100 * npar
+    }else {
+      
+      min_sample_size <- get_min_sample_size(
+        npar          = npar,
+        prevalence    = baseline_prob,
+        c_stat        = target_performance,
+        calib_slope   = NULL,
+        epv_value     = 10,
+        outcome_type  = "binary"
+      )
+      
+      prev_max_sample_size <- 10 * min_sample_size 
+      
+    }
     
-    prev_max_sample_size <- 10 * min_sample_size
   } else {
   
   metric_used <- attr(metric_function, "metric")
