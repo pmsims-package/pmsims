@@ -961,8 +961,12 @@ calculate_mlpwr_bs <- function(
         outcome_type  = "binary"
       )
       
-      prev_max_sample_size <- 10 * min_sample_size 
-      
+      if (baseline_prob <= 0.2){
+      prev_max_sample_size <- 2 * min_sample_size 
+      } else {
+        
+        prev_max_sample_size <- 10 * min_sample_size    
+      }
     }
     
   } else {
