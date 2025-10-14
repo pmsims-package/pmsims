@@ -962,7 +962,11 @@ calculate_mlpwr_bs <- function(
       )
       
       if (baseline_prob <= 0.2){
+      if(target_performance <= 0.7 & mean_or_assurance == "assurance"){
+        prev_max_sample_size <- 5 * min_sample_size  
+      }else{
       prev_max_sample_size <- 2 * min_sample_size 
+      }
       } else {
         
         prev_max_sample_size <- 10 * min_sample_size    
