@@ -48,31 +48,47 @@
 #' @export
 #'
 #' @examples
+
 simulate_binary <- function(
-  n_signal_parameters,
-  baseline_prob,
-  min_sample_size,
-  max_sample_size,
-  large_sample_performance,
-  minimum_threshold = 0.1,
+    # Predictors
+  signal_parameters,
   noise_parameters = 0,
   predictor_type = "continuous",
-  predictor_prop = NULL,
-  metric = "auc",
+  binary_predictor_prevalence = NULL,
+  # Outcome
+  outcome_prevalence,
+  large_sample_cstatistic,
+  # Model
   model = "glm",
-  se_final = 0.005,
-  n_reps_total = NULL,
-  tune_param = NULL,
+  # Performance
+  metric = "calibration_slope",
+  minimum_acceptable_performance,
+  # engine control
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance",
   ...
-) {
+){
+  
+  
+   # Tune for data function
+    tune_param <- binary_tuning(
+      target_prevalence = outcome_prevalence,
+      target_performance = large_sample_cstatistic,
+      candidate_features = signal_parameters,
+      proportion_noise_features = noise_parameters
+    )[c(1, 3)] # extract mean of linear predictor as new intercept and beta_signal scaled by var of lp
+
+  
   data_spec <- list(
     type = "binary",
     args = list(
-      n_signal_parameters = n_signal_parameters,
+      mu_lp = tune_param[1],
+      beta_signal = tune_param[2],
+      n_signal_parameters = signal_parameters,
       noise_parameters = noise_parameters,
       predictor_type = predictor_type,
-      predictor_prop = predictor_prop,
-      baseline_prob = baseline_prob
+      predictor_prop = binary_predictor_prevalence,
+      baseline_prob = outcome_prevalence
     )
   )
 
@@ -80,45 +96,67 @@ simulate_binary <- function(
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
 
-  # Tune data function
-  if (is.null(tune_param)) {
-    print("Tuning data function...")
-    tune_param <- tune_generate_data(
-      interval = c(0, 1),
-      large_n = set_test_n(max_sample_size),
-      tolerance = set_tolerance(large_sample_performance),
-      max_interval_expansion = 10,
-      data_function = data_function,
-      model_function = model_function,
-      metric_function = default_metric_generator(
-        metric,
-        data_function
-      ),
-      target_performance = large_sample_performance,
-      verbose = TRUE
-    )
-  }
+
 
   # TODO: What is this doing?
   se_final <- 0.005
-
-  do.call(
-    simulate_custom,
-    args = c(
+  
+  # Redefine metrics to internal syntax lang
+  
+  metric = ifelse(metric == "calibration_slope","calib_slope", metric)
+  
+  
+  # main pmsims
+  
+  suppressWarnings(output <-  simulate_custom(
       metric_function = default_metric_generator(metric, data_function),
-      target_performance = large_sample_performance - minimum_threshold,
+      target_performance = minimum_acceptable_performance,
       # Common arguments
       data_function = data_function,
       model_function = model_function,
-      min_sample_size = min_sample_size,
-      max_sample_size = max_sample_size,
-      se_final = se_final,
+      min_sample_size = 100,
+      max_sample_size = 30000,
+      se_final = NULL,
       n_reps_total = n_reps_total,
-      test_n = set_test_n(max_sample_size),
-      tune_param = tune_param
-    )
+      n_reps_per = 20,
+      method = "mlpwr-bs",
+      mean_or_assurance = mean_or_assurance,
+      test_n = 30000)
   )
+ 
+ ## print immediately (will show in console even if user assigns the result)
+ #print(output)
+ 
+ ## still return it invisibly so callers can assign/use it without extra console noise
+ #invisible(output)
+  
+  
+  ## append input parameters
+ 
+  
+  # Predictors
+  output$parameters <- signal_parameters
+  output$noise_parameters <- noise_parameters
+  output$predictor_type <- predictor_type
+  output$binary_predictor_prevalence <- output$predictor_type
+  # Outcome
+  output$prevalence <- outcome_prevalence
+  output$cstatistic <- large_sample_cstatistic
+  # Model
+  output$model <- model
+  # Performance
+  output$metric <- metric
+  # engine control
+  output$n_reps_total <- n_reps_total
+  output$mean_or_assurance <- mean_or_assurance
+
+ est <- output
+ class(est) <- "pmsims"
+ est
+ 
 }
+
+
 
 #' Calculate the minimum sample size required for a continous outcome
 #'
@@ -127,59 +165,106 @@ simulate_binary <- function(
 #'
 #' @examples
 simulate_continuous <- function(
-  n_signal_parameters,
-  min_sample_size,
-  max_sample_size,
+    # Predictors
+  signal_parameters,
   noise_parameters = 0,
   predictor_type = "continuous",
-  predictor_prop = NULL,
+  binary_predictor_prevalence = NULL,
+  # Outcome
+  large_sample_rsquared,
+  # Model
   model = "lm",
-  metric = "r2",
-  large_sample_performance = 0.8,
-  minimum_threshold = 0.10,
-  se_final = 0.005, # To give CIs of +/- 0.01
-  n_reps_total = NULL,
+  # Performance
+  metric = "calibration_slope",
+  minimum_acceptable_performance,
+  # engine control
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance",
   ...
-) {
-  inputs <- parse_inputs(
-    data_spec = list(
-      type = "continuous",
-      args = list(
-        n_signal_parameters = n_signal_parameters,
-        noise_parameters = noise_parameters,
-        predictor_type = predictor_type,
-        predictor_prop = predictor_prop
-      )
-    ),
-    metric,
-    model
-  )
-
-  if (!(is.null(n_reps_total))) {
-    se_final <- NULL
-  }
-
-  target_performance <- large_sample_performance - minimum_threshold
-
-  extra_args <- list(...)
-  if (!is.null(extra_args$tune_param)) {
-    large_sample_performance <- NULL
-  }
-
-  do.call(
-    simulate_custom,
-    args = c(
-      inputs,
-      target_performance = target_performance,
-      large_sample_performance = large_sample_performance,
-      min_sample_size = min_sample_size,
-      max_sample_size = max_sample_size,
-      n_reps_total = n_reps_total,
-      se_final = se_final,
-      test_n = set_test_n(max_sample_size),
-      ...
+)
+{
+  
+  
+  # Tune for data function
+  tune_param <- continuous_tuning(
+    r2 = large_sample_rsquared,
+    candidate_features = signal_parameters,
+    proportion_noise_features = noise_parameters
+  ) # extract beta_signal
+  
+  
+  data_spec <- list(
+    type = "continuous",
+    args = list(
+      beta_signal = tune_param,
+      n_signal_parameters = signal_parameters,
+      noise_parameters = noise_parameters,
+      predictor_type = predictor_type,
+      predictor_prop = binary_predictor_prevalence
     )
   )
+  
+  data_function <- default_data_generators(data_spec)
+  outcome_type <- attr(data_function, "outcome")
+  model_function <- default_model_generators(outcome_type, model)
+  
+  
+  
+  # TODO: What is this doing?
+  se_final <- 0.005
+  
+  # Redefine metrics to internal syntax lang
+  
+  metric = ifelse(metric == "calibration_slope","calib_slope", metric)
+  
+  
+  # main pmsims
+  
+  suppressWarnings(output <-  simulate_custom(
+    metric_function = default_metric_generator(metric, data_function),
+    target_performance = minimum_acceptable_performance,
+    # Common arguments
+    data_function = data_function,
+    model_function = model_function,
+    min_sample_size = 100,
+    max_sample_size = 30000,
+    se_final = NULL,
+    n_reps_total = n_reps_total,
+    n_reps_per = 20,
+    method = "mlpwr-bs",
+    mean_or_assurance = mean_or_assurance,
+    test_n = 30000)
+  )
+  
+  ## print immediately (will show in console even if user assigns the result)
+  #print(output)
+  
+  ## still return it invisibly so callers can assign/use it without extra console noise
+  #invisible(output)
+  
+  
+  ## append input parameters
+  
+  
+  # Predictors
+  output$parameters <- signal_parameters
+  output$noise_parameters <- noise_parameters
+  output$predictor_type <- predictor_type
+  output$binary_predictor_prevalence <- output$predictor_type
+  # Outcome
+  output$r2 <- large_sample_rsquared
+  # Model
+  output$model <- model
+  # Performance
+  output$metric <- metric
+  # engine control
+  output$n_reps_total <- n_reps_total
+  output$mean_or_assurance <- mean_or_assurance
+  
+  est <- output
+  class(est) <- "pmsims"
+  est
+  
 }
 
 #' Calculate the minimum sample size required for a survival outcome
@@ -191,60 +276,195 @@ simulate_continuous <- function(
 #'
 #' @examples
 simulate_survival <- function(
-  n_signal_parameters,
-  min_sample_size,
-  max_sample_size,
+    # Predictors
+  signal_parameters,
   noise_parameters = 0,
   predictor_type = "continuous",
-  predictor_prop = NULL,
-  baseline_hazard = 0.01,
-  censoring_rate = 0.2,
-  metric = "cindex",
+  binary_predictor_prevalence = NULL,
+  # Outcome
+  large_sample_cindex,
+  baseline_hazard = 1,
+  censoring_rate,
+  # Model
   model = "coxph",
-  large_sample_performance = 0.8,
-  minimum_threshold = 0.10,
-  se_final = 0.005, # To give CIs of +/- 0.01
-  n_reps_total = NULL,
+  # Performance
+  metric = "calibration_slope",
+  minimum_acceptable_performance,
+  # engine control
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance",
   ...
-) {
-  inputs <- parse_inputs(
-    data_spec = list(
-      type = "survival",
-      args = list(
-        n_signal_parameters = n_signal_parameters,
-        noise_parameters = noise_parameters,
-        predictor_type = predictor_type,
-        predictor_prop = predictor_prop,
-        baseline_hazard = baseline_hazard,
-        censoring_rate = censoring_rate
-      )
-    ),
-    metric,
-    model
-  )
-
-  if (!(is.null(n_reps_total))) {
-    se_final <- NULL
-  }
-
-  target_performance <- large_sample_performance - minimum_threshold
-  extra_args <- list(...)
-  if (!is.null(extra_args$tune_param)) {
-    large_sample_performance <- NULL
-  }
-
-  do.call(
-    simulate_custom,
-    args = c(
-      inputs,
-      target_performance = target_performance,
-      large_sample_performance = large_sample_performance,
-      min_sample_size = min_sample_size,
-      max_sample_size = max_sample_size,
-      se_final = se_final,
-      n_reps_total = n_reps_total,
-      test_n = set_test_n(max_sample_size),
-      ...
+){
+  
+  
+  # Tune for data function
+  tune_param <- binary_tuning(
+    target_prevalence = 1 - censoring_rate,
+    target_performance = large_sample_cindex,
+    candidate_features = signal_parameters,
+    proportion_noise_features = noise_parameters
+  )[c(1, 3)] # extract mean of linear predictor as new intercept and beta_signal scaled by var of lp
+  
+  
+  data_spec <- list(
+    type = "survival",
+    args = list(
+      baseline_hazard = baseline_hazard,
+      beta_signal = tune_param[2],
+      n_signal_parameters = signal_parameters,
+      noise_parameters = noise_parameters,
+      predictor_type = predictor_type,
+      predictor_prop = binary_predictor_prevalence,
+      censoring_rate = censoring_rate
     )
   )
+  
+  data_function <- default_data_generators(data_spec)
+  outcome_type <- attr(data_function, "outcome")
+  model_function <- default_model_generators(outcome_type, model)
+  
+  
+  
+  # TODO: What is this doing?
+  se_final <- 0.005
+  
+  # Redefine metrics to internal syntax lang
+  
+  metric = ifelse(metric == "calibration_slope","calib_slope", metric)
+  
+  
+  # main pmsims
+  
+  suppressWarnings(output <-  simulate_custom(
+    metric_function = default_metric_generator(metric, data_function),
+    target_performance = minimum_acceptable_performance,
+    # Common arguments
+    data_function = data_function,
+    model_function = model_function,
+    min_sample_size = 100,
+    max_sample_size = 30000,
+    se_final = NULL,
+    n_reps_total = n_reps_total,
+    n_reps_per = 20,
+    method = "mlpwr-bs",
+    mean_or_assurance = mean_or_assurance,
+    test_n = 30000)
+  )
+  
+  ## print immediately (will show in console even if user assigns the result)
+  #print(output)
+  
+  ## still return it invisibly so callers can assign/use it without extra console noise
+  #invisible(output)
+  
+  
+  ## append input parameters
+  
+  
+  # Predictors
+  output$parameters <- signal_parameters
+  output$noise_parameters <- noise_parameters
+  output$predictor_type <- predictor_type
+  output$binary_predictor_prevalence <- output$predictor_type
+  output$baseline_hazard <- baseline_hazard
+  # Outcome
+  output$censoring_rate <- censoring_rate
+  output$cstatistic <- large_sample_cindex
+  # Model
+  output$model <- model
+  # Performance
+  output$metric <- metric
+  # engine control
+  output$n_reps_total <- n_reps_total
+  output$mean_or_assurance <- mean_or_assurance
+  
+  est <- output
+  class(est) <- "pmsims"
+  est
+  
 }
+
+
+
+#' @export
+print.pmsims <- function(x, ...) {
+  if (!inherits(x, "pmsims")) {
+    stop("Object is not of class 'pmsims'")
+  }
+  
+  #cat("# Things to report in print.pmsims\n\n")
+  
+  
+  ## 1) Input parameters - print a compact list of commonly useful fields if present
+  cat("Input parameters:\n")
+  fields_to_show <- c("outcome", "predictor_type", "parameters", "noise_parameters", 
+                      "prevalence", "baseline_hazard", "censoring_rate",  
+                      "cstatistic", "r2", "target_performance", "model", "metric",
+                      "n_reps_total", "mean_or_assurance")
+  
+  # show those available plus any small scalar items commonly present
+  shown_any <- FALSE
+  for (nm in fields_to_show) {
+    if (!is.null(x[[nm]])) {
+      val <- x[[nm]]
+      # format the value nicely depending on its type
+      if (length(val) > 5) {
+        val_str <- paste(head(val, 5), collapse = ", ")
+        val_str <- paste0(val_str, " ...")
+      } else if (is.atomic(val)) {
+        val_str <- paste(val, collapse = ", ")
+      } else if (is.list(val)) {
+        val_str <- paste0("<list of length ", length(val), ">")
+      } else {
+        val_str <- as.character(val)
+      }
+      
+      cat("  - ", nm, ": ", val_str, "\n", sep = "")
+      shown_any <- TRUE
+    }
+  }
+  # if none of the above printed, print top-level names and small values
+  if (!shown_any) {
+    top_names <- names(x)
+    # print only scalar-ish entries
+    scalar_names <- top_names[sapply(x, function(el) {
+      (is.atomic(el) && length(el) <= 5) || is.null(el)
+    })]
+    if (length(scalar_names) > 0) {
+      for (nm in scalar_names) {
+        if (!is.null(x[[nm]])) {
+          cat("  - ", nm, ": ", paste0(capture.output(str(x[[nm]])), collapse = " "), "\n", sep = "")
+        }
+      }
+    } else {
+      cat("  <no compact scalar input parameters found on object — inspect object manually>\n")
+    }
+  }
+  cat("\n")
+  
+  ## 2) Final estimate of minimum sample size
+  min_n <- if (!is.null(x$min_n)) x$min_n else NA
+  cat("Final estimate of minimum sample size: ", min_n, "\n\n", sep = "")
+  
+  ## 3) Estimated performance at that sample size — try to extract mlpwr / mean performance
+  perf_val <- if (!is.null(x$perf_n)) x$perf_n else NA
+  cat("Estimated performance at sample size: ", round(perf_val,3), "\n\n", sep = "")
+  
+  
+  ## 4) Running time
+  if (!is.null(x$simulation_time)) {
+    simt <- x$simulation_time
+    # print nicely if it's difftime
+    if (inherits(simt, "difftime")) {
+      cat("Running time: ", format(simt), "\n", sep = "")
+    } else {
+      cat("Running time: ", paste0(capture.output(str(simt)), collapse = " "), "\n", sep = "")
+    }
+  } else {
+    cat("Running time: <not available>\n")
+  }
+  
+}
+
+
+

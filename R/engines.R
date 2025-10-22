@@ -1132,6 +1132,7 @@ calculate_mlpwr_bs <- function(
   return(list(
     results = perfs,
     summaries = mlpwr_summaries,
-    min_n = as.numeric(ds$final$design)
+    min_n = as.numeric(ds$final$design),
+    perf_n = as.numeric(ds$final$power)
   ))
 }

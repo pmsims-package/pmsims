@@ -175,6 +175,11 @@ simulate_custom <- function(
       "Not possible. Increase sample or lower performance",
       output$min_n
     ),
+    perf_n = ifelse(
+      is.na(output$perf_n),
+      "Not possible. Increase sample or lower performance",
+      output$perf_n
+    ),
     target_performance = target_performance,
     summaries = output$summaries,
     data = output$results,
