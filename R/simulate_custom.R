@@ -97,37 +97,6 @@ simulate_custom <- function(
       metric_function = metric_function,
       value_on_error = value_on_error
     )
-  } else if (method == "crude") {
-    output <- calculate_crude(
-      data_function,
-      model_function,
-      metric_function,
-      test_n = test_n,
-      value_on_error,
-      min_sample_size,
-      max_sample_size,
-      n_reps_total,
-      n_reps_per,
-      target_performance,
-      mean_or_assurance,
-      ...
-    )
-  } else if (method == "ga") {
-    output <- calculate_ga(
-      data_function = data_function,
-      model_function = model_function,
-      metric_function = metric_function,
-      value_on_error = value_on_error,
-      min_sample_size = min_sample_size,
-      max_sample_size = max_sample_size,
-      test_n = test_n,
-      n_reps_total = n_reps_total,
-      n_reps_per = n_reps_per,
-      target_performance = target_performance,
-      mean_or_assurance = mean_or_assurance,
-      penalty_weight = 1,
-      ...
-    )
   } else if (method == "bisection") {
     output <- calculate_bisection(
       data_function = data_function,
