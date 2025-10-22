@@ -14,7 +14,6 @@ RUN apt-get update && apt-get install -y \
 
 # Install key R development packages
 RUN R -e "install.packages('renv', repos='https://cloud.r-project.org/')"
-# RUN R -e "install.packages(c('devtools', 'remotes', 'roxygen2', 'testthat', 'usethis'), repos='https://cloud.r-project.org/', type = "binary")"
 
 # Set up a working directory
 WORKDIR /usr/local/src
