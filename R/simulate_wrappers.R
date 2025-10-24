@@ -96,10 +96,6 @@ simulate_binary <- function(
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
 
-
-
-  # TODO: What is this doing?
-  se_final <- 0.005
   
   # Redefine metrics to internal syntax lang
   
@@ -114,8 +110,8 @@ simulate_binary <- function(
       # Common arguments
       data_function = data_function,
       model_function = model_function,
-      min_sample_size = 100,
-      max_sample_size = 30000,
+      min_sample_size = NULL,
+      max_sample_size = NULL,
       se_final = NULL,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
@@ -209,10 +205,6 @@ simulate_continuous <- function(
   model_function <- default_model_generators(outcome_type, model)
   
   
-  
-  # TODO: What is this doing?
-  se_final <- 0.005
-  
   # Redefine metrics to internal syntax lang
   
   metric = ifelse(metric == "calibration_slope","calib_slope", metric)
@@ -226,8 +218,8 @@ simulate_continuous <- function(
     # Common arguments
     data_function = data_function,
     model_function = model_function,
-    min_sample_size = 100,
-    max_sample_size = 30000,
+    min_sample_size = NULL,
+    max_sample_size = NULL,
     se_final = NULL,
     n_reps_total = n_reps_total,
     n_reps_per = 20,
@@ -235,12 +227,6 @@ simulate_continuous <- function(
     mean_or_assurance = mean_or_assurance,
     test_n = 30000)
   )
-  
-  ## print immediately (will show in console even if user assigns the result)
-  #print(output)
-  
-  ## still return it invisibly so callers can assign/use it without extra console noise
-  #invisible(output)
   
   
   ## append input parameters
@@ -324,10 +310,7 @@ simulate_survival <- function(
   model_function <- default_model_generators(outcome_type, model)
   
   
-  
-  # TODO: What is this doing?
-  se_final <- 0.005
-  
+
   # Redefine metrics to internal syntax lang
   
   metric = ifelse(metric == "calibration_slope","calib_slope", metric)
@@ -341,8 +324,8 @@ simulate_survival <- function(
     # Common arguments
     data_function = data_function,
     model_function = model_function,
-    min_sample_size = 100,
-    max_sample_size = 30000,
+    min_sample_size = NULL,
+    max_sample_size = NULL,
     se_final = NULL,
     n_reps_total = n_reps_total,
     n_reps_per = 20,
@@ -350,13 +333,7 @@ simulate_survival <- function(
     mean_or_assurance = mean_or_assurance,
     test_n = 30000)
   )
-  
-  ## print immediately (will show in console even if user assigns the result)
-  #print(output)
-  
-  ## still return it invisibly so callers can assign/use it without extra console noise
-  #invisible(output)
-  
+
   
   ## append input parameters
   
@@ -467,4 +444,116 @@ print.pmsims <- function(x, ...) {
 }
 
 
+#' @export
+plot.pmsims <- function(x, metric_label = NULL, use_gg = TRUE, ...) {
+  if (!inherits(x, "pmsims")) stop("object must be of class 'pmsims'")
+  
+  if(x$mean_or_assurance == "mean"){
+    
+    mean_perf <- x$summaries$mean_performance
+    
+  }else{
+    
+    mean_perf <- x$summaries$quant20_performance 
+  }
+  
+  # performance and sample sizes
+  
+  n_vals <- as.numeric(names(mean_perf))
+  df <- data.frame(n = n_vals, mean = as.numeric(mean_perf), stringsAsFactors = FALSE)
+  
 
+  # sort by n
+  df <- df[order(df$n), , drop = FALSE]
+  
+  min_n <- if (!is.null(x$min_n)) as.numeric(x$min_n) else NA_real_
+  perf_n <- if (!is.null(x$perf_n)) as.numeric(x$perf_n) else {
+    if (!is.na(min_n) && any(df$n == min_n)) df$mean[df$n == min_n] else NA_real_
+  }
+  target_perf <- if (!is.null(x$target_performance)) as.numeric(x$target_performance) else NA_real_
+  metric_name <- if (!is.null(metric_label)) metric_label else if (!is.null(x$metric)) as.character(x$metric) else "performance"
+  metric_summary <- if (!is.null(x$mean_or_assurance)) as.character(x$mean_or_assurance) else "performance"
+  
+  # Try ggplot2
+  if (use_gg && requireNamespace("ggplot2", quietly = TRUE)) {
+    p <- ggplot2::ggplot(df, ggplot2::aes(x = n, y = mean))
+    
+    p <- p + ggplot2::geom_smooth(formula = 'y ~ x', size = 1, method = "loess", se = FALSE) + ggplot2::geom_point(size = 1.5)
+    
+    if (!is.na(target_perf)) {
+      p <- p + ggplot2::geom_hline(yintercept = target_perf, linetype = "dashed")
+    }
+    
+    if (!is.na(min_n)) {
+      p <- p + ggplot2::geom_vline(xintercept = min_n, linetype = "dotted")
+      # if min_n corresponds to a plotted point, add a larger point and annotate
+      if (any(df$n == min_n)) {
+        point_y <- df$mean[df$n == min_n]
+        p <- p + ggplot2::geom_point(data = df[df$n == min_n, , drop = FALSE],
+                                     ggplot2::aes(x = n, y = mean), size = 3)
+        p <- p + ggplot2::annotate("text", x = min_n, y = point_y,
+                                   label = sprintf("min_n = %s\nperf = %.3f", min_n, point_y),
+                                   hjust = -0.05, vjust = -0.5, size = 3.5)
+      } else if (!is.na(perf_n)) {
+        p <- p + ggplot2::geom_point(ggplot2::aes(x = min_n, y = perf_n), data = data.frame(n = min_n, mean = perf_n),
+                                     size = 3)
+        p <- p + ggplot2::annotate("text", x = min_n, y = perf_n,
+                                   label = sprintf("min_n = %s\nperf = %.3f", min_n, perf_n),
+                                   hjust = -0.05, vjust = -0.5, size = 3.5)
+      }
+    }
+    
+    # annotate target performance at right side
+    if (!is.na(target_perf) && nrow(df) > 0) {
+      x_right <- max(df$n, na.rm = TRUE)
+      p <- p + ggplot2::annotate("text", x = x_right, y = target_perf,
+                                 label = sprintf("target = %.3f", target_perf),
+                                 hjust = 1.05, vjust = -0.5, size = 3.5)
+    }
+    
+    p <- p + ggplot2::labs(
+      x = "Sample size (n)",
+      y = paste0("Performance (", metric_summary , "[", metric_name, "]" , ")"),
+      title = "Sample size vs performance"
+    ) + ggplot2::theme_bw() + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
+    
+    print(p)
+    invisible(p)
+  }else{
+  
+  # Base R fallback ---------------------------------------------------------
+  old_mar <- par("mar"); on.exit(par(mar = old_mar), add = TRUE)
+  par(mar = c(5, 5, 4, 2) + 0.1)
+  
+  ylim_min <- min(df$mean, na.rm = TRUE) - 0.01
+  ylim_max <- max(df$mean, na.rm = TRUE) + 0.01
+  
+  plot(df$n, df$mean, type = "n", xlab = "Sample size (n)",
+       ylab = paste0("Performance (", metric_summary , "[", metric_name, "]" , ")"),
+       main = "Sample size vs performance",
+       ylim = c(ylim_min, ylim_max))
+  
+  lines(df$n, df$mean, lwd = 2)
+  points(df$n, df$mean, pch = 16, cex = 0.6)
+  
+  if (!is.na(target_perf)) abline(h = target_perf, lty = 2)
+  if (!is.na(min_n)) {
+    abline(v = min_n, lty = 3)
+    if (any(df$n == min_n)) {
+      yv <- df$mean[df$n == min_n]
+      points(min_n, yv, pch = 19, cex = 1.2)
+      text(min_n, yv, sprintf("min_n=%s\nperf=%.3f", min_n, yv), pos = 4, offset = 0.5)
+    } else if (!is.na(perf_n)) {
+      points(min_n, perf_n, pch = 19, cex = 1.2)
+      text(min_n, perf_n, sprintf("min_n=%s\nperf=%.3f", min_n, perf_n), pos = 4, offset = 0.5)
+    }
+  }
+  
+  if (!is.na(target_perf)) {
+    text(max(df$n, na.rm = TRUE), target_perf, labels = sprintf("target=%.3f", target_perf),
+         pos = 2, xpd = TRUE)
+  }
+  
+  }
+  invisible(NULL)
+}

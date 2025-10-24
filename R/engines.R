@@ -26,38 +26,6 @@ get_summaries <- function(performance_matrix) {
   )
 }
 
-get_ga_solution <- function(
-  gaobject,
-  mean_or_assurance = c("mean", "assurance")
-) {
-  mean_or_assurance <- match.arg(mean_or_assurance)
-
-  # Select fitness threshold based on mean or assurance (20th percentile)
-  fitness_threshold <- if (mean_or_assurance == "mean") {
-    mean(gaobject@fitness, na.rm = TRUE)
-  } else {
-    quantile(gaobject@fitness, probs = 0.20, na.rm = TRUE)
-  }
-
-  # Get indices where fitness meets/exceeds threshold
-  valid_idx <- which(gaobject@fitness >= fitness_threshold)
-  candidate_population <- gaobject@population[valid_idx, , drop = FALSE]
-
-  # If multiple rows, compute summary statistic based on context
-  if (nrow(candidate_population) > 1) {
-    solution_values <- rowMeans(candidate_population, na.rm = TRUE)
-    if (mean_or_assurance == "mean") {
-      solution <- mean(solution_values, na.rm = TRUE)
-    } else {
-      solution <- quantile(solution_values, probs = 0.2, na.rm = TRUE)
-    }
-  } else {
-    solution <- candidate_population
-  }
-
-  return(round(as.numeric(solution)))
-}
-
 
 #' get_min_sample_size: Heuristic starting-n for binary/continuous/survival prediction
 #'
@@ -248,9 +216,6 @@ adaptive_startvalues <- function(output, aggregate_fun, var_bootstrap, target, c
 
 
 
-
-
-
 #' mlpwr engine
 #' @inheritParams simulate_custom
 #' @param n_init The number of initial sample sizes simualted before the gausian process search begins.
@@ -287,7 +252,7 @@ calculate_mlpwr <- function(
   
   if ("censoring_rate" %in% args_names) {
     censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
-    min_sample_size <- get_min_sample_size(
+    start_min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = 1 - censoring_rate,
       c_stat        = target_performance,
@@ -296,7 +261,7 @@ calculate_mlpwr <- function(
     )
   } else if ("baseline_prob" %in% args_names) {
     baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
-    min_sample_size <- get_min_sample_size(
+    start_min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = baseline_prob,
       c_stat        = target_performance,
@@ -304,7 +269,7 @@ calculate_mlpwr <- function(
       outcome_type  = "binary"
     )
   } else {
-    min_sample_size <- get_min_sample_size(
+    start_min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = NULL,
       c_stat        = target_performance,
@@ -356,13 +321,22 @@ calculate_mlpwr <- function(
   } else {
     ci <- NULL
   }
+  
+  
+  # overide adaptive min when provided
+  
+  if(!is.null(min_sample_size)){
+    start_min_sample_size <- min_sample_size
+  }
+  
+  
   # Perform search using mlpwr
   ds <-
     mlpwr::find.design(
       simfun = mlpwr_simulation_function,
       aggregate_fun = aggregate_fun,
       noise_fun = noise_fun,
-      boundaries = c(min_sample_size, max_sample_size),
+      boundaries = c(start_min_sample_size, max_sample_size),
       power = target_performance,
       surrogate = "gpr",
       setsize = n_reps_per,
@@ -384,326 +358,10 @@ calculate_mlpwr <- function(
 
   mlpwr_summaries <- get_summaries(results)
 
-  # list(
-  #   median_performance = get_perf(results, 0.5),
-  #   quant20_performance = get_perf(results, 0.2),
-  #   quant5_performance = get_perf(results, 0.05),
-  #   quant95_performance = get_perf(results, 0.95)
-  # )
-
   return(list(
     results = perfs,
     summaries = mlpwr_summaries,
     min_n = as.numeric(ds$final$design)
-  ))
-}
-
-#' The Crude Engine
-#' @inheritParams calculate_mlpwr
-#' @param value_on_error
-#' @param parallel Whether to use parallel processing. Default is FALSE
-#' @param cores If parallel processing, how many cores to pass to parallel::makeCluster(cores) Default is 20.
-#'
-#' @returns
-#' @export
-#'
-#' @examples
-calculate_crude <- function(
-  data_function,
-  model_function,
-  metric_function,
-  value_on_error,
-  min_sample_size,
-  max_sample_size,
-  test_n,
-  n_reps_total,
-  n_reps_per,
-  target_performance,
-  mean_or_assurance,
-  parallel = FALSE,
-  cores = 20
-) {
-  
-  # Determine number of predictors (excluding outcome column)
-  npar <- dim(data_function(1))[2] - 1
-  
-  # Infer the outcome type and compute data-driven minimum sample size
-  # Determine which outcome type applies
-  formals_list <- formals(data_function)
-  args_names <- names(formals_list)
-  
-  if ("censoring_rate" %in% args_names) {
-    censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = 1 - censoring_rate,
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "survival"
-    )
-  } else if ("baseline_prob" %in% args_names) {
-    baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = baseline_prob,
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "binary"
-    )
-  } else {
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = NULL,
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "continuous"
-    )
-  }
-  
-  n_steps <- round(n_reps_total / n_reps_per)
-
-  # Make sure n_reps_per is 10 or over
-  n_reps_per <- pmax(10, n_reps_per)
-
-  # Specify grid
-  sample_grid <- c(
-    round(seq(min_sample_size, max_sample_size, length.out = n_steps)),
-    max(30000, 3 * max_sample_size)
-  )
-
-  # Generate data and compute metric for sizes_to_check, n_reps_per times
-  test_data <- data_function(test_n)
-
-  metric_calculation <- function(n) {
-    tryCatch(
-      {
-        train_data <- data_function(n)
-        fit <- model_function(train_data)
-        model <- attr(model_function, "model")
-        return(metric_function(test_data, fit, model))
-      },
-      error = function(e) {
-        return(value_on_error)
-      }
-    )
-  }
-
-  if (parallel) {
-    cat("\nRunning in parallel...")
-    require(foreach)
-    cl <- parallel::makeCluster(cores)
-    doParallel::registerDoParallel(cl)
-    performance_matrix <-
-      foreach(a = sample_grid, .combine = rbind) %:%
-      foreach(b = 1:n_reps_per, .combine = c) %dopar%
-      {
-        return(metric_calculation(a))
-      }
-    colnames(performance_matrix) <- 1:n_reps_per
-    rownames(performance_matrix) <- sample_grid
-    parallel::stopCluster(cl)
-  } else {
-    performance_matrix <-
-      matrix(
-        nrow = length(sample_grid),
-        ncol = n_reps_per
-      )
-    colnames(performance_matrix) <- 1:n_reps_per
-    rownames(performance_matrix) <- sample_grid
-    # progress bar
-    pb <- utils::txtProgressBar(0, length(sample_grid) + 2, style = 3)
-    utils::setTxtProgressBar(pb, 1)
-
-    # Compute performance metrics across sizes and simulations
-    for (i in seq_along(sample_grid)) {
-      utils::setTxtProgressBar(pb, 1 + i)
-      for (j in 1:n_reps_per) {
-        performance_matrix[i, j] <- metric_calculation(sample_grid[i])
-      }
-    }
-    utils::setTxtProgressBar(pb, length(sample_grid) + 2)
-    close(pb)
-  }
-
-  crude_summaries <- get_summaries(performance_matrix)
-
-  if (mean_or_assurance == "mean") {
-    target_summaries <- crude_summaries$mean_performance
-  } else if (mean_or_assurance == "assurance") {
-    target_summaries <- crude_summaries$quant20_performance
-  } else {
-    stop("mean_or_assurance must be either 'mean' or 'assurance'")
-  }
-
-  if (
-    is.na(
-      which(target_summaries > target_performance)[1]
-    )
-  ) {
-    crude_min_n <- NA
-  } else {
-    crude_min_n <-
-      sample_grid[
-        which(target_summaries > target_performance)[1]
-      ]
-  }
-  return(list(
-    results = performance_matrix,
-    summaries = crude_summaries,
-    min_n = crude_min_n
-  ))
-}
-
-#' The GA Engine
-#' @inheritParams calculate_mlpwr
-#' @param value_on_error
-#'
-#' @returns
-#' @export
-#'
-#' @examples
-calculate_ga <- function(
-  data_function = data_function,
-  model_function = model_function,
-  metric_function = metric_function,
-  value_on_error = value_on_error,
-  min_sample_size = min_sample_size,
-  max_sample_size = max_sample_size,
-  test_n = test_n,
-  n_reps_total = n_reps_total,
-  n_reps_per = n_reps_per,
-  target_performance = target_performance,
-  mean_or_assurance = mean_or_assurance,
-  penalty_weight = 1
-) {
-  maxiter <- n_reps_per
-  popSize <- round(n_reps_total / n_reps_per)
-  
-  # Determine number of predictors (excluding outcome column)
-  npar <- dim(data_function(1))[2] - 1
-  
-  # Infer the outcome type and compute data-driven minimum sample size
-  # Determine which outcome type applies
-  formals_list <- formals(data_function)
-  args_names <- names(formals_list)
-  
-  if ("censoring_rate" %in% args_names) {
-    censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = 1 - censoring_rate,
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "survival"
-    )
-  } else if ("baseline_prob" %in% args_names) {
-    baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = baseline_prob,
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "binary"
-    )
-  } else {
-    min_sample_size <- get_min_sample_size(
-      npar          = npar,
-      prevalence    = NULL,
-      c_stat        = target_performance,
-      calib_slope   = NULL,
-      outcome_type  = "continuous"
-    )
-  }
-  
-  # Set seed for reproducibility
-  #set.seed(seed)
-
-  # Generate test data once
-  test_data <- data_function(test_n)
-
-  # Define the objective function for the genetic algorithm
-  calc_objective_function <- function(n) {
-    n <- round(n)
-    if (n < min_sample_size) {
-      return(-Inf)
-    } # Enforce minimum sample size
-    tryCatch(
-      {
-        # Generate training data
-        train_data <- data_function(n)
-
-        # Fit model
-        fit <- model_function(train_data)
-        model <- attr(model_function, "model")
-
-        # Calculate performance metric
-        performance <- metric_function(test_data, fit, model)
-
-        # Calculate penalty term (normalized by max sample size)
-        penalty <- penalty_weight * (n / max_sample_size)
-
-        # Objective value (minimize difference between performance and target while minimizing sample size)
-        # objective_value <- -abs(performance - target_performance  - penalty)
-        objective_value <- 1 /
-          (abs(performance - target_performance) + 1) -
-          penalty
-        return(objective_value)
-      },
-      error = function(e) {
-        return(value_on_error)
-      }
-    )
-  }
-
-  # Configure and run genetic algorithm
-  # Load GA package
-  require(GA)
-  ga_result <- GA::ga(
-    type = "real-valued",
-    fitness = calc_objective_function,
-    lower = min_sample_size,
-    upper = max_sample_size,
-    popSize = popSize,
-    maxiter = maxiter,
-    keepBest = TRUE,
-    parallel = FALSE,
-    seed = NULL,
-    monitor = FALSE
-  )
-
-  metric_calculation <- function(n) {
-    tryCatch(
-      {
-        train_data <- data_function(n)
-        fit <- model_function(train_data)
-        model <- attr(model_function, "model")
-        return(metric_function(test_data, fit, model))
-      },
-      error = function(e) {
-        return(value_on_error)
-      }
-    )
-  }
-
-  # Extract results
-  # This returns n that maximizes the mean/q20 fitness value
-  best_n <- get_ga_solution(ga_result, mean_or_assurance)
-  best_performance <- metric_calculation(best_n)
-
-  # Process results from GA
-  sample_size_iterations <- round(unlist(lapply(ga_result@bestSol, mean)))
-  perfs <- sapply(sample_size_iterations, function(x) metric_calculation(x))
-  ga_summaries <- list(
-    mean_performance = mean(perfs, na.rm = TRUE),
-    median_performance = quantile(perfs, 0.5, na.rm = TRUE),
-    quant20_performance = quantile(perfs, 0.2, na.rm = TRUE),
-    quant5_performance = quantile(perfs, 0.05, na.rm = TRUE),
-    quant95_performance = quantile(perfs, 0.95, na.rm = TRUE)
-  )
-  return(list(
-    results = perfs,
-    summaries = ga_summaries,
-    min_n = best_n
   ))
 }
 
@@ -733,7 +391,7 @@ calculate_bisection <- function(
   parallel = FALSE,
   cores = 20,
   verbose = FALSE,
-  budget = FALSE # <- new parameter
+  budget = FALSE
 ) {
   
   # Determine number of predictors (excluding outcome column)
@@ -746,7 +404,7 @@ calculate_bisection <- function(
   
   if ("censoring_rate" %in% args_names) {
     censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
-    min_sample_size <- get_min_sample_size(
+    start_min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = 1 - censoring_rate,
       c_stat        = target_performance,
@@ -755,7 +413,7 @@ calculate_bisection <- function(
     )
   } else if ("baseline_prob" %in% args_names) {
     baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
-    min_sample_size <- get_min_sample_size(
+    start_min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = baseline_prob,
       c_stat        = target_performance,
@@ -763,7 +421,7 @@ calculate_bisection <- function(
       outcome_type  = "binary"
     )
   } else {
-    min_sample_size <- get_min_sample_size(
+    start_min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = NULL,
       c_stat        = target_performance,
@@ -814,9 +472,17 @@ calculate_bisection <- function(
       list(y_summary = s$quant20_performance, y = vals)
     }
   }
-
+  
+  
+  # overide adaptive min when provided
+  
+  if(!is.null(min_sample_size)){
+    start_min_sample_size <- min_sample_size
+  }
+  
+  
   # Initial bounds
-  p_lo <- summary_at_n(min_sample_size)$y_summary
+  p_lo <- summary_at_n(start_min_sample_size)$y_summary
   p_hi <- summary_at_n(max_sample_size)$y_summary
 
   iter <- 0
@@ -828,7 +494,7 @@ calculate_bisection <- function(
     (budget && iter < max_iter) ||
       (!budget && (p_hi - p_lo) >= tol && iter < max_iter)
   ) {
-    mid <- floor((min_sample_size + max_sample_size) / 2)
+    mid <- floor((start_min_sample_size + max_sample_size) / 2)
     mid_result <- summary_at_n(mid)
     p_mid <- mid_result$y_summary
 
@@ -842,7 +508,7 @@ calculate_bisection <- function(
       max_sample_size <- mid
       p_hi <- p_mid
     } else {
-      min_sample_size <- mid
+      start_min_sample_size <- mid
       p_lo <- p_mid
     }
 
@@ -852,7 +518,7 @@ calculate_bisection <- function(
   result <- list(
     min_n = max_sample_size,
     performance = p_hi,
-    min_sample_size_bound = min_sample_size,
+    min_sample_size_bound = start_min_sample_size,
     min_sample_size_perf = p_lo,
     max_sample_size_bound = max_sample_size,
     max_sample_size_perf = p_hi,
@@ -870,7 +536,7 @@ calculate_bisection <- function(
 
 #' MLPWR_BS (MLPWR with Bisection for initial) Engine
 #' @inheritParams simulate_custom
-#' @param n_init The number of initial sample sizes simualted before the gausian process search begins.
+#' @param n_init The number of initial sample sizes simulated before the gausian process search begins.
 #' @param verbose Whether to run mlpwr with verbose output
 #' @param value_on_error The value used if there is an error in fitting the model or calculating performance.
 #'
@@ -908,7 +574,7 @@ calculate_mlpwr_bs <- function(
     
     metric_used <- attr(metric_function, "metric")
     if(metric_used == "cindex"){
-      min_sample_size <- get_min_sample_size(
+      prev_min_sample_size <- get_min_sample_size(
         npar          = npar,
         prevalence    = 1 - censoring_rate,
         c_stat        = target_performance,
@@ -920,7 +586,7 @@ calculate_mlpwr_bs <- function(
       prev_max_sample_size <- 100 * npar
       }else {
         
-        min_sample_size <- get_min_sample_size(
+        prev_min_sample_size <- get_min_sample_size(
           npar          = npar,
           prevalence    = 1 - censoring_rate,
           c_stat        = target_performance,
@@ -929,7 +595,7 @@ calculate_mlpwr_bs <- function(
           outcome_type  = "survival"
         )
         
-        prev_max_sample_size <- 10 * min_sample_size 
+        prev_max_sample_size <- 10 * prev_min_sample_size 
         
       }
       
@@ -940,7 +606,7 @@ calculate_mlpwr_bs <- function(
 
     metric_used <- attr(metric_function, "metric")
     if(metric_used == "auc"){
-      min_sample_size <- get_min_sample_size(
+      prev_min_sample_size <- get_min_sample_size(
         npar          = npar,
         prevalence    = baseline_prob,
         c_stat        = target_performance,
@@ -952,7 +618,7 @@ calculate_mlpwr_bs <- function(
       prev_max_sample_size <- 100 * npar
     }else {
       
-      min_sample_size <- get_min_sample_size(
+      prev_min_sample_size <- get_min_sample_size(
         npar          = npar,
         prevalence    = baseline_prob,
         c_stat        = target_performance,
@@ -963,13 +629,13 @@ calculate_mlpwr_bs <- function(
       
       if (baseline_prob <= 0.2){
       if(target_performance <= 0.7 & mean_or_assurance == "assurance"){
-        prev_max_sample_size <- 5 * min_sample_size  
+        prev_max_sample_size <- 5 * prev_min_sample_size  
       }else{
-      prev_max_sample_size <- 2 * min_sample_size 
+      prev_max_sample_size <- 2 * prev_min_sample_size 
       }
       } else {
         
-        prev_max_sample_size <- 10 * min_sample_size    
+        prev_max_sample_size <- 10 * prev_min_sample_size    
       }
     }
     
@@ -977,7 +643,7 @@ calculate_mlpwr_bs <- function(
   
   metric_used <- attr(metric_function, "metric")
   if(metric_used == "calib_slope"){
-    min_sample_size <- get_min_sample_size(
+    prev_min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = NULL,
       c_stat        = NULL,
@@ -989,7 +655,7 @@ calculate_mlpwr_bs <- function(
     
   }else{
     
-    min_sample_size <- get_min_sample_size(
+    prev_min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = NULL,
       c_stat        = target_performance,
@@ -1005,18 +671,20 @@ calculate_mlpwr_bs <- function(
     
   }
   
- 
+ # overide adaptive min and max when provided at stage 1
+  
+  if(!is.null(min_sample_size) && !is.null(max_sample_size)){
+    prev_min_sample_size <- min_sample_size
+    prev_max_sample_size <- max_sample_size
+  }
 
   prev <- calculate_bisection(
     data_function = data_function,
     model_function = model_function,
     metric_function = metric_function,
     target_performance = target_performance,
-    min_sample_size = min_sample_size,
+    min_sample_size = prev_min_sample_size,
     max_sample_size = prev_max_sample_size,
-    #max_sample_size = 10 * min_sample_size,
-    #n_reps_total = floor(0.2*n_reps_total),
-    #n_reps_total = 4 * n_reps_per,
     n_reps_total = 200,
     n_reps_per = n_reps_per,
     mean_or_assurance = mean_or_assurance,
@@ -1092,6 +760,14 @@ calculate_mlpwr_bs <- function(
   mlpwrbs_min_sample_size <- get_start_bounds$min_value
   mlpwrbs_max_sample_size <- get_start_bounds$max_value
   
+  # overide adaptive min and max when provided at stage 2
+  
+  if(!is.null(min_sample_size) && !is.null(max_sample_size)){
+    mlpwrbs_min_sample_size <- min_sample_size
+    mlpwrbs_max_sample_size <- max_sample_size
+  }
+  
+  
   ds <-
     mlpwr::find.design(
       simfun = mlpwr_simulation_function,
@@ -1101,13 +777,10 @@ calculate_mlpwr_bs <- function(
       power = target_performance,
       surrogate = "gpr",
       setsize = n_reps_per,
-      #evaluations = ceiling(0.8*n_reps_total),
-      #evaluations = n_reps_total - (4 * n_reps_per),
       evaluations = n_reps_total,
       ci = ci,
       n.startsets = 4,
-      silent = !verbose #,
-      #dat = prev$track_bisection
+      silent = !verbose
     )
 
   # Process results from mlpwr
@@ -1121,13 +794,6 @@ calculate_mlpwr_bs <- function(
   }
 
   mlpwr_summaries <- get_summaries(results)
-
-  # list(
-  #   median_performance = get_perf(results, 0.5),
-  #   quant20_performance = get_perf(results, 0.2),
-  #   quant5_performance = get_perf(results, 0.05),
-  #   quant95_performance = get_perf(results, 0.95)
-  # )
 
   return(list(
     results = perfs,
