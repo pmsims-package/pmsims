@@ -1,30 +1,65 @@
 Package: pmsims
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
-Authors@R: 
-    person(given = "First",
-           family = "Last",
-           role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Title: Simulation-based Sample Size Tools for Prediction Models
+Version: 1.0.0
+Authors@R:
+    c(
+      person(given = "Ewan",
+             family = "Carr",
+             role = c("aut", "cre"),
+             email = "ewan.carr@kcl.ac.uk",
+             comment = c(ORCID = "TODO")),
+      person(given = "Gordon",
+             family = "Forbes",
+             role = c("aut", "cre"),
+             comment = c(ORCID = "TODO")),
+      person(given = "Ridwan",
+             family = "Olaniran",
+             role = c("aut", "cre"),
+             comment = c(ORCID = "TODO")),
+      person(given = "Diana",
+             family = "Shamsutdinova",
+             role = "aut",
+             comment = c(ORCID = "TODO")),
+      person(given = "Daniel",
+             family = "Stahl",
+             role = "aut",
+             comment = c(ORCID = "TODO")),
+      person(given = "Sarah",
+             family = "Markham",
+             role = "aut",
+             comment = c(ORCID = "TODO")),
+      person(given = "Felix",
+             family = "Zimmer",
+             role = "aut",
+             comment = c(ORCID = "TODO"))
+    )
+Description: pmsims is a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects stability, accuracy, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with a range of regression-based modelling approaches. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models.
 License: GPL (>= 3)
-Encoding: UTF-8
-LazyData: true
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
-Imports: 
+URL: https://pmsims-package.github.io/pmsims/, https://github.com/pmsims-package/pmsims
+BugReports: https://github.com/pmsims-package/pmsims/issues
+Depends:
+    R (>= 4.1.0)
+Imports:
     graphics,
     mlpwr,
+    pROC,
     stats,
     survival,
     timeROC,
-    utils
-Suggests: 
+    utils,
+    glmnet,
+    ranger,
+    pec
+Suggests:
     testthat,
-    pROC,
     covr,
     pmsampsize,
     rmarkdown,
-    glmnet,
-    ranger
+    GA,
+    doParallel,
+    foreach
+Encoding: UTF-8
+LazyData: false
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+BuildVignettes: false

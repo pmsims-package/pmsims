@@ -1,0 +1,22 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/LICENSE.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/news/index.html</loc></url>
+<url><loc>/reference/default_data_generators.html</loc></url>
+<url><loc>/reference/default_models.html</loc></url>
+<url><loc>/reference/default_tune.html</loc></url>
+<url><loc>/reference/generate_binary_data.html</loc></url>
+<url><loc>/reference/generate_continuous_data.html</loc></url>
+<url><loc>/reference/generate_survival_data.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/parse_inputs.html</loc></url>
+<url><loc>/reference/pmsims-package.html</loc></url>
+<url><loc>/reference/simulate_binary.html</loc></url>
+<url><loc>/reference/simulate_continuous.html</loc></url>
+<url><loc>/reference/simulate_custom.html</loc></url>
+<url><loc>/reference/simulate_survival.html</loc></url>
+<url><loc>/reference/tune_generate_data.html</loc></url>
+</urlset>
+
