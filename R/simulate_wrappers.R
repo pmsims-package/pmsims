@@ -107,6 +107,7 @@ simulate_binary <- function(
   suppressWarnings(output <-  simulate_custom(
       metric_function = default_metric_generator(metric, data_function),
       target_performance = minimum_acceptable_performance,
+      c_statistic = large_sample_cstatistic,
       # Common arguments
       data_function = data_function,
       model_function = model_function,
@@ -215,6 +216,7 @@ simulate_continuous <- function(
   suppressWarnings(output <-  simulate_custom(
     metric_function = default_metric_generator(metric, data_function),
     target_performance = minimum_acceptable_performance,
+    c_statistic = large_sample_rsquared,
     # Common arguments
     data_function = data_function,
     model_function = model_function,
@@ -321,6 +323,7 @@ simulate_survival <- function(
   suppressWarnings(output <-  simulate_custom(
     metric_function = default_metric_generator(metric, data_function),
     target_performance = minimum_acceptable_performance,
+    c_statistic = large_sample_cindex,
     # Common arguments
     data_function = data_function,
     model_function = model_function,
@@ -445,67 +448,77 @@ print.pmsims <- function(x, ...) {
 
 
 #' @export
-plot.pmsims <- function(x, metric_label = NULL, use_gg = TRUE, ...) {
-  if (!inherits(x, "pmsims")) stop("object must be of class 'pmsims'")
-  
-  if(x$mean_or_assurance == "mean"){
+plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
     
-    mean_perf <- x$summaries$mean_performance
+    ds <- ex2$mlpwr_ds
+    design <- NULL
     
-  }else{
+    dat <- ds$dat
+    fit <- ds$fit
+    aggregate_fun <- ds$aggregate_fun
     
-    mean_perf <- x$summaries$quant20_performance 
-  }
-  
-  # performance and sample sizes
-  
-  n_vals <- as.numeric(names(mean_perf))
-  df <- data.frame(n = n_vals, mean = as.numeric(mean_perf), stringsAsFactors = FALSE)
-  
-
-  # sort by n
-  df <- df[order(df$n), , drop = FALSE]
-  
-  min_n <- if (!is.null(x$min_n)) as.numeric(x$min_n) else NA_real_
-  perf_n <- if (!is.null(x$perf_n)) as.numeric(x$perf_n) else {
-    if (!is.na(min_n) && any(df$n == min_n)) df$mean[df$n == min_n] else NA_real_
-  }
-  target_perf <- if (!is.null(x$target_performance)) as.numeric(x$target_performance) else NA_real_
-  metric_name <- if (!is.null(metric_label)) metric_label else if (!is.null(x$metric)) as.character(x$metric) else "performance"
-  metric_summary <- if (!is.null(x$mean_or_assurance)) as.character(x$mean_or_assurance) else "performance"
-  
-  # Try ggplot2
-  if (use_gg && requireNamespace("ggplot2", quietly = TRUE)) {
-    p <- ggplot2::ggplot(df, ggplot2::aes(x = n, y = mean))
+    dat_obs <- mlpwr:::todataframe(dat, aggregate = TRUE, aggregate_fun = aggregate_fun)
     
-    p <- p + ggplot2::geom_smooth(formula = 'y ~ x', size = 1, method = "loess", se = FALSE) + ggplot2::geom_point(size = 1.5)
+    boundaries <- ds$boundaries
+    if (!is.null(design)) {
+      namesx <- names(boundaries)
+      specified <- !sapply(design, is.na)
+      boundariesx <- unlist(boundaries[!specified])
+      ns <- seq(boundariesx[1], boundariesx[2])
+      nsx <- lapply(ns, function(x) {
+        a <- c()
+        a[specified] <- as.numeric(design[specified])
+        a[!specified] <- x
+        a
+      })
+      ind <- dat_obs[c(specified, FALSE, FALSE)] == as.numeric(design[specified])
+      dat_obs <- dat_obs[ind, ]
+      a1 <- names(ds$final$design)[!specified]
+      a2 <- paste(names(design)[specified], "=", design[specified], 
+                  sep = " ", collapse = ",")
+      xlab <- paste0(a1, " (", a2, ")")
+    }
+    if (is.null(design)) {
+      boundariesx <- unlist(boundaries)
+      xlab <- names(ds$final$design)
+      ns <- seq(boundariesx[1], boundariesx[2])
+      nsx <- ns
+    }
+    dat_pred <- data.frame(n = ns, y = sapply(nsx, fit$fitfun), 
+                           type = "Prediction")
     
-    if (!is.na(target_perf)) {
-      p <- p + ggplot2::geom_hline(yintercept = target_perf, linetype = "dashed")
+    
+    #### plot annotations
+    min_n <- if (!is.null(x$min_n)) as.numeric(x$min_n) else NA_real_
+    perf_n <- if (!is.null(x$perf_n)) as.numeric(x$perf_n) else {
+      if (!is.na(min_n) && any(df$n == min_n)) df$mean[df$n == min_n] else NA_real_
     }
     
-    if (!is.na(min_n)) {
-      p <- p + ggplot2::geom_vline(xintercept = min_n, linetype = "dotted")
-      # if min_n corresponds to a plotted point, add a larger point and annotate
-      if (any(df$n == min_n)) {
-        point_y <- df$mean[df$n == min_n]
-        p <- p + ggplot2::geom_point(data = df[df$n == min_n, , drop = FALSE],
-                                     ggplot2::aes(x = n, y = mean), size = 3)
-        p <- p + ggplot2::annotate("text", x = min_n, y = point_y,
-                                   label = sprintf("min_n = %s\nperf = %.3f", min_n, point_y),
-                                   hjust = -0.05, vjust = -0.5, size = 3.5)
-      } else if (!is.na(perf_n)) {
-        p <- p + ggplot2::geom_point(ggplot2::aes(x = min_n, y = perf_n), data = data.frame(n = min_n, mean = perf_n),
-                                     size = 3)
-        p <- p + ggplot2::annotate("text", x = min_n, y = perf_n,
-                                   label = sprintf("min_n = %s\nperf = %.3f", min_n, perf_n),
-                                   hjust = -0.05, vjust = -0.5, size = 3.5)
-      }
-    }
     
-    # annotate target performance at right side
-    if (!is.na(target_perf) && nrow(df) > 0) {
-      x_right <- max(df$n, na.rm = TRUE)
+    target_perf <- if (!is.null(x$target_performance)) as.numeric(x$target_performance) else NA_real_
+    metric_name <- if (!is.null(metric_label)) metric_label else if (!is.null(x$metric)) as.character(x$metric) else "performance"
+    metric_summary <- if (!is.null(x$mean_or_assurance)) as.character(x$mean_or_assurance) else "performance"
+    
+    
+    
+    
+    p <- ggplot2::ggplot()
+    
+    p <- p + ggplot2::geom_line(ggplot2::aes(x = dat_pred$n, 
+                                                 y = dat_pred$y)) + ggplot2::geom_point(ggplot2::aes(x = dat_obs$V1, 
+                                                                                                     y = dat_obs$y)) + ggplot2::theme_bw() + ggplot2::scale_color_brewer(palette = "Set1") + 
+      ggplot2::theme(legend.title = ggplot2::element_blank()) + 
+      ggplot2::xlab(xlab) + ggplot2::ylab("Power") + ggplot2::theme(legend.position = "bottom")
+  
+    
+    p <- p + ggplot2::geom_point(ggplot2::aes(x = min_n, y = perf_n), data = data.frame(n = min_n, mean = perf_n),
+                                 size = 3)
+    p <- p + ggplot2::annotate("text", x = min_n, y = perf_n,
+                               label = sprintf("min_n = %s\nperf = %.3f", min_n, perf_n),
+                               hjust = -0.05, vjust = -0.5, size = 3.5)
+    
+    if (!is.na(target_perf) && nrow(dat_obs) > 0) {
+      x_right <- max(dat_pred$n, na.rm = TRUE)
       p <- p + ggplot2::annotate("text", x = x_right, y = target_perf,
                                  label = sprintf("target = %.3f", target_perf),
                                  hjust = 1.05, vjust = -0.5, size = 3.5)
@@ -517,43 +530,22 @@ plot.pmsims <- function(x, metric_label = NULL, use_gg = TRUE, ...) {
       title = "Sample size vs performance"
     ) + ggplot2::theme_bw() + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
     
-    print(p)
-    invisible(p)
-  }else{
-  
-  # Base R fallback ---------------------------------------------------------
-  old_mar <- par("mar"); on.exit(par(mar = old_mar), add = TRUE)
-  par(mar = c(5, 5, 4, 2) + 0.1)
-  
-  ylim_min <- min(df$mean, na.rm = TRUE) - 0.01
-  ylim_max <- max(df$mean, na.rm = TRUE) + 0.01
-  
-  plot(df$n, df$mean, type = "n", xlab = "Sample size (n)",
-       ylab = paste0("Performance (", metric_summary , "[", metric_name, "]" , ")"),
-       main = "Sample size vs performance",
-       ylim = c(ylim_min, ylim_max))
-  
-  lines(df$n, df$mean, lwd = 2)
-  points(df$n, df$mean, pch = 16, cex = 0.6)
-  
-  if (!is.na(target_perf)) abline(h = target_perf, lty = 2)
-  if (!is.na(min_n)) {
-    abline(v = min_n, lty = 3)
-    if (any(df$n == min_n)) {
-      yv <- df$mean[df$n == min_n]
-      points(min_n, yv, pch = 19, cex = 1.2)
-      text(min_n, yv, sprintf("min_n=%s\nperf=%.3f", min_n, yv), pos = 4, offset = 0.5)
-    } else if (!is.na(perf_n)) {
-      points(min_n, perf_n, pch = 19, cex = 1.2)
-      text(min_n, perf_n, sprintf("min_n=%s\nperf=%.3f", min_n, perf_n), pos = 4, offset = 0.5)
+    
+    if (!is.na(target_perf)) {
+      p <- p + ggplot2::geom_hline(yintercept = target_perf, linetype = "dashed")
     }
-  }
-  
-  if (!is.na(target_perf)) {
-    text(max(df$n, na.rm = TRUE), target_perf, labels = sprintf("target=%.3f", target_perf),
-         pos = 2, xpd = TRUE)
-  }
-  
-  }
-  invisible(NULL)
+    
+    if (!is.na(min_n)) {
+      p <- p + ggplot2::geom_vline(xintercept = min_n, linetype = "dotted")
+    }
+    
+    if(plot){
+    print(p)   
+    } else {
+      observed_data = dat_obs #[order(dat_obs$V1), , drop = FALSE]
+      predicted_data = dat_pred[, -3]
+      colnames(observed_data) <-  colnames(predicted_data) <- c("n", metric_name)
+      plot_data <- list(observed_data = observed_data, predicted_data = predicted_data)
+      plot_data
+    } 
 }

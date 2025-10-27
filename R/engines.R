@@ -234,6 +234,7 @@ calculate_mlpwr <- function(
   min_sample_size,
   max_sample_size,
   target_performance,
+  c_statistic,
   mean_or_assurance,
   n_init,
   verbose,
@@ -386,6 +387,7 @@ calculate_bisection <- function(
   n_reps_total = n_reps_total,
   n_reps_per = n_reps_per,
   target_performance = target_performance,
+  c_statistic,
   mean_or_assurance = mean_or_assurance,
   tol = 1e-3,
   parallel = FALSE,
@@ -552,6 +554,7 @@ calculate_mlpwr_bs <- function(
   min_sample_size,
   max_sample_size,
   target_performance,
+  c_statistic,
   mean_or_assurance,
   verbose,
   data_function,
@@ -589,8 +592,8 @@ calculate_mlpwr_bs <- function(
         prev_min_sample_size <- get_min_sample_size(
           npar          = npar,
           prevalence    = 1 - censoring_rate,
-          c_stat        = target_performance,
-          calib_slope   = NULL,
+          c_stat        = c_statistic,
+          calib_slope   = target_performance,
           epv_value     = 10,
           outcome_type  = "survival"
         )
@@ -602,40 +605,74 @@ calculate_mlpwr_bs <- function(
       
     
   } else if ("baseline_prob" %in% args_names) {
-    baseline_prob <- eval(formals_list[["baseline_prob"]], environment(data_function))
-
+    # evaluate and validate baseline_prob
+    baseline_prob <- eval(formals_list[["baseline_prob"]], envir = environment(data_function))
+    if (!is.numeric(baseline_prob) || length(baseline_prob) != 1 || is.na(baseline_prob)) {
+      stop("baseline_prob must be a single numeric value (not NA).")
+    }
+    if (baseline_prob <= 0 || baseline_prob >= 1) {
+      stop("baseline_prob must be between 0 and 1 (exclusive).")
+    }
+    
     metric_used <- attr(metric_function, "metric")
-    if(metric_used == "auc"){
+    if (is.null(metric_used)) {
+      stop("metric_function does not have a 'metric' attribute.")
+    }
+    
+    # Branch by metric and then use mutually exclusive branches for clarity
+    if (metric_used == "auc") {
+
+      epv_for_auc <- 3 * baseline_prob
+
       prev_min_sample_size <- get_min_sample_size(
-        npar          = npar,
-        prevalence    = baseline_prob,
-        c_stat        = target_performance,
-        calib_slope   = NULL,
-        epv_value     = 3 * baseline_prob,
-        outcome_type  = "binary"
+        npar         = npar,
+        prevalence   = baseline_prob,
+        c_stat       = target_performance,
+        calib_slope  = NULL,
+        epv_value    = epv_for_auc,
+        outcome_type = "binary"
       )
       
       prev_max_sample_size <- 100 * npar
-    }else {
       
-      prev_min_sample_size <- get_min_sample_size(
-        npar          = npar,
-        prevalence    = baseline_prob,
-        c_stat        = target_performance,
-        calib_slope   = NULL,
-        epv_value     = 10,
-        outcome_type  = "binary"
-      )
-      
-      if (baseline_prob <= 0.2){
-      if(target_performance <= 0.7 & mean_or_assurance == "assurance"){
-        prev_max_sample_size <- 5 * prev_min_sample_size  
-      }else{
-      prev_max_sample_size <- 2 * prev_min_sample_size 
-      }
-      } else {
+    } else {
+      # non-AUC cases: decide EPV and prev_max based on baseline_prob and other conditions
+      if (baseline_prob <= 0.2 && c_statistic <= 0.7 && mean_or_assurance == "assurance") {
+        epv_val <- 30L
+        prev_min_sample_size <- get_min_sample_size(
+          npar         = npar,
+          prevalence   = baseline_prob,
+          c_stat       = c_statistic,
+          calib_slope  = target_performance,
+          epv_value    = epv_val,
+          outcome_type = "binary"
+        )
+        prev_max_sample_size <- 5 * prev_min_sample_size
         
-        prev_max_sample_size <- 10 * prev_min_sample_size    
+      } else if (baseline_prob <= 0.2) {
+        epv_val <- 10L
+        prev_min_sample_size <- get_min_sample_size(
+          npar         = npar,
+          prevalence   = baseline_prob,
+          c_stat       = c_statistic,
+          calib_slope  = target_performance,
+          epv_value    = epv_val,
+          outcome_type = "binary"
+        )
+        prev_max_sample_size <- 2 * prev_min_sample_size
+        
+      } else {
+        # baseline_prob > 0.2
+        epv_val <- 10L
+        prev_min_sample_size <- get_min_sample_size(
+          npar         = npar,
+          prevalence   = baseline_prob,
+          c_stat       = target_performance,
+          calib_slope  = NULL,
+          epv_value    = epv_val,
+          outcome_type = "binary"
+        )
+        prev_max_sample_size <- 10 * prev_min_sample_size
       }
     }
     
@@ -683,6 +720,7 @@ calculate_mlpwr_bs <- function(
     model_function = model_function,
     metric_function = metric_function,
     target_performance = target_performance,
+    c_statistic = c_statistic,
     min_sample_size = prev_min_sample_size,
     max_sample_size = prev_max_sample_size,
     n_reps_total = 200,
@@ -799,6 +837,7 @@ calculate_mlpwr_bs <- function(
     results = perfs,
     summaries = mlpwr_summaries,
     min_n = as.numeric(ds$final$design),
-    perf_n = as.numeric(ds$final$power)
+    perf_n = as.numeric(ds$final$power),
+    mlpwr_ds = ds
   ))
 }
