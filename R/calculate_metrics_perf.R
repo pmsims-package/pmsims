@@ -1,13 +1,9 @@
 #' Calculate performance metrics
-#' 'calculate_metrics_perf' calculates the performetrics for a model given a sample size n.
+#' Calculates the performetrics for a model given a sample size n.
 #' @param n is the sample size.
 #' @param value_on_error value to return if error.
 #'
-#'
-#' @return
-#' @export
-#'
-#' @examples
+#' @return The calculated performance metric
 
 calculate_metrics_perf <- function(
   n,

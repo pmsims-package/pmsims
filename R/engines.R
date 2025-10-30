@@ -29,32 +29,16 @@ get_summaries <- function(performance_matrix) {
 
 #' get_min_sample_size: Heuristic starting-n for binary/continuous/survival prediction
 #'
-#' @param npar             Integer. Number of predictors in the model.
-#' @param prevalence       Numeric [0,1]. Event rate or case‐fraction (binary/survival).
-#'                         (optional; used for EPV calculations)
-#' @param c_stat           Numeric >0.5. Anticipated c‐statistic (discrimination).
-#'                         (optional; factor >1/c_stat)
-#' @param calib_slope      Numeric. Anticipated calibration slope.
-#'                         (optional; factor 1/calib_slope if <1)
-#' @param outcome_type     One of "binary", "survival", or "continuous".
-#' @return Integer: recommended starting minimum sample size.
+#' @param npar             integer. Number of predictors in the model
+#' @param prevalence       numeric [0,1]. An optional event rate or case‐fraction (binary or survival). Used for EPV calculations.
+#' @param c_stat           numeric >0.5. Anticipated c‐statistic (discrimination). (optional; factor >1/c_stat) (TODO: Explain)
+#' @param calib_slope      numeric. Anticipated calibration slope. (optional; factor 1/calib_slope if <1) (TODO: Explain)
+#' @param outcome_type     Outcome type. Must be one of "binary", "survival", or "continuous".
+#' @return                 integer. Recommended starting value from which to calculate the minimum sample size
 #' @examples
 #' get_min_sample_size(npar = 5, prevalence = 0.2, c_stat = 0.75,
 #'                     calib_slope = 0.9, outcome_type = "binary")
-#' get_min_sample_size: Heuristic starting-n for binary/continuous/survival prediction
-#'
-#' @param npar             Integer. Number of predictors in the model.
-#' @param prevalence       Numeric [0,1]. Event rate or case‐fraction (binary/survival).
-#'                         (optional; used for EPV calculations)
-#' @param c_stat           Numeric >0.5. Anticipated c‐statistic (discrimination).
-#'                         (optional; factor >1/c_stat)
-#' @param calib_slope      Numeric. Anticipated calibration slope.
-#'                         (optional; factor 1/calib_slope if <1)
-#' @param outcome_type     One of "binary", "survival", or "continuous".
-#' @return Integer: recommended starting minimum sample size.
-#' @examples
-#' get_min_sample_size(npar = 5, prevalence = 0.2, c_stat = 0.75,
-#'                     calib_slope = 0.9, outcome_type = "binary")
+
 get_min_sample_size <- function(
     npar,
     prevalence   = NULL,
@@ -64,10 +48,10 @@ get_min_sample_size <- function(
     outcome_type = c("binary","survival","continuous")
 ) {
   outcome_type <- match.arg(outcome_type)
-  
+
   # --- 1) Base rule: 3 * npar (absolute minimum)
   n0 <- 3 * npar
-  
+
   # --- 2) Outcome-specific rules ---
   if (outcome_type == "binary") {
     # Recommended: ≥10 EPV (Riley et al., 2020)
@@ -93,15 +77,15 @@ get_min_sample_size <- function(
       }
     }
     n0 <- max(n0, n_epv)
-    
+
   } else if (outcome_type == "survival") {
     # Recommended: ≥20 EPV (Riley et al., 2020)
-    
+
     epv <- epv_value
     if (!is.null(prevalence) && prevalence > 0 && prevalence < 1) {
       n_epv <- round(epv * npar / prevalence)
-      
-      
+
+
       # Optional adjustments:
       if (!is.null(c_stat)) {
         if (c_stat <= 0 || c_stat > 1) warning("c_stat should be between 0 and 1.")
@@ -109,7 +93,7 @@ get_min_sample_size <- function(
         adj <- 1 / max(c_stat, 0.5)  # avoid extreme inflation
         n_epv <- round(n_epv * adj)
       }
-      
+
     } else {
       warning("Event proportion not provided; assuming 50% events.")
       n_epv <- round(epv * npar / 0.5)
@@ -121,14 +105,13 @@ get_min_sample_size <- function(
         n_epv <- round(n_epv * adj)
       }
     }
-    
-    
+
     n0 <- max(n0, n_epv)
-    
+
   } else if (outcome_type == "continuous") {
     # Continuous outcome: ≥20 obs per predictor (Steyerberg, 2019)
     n_cont <- 3 * npar
-    
+
     # Optional adjustments:
     if (!is.null(c_stat)) {
       if (c_stat <= 0 || c_stat > 1) warning("c_stat should be between 0 and 1.")
@@ -136,7 +119,7 @@ get_min_sample_size <- function(
       adj <- 1 / max(c_stat, 0.2)  # avoid extreme inflation
       n_cont <- round(n_cont * adj)
     }
-    
+
     if (!is.null(calib_slope)) {
       if (calib_slope > 0 && calib_slope < 1) {
         # Lower slope means more shrinkage needed → increase N slightly
@@ -149,64 +132,64 @@ get_min_sample_size <- function(
         n_cont <- round(n_cont * adj)
       }
     }
-    
+
     n0 <- max(n0, n_cont)
   }
-  
+
   return(as.integer(n0))
 }
 
 
-#' adaptive_startvalues
+#' adaptive_startvalues Derive adaptive sample sizes (TODO)
 #'
-#' @param output 
-#' @param aggregate_fun 
-#' @param var_bootstrap 
-#' @param target 
-#' @param ci_q 
-#' 
+#' @param output
+#' @param aggregate_fun
+#' @param var_bootstrap
+#' @param target
+#' @param ci_q
+#'
 adaptive_startvalues <- function(output, aggregate_fun, var_bootstrap, target, ci_q = 0.975) {
   bisection_output <- output$track_bisection
   n_iter <- length(bisection_output)
-  
+
   # Matrix: n, est, se, ll, ul
   bisection_summary <- matrix(NA, nrow = n_iter, ncol = 5,
                               dimnames = list(NULL, c("n", "est", "se", "ll", "ul")))
-  
+
   for (i in seq_len(n_iter)) {
     results <- bisection_output[[i]]
     n <- results$x
     performance_data <- results$y
-    
+
     est <- aggregate_fun(performance_data)
     se <- sqrt(var_bootstrap(performance_data))
-    
+
     ll <- est - se * qnorm(ci_q)
     ul <- est + se * qnorm(ci_q)
-    
+
     bisection_summary[i, ] <- c(n, est, se, ll, ul)
   }
-  
+
   ## --- Find min value ---
   ordered_by_ul <- bisection_summary[order(bisection_summary[, "ul"], decreasing = TRUE), ]
   below_target  <- ordered_by_ul[ordered_by_ul[, "ul"] < target, , drop = FALSE]
-  
+
   if (nrow(below_target) == 0) {
     min_value <- min(bisection_summary[, "n"] * 0.8)
   } else {
     min_value <- max(below_target[, "n"])
   }
-  
+
   ## --- Find max value ---
   ordered_by_ll <- bisection_summary[order(bisection_summary[, "ll"], decreasing = TRUE), ]
   above_target  <- ordered_by_ll[ordered_by_ll[, "ll"] > target, , drop = FALSE]
-  
+
   if (nrow(above_target) == 0) {
     max_value <- max(bisection_summary[, "n"] * 1.2)
   } else {
     max_value <- min(above_target[, "n"])
   }
-  
+
   return(list(
     summary = bisection_summary,
     min_value = round(min_value),
@@ -215,17 +198,11 @@ adaptive_startvalues <- function(output, aggregate_fun, var_bootstrap, target, c
 }
 
 
-
 #' mlpwr engine
 #' @inheritParams simulate_custom
-#' @param n_init The number of initial sample sizes simualted before the gausian process search begins.
-#' @param verbose Whether to run mlpwr with verbose output
+#' @param n_init The number of initial sample sizes simualted before the Gausian process search begins.
+#' @param verbose logical. Passed to mlpwr; return verbose output.
 #' @param value_on_error The value used if there is an error in fitting the model or calculating performance.
-#'
-#' @returns
-#' @export
-#'
-#' @examples
 calculate_mlpwr <- function(
   test_n,
   n_reps_total,
@@ -245,12 +222,11 @@ calculate_mlpwr <- function(
 ) {
   # Determine number of predictors (excluding outcome column)
   npar <- dim(data_function(1))[2] - 1
-  
+
   # Infer the outcome type and compute data-driven minimum sample size
-  # Determine which outcome type applies
   formals_list <- formals(data_function)
   args_names <- names(formals_list)
-  
+
   if ("censoring_rate" %in% args_names) {
     censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
     start_min_sample_size <- get_min_sample_size(
@@ -278,11 +254,8 @@ calculate_mlpwr <- function(
       outcome_type  = "continuous"
     )
   }
-  
-  
-  
 
-  # calculate the metrics for a sample size n
+  # Calculate metrics for sample size n
   mlpwr_simulation_function <- function(n) {
     tryCatch(
       {
@@ -314,6 +287,7 @@ calculate_mlpwr <- function(
   # Calculate bootstrapped quantile variance
   noise_fun <- function(x) var_bootstrap(x$y)
 
+  # TODO: Explan this better
   # processing final_estimate_se
   # Auto-stopping or not
   if (!(is.null(se_final))) {
@@ -322,15 +296,12 @@ calculate_mlpwr <- function(
   } else {
     ci <- NULL
   }
-  
-  
-  # overide adaptive min when provided
-  
+
+  # Overide adaptive min when provided
   if(!is.null(min_sample_size)){
     start_min_sample_size <- min_sample_size
   }
-  
-  
+
   # Perform search using mlpwr
   ds <-
     mlpwr::find.design(
@@ -368,6 +339,7 @@ calculate_mlpwr <- function(
 
 
 #' The Bisection Engine
+#' TODO: Add description.
 #' @inheritParams calculate_mlpwr
 #' @param value_on_error
 #'
@@ -395,15 +367,15 @@ calculate_bisection <- function(
   verbose = FALSE,
   budget = FALSE
 ) {
-  
+
   # Determine number of predictors (excluding outcome column)
   npar <- dim(data_function(1))[2] - 1
-  
+
   # Infer the outcome type and compute data-driven minimum sample size
   # Determine which outcome type applies
   formals_list <- formals(data_function)
   args_names <- names(formals_list)
-  
+
   if ("censoring_rate" %in% args_names) {
     censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
     start_min_sample_size <- get_min_sample_size(
@@ -431,8 +403,6 @@ calculate_bisection <- function(
       outcome_type  = "continuous"
     )
   }
-  
-  
 
   max_iter <- round(n_reps_total / n_reps_per)
 
@@ -474,15 +444,13 @@ calculate_bisection <- function(
       list(y_summary = s$quant20_performance, y = vals)
     }
   }
-  
-  
-  # overide adaptive min when provided
-  
+
+  # Overide adaptive min when provided
+
   if(!is.null(min_sample_size)){
     start_min_sample_size <- min_sample_size
   }
-  
-  
+
   # Initial bounds
   p_lo <- summary_at_n(start_min_sample_size)$y_summary
   p_hi <- summary_at_n(max_sample_size)$y_summary
@@ -536,7 +504,7 @@ calculate_bisection <- function(
 }
 
 
-#' MLPWR_BS (MLPWR with Bisection for initial) Engine
+#' mlpwr-bs Hybrid engine using bisection to determine initial range and mlpwr for search
 #' @inheritParams simulate_custom
 #' @param n_init The number of initial sample sizes simulated before the gausian process search begins.
 #' @param verbose Whether to run mlpwr with verbose output
@@ -562,19 +530,19 @@ calculate_mlpwr_bs <- function(
   metric_function,
   value_on_error
 ) {
-  # calculate the first stage bisection
+  # Calculate the first stage bisection
 
   # Determine number of predictors (excluding outcome column)
   npar <- dim(data_function(1))[2] - 1
-  
+
   # Infer the outcome type and compute data-driven minimum sample size
   # Determine which outcome type applies
   formals_list <- formals(data_function)
   args_names <- names(formals_list)
-  
+
   if ("censoring_rate" %in% args_names) {
     censoring_rate <- eval(formals_list[["censoring_rate"]], environment(data_function))
-    
+
     metric_used <- attr(metric_function, "metric")
     if(metric_used == "cindex"){
       prev_min_sample_size <- get_min_sample_size(
@@ -585,10 +553,10 @@ calculate_mlpwr_bs <- function(
         epv_value     = 3 * (1 - censoring_rate),
         outcome_type  = "survival"
       )
-      
+
       prev_max_sample_size <- 100 * npar
       }else {
-        
+
         prev_min_sample_size <- get_min_sample_size(
           npar          = npar,
           prevalence    = 1 - censoring_rate,
@@ -597,15 +565,12 @@ calculate_mlpwr_bs <- function(
           epv_value     = 10,
           outcome_type  = "survival"
         )
-        
-        prev_max_sample_size <- 10 * prev_min_sample_size 
-        
+
+        prev_max_sample_size <- 10 * prev_min_sample_size
       }
-      
-      
-    
+
   } else if ("baseline_prob" %in% args_names) {
-    # evaluate and validate baseline_prob
+    # Evaluate and validate baseline_prob
     baseline_prob <- eval(formals_list[["baseline_prob"]], envir = environment(data_function))
     if (!is.numeric(baseline_prob) || length(baseline_prob) != 1 || is.na(baseline_prob)) {
       stop("baseline_prob must be a single numeric value (not NA).")
@@ -613,17 +578,15 @@ calculate_mlpwr_bs <- function(
     if (baseline_prob <= 0 || baseline_prob >= 1) {
       stop("baseline_prob must be between 0 and 1 (exclusive).")
     }
-    
+
     metric_used <- attr(metric_function, "metric")
     if (is.null(metric_used)) {
       stop("metric_function does not have a 'metric' attribute.")
     }
-    
+
     # Branch by metric and then use mutually exclusive branches for clarity
     if (metric_used == "auc") {
-
       epv_for_auc <- 3 * baseline_prob
-
       prev_min_sample_size <- get_min_sample_size(
         npar         = npar,
         prevalence   = baseline_prob,
@@ -632,9 +595,9 @@ calculate_mlpwr_bs <- function(
         epv_value    = epv_for_auc,
         outcome_type = "binary"
       )
-      
+
       prev_max_sample_size <- 100 * npar
-      
+
     } else {
       # non-AUC cases: decide EPV and prev_max based on baseline_prob and other conditions
       if (baseline_prob <= 0.2 && c_statistic <= 0.7 && mean_or_assurance == "assurance") {
@@ -648,7 +611,7 @@ calculate_mlpwr_bs <- function(
           outcome_type = "binary"
         )
         prev_max_sample_size <- 5 * prev_min_sample_size
-        
+
       } else if (baseline_prob <= 0.2) {
         epv_val <- 10L
         prev_min_sample_size <- get_min_sample_size(
@@ -660,9 +623,8 @@ calculate_mlpwr_bs <- function(
           outcome_type = "binary"
         )
         prev_max_sample_size <- 2 * prev_min_sample_size
-        
+
       } else {
-        # baseline_prob > 0.2
         epv_val <- 10L
         prev_min_sample_size <- get_min_sample_size(
           npar         = npar,
@@ -675,9 +637,9 @@ calculate_mlpwr_bs <- function(
         prev_max_sample_size <- 10 * prev_min_sample_size
       }
     }
-    
+
   } else {
-  
+
   metric_used <- attr(metric_function, "metric")
   if(metric_used == "calib_slope"){
     prev_min_sample_size <- get_min_sample_size(
@@ -687,11 +649,11 @@ calculate_mlpwr_bs <- function(
       calib_slope   = target_performance,
       outcome_type  = "continuous"
     )
-    
+
     prev_max_sample_size <- 100 * npar
-    
+
   }else{
-    
+
     prev_min_sample_size <- get_min_sample_size(
       npar          = npar,
       prevalence    = NULL,
@@ -702,14 +664,14 @@ calculate_mlpwr_bs <- function(
     if(target_performance <= 0.5){
     prev_max_sample_size <- 200 * npar
     } else {
-    prev_max_sample_size <- 100 * npar 
+    prev_max_sample_size <- 100 * npar
     }
   }
-    
+
   }
-  
- # overide adaptive min and max when provided at stage 1
-  
+
+ # Override adaptive min and max when provided at stage 1
+
   if(!is.null(min_sample_size) && !is.null(max_sample_size)){
     prev_min_sample_size <- min_sample_size
     prev_max_sample_size <- max_sample_size
@@ -731,18 +693,13 @@ calculate_mlpwr_bs <- function(
     budget = TRUE,
     test_n = test_n
   )
-  
 
-  
-
-  # calculate the second stage mlpwr
-  
+  # Calculate the second stage mlpwr
   test_data <- data_function(test_n)
-  # calculate the metrics for a sample size n
+  # Calculate the metrics for a sample size n
   mlpwr_simulation_function <- function(n) {
     tryCatch(
       {
-        #test_data <- data_function(test_n)
         train_data <- data_function(n)
         fit <- model_function(train_data)
         model <- attr(model_function, "model")
@@ -766,14 +723,11 @@ calculate_mlpwr_bs <- function(
   var_bootstrap <- function(x) {
     var(replicate(100, aggregate_fun(sample(x, length(x), replace = TRUE))))
   }
-  
- # var_bootstrap <- function(x) {
- #   var(x) / (100*length(x))
- # }
 
   # Calculate bootstrapped quantile variance
   noise_fun <- function(x) var_bootstrap(x$y)
 
+  # TODO Explain
   # processing final_estimate_se
   # Auto-stopping or not
   if (!(is.null(se_final))) {
@@ -782,30 +736,25 @@ calculate_mlpwr_bs <- function(
   } else {
     ci <- NULL
   }
+
   # Perform search using mlpwr
-  
-  # get starting min_sample from previous bisection in stage 1
-  #a.lo = prev$track_bisection[length(prev$track_bisection)][[1]]$x
-  
-  
-  get_start_bounds = adaptive_startvalues(output = prev, 
-                                          aggregate_fun = aggregate_fun,
-                                          var_bootstrap = var_bootstrap,
-                                          target = target_performance,
-                                          ci_q = 0.975)
-  
+  get_start_bounds = adaptive_startvalues(
+    output = prev,
+    aggregate_fun = aggregate_fun,
+    var_bootstrap = var_bootstrap,
+    target = target_performance,
+    ci_q = 0.975
+  )
 
   mlpwrbs_min_sample_size <- get_start_bounds$min_value
   mlpwrbs_max_sample_size <- get_start_bounds$max_value
-  
-  # overide adaptive min and max when provided at stage 2
-  
+
+  # Overide adaptive min and max when provided at stage 2
   if(!is.null(min_sample_size) && !is.null(max_sample_size)){
     mlpwrbs_min_sample_size <- min_sample_size
     mlpwrbs_max_sample_size <- max_sample_size
   }
-  
-  
+
   ds <-
     mlpwr::find.design(
       simfun = mlpwr_simulation_function,

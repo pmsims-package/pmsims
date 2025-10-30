@@ -1,14 +1,12 @@
 #' Tuning for a binary outcome model
 #'
 #' @param target_performance The desired model performance in a large sample
-#' @param target_prevalence The desired model performance in a large sample
-#' @param tolerance The tolerance in the large sample performance
+#' @param target_prevalence The expected outcome prevalence
+#' @param tolerance Convergence parameters (TODO)
 #' @returns The optimal value for the tuning parameter
-#' @export
-#'
-#' @examples
 
 invlogit <- function(x) 1 / (1 + exp(-x))
+
 logit <- function(x) log(x / (1 - x))
 
 binary_tuning <- function(
@@ -21,15 +19,10 @@ binary_tuning <- function(
   candidate_features
 ) {
   pcfun <- function(x) {
-    # target_prevalence = 0.2;
-    # target_performance=0.7;
-    # min.opt = c(-7,0.5);
-    # max.opt = c(0,14)
-
     mean <- x[1]
     variance <- x[2]
 
-    f1 = function(x) {
+    f1 <- function(x) {
       stats::integrate(
         function(y) {
           stats::dnorm(x, mean = mean, sd = sqrt(variance)) *
@@ -42,7 +35,7 @@ binary_tuning <- function(
       )$value
     }
 
-    num = stats::integrate(Vectorize(f1), -Inf, Inf)$value
+    num <- stats::integrate(Vectorize(f1), -Inf, Inf)$value
 
     f2 = function(x) {
       stats::integrate(
@@ -94,26 +87,19 @@ binary_tuning <- function(
   }
 
   N <- 500000
-  # Better 2000000 to check
   lp <- stats::rnorm(N, mean = out[1], sd = sqrt(out[2]))
   p <- (1 + exp(-lp))^(-1)
   y <- stats::rbinom(N, 1, prob = p)
   prev <- mean(y)
   c <- quickcstat(y, lp)
 
-  non_noise_predictors <- candidate_features -
-    round(candidate_features * proportion_noise_features)
+  non_noise_predictors <-
+    candidate_features - round(candidate_features * proportion_noise_features)
   beta_init <- 1 / non_noise_predictors
   beta_signal <- beta_init * sqrt(out[2] / beta_init)
 
   c(out[1], out[2], beta_signal, prev, c)
 }
-
-# Check
-#round(binary_tuning(0.05, 0.75, tolerance=0.0001),4)
-#round(binary_tuning(0.05, 0.75, tolerance=0.0001),4)
-#round(binary_tuning(0.05, 0.7, tolerance=0.00001),4)
-#round(binary_tuning(0.2, 0.7, tolerance=0.00001),4)
 
 quickcstat <- function(y, pred) {
   casepred <- pred[y == 1]

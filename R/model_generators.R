@@ -1,24 +1,13 @@
-#' default_model_generators
+#' default_model_generators Generate appropriate model based on input arguments
 #'
 #' @param outcome type of outcome, possible options are: "binary".
-#'
-#' @return
-#' @export
+#' @return Model function.
 #'
 #' @examples default_model_generators("binary")
 default_models <- list(
   binary = list(
     glm = function(d) {
       glm("y ~ .", data = d, family = "binomial")
-      #d <- as.matrix(d)
-      #x <- d[, -1]
-      #y <- d[, 1]
-      #fastglm::fastglm(
-       # x,
-       # y,
-      #  family = binomial(), 
-     #   method = 2
-      #)
     },
     lasso = function(d) {
       d <- as.matrix(d)

@@ -31,8 +31,8 @@ default_metric_generator <- function(metric, data_function) {
     } else if (metric == "calib_slope_free") {
       metric_function <- survival_calib_slope_free
     } else if (metric == "IBS") {
-      # integrated Brier Score
-      metric_function <- NULL # survival_ibs; not ready, placeholder
+      # Integrated Brier Score
+      metric_function <- NULL # survival_ibs; TODO: Implement survival IBS
     } else {
       stop(paste(
         "Default metric",
@@ -134,18 +134,18 @@ binary_brier_score <- function(data, fit, model) {
 }
 
 binary_brier_score_scaled <- function(data, fit, model) {
-  # this works for models being glm(family="binomial") models
+  # This works for models being glm(family = binomial) models
   # or those with predict(type = "response") giving probability outcomes
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
   y_hat <- predict_custom(x, y, fit, model, type = "response")
   return(1 - mean((y - y_hat)**2) / mean((y - mean(y))**2))
-  # note: same as r2, or cor(y, y_hat, "pearson")**2
+  # Note: same as r2, or cor(y, y_hat, "pearson")**2
   # with y_hat being a probability of y=1 (not 1/0 prediction)
 }
 
 continuous_r2 <- function(data, fit, model) {
-  # formula for out of sample r-squared taken from this:
+  # Formula for out of sample r-squared taken from this:
   # https://www.tandfonline.com/doi/full/10.1080/00031305.2023.2216252
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
@@ -158,7 +158,7 @@ continuous_r2 <- function(data, fit, model) {
 }
 
 continuous_calib_slope <- function(data, fit, model) {
-  # computes calibration slope for logistic regression
+  # Computes calibration slope for logistic regression
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
   y_hat <- predict(fit, x, type = "response")
@@ -171,7 +171,7 @@ continuous_calib_slope <- function(data, fit, model) {
 }
 
 continuous_calib_itl <- function(data, fit, model) {
-  # computes calibration slope for logistic regression
+  # Computes calibration slope for logistic regression
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
   y_hat <- predict(fit, x, type = "response")
@@ -184,7 +184,7 @@ continuous_calib_itl <- function(data, fit, model) {
 }
 
 survival_cindex <- function(data, fit, model) {
-  # this works for models being the Cox models or those with predict(type =
+  # This works for models being the Cox models or those with predict(type =
   # "lp") giving some sort of a risk score, or linear predictor
   y_surv <- survival::Surv(data$time, data$event)
   x <- data[,
@@ -204,9 +204,7 @@ survival_cindex <- function(data, fit, model) {
   return(cindex)
 }
 
-
 # 1) Cox-like calibration slope (uses linear predictor)
-# ----------------------------------------------------
 survival_calib_slope <- function(data, fit, model) {
   y_surv <- survival::Surv(data$time, data$event)
   x <- data[,
@@ -222,38 +220,30 @@ survival_calib_slope <- function(data, fit, model) {
   return(slope)
 }
 
-
-
 # 2) Model-free IPCW calibration slope
-
-
 survival_calib_slope_free <- function(data, fit, model, eval_time = NULL) {
-  
-  #data=data.frame(time=lung$time,event=ifelse(lung$status==1,0,1),lung[,-2:-3])
-  #data=na.omit(data)
-  #fit = coxph(Surv(time,event)~.,data)
-  
-  # the data set should be ordered, order(time,-status) in order to get the values IPCW.subjectTimes in the right order
+  # the data set should be ordered, order(time,-status) in order to get the
+  # values IPCW.subjectTimes in the right order
   data <- data[base::order(data$time),]
   eval_time=NULL
-  
+
   # data must have time, event, and predictors
   y_surv <- survival::Surv(data$time, data$event)
   x <- data[,
             names(data) != "time" & names(data) != "event" & names(data) != "id"
   ]
-  
+
   # Get predicted survival (higher = higher risk)
   pred_surv <- survival:::predict.coxph(fit, data, type = "survival")
-  
+
   # Get predicted model free yhat from logit: y_hat = log(S(t)/1-S(t))
   y_hat <- log(pred_surv/(1-pred_surv))
-  
+
   # Choose evaluation time if not given: last follow-up time
   if (is.null(eval_time)) {
     eval_time <- max(data$time[data$event == 1]) * 0.9999
   }
-  
+
   # Compute IPCW weights for censoring at eval_time
   ipcw_obj <- try(
     pec::ipcw(
@@ -265,39 +255,35 @@ survival_calib_slope_free <- function(data, fit, model, eval_time = NULL) {
     ),
     silent = TRUE
   )
-  
-  
+
   if (class(ipcw_obj)[1] == "try-error" || is.null(ipcw_obj)) {
     slope <- NaN
   } else {
     # Observed binary outcome: event before eval_time
     y_obs <- as.numeric(data$time <= eval_time & data$event == 1)
-    
+
     # IPCW weights
     w <- ipcw_obj$IPCW.subjectTimes
-    
+
     # Weighted logistic regression of observed on predicted LP
-    fit_slope <- try(suppressWarnings(glm(y_obs ~ y_hat, weights = w, 
+    fit_slope <- try(suppressWarnings(glm(y_obs ~ y_hat, weights = w,
                                           family = binomial)))
-    
+
     if (class(fit_slope)[1] == "try-error" || is.null(fit_slope)) {
       slope <- NaN
     } else {
       slope <- as.numeric(coef(fit_slope)[2])
     }
   }
-  
+
   return(slope)
 }
 
-
-
 survival_auc <- function(data, fit, model) {
-  # this works for models being the Cox models
-  # or those with predict( type="lp") giving some sort of a risk score,
-  # or linear predictor
-  # AUC is time-dependent for survival outcomes,
-  # this function computes AUC for the latest event time available in the data
+  # For models being the Cox models or those with predict( type="lp") giving
+  # some sort of a risk score, or linear predictor AUC is time-dependent for
+  # survival outcomes, this function computes AUC for the latest event time
+  # available in the data
   y_surv <- survival::Surv(data$time, data$event)
   x <- data[, names(data) != "time" & names(data) != "event"]
   y_hat <- predict(fit, x, type = "lp")

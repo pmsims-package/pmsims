@@ -4,9 +4,7 @@
 #' Arguments to be passed to the data generating function must be stored in a list item named args.
 #' For options that can be passed to the different default generators see \link{generate_continuous_data}, \link{generate_binary_data}, or \link{generate_survival_data}.
 #' @return A function with default arguments set to the values passed with opts
-#' @export
-#'
-#' @examples
+
 default_data_generators <- function(opts) {
   type <- opts$type
   if (type == "binary") {
@@ -21,20 +19,17 @@ default_data_generators <- function(opts) {
   return(update_arguments(f, opts))
 }
 
-#' Simulate Continuous data
+#' Title Simulate continuous data
 #'
-#' @param n Sample size
+#' @param n Sample size of simulated dataset
 #' @param beta_signal Association between signal predictors and the outcome
-#' @param n_signal_parameters Number of predictors that have a non zero
-#' association with the outcome @param noise_parameters Number of predictors
-#' with no association with outcome
-#' @param predictor_type Type of predictor, can be "continuous" or "binary."
-#' @param predictor_prop If predictor type is binary, the probability of a
-#' predictor taking value 1
+#' @param n_signal_parameters Number of predictors that have a non zero association with the outcome
+#' @param noise_parameters Number of predictors with no association with outcome
+#' @param predictor_type Type of predictor, can be "continuous" or "binary"
+#' @param predictor_prop If predictor type is binary, the probability of a predictor taking value 1
 #'
 #' @return A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
-#' @export
-#'
+
 #' @examples generate_continuous_data(
 #'   n = 100, n_signal_parameters = 10,
 #'   noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1,
@@ -64,10 +59,10 @@ generate_continuous_data <- function(
   return(as.data.frame(data))
 }
 
-#' Title Simulate Binary Data
+#' Title Simulate binary data
 #'
 #' @inheritParams generate_continuous_data
-#' @param baseline_prob Baseline probability of outcome (ie. probability when all predicors are 0)
+#' @param baseline_prob Baseline probability of outcome (i.e., probability when all predicors are 0)
 #'
 #' @return A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 #' @export
@@ -84,7 +79,6 @@ generate_binary_data <- function(
   baseline_prob
 ) {
   parameters <- n_signal_parameters + noise_parameters
-  #intercept <- log(baseline_prob / (1 - baseline_prob))
   intercept <- mu_lp
   X <- generate_predictors(n, parameters, predictor_type, predictor_prop)
   lp <- generate_linear_predictor(
@@ -100,16 +94,13 @@ generate_binary_data <- function(
   return(as.data.frame(data))
 }
 
-#' Title Simulate Survival Data
+#' Title Simulate survival data
 #'
 #' @inheritParams generate_continuous_data
-#' @param baseline_hazard Baseline Hazard
+#' @param baseline_hazard Baseline hazard
 #' @param censoring_rate Early drop out/censoring rate
 #'
-#' @return A data frame with a time ("time"), event status ("event") (0 = censored, 1 =
-#' event), and n_signal_parameters + noise_parameters predictor columns ("x1", "x2", ... .)
-#' @export
-#'
+#' @return A data frame with a time ("time"), event status ("event") (0 = censored, 1 = event), and n_signal_parameters + noise_parameters predictor columns ("x1", "x2", ... .)
 #' @examples generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 generate_survival_data <- function(
   n,
@@ -134,15 +125,10 @@ generate_survival_data <- function(
 
   # Generate survival times
   event_time <- rexp(n, rate = baseline_hazard * exp(lp))
-  # introduce right-censoring at a median time
-  #T_observe <- -log(0.5) / baseline_hazard
+  # Introduce right-censoring at a median time
+  # T_observe <- -log(0.5) / baseline_hazard
   T_observe <- stats::quantile(event_time, 1 - censoring_rate)
   censor_time <- rep(T_observe, n)
-  # additional censoring or dropping out
-  #censor_ids <-
-  #  sample(n, round(n * censoring_rate, 0), replace = FALSE)
-  #censor_time[censor_ids] <- runif(length(censor_ids), 0, T_observe)
-
   event <- as.numeric(event_time <= censor_time)
   survival_time <- pmin(event_time, censor_time)
 
