@@ -10,7 +10,8 @@ continuous_tuning <- function(
   proportion_noise_features,
   candidate_features
 ) {
-  non_noise_predictors = candidate_features - round(candidate_features*proportion_noise_features)
-  beta_signal = sqrt(r2/(non_noise_predictors*(1 - r2)))
+  non_noise_predictors = candidate_features -
+    round(candidate_features * proportion_noise_features)
+  beta_signal = sqrt(r2 / (non_noise_predictors * (1 - r2)))
   return(beta_signal)
 }

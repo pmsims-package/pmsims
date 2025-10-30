@@ -15,7 +15,6 @@ test_that("simulate_binary", {
   expect_equal(length(output), 8)
 })
 
-
 # test_that("simulate_continuous", {
 #   set.seed(4321)
 #   output <- simulate_continuous(
@@ -30,7 +29,6 @@ test_that("simulate_binary", {
 #   )
 #   expect_equal(length(output), 8)
 # })
-
 
 # test_that("simulate_survival", {
 #   set.seed(1234)

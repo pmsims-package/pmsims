@@ -55,10 +55,13 @@ simulate_custom <- function(
     stop("Exactly one of 'n_reps_total' or 'se_final' must be specified.")
   }
 
-  if (!is.null(min_sample_size) && !is.null(max_sample_size) && min_sample_size > max_sample_size) {
+  if (
+    !is.null(min_sample_size) &&
+      !is.null(max_sample_size) &&
+      min_sample_size > max_sample_size
+  ) {
     stop("min_sample_size must be less than max_sample_size")
   }
-  
 
   if ((mean_or_assurance %in% c("mean", "assurance")) == FALSE) {
     stop("mean_or_assurance must be either 'mean' or 'assurance'")

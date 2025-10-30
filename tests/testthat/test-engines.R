@@ -1,6 +1,6 @@
 test_that("calculate_mlpwr", {
   set.seed = 1234
-  
+
   functions <- get_binary_data_model_metric()
   output <- calculate_mlpwr(
     test_n = 1000,
@@ -15,10 +15,11 @@ test_that("calculate_mlpwr", {
     data_function = functions$data_function,
     model_function = functions$model_function,
     metric_function = functions$metric_function,
-    value_on_error = 0.5) 
-  
+    value_on_error = 0.5
+  )
+
   expect_true(is.numeric(output$min_n))
-  
+
   output <- calculate_mlpwr(
     test_n = 1000,
     n_reps_total = 20,
@@ -32,19 +33,15 @@ test_that("calculate_mlpwr", {
     data_function = functions$data_function,
     model_function = functions$model_function,
     metric_function = functions$metric_function,
-    value_on_error = 0.5) 
-  
+    value_on_error = 0.5
+  )
+
   expect_true(is.numeric(output$min_n))
- 
 })
 
 test_that("calculate_crude", {
-  
   functions <- get_binary_data_model_metric()
-  
 
-
-  
   output <- calculate_crude(
     data_function = functions$data_function,
     model_function = functions$model_function,
@@ -53,14 +50,14 @@ test_that("calculate_crude", {
     min_sample_size = 50,
     max_sample_size = 200,
     test_n = 1000,
-    n_reps_total =  100,
+    n_reps_total = 100,
     n_reps_per = 10,
     target_performance = 0.75,
-    mean_or_assurance = "mean") 
-  
+    mean_or_assurance = "mean"
+  )
+
   expect_true(is.numeric(output$min_n))
-  
-  
+
   output <- calculate_crude(
     data_function = functions$data_function,
     model_function = functions$model_function,
@@ -69,21 +66,18 @@ test_that("calculate_crude", {
     min_sample_size = 50,
     max_sample_size = 200,
     test_n = 1000,
-    n_reps_total =  100,
+    n_reps_total = 100,
     n_reps_per = 10,
     target_performance = 0.75,
-    mean_or_assurance = "assurance") 
-  
+    mean_or_assurance = "assurance"
+  )
+
   expect_true(is.numeric(output$min_n))
-  
-  
 })
 
 
 test_that("calculate_ga", {
-  
   functions <- get_binary_data_model_metric()
-  
 
   output <- calculate_ga(
     data_function = functions$data_function,
@@ -93,14 +87,15 @@ test_that("calculate_ga", {
     min_sample_size = 50,
     max_sample_size = 200,
     test_n = 1000,
-    n_reps_total =  100,
+    n_reps_total = 100,
     n_reps_per = 10,
     target_performance = 0.75,
     mean_or_assurance = "mean",
-    penalty_weight = 1) 
-  
+    penalty_weight = 1
+  )
+
   expect_true(is.numeric(output$min_n))
-  
+
   output <- calculate_ga(
     data_function = functions$data_function,
     model_function = functions$model_function,
@@ -109,21 +104,19 @@ test_that("calculate_ga", {
     min_sample_size = 50,
     max_sample_size = 200,
     test_n = 1000,
-    n_reps_total =  100,
+    n_reps_total = 100,
     n_reps_per = 10,
     target_performance = 0.75,
     mean_or_assurance = "assurance",
-    penalty_weight = 1) 
-  
+    penalty_weight = 1
+  )
+
   expect_true(is.numeric(output$min_n))
-  
 })
 
 test_that("calculate_bisection", {
-  
   functions <- get_binary_data_model_metric()
-  
-  
+
   output <- calculate_bisection(
     data_function = functions$data_function,
     model_function = functions$model_function,
@@ -132,18 +125,18 @@ test_that("calculate_bisection", {
     min_sample_size = 50,
     max_sample_size = 200,
     test_n = 1000,
-    n_reps_total =  100,
+    n_reps_total = 100,
     n_reps_per = 10,
     target_performance = 0.75,
     mean_or_assurance = "mean",
-    tol                = 1e-3,
-    parallel           = FALSE,
-    cores              = 20,
+    tol = 1e-3,
+    parallel = FALSE,
+    cores = 20,
     verbose = FALSE
-) 
-  
+  )
+
   expect_true(is.numeric(output$min_n))
-  
+
   output <- calculate_bisection(
     data_function = functions$data_function,
     model_function = functions$model_function,
@@ -152,15 +145,15 @@ test_that("calculate_bisection", {
     min_sample_size = 50,
     max_sample_size = 200,
     test_n = 1000,
-    n_reps_total =  100,
+    n_reps_total = 100,
     n_reps_per = 10,
     target_performance = 0.75,
     mean_or_assurance = "assurance",
-    tol                = 1e-3,
-    parallel           = FALSE,
-    cores              = 20,
-    verbose = FALSE) 
-  
+    tol = 1e-3,
+    parallel = FALSE,
+    cores = 20,
+    verbose = FALSE
+  )
+
   expect_true(is.numeric(output$min_n))
-  
 })

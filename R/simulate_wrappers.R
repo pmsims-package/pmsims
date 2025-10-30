@@ -67,17 +67,14 @@ simulate_binary <- function(
   n_reps_total = 1000,
   mean_or_assurance = "assurance",
   ...
-){
-
-
-   # Tune for data function
-    tune_param <- binary_tuning(
-      target_prevalence = outcome_prevalence,
-      target_performance = large_sample_cstatistic,
-      candidate_features = signal_parameters,
-      proportion_noise_features = noise_parameters
-    )[c(1, 3)] # extract mean of linear predictor as new intercept and beta_signal scaled by var of lp
-
+) {
+  # Tune for data function
+  tune_param <- binary_tuning(
+    target_prevalence = outcome_prevalence,
+    target_performance = large_sample_cstatistic,
+    candidate_features = signal_parameters,
+    proportion_noise_features = noise_parameters
+  )[c(1, 3)] # extract mean of linear predictor as new intercept and beta_signal scaled by var of lp
 
   data_spec <- list(
     type = "binary",
@@ -97,12 +94,12 @@ simulate_binary <- function(
   model_function <- default_model_generators(outcome_type, model)
 
   # Redefine metrics to internal syntax lang
-  metric = ifelse(metric == "calibration_slope","calib_slope", metric)
-
+  metric = ifelse(metric == "calibration_slope", "calib_slope", metric)
 
   # main pmsims
 
-  suppressWarnings(output <-  simulate_custom(
+  suppressWarnings(
+    output <- simulate_custom(
       metric_function = default_metric_generator(metric, data_function),
       target_performance = minimum_acceptable_performance,
       c_statistic = large_sample_cstatistic,
@@ -116,7 +113,8 @@ simulate_binary <- function(
       n_reps_per = 20,
       method = "mlpwr-bs",
       mean_or_assurance = mean_or_assurance,
-      test_n = 30000)
+      test_n = 30000
+    )
   )
 
   # Predictors
@@ -135,10 +133,9 @@ simulate_binary <- function(
   output$n_reps_total <- n_reps_total
   output$mean_or_assurance <- mean_or_assurance
 
- est <- output
- class(est) <- "pmsims"
- est
-
+  est <- output
+  class(est) <- "pmsims"
+  est
 }
 
 
@@ -149,7 +146,7 @@ simulate_binary <- function(
 #'
 #' @examples
 simulate_continuous <- function(
-    # Predictors
+  # Predictors
   signal_parameters,
   noise_parameters = 0,
   predictor_type = "continuous",
@@ -165,17 +162,13 @@ simulate_continuous <- function(
   n_reps_total = 1000,
   mean_or_assurance = "assurance",
   ...
-)
-{
-
-
+) {
   # Tune for data function
   tune_param <- continuous_tuning(
     r2 = large_sample_rsquared,
     candidate_features = signal_parameters,
     proportion_noise_features = noise_parameters
   ) # extract beta_signal
-
 
   data_spec <- list(
     type = "continuous",
@@ -192,34 +185,32 @@ simulate_continuous <- function(
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
 
-
   # Redefine metrics to internal syntax lang
 
-  metric = ifelse(metric == "calibration_slope","calib_slope", metric)
-
+  metric = ifelse(metric == "calibration_slope", "calib_slope", metric)
 
   # main pmsims
 
-  suppressWarnings(output <-  simulate_custom(
-    metric_function = default_metric_generator(metric, data_function),
-    target_performance = minimum_acceptable_performance,
-    c_statistic = large_sample_rsquared,
-    # Common arguments
-    data_function = data_function,
-    model_function = model_function,
-    min_sample_size = NULL,
-    max_sample_size = NULL,
-    se_final = NULL,
-    n_reps_total = n_reps_total,
-    n_reps_per = 20,
-    method = "mlpwr-bs",
-    mean_or_assurance = mean_or_assurance,
-    test_n = 30000)
+  suppressWarnings(
+    output <- simulate_custom(
+      metric_function = default_metric_generator(metric, data_function),
+      target_performance = minimum_acceptable_performance,
+      c_statistic = large_sample_rsquared,
+      # Common arguments
+      data_function = data_function,
+      model_function = model_function,
+      min_sample_size = NULL,
+      max_sample_size = NULL,
+      se_final = NULL,
+      n_reps_total = n_reps_total,
+      n_reps_per = 20,
+      method = "mlpwr-bs",
+      mean_or_assurance = mean_or_assurance,
+      test_n = 30000
+    )
   )
 
-
   ## append input parameters
-
 
   # Predictors
   output$parameters <- signal_parameters
@@ -239,7 +230,6 @@ simulate_continuous <- function(
   est <- output
   class(est) <- "pmsims"
   est
-
 }
 
 #' Calculate the minimum sample size required for a survival outcome
@@ -251,7 +241,7 @@ simulate_continuous <- function(
 #'
 #' @examples
 simulate_survival <- function(
-    # Predictors
+  # Predictors
   signal_parameters,
   noise_parameters = 0,
   predictor_type = "continuous",
@@ -269,9 +259,7 @@ simulate_survival <- function(
   n_reps_total = 1000,
   mean_or_assurance = "assurance",
   ...
-){
-
-
+) {
   # Tune for data function
   tune_param <- binary_tuning(
     target_prevalence = 1 - censoring_rate,
@@ -279,7 +267,6 @@ simulate_survival <- function(
     candidate_features = signal_parameters,
     proportion_noise_features = noise_parameters
   )[c(1, 3)] # extract mean of linear predictor as new intercept and beta_signal scaled by var of lp
-
 
   data_spec <- list(
     type = "survival",
@@ -300,24 +287,26 @@ simulate_survival <- function(
 
   # Redefine metrics to internal syntax lang
 
-  metric = ifelse(metric == "calibration_slope","calib_slope", metric)
+  metric = ifelse(metric == "calibration_slope", "calib_slope", metric)
   # main pmsims
 
-  suppressWarnings(output <-  simulate_custom(
-    metric_function = default_metric_generator(metric, data_function),
-    target_performance = minimum_acceptable_performance,
-    c_statistic = large_sample_cindex,
-    # Common arguments
-    data_function = data_function,
-    model_function = model_function,
-    min_sample_size = NULL,
-    max_sample_size = NULL,
-    se_final = NULL,
-    n_reps_total = n_reps_total,
-    n_reps_per = 20,
-    method = "mlpwr-bs",
-    mean_or_assurance = mean_or_assurance,
-    test_n = 30000)
+  suppressWarnings(
+    output <- simulate_custom(
+      metric_function = default_metric_generator(metric, data_function),
+      target_performance = minimum_acceptable_performance,
+      c_statistic = large_sample_cindex,
+      # Common arguments
+      data_function = data_function,
+      model_function = model_function,
+      min_sample_size = NULL,
+      max_sample_size = NULL,
+      se_final = NULL,
+      n_reps_total = n_reps_total,
+      n_reps_per = 20,
+      method = "mlpwr-bs",
+      mean_or_assurance = mean_or_assurance,
+      test_n = 30000
+    )
   )
 
   ## append input parameters
@@ -341,5 +330,4 @@ simulate_survival <- function(
   est <- output
   class(est) <- "pmsims"
   est
-
 }

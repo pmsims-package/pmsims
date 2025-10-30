@@ -6,10 +6,22 @@ print.pmsims <- function(x, ...) {
 
   ## 1) Input parameters - print a compact list of commonly useful fields if present
   cat("Input parameters:\n")
-  fields_to_show <- c("outcome", "predictor_type", "parameters", "noise_parameters",
-                      "prevalence", "baseline_hazard", "censoring_rate",
-                      "cstatistic", "r2", "target_performance", "model", "metric",
-                      "n_reps_total", "mean_or_assurance")
+  fields_to_show <- c(
+    "outcome",
+    "predictor_type",
+    "parameters",
+    "noise_parameters",
+    "prevalence",
+    "baseline_hazard",
+    "censoring_rate",
+    "cstatistic",
+    "r2",
+    "target_performance",
+    "model",
+    "metric",
+    "n_reps_total",
+    "mean_or_assurance"
+  )
 
   # show those available plus any small scalar items commonly present
   shown_any <- FALSE
@@ -42,11 +54,20 @@ print.pmsims <- function(x, ...) {
     if (length(scalar_names) > 0) {
       for (nm in scalar_names) {
         if (!is.null(x[[nm]])) {
-          cat("  - ", nm, ": ", paste0(capture.output(str(x[[nm]])), collapse = " "), "\n", sep = "")
+          cat(
+            "  - ",
+            nm,
+            ": ",
+            paste0(capture.output(str(x[[nm]])), collapse = " "),
+            "\n",
+            sep = ""
+          )
         }
       }
     } else {
-      cat("  <no compact scalar input parameters found on object — inspect object manually>\n")
+      cat(
+        "  <no compact scalar input parameters found on object — inspect object manually>\n"
+      )
     }
   }
   cat("\n")
@@ -57,8 +78,12 @@ print.pmsims <- function(x, ...) {
 
   ## 3) Estimated performance at that sample size — try to extract mlpwr / mean performance
   perf_val <- if (!is.null(x$perf_n)) x$perf_n else NA
-  cat("Estimated performance at sample size: ", round(perf_val,3), "\n\n", sep = "")
-
+  cat(
+    "Estimated performance at sample size: ",
+    round(perf_val, 3),
+    "\n\n",
+    sep = ""
+  )
 
   ## 4) Running time
   if (!is.null(x$simulation_time)) {
@@ -67,10 +92,14 @@ print.pmsims <- function(x, ...) {
     if (inherits(simt, "difftime")) {
       cat("Running time: ", format(simt), "\n", sep = "")
     } else {
-      cat("Running time: ", paste0(capture.output(str(simt)), collapse = " "), "\n", sep = "")
+      cat(
+        "Running time: ",
+        paste0(capture.output(str(simt)), collapse = " "),
+        "\n",
+        sep = ""
+      )
     }
   } else {
     cat("Running time: <not available>\n")
   }
-
 }
