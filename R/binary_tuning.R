@@ -4,10 +4,7 @@
 #' @param target_prevalence The expected outcome prevalence
 #' @param tolerance Convergence parameters (TODO)
 #' @returns The optimal value for the tuning parameter
-
-invlogit <- function(x) 1 / (1 + exp(-x))
-
-logit <- function(x) log(x / (1 - x))
+#' @keywords internal
 
 binary_tuning <- function(
   target_prevalence,
@@ -27,8 +24,8 @@ binary_tuning <- function(
         function(y) {
           stats::dnorm(x, mean = mean, sd = sqrt(variance)) *
             stats::dnorm(y, mean = mean, sd = sqrt(variance)) *
-            (1 + exp(-x))^(-1) *
-            (1 + exp(y))^(-1)
+            stats::plogis(x) *
+            stats::plogis(-y)
         },
         -Inf,
         x
@@ -42,8 +39,8 @@ binary_tuning <- function(
         function(y) {
           stats::dnorm(x, mean = mean, sd = sqrt(variance)) *
             stats::dnorm(y, mean = mean, sd = sqrt(variance)) *
-            (1 + exp(-x))^(-1) *
-            (1 + exp(y))^(-1)
+            stats::plogis(x) *
+            stats::plogis(-y)
         },
         -Inf,
         Inf
@@ -53,7 +50,7 @@ binary_tuning <- function(
     denom <- stats::integrate(Vectorize(f2), -Inf, Inf)$value
 
     f3 <- function(x) {
-      stats::dnorm(x, mean = mean, sd = sqrt(variance)) * (1 + exp(-x))^(-1)
+      stats::dnorm(x, mean = mean, sd = sqrt(variance)) * stats::plogis(x)
     }
 
     c <- num / denom
@@ -67,7 +64,7 @@ binary_tuning <- function(
     mu <- 0.5 *
       (2 * target_prevalence - 1) *
       (sigma_c^2) +
-      log(target_prevalence / (1 - target_prevalence))
+      stats::qlogis(target_prevalence)
     out <- stats::optim(
       par = c(mu, 0.15),
       pcfun,
@@ -78,7 +75,7 @@ binary_tuning <- function(
     mu <- 0.5 *
       (2 * target_prevalence - 1) *
       (sigma_c^2) +
-      log(target_prevalence / (1 - target_prevalence))
+      stats::qlogis(target_prevalence)
     sigma <- sqrt(
       (sigma_c^2) *
         (1 + target_prevalence * (1 - target_prevalence) * (sigma_c^2))
@@ -88,11 +85,10 @@ binary_tuning <- function(
 
   N <- 500000
   lp <- stats::rnorm(N, mean = out[1], sd = sqrt(out[2]))
-  p <- (1 + exp(-lp))^(-1)
+  p <- stats::plogis(lp)
   y <- stats::rbinom(N, 1, prob = p)
   prev <- mean(y)
   c <- quickcstat(y, lp)
-
   non_noise_predictors <-
     candidate_features - round(candidate_features * proportion_noise_features)
   beta_init <- 1 / non_noise_predictors

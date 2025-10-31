@@ -10,6 +10,8 @@ parse_inputs(data_spec, metric, model)
 \item{data_spec}{A list with two items. The first named type which indicates the type of outcome. The second named args which is a list of arguments to be passed to the data generating function.}
 
 \item{metric}{A string indicating the metric to be used.}
+
+\item{model}{A string indicating the model to be used.}
 }
 \value{
 A list containing a data function, a model function, and a metric function.
@@ -17,3 +19,4 @@ A list containing a data function, a model function, and a metric function.
 \description{
 Title
 }
+\keyword{internal}

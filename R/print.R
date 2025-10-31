@@ -1,3 +1,4 @@
+#' @keywords internal
 #' @export
 print.pmsims <- function(x, ...) {
   if (!inherits(x, "pmsims")) {

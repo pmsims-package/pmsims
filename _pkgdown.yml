@@ -4,7 +4,17 @@ template:
   light-switch: true
   bslib:
     primary: "#0054AD"
+    danger: "#A6081A"
     border-radius: 0.5rem
     btn-border-radius: 0.25rem
-    danger: "#A6081A"
+  bootswatch: cosmo
+  css: styles.css
 
+# Output location
+output_dir: docs
+
+# Optional: site metadata
+home:
+  title: "pmsims"
+  description: >
+    Simulation-based sample size estimation for prediction modelling.

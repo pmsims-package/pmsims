@@ -17,3 +17,4 @@ A function with default arguments set to the values passed with opts
 \description{
 Title Create default data generating functions
 }
+\keyword{internal}

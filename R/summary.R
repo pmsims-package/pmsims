@@ -1,3 +1,4 @@
+#' @keywords internal
 #' @export
 summary.pmsims <- function(result) {
   cat(

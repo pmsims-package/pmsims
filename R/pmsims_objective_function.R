@@ -1,16 +1,36 @@
 #' Objective function for pmsims
-#' 'objective_function' is the function that calculate the pmsims objective = |Perf(n) - Target - \lambda*C(n)|.
-#' @param n is the sample size.
-#' @param penalty_weight This is the weight that balances the objective and the cost of large sample size. Value 0 implies the focus is to minimize the abs difference.
-#' @param target_performance The minimum desired model performance.
-#' @param min_sample_size The minimum sample size assessed. This sets the lower bound of the search region for sample size.
-#' @param max_sample_size The maximum sample size assessed. This sets the upper bound of the search region for sample size.
-#' @param value_on_error value to return if error.
 #'
-#' @return
+#' Computes the objective value
+#' \deqn{\left| M(n) - M^* - \lambda\,C(n) \right|,}
+#' where \eqn{M(n)} is performance at sample size \eqn{n}, \eqn{M^*} is the
+#' target performance, \eqn{C(n)} is a cost term increasing with \eqn{n}, and
+#' \eqn{\lambda} (set via `penalty_weight`) controls the penalty on large samples.
+#'
+#' @param n Integer sample size.
+#' @param penalty_weight Penalty weight \eqn{\lambda} on the cost term \eqn{C(n)};
+#'   `0` minimises only the absolute performance gap.
+#' @param target_performance Target performance \eqn{M^*} (numeric).
+#' @param min_sample_size Minimum sample size considered (lower bound of search).
+#' @param max_sample_size Maximum sample size considered (upper bound of search).
+#' @param value_on_error Value to return if the objective cannot be evaluated.
+#'
+#' @return A single numeric: the objective value at \eqn{n}.
+#' @keywords internal
 #' @export
 #'
 #' @examples
+#' # \dontrun{
+#' # Example usage (assuming helper functions exist):
+#' # objective_function(
+#' #   n = 500,
+#' #   penalty_weight = 0.1,
+#' #   target_performance = 0.75,
+#' #   min_sample_size = 100,
+#' #   max_sample_size = 5000,
+#' #   value_on_error = Inf
+#' # )
+#' # }
+
 objective_function <- function(
   n,
   penalty_weight,

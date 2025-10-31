@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Simulation-based Sample Size Tools for Prediction Models • pmsims</title>
+<title>pmsims • pmsims</title>
 <!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
   window.MathJax = {
     chtml: {
@@ -16,9 +16,9 @@
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Simulation-based Sample Size Tools for Prediction Models">
-<meta name="description" content="pmsims is a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects stability, accuracy, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with a range of regression-based modelling approaches. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models.">
-<meta property="og:description" content="pmsims is a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects stability, accuracy, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with a range of regression-based modelling approaches. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models.">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="pmsims">
+<meta name="description" content="Simulation-based sample size estimation for prediction modelling.">
+<meta property="og:description" content="Simulation-based sample size estimation for prediction modelling.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -37,7 +37,14 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="articles/pmsims.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="articles/about.html">How pmsims works</a></li>
+  </ul>
+</li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -60,38 +67,30 @@
   </div>
 </nav><div class="container template-home">
 <div class="row">
-  <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="pmsims-">pmsims <img src="reference/figures/logo.png" align="right" height="110"><a class="anchor" aria-label="anchor" href="#pmsims-"></a>
-</h1></div>
-<p><strong>pmsims</strong> is an R package for estimating how much data are needed to develop reliable and generalisable prediction models. It uses flexible, simulation-based methods to examine how performance changes with sample size via repeated data generation, model fitting, and validation.</p>
-<p>The aim of <strong>pmsims</strong> is to support study planning and feasibility assessment by quantifying the sample sizes required to achieve adequate discrimination, calibration, and parameter precision. The current version focuses on regression-based prediction models with continuous, binary, and time-to-event outcomes.</p>
-<p><strong>Authors &amp; contributors.</strong> The package is developed at <a href="https://www.kcl.ac.uk/" class="external-link">King’s College London</a> (Department of Biostatistics &amp; Health Informatics) with input from researchers, clinicians, and patient partners.</p>
-<p>To learn more about the wider project, visit the <strong><a href="https://pmsims-package.github.io/pmsims-website/" class="external-link">pmsims project website</a></strong>.</p>
+  <main id="main" class="col-md-9"><p><img src="reference/figures/logo.png" align="right" height="110"></p>
+<p><strong>pmsims</strong> is an R package for estimating how much data are needed to develop reliable and generalisable prediction models. It uses a <strong>simulation-based learning curve</strong> approach to quantify how model performance improves with increasing sample size, supporting principled study planning and feasibility assessment.</p>
+<p>The package is fully model-agnostic: users can define how data are generated, how models are fitted, and how predictive performance is measured. It currently supports regression-based prediction models with continuous, binary, and time-to-event outcomes.</p>
+<p><strong>Developed at</strong> <a href="https://www.kcl.ac.uk/" class="external-link">King’s College London</a> (Department of Biostatistics &amp; Health Informatics) with input from researchers, clinicians, and patient partners. See also the <a href="https://pmsims-package.github.io/pmsims-website/" class="external-link">pmsims project site</a>.</p>
 <hr>
 <div class="section level2">
-<h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<div class="section level3">
-<h3 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h3>
 <p>Install the development version from GitHub:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"pmsims-package/pmsims"</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="minimal-example">Minimal example<a class="anchor" aria-label="anchor" href="#minimal-example"></a>
-</h3>
+<div class="section level2">
+<h2 id="minimal-example">Minimal example<a class="anchor" aria-label="anchor" href="#minimal-example"></a>
+</h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pmsims-package.github.io/pmsims/" class="external-link">pmsims</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Explore performance across sample sizes for a binary outcome using logistic regression</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
 <hr>
-</div>
 </div>
 <div class="section level2">
 <h2 id="get-in-touch">Get in touch<a class="anchor" aria-label="anchor" href="#get-in-touch"></a>
@@ -108,7 +107,7 @@
 <p>This work is supported by the <strong>National Institute for Health and Care Research (NIHR)</strong> under the <strong>Research for Patient Benefit (RfPB)</strong> Programme.</p>
 <p><em>The views expressed are those of the authors and not necessarily those of the NIHR or the Department of Health and Social Care.</em></p>
 </div>
-</div>
+
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
@@ -136,13 +135,13 @@
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Ewan Carr <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/TODO" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
-<li>Gordon Forbes <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/TODO" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
-<li>Ridwan Olaniran <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/TODO" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
-<li>Diana Shamsutdinova <br><small class="roles"> Author </small> <a href="https://orcid.org/TODO" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
-<li>Daniel Stahl <br><small class="roles"> Author </small> <a href="https://orcid.org/TODO" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
-<li>Sarah Markham <br><small class="roles"> Author </small> <a href="https://orcid.org/TODO" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
-<li>Felix Zimmer <br><small class="roles"> Author </small> <a href="https://orcid.org/TODO" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Ewan Carr <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0002-1146-4922" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Gordon Forbes <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0001-8662-3636" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Ridwan Olaniran <br><small class="roles"> Author </small>   </li>
+<li>Diana Shamsutdinova <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-2434-3641" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Daniel Stahl <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0001-7987-6619" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Sarah Markham <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0002-8755-5935" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Felix Zimmer <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0002-8127-0007" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
 </ul>
 </div>
 

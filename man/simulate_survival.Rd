@@ -2,40 +2,118 @@
 % Please edit documentation in R/simulate_wrappers.R
 \name{simulate_survival}
 \alias{simulate_survival}
-\title{Calculate the minimum sample size required for a survival outcome}
+\title{Minimum sample size for survival‐outcome prediction models}
 \usage{
 simulate_survival(
-  n_signal_parameters,
-  min_sample_size,
-  max_sample_size,
+  signal_parameters,
   noise_parameters = 0,
   predictor_type = "continuous",
-  predictor_prop = NULL,
-  baseline_hazard = 0.01,
-  censoring_rate = 0.2,
-  metric = "cindex",
+  binary_predictor_prevalence = NULL,
+  large_sample_cindex,
+  baseline_hazard = 1,
+  censoring_rate,
   model = "coxph",
-  large_sample_performance = 0.8,
-  minimum_threshold = 0.1,
-  se_final = 0.005,
-  n_reps_total = NULL,
+  metric = "calibration_slope",
+  minimum_acceptable_performance,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance",
   ...
 )
 }
 \arguments{
-\item{n_signal_parameters}{Number of predictors that have a non zero
-association with the outcome @param noise_parameters Number of predictors
-with no association with outcome}
+\item{signal_parameters}{Integer. Number of candidate predictors associated
+with the outcome (i.e., true signal features).}
 
-\item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
+\item{noise_parameters}{Integer. Number of candidate predictors not
+associated with the outcome (noise features). Default is 0.}
 
-\item{predictor_prop}{If predictor type is binary, the probability of a
-predictor taking value 1}
+\item{predictor_type}{Character string, either \code{"continuous"} or \code{"binary"}.
+Specifies the type of simulated candidate predictors.}
 
-\item{baseline_hazard}{Baseline Hazard}
+\item{binary_predictor_prevalence}{Optional numeric in (0, 1). Prevalence of
+the binary predictors when \code{predictor_type = "binary"}. Ignored otherwise.}
 
-\item{censoring_rate}{Early drop out/censoring rate}
+\item{large_sample_cindex}{Numeric in (0, 1). Expected large-sample
+C-index for the survival model (used to tune the data-generating mechanism
+so that the model attains this performance for very large \eqn{n}).}
+
+\item{baseline_hazard}{Numeric > 0. Baseline hazard level used by the
+data-generating mechanism (e.g., the constant hazard in an exponential
+baseline). Larger values imply shorter event times, all else equal.}
+
+\item{censoring_rate}{Numeric in [0, 1). Proportion of individuals expected
+to be censored in the simulated datasets (administrative or random
+censoring). Higher values imply fewer observed events for a fixed \eqn{n}.}
+
+\item{model}{Character string; currently \code{"coxph"} (Cox proportional hazards).}
+
+\item{metric}{Character string naming the performance metric used to assess
+the sample size; defaults to \code{"calibration_slope"}. (Internally mapped to
+the engine's metric identifiers.)}
+
+\item{minimum_acceptable_performance}{Numeric. The target threshold
+\eqn{M^\\*}; the algorithm searches for the smallest \eqn{n} meeting the
+chosen criterion with respect to this threshold.}
+
+\item{n_reps_total}{Integer. Total number of simulation replications used by
+the engine across the search.}
+
+\item{mean_or_assurance}{Character string, either \code{"mean"} or \code{"assurance"}.
+Controls whether the minimum \eqn{n} is defined by the mean-based criterion
+or the assurance-based criterion (with the assurance level \eqn{\delta}
+controlled by the engine's defaults or additional arguments in \code{...}).}
+
+\item{...}{Additional options passed to \code{\link[=simulate_custom]{simulate_custom()}} (e.g., assurance
+level \eqn{\delta}, per-iteration settings).}
+}
+\value{
+An object of class \code{"pmsims"} containing the estimated minimum sample
+size and simulation diagnostics (inputs, fitted GP curve, intermediate
+evaluations, and summary metrics).
 }
 \description{
-Calculate the minimum sample size required for a survival outcome
+Compute the minimum sample size required to develop a prediction model with a
+\strong{time-to-event (survival)} outcome. As with the other wrappers, this uses a
+simulation-based learning-curve approach with Gaussian-process surrogate
+modelling to locate the smallest \eqn{n} meeting the chosen performance
+criterion.
+}
+\section{Criteria}{
+
+Two formulations are supported.
+\itemize{
+\item \strong{Mean-based}: find the smallest \eqn{n} such that the expected model
+performance exceeds the target \eqn{M^*}, i.e.
+\deqn{\min_n \; \mathbb{E}_{D_n}\{ M \mid D_n \} \ge M^*.}
+\item \strong{Assurance-based}: find the smallest \eqn{n} such that the probability
+the performance exceeds \eqn{M^*} is at least \eqn{\delta} (e.g. 0.80),
+i.e.
+\deqn{\min_n \; \mathbb{P}_{D_n}\!\left( M \mid D_n \ge M^* \right) \ge \delta.}
+}
+
+Here, \eqn{M} is the chosen performance metric and the probability/expectation
+is over repeated samples of training data of size \eqn{n}. The assurance
+criterion explicitly accounts for variability across training sets; models
+with higher variance typically require larger \eqn{n} to satisfy it.
+}
+
+\examples{
+\dontrun{
+est <- simulate_survival(
+  signal_parameters = 10,
+  noise_parameters = 10,
+  predictor_type = "continuous",
+  large_sample_cindex = 0.70,
+  baseline_hazard = 0.01,
+  censoring_rate = 0.30,
+  metric = "calibration_slope",
+  minimum_acceptable_performance = 0.9,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance"
+)
+est
+}
+}
+\seealso{
+\code{\link[=simulate_binary]{simulate_binary()}}, \code{\link[=simulate_continuous]{simulate_continuous()}}, \code{\link[=simulate_custom]{simulate_custom()}}
 }

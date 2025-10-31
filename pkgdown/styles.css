@@ -1,0 +1,60 @@
+/* css styles */
+
+body {
+  font-size: 1.2em;
+}
+
+.resource-card {
+  background: linear-gradient(90deg, #f4f9fd, #e7f1fa);
+  border: 1px solid #d6e4f0;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease;
+  height: 100%;
+}
+
+.resource-card h3 {
+  margin-top: 0;
+  font-size: 1.25rem;
+}
+
+.resource-card p {
+  margin-bottom: 0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.resource-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.custom-welcome-box {
+  background: linear-gradient(90deg, #005a9c, #007bff);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  max-width: 900px;
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+  line-height: 1.5;
+  font-size: 1.4rem;
+
+  h3 {
+    margin-top: 0;
+    font-size: 1.75rem;
+  }
+
+  p {
+    margin: 1rem 0;
+    max-width: 65ch;
+  }
+}
+
+.hl {
+  background-color: #fff3cd;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-weight: 500;
+}

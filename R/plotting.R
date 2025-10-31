@@ -3,6 +3,7 @@
 #' @param metric_label
 #' @param x pmsims object
 #' @param plot Whether to plot or data only
+#' @keywords internal
 #' @export
 plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
   ds <- x$mlpwr_ds

@@ -1,18 +1,29 @@
-# pmsims <img src="man/figures/logo.png" align="right" height="110" />
+---
+title: "pmsims"
+---
 
-**pmsims** is an R package for estimating how much data are needed to develop reliable and generalisable prediction models. It uses flexible, simulation-based methods to examine how performance changes with sample size via repeated data generation, model fitting, and validation.
+<img src="man/figures/logo.png" align="right" height="110" />
 
-The aim of **pmsims** is to support study planning and feasibility assessment by quantifying the sample sizes required to achieve adequate discrimination, calibration, and parameter precision. The current version focuses on regression-based prediction models with continuous, binary, and time-to-event outcomes.
+**pmsims** is an R package for estimating how much data are needed to develop
+reliable and generalisable prediction models. It uses a **simulation-based
+learning curve** approach to quantify how model performance improves with
+increasing sample size, supporting principled study planning and feasibility
+assessment.
 
-**Authors & contributors.** The package is developed at [King’s College London](https://www.kcl.ac.uk/) (Department of Biostatistics & Health Informatics) with input from researchers, clinicians, and patient partners.
+The package is fully model-agnostic: users can define how data are generated,
+how models are fitted, and how predictive performance is measured. It currently
+supports regression-based prediction models with continuous, binary, and
+time-to-event outcomes.
 
-To learn more about the wider project, visit the **[pmsims project website](https://pmsims-package.github.io/pmsims-website/)**.
+**Developed at** [King’s College London](https://www.kcl.ac.uk/) (Department of
+Biostatistics & Health Informatics)  with input from researchers, clinicians,
+and patient partners.  See also the [pmsims project
+site](https://pmsims-package.github.io/pmsims-website/).
 
 ---
 
-## Getting started
 
-### Installation
+## Installation
 
 Install the development version from GitHub:
 
@@ -21,12 +32,11 @@ Install the development version from GitHub:
 remotes::install_github("pmsims-package/pmsims")
 ```
 
-### Minimal example
+## Minimal example
 
 ```r
 library(pmsims)
 
-# Explore performance across sample sizes for a binary outcome using logistic regression
 set.seed(123)
 
 print(res)

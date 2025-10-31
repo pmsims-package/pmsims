@@ -35,6 +35,7 @@ get_summaries <- function(performance_matrix) {
 #' @param calib_slope      numeric. Anticipated calibration slope. (optional; factor 1/calib_slope if <1) (TODO: Explain)
 #' @param outcome_type     Outcome type. Must be one of "binary", "survival", or "continuous".
 #' @return                 integer. Recommended starting value from which to calculate the minimum sample size
+#' @keywords internal
 #' @examples
 #' get_min_sample_size(npar = 5, prevalence = 0.2, c_stat = 0.75,
 #'                     calib_slope = 0.9, outcome_type = "binary")
@@ -153,6 +154,7 @@ get_min_sample_size <- function(
 #' @param var_bootstrap
 #' @param target
 #' @param ci_q
+#' @keywords internal
 #'
 adaptive_startvalues <- function(
   output,
@@ -223,6 +225,7 @@ adaptive_startvalues <- function(
 #' @param n_init The number of initial sample sizes simualted before the Gausian process search begins.
 #' @param verbose logical. Passed to mlpwr; return verbose output.
 #' @param value_on_error The value used if there is an error in fitting the model or calculating performance.
+#' @keywords internal
 calculate_mlpwr <- function(
   test_n,
   n_reps_total,
@@ -370,6 +373,7 @@ calculate_mlpwr <- function(
 #' @param value_on_error
 #'
 #' @returns
+#' @keywords internal
 #' @export
 #'
 #' @examples
@@ -542,6 +546,7 @@ calculate_bisection <- function(
 #' @param value_on_error The value used if there is an error in fitting the model or calculating performance.
 #'
 #' @returns
+#' @keywords internal
 #' @export
 #'
 #' @examples

@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_generators.R
 \name{generate_continuous_data}
 \alias{generate_continuous_data}
-\title{Simulate Continuous data}
+\title{Title Simulate continuous data}
 \usage{
 generate_continuous_data(
   n,
@@ -14,24 +14,23 @@ generate_continuous_data(
 )
 }
 \arguments{
-\item{n}{Sample size}
+\item{n}{Sample size of simulated dataset}
 
 \item{beta_signal}{Association between signal predictors and the outcome}
 
-\item{n_signal_parameters}{Number of predictors that have a non zero
-association with the outcome @param noise_parameters Number of predictors
-with no association with outcome}
+\item{n_signal_parameters}{Number of predictors that have a non zero association with the outcome}
 
-\item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
+\item{noise_parameters}{Number of predictors with no association with outcome}
 
-\item{predictor_prop}{If predictor type is binary, the probability of a
-predictor taking value 1}
+\item{predictor_type}{Type of predictor, can be "continuous" or "binary"}
+
+\item{predictor_prop}{If predictor type is binary, the probability of a predictor taking value 1}
 }
 \value{
 A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 }
 \description{
-Simulate Continuous data
+Title Simulate continuous data
 }
 \examples{
 generate_continuous_data(
@@ -40,3 +39,4 @@ generate_continuous_data(
   beta_signal = 0.1
 )
 }
+\keyword{internal}

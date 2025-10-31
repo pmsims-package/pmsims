@@ -2,10 +2,11 @@
 % Please edit documentation in R/data_generators.R
 \name{generate_binary_data}
 \alias{generate_binary_data}
-\title{Title Simulate Binary Data}
+\title{Title Simulate binary data}
 \usage{
 generate_binary_data(
   n,
+  mu_lp,
   beta_signal,
   n_signal_parameters,
   noise_parameters,
@@ -15,27 +16,27 @@ generate_binary_data(
 )
 }
 \arguments{
-\item{n}{Sample size}
+\item{n}{Sample size of simulated dataset}
 
 \item{beta_signal}{Association between signal predictors and the outcome}
 
-\item{n_signal_parameters}{Number of predictors that have a non zero
-association with the outcome @param noise_parameters Number of predictors
-with no association with outcome}
+\item{n_signal_parameters}{Number of predictors that have a non zero association with the outcome}
 
-\item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
+\item{noise_parameters}{Number of predictors with no association with outcome}
 
-\item{predictor_prop}{If predictor type is binary, the probability of a
-predictor taking value 1}
+\item{predictor_type}{Type of predictor, can be "continuous" or "binary"}
 
-\item{baseline_prob}{Baseline probability of outcome (ie. probability when all predicors are 0)}
+\item{predictor_prop}{If predictor type is binary, the probability of a predictor taking value 1}
+
+\item{baseline_prob}{Baseline probability of outcome (i.e., probability when all predicors are 0)}
 }
 \value{
 A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 }
 \description{
-Title Simulate Binary Data
+Title Simulate binary data
 }
 \examples{
 generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 }
+\keyword{internal}

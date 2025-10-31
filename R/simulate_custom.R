@@ -20,6 +20,7 @@
 #' @param ... Other argments passed to the method function.
 #'
 #' @returns
+#' @keywords internal
 #' @export
 #'
 #' @examples
@@ -176,6 +177,7 @@ simulate_custom <- function(
 #' @param model A string indicating the model to be used.
 #'
 #' @return A list containing a data function, a model function, and a metric function.
+#' @keywords internal
 #' @export
 #'
 #' @examples

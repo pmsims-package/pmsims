@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_generators.R
 \name{generate_survival_data}
 \alias{generate_survival_data}
-\title{Title Simulate Survival Data}
+\title{Title Simulate survival data}
 \usage{
 generate_survival_data(
   n,
@@ -16,30 +16,29 @@ generate_survival_data(
 )
 }
 \arguments{
-\item{n}{Sample size}
+\item{n}{Sample size of simulated dataset}
 
 \item{beta_signal}{Association between signal predictors and the outcome}
 
-\item{n_signal_parameters}{Number of predictors that have a non zero
-association with the outcome @param noise_parameters Number of predictors
-with no association with outcome}
+\item{n_signal_parameters}{Number of predictors that have a non zero association with the outcome}
 
-\item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
+\item{noise_parameters}{Number of predictors with no association with outcome}
 
-\item{predictor_prop}{If predictor type is binary, the probability of a
-predictor taking value 1}
+\item{predictor_type}{Type of predictor, can be "continuous" or "binary"}
 
-\item{baseline_hazard}{Baseline Hazard}
+\item{predictor_prop}{If predictor type is binary, the probability of a predictor taking value 1}
+
+\item{baseline_hazard}{Baseline hazard}
 
 \item{censoring_rate}{Early drop out/censoring rate}
 }
 \value{
-A data frame with a time ("time"), event status ("event") (0 = censored, 1 =
-event), and n_signal_parameters + noise_parameters predictor columns ("x1", "x2", ... .)
+A data frame with a time ("time"), event status ("event") (0 = censored, 1 = event), and n_signal_parameters + noise_parameters predictor columns ("x1", "x2", ... .)
 }
 \description{
-Title Simulate Survival Data
+Title Simulate survival data
 }
 \examples{
 generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 }
+\keyword{internal}

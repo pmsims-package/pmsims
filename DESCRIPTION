@@ -6,32 +6,31 @@ Authors@R:
       person(given = "Ewan",
              family = "Carr",
              role = c("aut", "cre"),
-             email = "ewan.carr@kcl.ac.uk",
-             comment = c(ORCID = "TODO")),
+             email = "pmsims@kcl.ac.uk",
+             comment = c(ORCID = "0000-0002-1146-4922")),
       person(given = "Gordon",
              family = "Forbes",
-             role = c("aut", "cre"),
-             comment = c(ORCID = "TODO")),
+             role = c("aut"),
+             comment = c(ORCID = "0000-0001-8662-3636")),
       person(given = "Ridwan",
              family = "Olaniran",
-             role = c("aut", "cre"),
-             comment = c(ORCID = "TODO")),
+             role = c("aut")),
       person(given = "Diana",
              family = "Shamsutdinova",
              role = "aut",
-             comment = c(ORCID = "TODO")),
+             comment = c(ORCID = "0000-0003-2434-3641")),
       person(given = "Daniel",
              family = "Stahl",
              role = "aut",
-             comment = c(ORCID = "TODO")),
+             comment = c(ORCID = "0000-0001-7987-6619")),
       person(given = "Sarah",
              family = "Markham",
              role = "aut",
-             comment = c(ORCID = "TODO")),
+             comment = c(ORCID = "0000-0002-8755-5935")),
       person(given = "Felix",
              family = "Zimmer",
              role = "aut",
-             comment = c(ORCID = "TODO"))
+             comment = c(ORCID = "0000-0002-8127-0007"))
     )
 Description: pmsims is a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects stability, accuracy, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with a range of regression-based modelling approaches. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models.
 License: GPL (>= 3)
@@ -61,5 +60,5 @@ Suggests:
 Encoding: UTF-8
 LazyData: false
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 BuildVignettes: false

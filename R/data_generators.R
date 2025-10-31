@@ -4,6 +4,7 @@
 #' Arguments to be passed to the data generating function must be stored in a list item named args.
 #' For options that can be passed to the different default generators see \link{generate_continuous_data}, \link{generate_binary_data}, or \link{generate_survival_data}.
 #' @return A function with default arguments set to the values passed with opts
+#' @keywords internal
 
 default_data_generators <- function(opts) {
   type <- opts$type
@@ -29,6 +30,7 @@ default_data_generators <- function(opts) {
 #' @param predictor_prop If predictor type is binary, the probability of a predictor taking value 1
 #'
 #' @return A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
+#' @keywords internal
 
 #' @examples generate_continuous_data(
 #'   n = 100, n_signal_parameters = 10,
@@ -65,6 +67,7 @@ generate_continuous_data <- function(
 #' @param baseline_prob Baseline probability of outcome (i.e., probability when all predicors are 0)
 #'
 #' @return A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
+#' @keywords internal
 #' @export
 #'
 #' @examples generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
@@ -88,7 +91,7 @@ generate_binary_data <- function(
     intercept,
     beta_signal
   )
-  y_prob <- 1 / (1 + exp(-lp))
+  y_prob <- stats::plogis(lp)
   y <- rbinom(n, 1, y_prob)
   data <- cbind(y, X)
   return(as.data.frame(data))
@@ -101,6 +104,7 @@ generate_binary_data <- function(
 #' @param censoring_rate Early drop out/censoring rate
 #'
 #' @return A data frame with a time ("time"), event status ("event") (0 = censored, 1 = event), and n_signal_parameters + noise_parameters predictor columns ("x1", "x2", ... .)
+#' @keywords internal
 #' @examples generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 generate_survival_data <- function(
   n,

@@ -3,7 +3,7 @@
 \docType{data}
 \name{default_models}
 \alias{default_models}
-\title{default_model_generators}
+\title{default_model_generators Generate appropriate model based on input arguments}
 \format{
 An object of class \code{list} of length 3.
 }
@@ -13,10 +13,13 @@ default_models
 \arguments{
 \item{outcome}{type of outcome, possible options are: "binary".}
 }
+\value{
+Model function.
+}
 \description{
-default_model_generators
+default_model_generators Generate appropriate model based on input arguments
 }
 \examples{
 default_model_generators("binary")
 }
-\keyword{datasets}
+\keyword{internal}

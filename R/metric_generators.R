@@ -64,6 +64,7 @@ default_metric_generator <- function(metric, data_function) {
   return(metric_function)
 }
 
+#' @keywords internal
 #' @export
 predict_custom <- function(x, y, fit, model, type = "response") {
   if (model == "glm") {
@@ -237,7 +238,7 @@ survival_calib_slope_free <- function(data, fit, model, eval_time = NULL) {
   pred_surv <- survival:::predict.coxph(fit, data, type = "survival")
 
   # Get predicted model free yhat from logit: y_hat = log(S(t)/1-S(t))
-  y_hat <- log(pred_surv / (1 - pred_surv))
+  y_hat <- stats::qlogis(pred_surv)
 
   # Choose evaluation time if not given: last follow-up time
   if (is.null(eval_time)) {

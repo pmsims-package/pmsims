@@ -4,6 +4,7 @@
 #' @param value_on_error value to return if error.
 #'
 #' @return The calculated performance metric
+#' @keywords internal
 
 calculate_metrics_perf <- function(
   n,

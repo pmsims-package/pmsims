@@ -4,6 +4,7 @@
 #' @return Model function.
 #'
 #' @examples default_model_generators("binary")
+#' @keywords internal
 default_models <- list(
   binary = list(
     glm = function(d) {

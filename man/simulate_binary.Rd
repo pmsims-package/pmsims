@@ -2,94 +2,114 @@
 % Please edit documentation in R/simulate_wrappers.R
 \name{simulate_binary}
 \alias{simulate_binary}
-\title{Calculate the minimum sample size required to develop a prediction model}
+\title{Minimum sample size for binary-outcome prediction models}
 \usage{
 simulate_binary(
-  n_signal_parameters,
-  baseline_prob,
-  min_sample_size,
-  max_sample_size,
-  large_sample_performance,
-  minimum_threshold = 0.1,
+  signal_parameters,
   noise_parameters = 0,
   predictor_type = "continuous",
-  predictor_prop = NULL,
-  metric = "auc",
+  binary_predictor_prevalence = NULL,
+  outcome_prevalence,
+  large_sample_cstatistic,
   model = "glm",
-  se_final = 0.005,
-  n_reps_total = NULL,
-  tune_param = NULL,
+  metric = "calibration_slope",
+  minimum_acceptable_performance,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance",
   ...
 )
 }
 \arguments{
-\item{n_signal_parameters}{Number of predictors that have a non zero
-association with the outcome @param noise_parameters Number of predictors
-with no association with outcome}
+\item{signal_parameters}{Integer. Number of candidate predictors associated
+with the outcome (i.e., true signal features).}
 
-\item{baseline_prob}{Baseline probability of outcome (ie. probability when all predicors are 0)}
+\item{noise_parameters}{Integer. Number of candidate predictors not
+associated with the outcome (noise features). Default is 0.}
 
-\item{min_sample_size}{The minimum sample size used in simulations}
+\item{predictor_type}{Character string, either \code{"continuous"} or \code{"binary"}.
+Specifies the type of simulated candidate predictors.}
 
-\item{max_sample_size}{The maximum sample size used in simulations}
+\item{binary_predictor_prevalence}{Optional numeric in (0, 1). Prevalence of
+the binary predictors when \code{predictor_type = "binary"}. Ignored otherwise.}
 
-\item{large_sample_performance}{The desired performance in a large sample
-(for the metric defined by tune_metric_function). This may be specified in
-place of tune_param. The data generating model is tuned so the desired
-performance is obtained when n is equal to the max_sample_size.}
+\item{outcome_prevalence}{Numeric in (0, 1). Target prevalence of the binary
+outcome in the intended modelling context.}
 
-\item{predictor_type}{Type of predictor, can be "continuous" or "binary."}
+\item{large_sample_cstatistic}{Numeric in (0, 1). Expected C-statistic for a
+model developed on a very large sample (used to tune the data-generating
+mechanism).}
 
-\item{predictor_prop}{If predictor type is binary, the probability of a
-predictor taking value 1}
+\item{model}{Character string specifying the modelling algorithm (e.g.,
+\code{"glm"}). Passed to the internal model generator.}
 
-\item{tune_param}{A tuning parameter to be passed to the data generating
-function}
+\item{metric}{Character string naming the performance metric used to assess
+the sample size; defaults to \code{"calibration_slope"}. (Internally mapped to
+the engine's metric identifiers.)}
 
-\item{...}{Other options passed to \code{\link[=simulate_custom]{simulate_custom()}}}
+\item{minimum_acceptable_performance}{Numeric. The target threshold
+\eqn{M^\\*}; the algorithm searches for the smallest \eqn{n} meeting the
+chosen criterion with respect to this threshold.}
 
-\item{data_generating_function}{A function of two parameters, n and a tuning
-parameter, that returns data for the model function}
+\item{n_reps_total}{Integer. Total number of simulation replications used by
+the engine across the search.}
 
-\item{model_function}{A function which takes the object returned by the data
-generating function and fits the analysis model of interest.}
+\item{mean_or_assurance}{Character string, either \code{"mean"} or \code{"assurance"}.
+Controls whether the minimum \eqn{n} is defined by the mean-based criterion
+or the assurance-based criterion (with the assurance level \eqn{\delta}
+controlled by the engine's defaults or additional arguments in \code{...}).}
 
-\item{metric_function}{A function which takes a a test dataset and model
-object as arguments and returns a performance metricß}
-
-\item{target_performance}{The desired performance of the prediction model}
-
-\item{test_n}{The sample size used for testing model performance}
-
-\item{tune_args}{A named list of arguments to be passed to
-tune_generate_data.R. Possible arguments are large_n, min_tune_arg,
-max_tune_arg, max_interval_expansion, and tolerance. See
-\code{\link{tune_generate_data}} for more details.}
-
-\item{tune_metric_function}{The metric_function used when tuning the model.
-This may differ from the metric function used for determining the sample
-size.}
-
-\item{n_reps_totalThe}{number of simulation reps}
-
-\item{final_estimate_se}{The standard error for the estimate of model
-performance at the minimum sample size. Either this or nreps should be
-specified.}
-
-\item{n_sample_sizes}{The number of different sample sizes simulations are
-carried out at each sample size}
-
-\item{n_init}{The number of different sample sizes for initialization
-(before updates)}
+\item{...}{Additional options passed to \code{\link[=simulate_custom]{simulate_custom()}} (e.g., assurance
+level \eqn{\delta}, per-iteration settings).}
 }
 \value{
-A list of results form the simulation
+An object of class \code{"pmsims"} containing the estimated minimum sample
+size and simulation diagnostics (inputs, fitted GP curve, intermediate
+evaluations, and summary metrics).
 }
 \description{
-Minimum working example using the mlpwr package
+Compute the minimum sample size required to develop a prediction model with a
+binary outcome. The function wraps a simulation-based engine that combines a
+bisection search with Gaussian-process curve fitting. From user inputs
+(outcome prevalence, expected large-sample performance, minimum acceptable
+performance, etc.) it constructs a data-generating function, a model-fitting
+function, and a metric function, then searches for the smallest \eqn{n} that
+meets the chosen performance criterion.
 }
-\examples{
-# TODO
-Calculate the minimum sample size required for a binary outcome
+\section{Criteria}{
 
+Two formulations are supported.
+\itemize{
+\item \strong{Mean-based}: find the smallest \eqn{n} such that the expected model
+performance exceeds the target \eqn{M^*}, i.e.
+\deqn{\min_n \; \mathbb{E}_{D_n}\{ M \mid D_n \} \ge M^*.}
+\item \strong{Assurance-based}: find the smallest \eqn{n} such that the probability
+the performance exceeds \eqn{M^*} is at least \eqn{\delta} (e.g. 0.80),
+i.e.
+\deqn{\min_n \; \mathbb{P}_{D_n}\!\left( M \mid D_n \ge M^* \right) \ge \delta.}
+}
+
+Here, \eqn{M} is the chosen performance metric and the probability/expectation
+is over repeated samples of training data of size \eqn{n}. The assurance
+criterion explicitly accounts for variability across training sets; models
+with higher variance typically require larger \eqn{n} to satisfy it.
+}
+
+\examples{
+\dontrun{
+est <- simulate_binary(
+  signal_parameters = 10,
+  noise_parameters = 10,
+  predictor_type = "continuous",
+  outcome_prevalence = 0.2,
+  large_sample_cstatistic = 0.75,
+  metric = "calibration_slope",
+  minimum_acceptable_performance = 0.9,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance"
+)
+est
+}
+}
+\seealso{
+\code{\link[=simulate_continuous]{simulate_continuous()}}, \code{\link[=simulate_survival]{simulate_survival()}}, \code{\link[=simulate_custom]{simulate_custom()}}
 }

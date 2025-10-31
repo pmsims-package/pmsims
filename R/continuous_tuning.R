@@ -4,6 +4,7 @@
 #' @param proportion_noise_features Proportion of noise features
 #'
 #' @returns The tuned beta value
+#' @keywords internal
 
 continuous_tuning <- function(
   r2,

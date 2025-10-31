@@ -10,6 +10,8 @@ simulate_custom(
   model_function = NULL,
   metric_function = NULL,
   target_performance,
+  c_statistic,
+  mean_or_assurance = "assurance",
   test_n = 30000,
   min_sample_size,
   max_sample_size,
@@ -31,6 +33,8 @@ simulate_custom(
 
 \item{target_performance}{The minimum desired model performance}
 
+\item{mean_or_assurance}{Can be either "mean" or "assurance". If mean, sample size is calculated so that average model performance is greater than target_performance. If assurance model performance is greater than target performance 80\% of the time.}
+
 \item{test_n}{The sample size used for test datasets. This should be a large number.}
 
 \item{min_sample_size}{The minimum sample size assessed. This sets the lower bound of the search region for sample size.}
@@ -43,15 +47,20 @@ simulate_custom(
 
 \item{se_final}{A standard error which can be used as a stopping criteria. Either n_reps_total or se_final should be given.}
 
-\item{n_init}{The number of initial sample sizes to be used in the search before the alorithm passed in method is used}
+\item{n_init}{The number of initial sample sizes to be used in the search before the algorithm passed in method is used}
 
-\item{method}{The method used to search for the minimum sample size. Options are "mlpwr" and "crude".}
+\item{method}{The method used to search for the minimum sample size. Options are "mlpwr", "crude" and "ga".}
 
 \item{verbose}{A logical controlling output}
 
 \item{...}{Other argments passed to the method function.}
+
+\item{penalty_weight}{This is the weight that balances the objective and the cost of large sample size for the "ga" engine. Value 0 implies the focus is to minimize the abs difference.}
+
+\item{tol}{This is the minimum difference between performance at i and i+1 for the "bisection" engine, default is 1e-3.}
 }
 \description{
 Simulate Custom
 'simulate_custom' is the interface for pmsims at the most basic level. It performs no processing of arguments and allows all possible options to be customised.
 }
+\keyword{internal}

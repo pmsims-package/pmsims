@@ -4,12 +4,31 @@
 \name{pmsims-package}
 \alias{pmsims}
 \alias{pmsims-package}
-\title{pmsims: What the Package Does (One Line, Title Case)}
+\title{pmsims: Simulation-based Sample Size Tools for Prediction Models}
 \description{
-What the package does (one paragraph).
+pmsims is a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects stability, accuracy, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with a range of regression-based modelling approaches. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://pmsims-package.github.io/pmsims/}
+  \item \url{https://github.com/pmsims-package/pmsims}
+  \item Report bugs at \url{https://github.com/pmsims-package/pmsims/issues}
+}
+
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
+\strong{Maintainer}: Ewan Carr \email{pmsims@kcl.ac.uk} (\href{https://orcid.org/0000-0002-1146-4922}{ORCID})
+
+Authors:
+\itemize{
+  \item Gordon Forbes (\href{https://orcid.org/0000-0001-8662-3636}{ORCID})
+  \item Ridwan Olaniran
+  \item Diana Shamsutdinova (\href{https://orcid.org/0000-0003-2434-3641}{ORCID})
+  \item Daniel Stahl (\href{https://orcid.org/0000-0001-7987-6619}{ORCID})
+  \item Sarah Markham (\href{https://orcid.org/0000-0002-8755-5935}{ORCID})
+  \item Felix Zimmer (\href{https://orcid.org/0000-0002-8127-0007}{ORCID})
+}
 
 }
 \keyword{internal}
