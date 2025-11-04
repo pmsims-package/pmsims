@@ -10,10 +10,8 @@ template:
   bootswatch: cosmo
   css: styles.css
 
-# Output location
 output_dir: docs
 
-# Optional: site metadata
 home:
   title: "pmsims"
   description: >
