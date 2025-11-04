@@ -1,14 +1,142 @@
 ---
-title: "pmsims"
+title: "Getting started with pmsims"
 ---
 
-```{r, include = FALSE}
+```{r}
+#| label: setup
+#| include: false
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 6, fig.height = 4,
+  warning = FALSE,
+  message = FALSE
 )
+set.seed(123)
 ```
 
-```{r setup}
+## What pmsims does
+
+**pmsims** estimates the **minimum training sample size** needed for
+a prediction model to achieve a target level of performance **with assurance**.
+Rather than relying on simple rules of thumb or closed‑form formulae, pmsims
+uses **simulation** to:
+
+- generate synthetic datasets that reflect your target setting (outcome type,
+  prevalence or \(R^2\), signal vs noise predictors),
+- fit a specified **model** (e.g., logistic regression or linear regression),
+- evaluate a chosen **performance metric** (e.g., calibration slope, AUC),
+- and trace a **learning curve** of performance as the training size increases.
+
+The recommended design objective is **assurance**: the **smallest \(n\)** such
+that a high proportion of repeated studies (e.g., 80%) meet the target
+performance. In pmsims, this is implemented via the **20th percentile** of the
+simulated performance distribution at each \(n\).
+
+## Required inputs at a glance
+
+There are three wrapper functions for binary, continuous, and survival outcomes, respectively:
+
+- `simulate_binary()`
+- `simulate_continuous()`
+- `simulate_survival()`
+
+All three functions share the same basic structure. The table below lists the
+key inputs.
+
+| Argument | Type | Applies to | Required | Default | Description |
+|---|---|---|:---:|---|---|
+| `signal_parameters` | integer | binary, continuous | ✓ | — | Number of **true signal** predictors used in data generation. |
+| `noise_parameters` | integer | binary, continuous |  | `0` | Number of **noise** predictors with no association to the outcome. |
+| `predictor_type` | `"continuous"`\|`"binary"` | binary, continuous |  | `"continuous"` | Type of simulated candidate predictors. |
+| `binary_predictor_prevalence` | numeric (0,1) | binary, continuous |  | `NULL` | Prevalence for binary predictors **when** `predictor_type = "binary"`; ignored otherwise. |
+| `outcome_prevalence` | numeric (0,1) | **binary only** | ✓ | — | Target prevalence of the binary outcome in the intended setting. |
+| `large_sample_cstatistic` | numeric (0,1) | **binary only** | ✓ | — | Expected **C‑statistic** for a very large training sample (used to tune the generator). |
+| `large_sample_rsquared` | numeric (0,1) | **continuous only** | ✓ | — | Expected **\(R^2\)** for a very large training sample (used to tune the generator). |
+| `model` | character | binary, continuous |  | `"glm"` (binary), `"lm"` (continuous) | Modelling algorithm label passed to the internal generator. |
+| `metric` | character | binary, continuous |  | `"calibration_slope"` | Performance metric targeted by the learning curve (mapped internally where needed). |
+| `minimum_acceptable_performance` | numeric | binary, continuous | ✓ | — | Target threshold \(M^*\) (e.g., calibration slope \(\ge 0.9\)). |
+| `n_reps_total` | integer | binary, continuous | ✓ | `1000` | Total number of simulation replications used by the engine. |
+| `mean_or_assurance` | `"mean"`\|`"assurance"` | binary, continuous |  | `"assurance"` | Criterion; we recommend `"assurance"`. |
+
+> Notes
+> • The engine automatically tunes the data generator so the chosen model reaches the specified **large‑sample performance** (C‑statistic or \(R^2\)) on very large samples.
+> • For reproducibility, set a random seed (`set.seed()`).
+
+---
+
+## Installation
+
+```{r}
+#| eval: false
+# install.packages("remotes")
+# remotes::install_github("pmsims-package/pmsims")
+```
+
+---
+
+## Binary-outcome example
+
+We target the smallest *n* that meets the **assurance** criterion.
+
+```{r}
 library(pmsims)
+
+binary_example <- simulate_binary(
+  signal_parameters = 5,
+  noise_parameters  = 0,
+  predictor_type = "continuous",
+  binary_predictor_prevalence = NULL,
+  outcome_prevalence = 0.20,
+  large_sample_cstatistic = 0.75,
+  model = "glm",
+  metric = "calibration_slope",
+  minimum_acceptable_performance = 0.90,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance"
+)
+
+binary_example
+```
+
+Plot the estimated learning curve and identified sample size:
+
+```{r}
+plot(binary_example)
+```
+
+## Continuous-outcome example
+
+```{r}
+#| eval: false
+est_cont <- simulate_continuous(
+  # Predictors
+  signal_parameters = 5,
+  noise_parameters  = 5,
+  predictor_type    = "continuous",
+  binary_predictor_prevalence = NULL,
+  # Outcome
+  large_sample_rsquared = 0.50,
+  # Model & metric
+  model  = "lm",
+  metric = "calibration_slope",
+  # Target & engine
+  minimum_acceptable_performance = 0.90,
+  n_reps_total   = 1000,
+  mean_or_assurance = "assurance"
+)
+est_cont
+```
+
+```{r}
+#| eval: false
+plot(est_cont)
+```
+
+---
+
+## Session info
+
+```{r}
+sessionInfo()
 ```
