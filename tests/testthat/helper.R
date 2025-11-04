@@ -5,6 +5,7 @@ get_binary_data_model_metric <- function() {
       n_signal_parameters = 5,
       noise_parameters = 5,
       predictor_type = "continuous",
+      mu_lp = stats::qlogis(0.2),
       baseline_prob = 0.2,
       beta_signal = 0.6124837 # hard coded for speed from tuning code commented out below
     )

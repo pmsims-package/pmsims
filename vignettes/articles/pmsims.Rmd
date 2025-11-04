@@ -94,15 +94,9 @@ lists the key inputs.
 ## Installation
 
 ```{r}
-#| eval: false
 # install.packages("remotes")
 # remotes::install_github("pmsims-package/pmsims")
 library(pmsims)
-```
-
-```{r}
-#| echo: false
-devtools::load_all()
 ```
 
 ## Binary-outcome example

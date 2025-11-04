@@ -80,7 +80,7 @@ test_that("wrapper calibration slope bounds are enforced", {
       n_reps_total = 1000,
       mean_or_assurance = "assurance"
     ),
-    "Suggested calibration slope is too low",
+    "Suggested calibration slope is too low; check and try again.",
     fixed = TRUE
   )
 
@@ -95,7 +95,7 @@ test_that("wrapper calibration slope bounds are enforced", {
       n_reps_total = 1000,
       mean_or_assurance = "assurance"
     ),
-    "Suggested calibration slope is too high",
+    "Suggested calibration slope is too high; check and try again.",
     fixed = TRUE
   )
 
@@ -112,7 +112,7 @@ test_that("wrapper calibration slope bounds are enforced", {
       n_reps_total = 1000,
       mean_or_assurance = "assurance"
     ),
-    "Suggested calibration slope is too low",
+    "Suggested calibration slope is too low; check and try again.",
     fixed = TRUE
   )
 })
@@ -121,7 +121,7 @@ test_that("simulate_binary requires achievable AUC targets", {
   expect_error(
     simulate_binary(
       signal_parameters = 10,
-      noise_parameters = 0
+      noise_parameters = 0,
       predictor_type = "continuous",
       outcome_prevalence = 0.2,
       large_sample_cstatistic = 0.80,
@@ -130,7 +130,7 @@ test_that("simulate_binary requires achievable AUC targets", {
       n_reps_total = 1000,
       mean_or_assurance = "assurance"
     ),
-    "Requested minimum acceptable AUC exceeds the expected large-sample performance",
+    "Requested minimum acceptable AUC exceeds the expected large-sample performance; adjust inputs and try again.",
     fixed = TRUE
   )
 })

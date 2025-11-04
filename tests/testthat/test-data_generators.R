@@ -43,27 +43,30 @@ test_that("generate_continuous_data", {
   expect_equal(ncol(data), 11)
   expect_equal(
     colnames(data),
-    c("y", paste0("x", 1:(signal_parameters + signal_parameters)))
+    c("y", paste0("x", 1:(signal_parameters + noise_parameters)))
   )
 })
 
 test_that("generate_binary_data", {
   signal_parameters <- 5
   noise_parameters <- 5
+  baseline_prob <- 0.1
+  mu_lp <- stats::qlogis(baseline_prob)
   data <- generate_binary_data(
     n = 100,
+    mu_lp = mu_lp,
     n_signal_parameters = signal_parameters,
     noise_parameters = noise_parameters,
     predictor_type = "continuous",
     beta_signal = 0.1,
-    baseline_prob = 0.1
+    baseline_prob = baseline_prob
   )
 
   expect_equal(nrow(data), 100)
   expect_equal(ncol(data), 11)
   expect_equal(
     colnames(data),
-    c("y", paste0("x", 1:(signal_parameters + signal_parameters)))
+    c("y", paste0("x", 1:(signal_parameters + noise_parameters)))
   )
 })
 

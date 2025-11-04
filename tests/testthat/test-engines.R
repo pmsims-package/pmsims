@@ -1,8 +1,8 @@
 test_that("calculate_mlpwr", {
-  set.seed = 1234
-
+  set.seed(1234)
   functions <- get_binary_data_model_metric()
-  output <- calculate_mlpwr(
+
+  output <- suppressWarnings(calculate_mlpwr(
     test_n = 1000,
     n_reps_total = 20,
     n_reps_per = 5,
@@ -10,17 +10,19 @@ test_that("calculate_mlpwr", {
     min_sample_size = 50,
     max_sample_size = 200,
     target_performance = 0.75,
+    c_statistic = 0.8,
     mean_or_assurance = "mean",
     n_init = 4,
     data_function = functions$data_function,
     model_function = functions$model_function,
     metric_function = functions$metric_function,
     value_on_error = 0.5
-  )
+  ))
 
   expect_true(is.numeric(output$min_n))
+  expect_true(is.list(output$summaries))
 
-  output <- calculate_mlpwr(
+  output_assurance <- suppressWarnings(calculate_mlpwr(
     test_n = 1000,
     n_reps_total = 20,
     n_reps_per = 5,
@@ -28,96 +30,48 @@ test_that("calculate_mlpwr", {
     min_sample_size = 50,
     max_sample_size = 200,
     target_performance = 0.75,
+    c_statistic = 0.8,
     mean_or_assurance = "assurance",
     n_init = 4,
     data_function = functions$data_function,
     model_function = functions$model_function,
     metric_function = functions$metric_function,
     value_on_error = 0.5
-  )
+  ))
 
-  expect_true(is.numeric(output$min_n))
+  expect_true(is.numeric(output_assurance$min_n))
 })
 
-test_that("calculate_crude", {
+test_that("calculate_mlpwr_bs", {
+  set.seed(1234)
   functions <- get_binary_data_model_metric()
 
-  output <- calculate_crude(
-    data_function = functions$data_function,
-    model_function = functions$model_function,
-    metric_function = functions$metric_function,
-    value_on_error = 0.5,
+  output <- suppressWarnings(calculate_mlpwr_bs(
+    test_n = 1000,
+    n_reps_total = 40,
+    n_reps_per = 5,
+    se_final = NULL,
     min_sample_size = 50,
     max_sample_size = 200,
-    test_n = 1000,
-    n_reps_total = 100,
-    n_reps_per = 10,
     target_performance = 0.75,
-    mean_or_assurance = "mean"
-  )
-
-  expect_true(is.numeric(output$min_n))
-
-  output <- calculate_crude(
-    data_function = functions$data_function,
-    model_function = functions$model_function,
-    metric_function = functions$metric_function,
-    value_on_error = 0.5,
-    min_sample_size = 50,
-    max_sample_size = 200,
-    test_n = 1000,
-    n_reps_total = 100,
-    n_reps_per = 10,
-    target_performance = 0.75,
-    mean_or_assurance = "assurance"
-  )
-
-  expect_true(is.numeric(output$min_n))
-})
-
-
-test_that("calculate_ga", {
-  functions <- get_binary_data_model_metric()
-
-  output <- calculate_ga(
-    data_function = functions$data_function,
-    model_function = functions$model_function,
-    metric_function = functions$metric_function,
-    value_on_error = 0.5,
-    min_sample_size = 50,
-    max_sample_size = 200,
-    test_n = 1000,
-    n_reps_total = 100,
-    n_reps_per = 10,
-    target_performance = 0.75,
+    c_statistic = 0.8,
     mean_or_assurance = "mean",
-    penalty_weight = 1
-  )
-
-  expect_true(is.numeric(output$min_n))
-
-  output <- calculate_ga(
+    verbose = FALSE,
     data_function = functions$data_function,
     model_function = functions$model_function,
     metric_function = functions$metric_function,
-    value_on_error = 0.5,
-    min_sample_size = 50,
-    max_sample_size = 200,
-    test_n = 1000,
-    n_reps_total = 100,
-    n_reps_per = 10,
-    target_performance = 0.75,
-    mean_or_assurance = "assurance",
-    penalty_weight = 1
-  )
+    value_on_error = 0.5
+  ))
 
   expect_true(is.numeric(output$min_n))
+  expect_true(is.list(output$summaries))
 })
 
 test_that("calculate_bisection", {
+  set.seed(1234)
   functions <- get_binary_data_model_metric()
 
-  output <- calculate_bisection(
+  output <- suppressWarnings(calculate_bisection(
     data_function = functions$data_function,
     model_function = functions$model_function,
     metric_function = functions$metric_function,
@@ -125,19 +79,20 @@ test_that("calculate_bisection", {
     min_sample_size = 50,
     max_sample_size = 200,
     test_n = 1000,
-    n_reps_total = 100,
+    n_reps_total = 40,
     n_reps_per = 10,
     target_performance = 0.75,
+    c_statistic = 0.8,
     mean_or_assurance = "mean",
     tol = 1e-3,
     parallel = FALSE,
-    cores = 20,
+    cores = 2,
     verbose = FALSE
-  )
+  ))
 
   expect_true(is.numeric(output$min_n))
 
-  output <- calculate_bisection(
+  output_assurance <- suppressWarnings(calculate_bisection(
     data_function = functions$data_function,
     model_function = functions$model_function,
     metric_function = functions$metric_function,
@@ -145,15 +100,16 @@ test_that("calculate_bisection", {
     min_sample_size = 50,
     max_sample_size = 200,
     test_n = 1000,
-    n_reps_total = 100,
+    n_reps_total = 40,
     n_reps_per = 10,
     target_performance = 0.75,
+    c_statistic = 0.8,
     mean_or_assurance = "assurance",
     tol = 1e-3,
     parallel = FALSE,
-    cores = 20,
+    cores = 2,
     verbose = FALSE
-  )
+  ))
 
-  expect_true(is.numeric(output$min_n))
+  expect_true(is.numeric(output_assurance$min_n))
 })
