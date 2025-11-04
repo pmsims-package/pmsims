@@ -91,6 +91,12 @@ simulate_binary <- function(
   mean_or_assurance = "assurance",
   ...
 ) {
+  validate_metric_constraints(
+    metric = metric,
+    minimum_acceptable_performance = minimum_acceptable_performance,
+    expected_performance = large_sample_cstatistic
+  )
+
   # Tune for data function
   tune_param <- binary_tuning(
     target_prevalence = outcome_prevalence,
@@ -203,6 +209,11 @@ simulate_continuous <- function(
   mean_or_assurance = "assurance",
   ...
 ) {
+  validate_metric_constraints(
+    metric = metric,
+    minimum_acceptable_performance = minimum_acceptable_performance
+  )
+
   # Tuning the data-generating function
   tune_param <- continuous_tuning(
     r2 = large_sample_rsquared,
@@ -318,6 +329,12 @@ simulate_survival <- function(
   mean_or_assurance = "assurance",
   ...
 ) {
+  validate_metric_constraints(
+    metric = metric,
+    minimum_acceptable_performance = minimum_acceptable_performance,
+    expected_performance = large_sample_cindex
+  )
+
   # Tune the data-generating function
   tune_param <- binary_tuning(
     target_prevalence = 1 - censoring_rate,
