@@ -7,8 +7,6 @@ title: "How pmsims works"
 **pmsims** estimates the minimum sample size needed for a prediction model to achieve adequate performance with high probability (“assurance”).
 It does this by simulating datasets, fitting models, evaluating performance, and tracing how performance improves as the sample size grows — a *learning curve*.
 
----
-
 # 1. Conceptual background
 
 Prediction models must be trained on enough data to generalise beyond the development sample.
@@ -17,8 +15,6 @@ Traditional heuristics (e.g., *10 events per variable*) ignore factors such as o
 Analytic formulae (e.g., *pmsampsize*) rely on assumptions that often fail for modern models.
 
 **Simulation-based approaches**, like pmsims, overcome these limitations by explicitly generating data and empirically assessing model behaviour across different training sizes.
-
----
 
 # 2. The pmsims workflow
 
@@ -55,8 +51,6 @@ The learning curve is used to identify the smallest `n` where the chosen quantil
 (e.g. 20th percentile) of performance exceeds the target value.
 This gives the required training size for which the model is expected
 to achieve adequate performance in at least 80% of cases.
-
----
 
 # 3. Interpretation
 
