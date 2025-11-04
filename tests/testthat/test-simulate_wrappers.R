@@ -1,47 +1,136 @@
-test_that("simulate_binary", {
-  set.seed(1234)
+test_that("simulate_binary returns a pmsims object", {
+  skip_on_cran()
+  set.seed(2024)
 
-  output <- simulate_binary(
-    n_signal_parameters = 5,
-    noise_parameters = 5,
+  result <- simulate_binary(
+    signal_parameters = 3,
+    noise_parameters = 2,
     predictor_type = "continuous",
-    baseline_prob = 0.1,
-    min_sample_size = 100,
-    max_sample_size = 3000,
-    minimum_threshold = 0.05,
-    tune_param = 0.60,
-    large_sample_performance = 0.7,
+    outcome_prevalence = 0.2,
+    large_sample_cstatistic = 0.75,
+    metric = "calibration_slope",
+    minimum_acceptable_performance = 0.9,
+    n_reps_total = 60,
+    mean_or_assurance = "mean"
   )
-  expect_equal(length(output), 8)
+
+  expect_s3_class(result, "pmsims")
+  expect_equal(result$outcome, "binary")
+  expect_true(is.numeric(result$min_n))
+  expect_gt(result$min_n, 0)
+  expect_equal(result$target_performance, 0.9)
 })
 
-# test_that("simulate_continuous", {
-#   set.seed(4321)
-#   output <- simulate_continuous(
-#     n_signal_parameters = 10,
-#     noise_parameters = 10,
-#     predictor_type = "continuous",
-#     min_sample_size = 100,
-#     max_sample_size = 3000,
-#     n_reps_total = 10,
-#     minimum_threshold = 0.05,
-#     tune_param = 0.6353973
-#   )
-#   expect_equal(length(output), 8)
-# })
+test_that("simulate_continuous returns a pmsims object", {
+  skip_on_cran()
+  set.seed(1111)
 
-# test_that("simulate_survival", {
-#   set.seed(1234)
-#
-#   output <- simulate_survival(
-#     signal_parameters = 10,
-#     noise_parameters = 10,
-#     predictor_type = "continuous",
-#     min_sample_size = 100,
-#     max_sample_size = 3000,
-#     n_reps_total = 10,
-#     minimum_threshold = 0.05,
-#     large_sample_performance = 0.7
-#   )
-#   expect_equal(length(output), 8)
-# })
+  result <- simulate_continuous(
+    signal_parameters = 4,
+    noise_parameters = 2,
+    predictor_type = "continuous",
+    large_sample_rsquared = 0.5,
+    metric = "calibration_slope",
+    minimum_acceptable_performance = 1.0,
+    n_reps_total = 60,
+    mean_or_assurance = "mean"
+  )
+
+  expect_s3_class(result, "pmsims")
+  expect_equal(result$outcome, "continuous")
+  expect_true(is.numeric(result$min_n))
+  expect_gt(result$min_n, 0)
+  expect_equal(result$target_performance, 1.0)
+})
+
+test_that("simulate_survival returns a pmsims object", {
+  skip_on_cran()
+  set.seed(765)
+
+  result <- simulate_survival(
+    signal_parameters = 4,
+    noise_parameters = 2,
+    predictor_type = "continuous",
+    large_sample_cindex = 0.75,
+    baseline_hazard = 0.01,
+    censoring_rate = 0.3,
+    metric = "calibration_slope",
+    minimum_acceptable_performance = 0.9,
+    n_reps_total = 60,
+    mean_or_assurance = "mean"
+  )
+
+  expect_s3_class(result, "pmsims")
+  expect_equal(result$outcome, "survival")
+  expect_true(is.numeric(result$min_n))
+  expect_gt(result$min_n, 0)
+  expect_equal(result$target_performance, 0.9)
+})
+
+test_that("wrapper calibration slope bounds are enforced", {
+  expect_error(
+    simulate_binary(
+      signal_parameters = 3,
+      noise_parameters = 1,
+      predictor_type = "continuous",
+      outcome_prevalence = 0.2,
+      large_sample_cstatistic = 0.75,
+      metric = "calibration_slope",
+      minimum_acceptable_performance = 0.7,
+      n_reps_total = 40,
+      mean_or_assurance = "mean"
+    ),
+    "Suggested calibration slope is too low",
+    fixed = TRUE
+  )
+
+  expect_error(
+    simulate_continuous(
+      signal_parameters = 3,
+      noise_parameters = 1,
+      predictor_type = "continuous",
+      large_sample_rsquared = 0.5,
+      metric = "calibration_slope",
+      minimum_acceptable_performance = 1.3,
+      n_reps_total = 40,
+      mean_or_assurance = "mean"
+    ),
+    "Suggested calibration slope is too high",
+    fixed = TRUE
+  )
+
+  expect_error(
+    simulate_survival(
+      signal_parameters = 3,
+      noise_parameters = 1,
+      predictor_type = "continuous",
+      large_sample_cindex = 0.75,
+      baseline_hazard = 0.01,
+      censoring_rate = 0.3,
+      metric = "calibration_slope",
+      minimum_acceptable_performance = 0.7,
+      n_reps_total = 40,
+      mean_or_assurance = "mean"
+    ),
+    "Suggested calibration slope is too low",
+    fixed = TRUE
+  )
+})
+
+test_that("simulate_binary requires achievable AUC targets", {
+  expect_error(
+    simulate_binary(
+      signal_parameters = 3,
+      noise_parameters = 1,
+      predictor_type = "continuous",
+      outcome_prevalence = 0.2,
+      large_sample_cstatistic = 0.82,
+      metric = "auc",
+      minimum_acceptable_performance = 0.9,
+      n_reps_total = 40,
+      mean_or_assurance = "mean"
+    ),
+    "Requested minimum acceptable AUC exceeds the expected large-sample performance",
+    fixed = TRUE
+  )
+})
