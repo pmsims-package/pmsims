@@ -69,6 +69,15 @@ simulate_custom <- function(
 
   # Define a default metric value if calculations fail; 0.5 for default
   metric_name <- attr(metric_function, "metric")
+
+  if (!is.null(metric_name)) {
+    validate_metric_constraints(
+      metric = metric_name,
+      minimum_acceptable_performance = target_performance,
+      expected_performance = c_statistic
+    )
+  }
+
   error_values <- list(
     auc = 0.5,
     cindex = 0.5,
