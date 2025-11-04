@@ -3,7 +3,7 @@
 #' @param target_performance The desired model performance in a large sample
 #' @param target_prevalence The expected outcome prevalence
 #' @param tolerance Convergence parameters (TODO)
-#' @returns The optimal value for the tuning parameter
+#' @return The optimal value for the tuning parameter
 #' @keywords internal
 
 binary_tuning <- function(

@@ -111,7 +111,7 @@ binary_calib_slope <- function(data, fit, model) {
 
 binary_calib_itl <- function(data, fit, model) {
   # Calibration slope for logistic regression returns the absolute value of
-  # calibration in the large as positve or negative is bad
+  # calibration in the large as positive or negative is bad
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
   y_link <- predict_custom(x, y, fit, model, type = "link")

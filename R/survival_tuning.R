@@ -3,7 +3,7 @@
 #' @param target_performance The desired model performance in a large sample
 #' @param target_prevalence The desired model performance in a large sample
 #' @param tolerance The tolerance in the large sample performance
-#' @returns The optimal value for the tuning parameter
+#' @return The optimal value for the tuning parameter
 #' @keywords internal
 #' @export
 #'

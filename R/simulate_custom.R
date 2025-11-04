@@ -1,25 +1,24 @@
 #' Simulate Custom
 #' 'simulate_custom' is the interface for pmsims at the most basic level. It performs no processing of arguments and allows all possible options to be customised.
 #'
-#' @param data_function A function that returns datasets. Must have a single argmument, n, which controls the sample size.
-#' @param model_function A function that fits models to the data. Take the data object returned by data_funciton as only argument.
+#' @param data_function A function that returns datasets. Must have a single argument, `n`, which controls the sample size.
+#' @param model_function A function that fits models to the data. Takes the data object returned by `data_function` as its only argument.
 #' @param metric_function A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.
-#' @param target_performance The minimum desired model performance
-#' @param mean_or_assurance Can be either "mean" or "assurance". If mean, sample size is calculated so that average model performance is greater than target_performance. If assurance model performance is greater than target performance 80% of the time.
-#' @param test_n The sample size used for test datasets. This should be a large number.
-#' @param min_sample_size The minimum sample size assessed. This sets the lower bound of the search region for sample size.
-#' @param max_sample_size The maximum sample size assessed. This sets the upper bound of the search region for sample size.
-#' @param n_reps_total The total number of simulation reps run by pmsims.
-#' @param n_reps_per The number of reps run at each sample size.
-#' @param se_final A standard error which can be used as a stopping criteria. Either n_reps_total or se_final should be given.
-#' @param n_init The number of initial sample sizes to be used in the search before the algorithm passed in method is used
-#' @param method The method used to search for the minimum sample size. Options are "mlpwr", "crude" and "ga".
-#' @param verbose A logical controlling output
-#' @param penalty_weight This is the weight that balances the objective and the cost of large sample size for the "ga" engine. Value 0 implies the focus is to minimize the abs difference.
-#' @param tol This is the minimum difference between performance at i and i+1 for the "bisection" engine, default is 1e-3.
-#' @param ... Other argments passed to the method function.
+#' @param target_performance Numeric target performance threshold the algorithm must meet or exceed.
+#' @param c_statistic Numeric; anticipated large-sample discrimination used when tuning the data generator.
+#' @param mean_or_assurance Character string `"mean"` or `"assurance"` indicating which criterion defines the minimum sample size.
+#' @param test_n Integer size of the test datasets used to evaluate performance (should be large).
+#' @param min_sample_size Integer lower bound of the sample-size search region.
+#' @param max_sample_size Integer upper bound of the sample-size search region.
+#' @param n_reps_total Integer total number of simulation replications allocated to the search.
+#' @param n_reps_per Integer number of replications evaluated at each candidate sample size.
+#' @param se_final Numeric standard error threshold used for early stopping (supply either `n_reps_total` or `se_final`).
+#' @param n_init Integer number of initial sample sizes explored before the main search algorithm begins.
+#' @param method Character string selecting the search engine; currently `"mlpwr"`, `"bisection"`, or `"mlpwr-bs"`.
+#' @param verbose Logical flag controlling printed progress information.
+#' @param ... Additional arguments passed to the chosen engine (for example `tol` for bisection or `penalty_weight` for GA-based methods).
 #'
-#' @returns
+#' @return An object of class `"pmsims"` containing the estimated minimum sample size and simulation diagnostics.
 #' @keywords internal
 #' @export
 #'
@@ -170,17 +169,44 @@ simulate_custom <- function(
   return(results_list)
 }
 
-#' Title
+#' Parse and validate input specifications
 #'
-#' @param data_spec A list with two items. The first named type which indicates the type of outcome. The second named args which is a list of arguments to be passed to the data generating function.
-#' @param metric A string indicating the metric to be used.
-#' @param model A string indicating the model to be used.
+#' This function validates the provided data, model, and metric specifications,
+#' and returns corresponding generator functions for each. It ensures that all
+#' required inputs are provided and correctly configured.
 #'
-#' @return A list containing a data function, a model function, and a metric function.
+#' @param data_spec A list containing two elements:
+#'   \describe{
+#'     \item{\code{type}}{A character string indicating the outcome type.}
+#'     \item{\code{args}}{A list of arguments to be passed to the data-generating function.}
+#'   }
+#' @param metric A character vector specifying one or more metrics to be used.
+#'   Currently, only the first element is used.
+#' @param model A character string specifying the model to be used.
+#'
+#' @return A list containing three elements:
+#'   \describe{
+#'     \item{\code{data_function}}{The data-generating function.}
+#'     \item{\code{model_function}}{The model-generating function.}
+#'     \item{\code{metric_function}}{The metric function corresponding to the chosen metric.}
+#'   }
+#'
+#' @details
+#' This function calls \code{default_data_generators()}, \code{default_model_generators()},
+#' and \code{default_metric_generator()} to construct the appropriate functions based on
+#' the supplied inputs.
+#'
 #' @keywords internal
 #' @export
 #'
 #' @examples
+#' \dontrun{
+#' data_spec <- list(
+#'   type = "binary",
+#'   args = list(n = 100, p = 5)
+#' )
+#' parse_inputs(data_spec, metric = "auc", model = "glm")
+#' }
 parse_inputs <- function(data_spec, metric, model) {
   if (is.null(metric)) {
     stop("metric is missing")
@@ -188,16 +214,16 @@ parse_inputs <- function(data_spec, metric, model) {
   if (is.null(data_spec)) {
     stop("data_spec missing")
   }
-  # Set data generating function
   data_function <- default_data_generators(data_spec)
-  # Set model function, based on outcome type and chosen model
   model_function <- default_model_generators(
     attr(data_function, "outcome"),
     model
   )
+
   # Set a metric, based on outcome type
-  # TODO: handle multiple metrics. Currently selecting first element in
-  # 'metric' only.
+  # TODO:
+  # Currently, we're selecting the first element in 'metric' only.
+  # In future, we will expand this to handle multiple metrics.
   metric_function <- default_metric_generator(metric[[1]], data_function)
   return(list(
     data_function = data_function,

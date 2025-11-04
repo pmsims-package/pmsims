@@ -1,7 +1,7 @@
 #' Calculate performance metrics
-#' Calculates the performetrics for a model given a sample size n.
-#' @param n is the sample size.
-#' @param value_on_error value to return if error.
+#' Calculates the performance metrics for a model given a sample size n.
+#' @param n Integer sample size.
+#' @param value_on_error Numeric fallback returned if the metric cannot be computed.
 #'
 #' @return The calculated performance metric
 #' @keywords internal

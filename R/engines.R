@@ -29,12 +29,13 @@ get_summaries <- function(performance_matrix) {
 
 #' get_min_sample_size: Heuristic starting-n for binary/continuous/survival prediction
 #'
-#' @param npar             integer. Number of predictors in the model
-#' @param prevalence       numeric [0,1]. An optional event rate or case‐fraction (binary or survival). Used for EPV calculations.
-#' @param c_stat           numeric >0.5. Anticipated c‐statistic (discrimination). (optional; factor >1/c_stat) (TODO: Explain)
-#' @param calib_slope      numeric. Anticipated calibration slope. (optional; factor 1/calib_slope if <1) (TODO: Explain)
-#' @param outcome_type     Outcome type. Must be one of "binary", "survival", or "continuous".
-#' @return                 integer. Recommended starting value from which to calculate the minimum sample size
+#' @param npar Integer; number of predictors in the model.
+#' @param prevalence Numeric in [0, 1]; optional event rate or case fraction used for EPV calculations.
+#' @param c_stat Numeric in (0.5, 1]; anticipated discrimination (C-statistic). Lower values inflate the heuristic.
+#' @param calib_slope Numeric; anticipated calibration slope. Values below 1 trigger a modest inflation.
+#' @param epv_value Numeric; target events-per-variable (EPV) value applied when prevalence is supplied.
+#' @param outcome_type Character string; must be one of `"binary"`, `"survival"`, or `"continuous"`.
+#' @return Integer recommended starting value from which to calculate the minimum sample size.
 #' @keywords internal
 #' @examples
 #' get_min_sample_size(npar = 5, prevalence = 0.2, c_stat = 0.75,
@@ -147,13 +148,13 @@ get_min_sample_size <- function(
 }
 
 
-#' adaptive_startvalues Derive adaptive sample sizes (TODO)
+#' adaptive_startvalues Derive adaptive sample sizes
 #'
-#' @param output
-#' @param aggregate_fun
-#' @param var_bootstrap
-#' @param target
-#' @param ci_q
+#' @param output List-like object containing `track_bisection`, produced by `calculate_bisection()`.
+#' @param aggregate_fun Function used to summarise replicate performance values (for example, `mean` or a quantile function).
+#' @param var_bootstrap Function returning the bootstrap variance of the aggregated performance.
+#' @param target Numeric target performance threshold.
+#' @param ci_q Numeric quantile for confidence-interval construction (default 0.975 gives a two-sided 95% interval).
 #' @keywords internal
 #'
 adaptive_startvalues <- function(
@@ -222,9 +223,9 @@ adaptive_startvalues <- function(
 
 #' mlpwr engine
 #' @inheritParams simulate_custom
-#' @param n_init The number of initial sample sizes simualted before the Gausian process search begins.
-#' @param verbose logical. Passed to mlpwr; return verbose output.
-#' @param value_on_error The value used if there is an error in fitting the model or calculating performance.
+#' @param n_init Integer number of initial sample sizes simulated before the Gaussian-process search begins.
+#' @param verbose Logical flag passed to `mlpwr`; when `TRUE` verbose output is printed.
+#' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
 #' @keywords internal
 calculate_mlpwr <- function(
   test_n,
@@ -316,7 +317,7 @@ calculate_mlpwr <- function(
   # Calculate bootstrapped quantile variance
   noise_fun <- function(x) var_bootstrap(x$y)
 
-  # TODO: Explan this better
+  # TODO: Explain this better
   # processing final_estimate_se
   # Auto-stopping or not
   if (!(is.null(se_final))) {
@@ -326,7 +327,7 @@ calculate_mlpwr <- function(
     ci <- NULL
   }
 
-  # Overide adaptive min when provided
+  # Override adaptive min when provided
   if (!is.null(min_sample_size)) {
     start_min_sample_size <- min_sample_size
   }
@@ -368,11 +369,19 @@ calculate_mlpwr <- function(
 
 
 #' The Bisection Engine
-#' TODO: Add description.
-#' @inheritParams calculate_mlpwr
-#' @param value_on_error
 #'
-#' @returns
+#' Runs a bisection search over sample size using repeated simulations and
+#' summaries of the chosen performance metric.
+#'
+#' @inheritParams calculate_mlpwr
+#' @param value_on_error Numeric fallback returned when a simulation run fails.
+#' @param tol Numeric tolerance controlling when the bisection loop stops.
+#' @param parallel Logical; if `TRUE` the per-sample-size simulations run in parallel via `foreach`.
+#' @param cores Integer number of cores to use when `parallel = TRUE`.
+#' @param budget Logical; if `TRUE` the algorithm halts once the evaluation budget is exhausted instead of using `tol`.
+#'
+#' @return A list containing the simulation `results`, performance `summaries`,
+#'   optional tracking `history`, and the `track_bisection` records.
 #' @keywords internal
 #' @export
 #'
@@ -480,7 +489,7 @@ calculate_bisection <- function(
     }
   }
 
-  # Overide adaptive min when provided
+  # Override adaptive min when provided
 
   if (!is.null(min_sample_size)) {
     start_min_sample_size <- min_sample_size
@@ -538,14 +547,13 @@ calculate_bisection <- function(
   return(result)
 }
 
-
 #' mlpwr-bs Hybrid engine using bisection to determine initial range and mlpwr for search
 #' @inheritParams simulate_custom
-#' @param n_init The number of initial sample sizes simulated before the gausian process search begins.
-#' @param verbose Whether to run mlpwr with verbose output
-#' @param value_on_error The value used if there is an error in fitting the model or calculating performance.
+#' @param n_init Integer number of initial sample sizes simulated before the Gaussian-process search begins.
+#' @param verbose Logical flag passed to `mlpwr`; when `TRUE` verbose output is printed.
+#' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
 #'
-#' @returns
+#' @return List containing the combined bisection and mlpwr results (`results`, `summaries`, `min_n`, `perf_n`, and `mlpwr_ds`).
 #' @keywords internal
 #' @export
 #'
@@ -789,7 +797,7 @@ calculate_mlpwr_bs <- function(
   mlpwrbs_min_sample_size <- get_start_bounds$min_value
   mlpwrbs_max_sample_size <- get_start_bounds$max_value
 
-  # Overide adaptive min and max when provided at stage 2
+  # Override adaptive min and max when provided at stage 2
   if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
     mlpwrbs_min_sample_size <- min_sample_size
     mlpwrbs_max_sample_size <- max_sample_size

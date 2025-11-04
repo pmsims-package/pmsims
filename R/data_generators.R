@@ -64,7 +64,7 @@ generate_continuous_data <- function(
 #' Title Simulate binary data
 #'
 #' @inheritParams generate_continuous_data
-#' @param baseline_prob Baseline probability of outcome (i.e., probability when all predicors are 0)
+#' @param baseline_prob Baseline probability of outcome (i.e., probability when all predictors are 0)
 #'
 #' @return A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 #' @keywords internal
