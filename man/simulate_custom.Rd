@@ -25,39 +25,40 @@ simulate_custom(
 )
 }
 \arguments{
-\item{data_function}{A function that returns datasets. Must have a single argmument, n, which controls the sample size.}
+\item{data_function}{A function that returns datasets. Must have a single argument, \code{n}, which controls the sample size.}
 
-\item{model_function}{A function that fits models to the data. Take the data object returned by data_funciton as only argument.}
+\item{model_function}{A function that fits models to the data. Takes the data object returned by \code{data_function} as its only argument.}
 
 \item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.}
 
-\item{target_performance}{The minimum desired model performance}
+\item{target_performance}{Numeric target performance threshold the algorithm must meet or exceed.}
 
-\item{mean_or_assurance}{Can be either "mean" or "assurance". If mean, sample size is calculated so that average model performance is greater than target_performance. If assurance model performance is greater than target performance 80\% of the time.}
+\item{c_statistic}{Numeric; anticipated large-sample discrimination used when tuning the data generator.}
 
-\item{test_n}{The sample size used for test datasets. This should be a large number.}
+\item{mean_or_assurance}{Character string \code{"mean"} or \code{"assurance"} indicating which criterion defines the minimum sample size.}
 
-\item{min_sample_size}{The minimum sample size assessed. This sets the lower bound of the search region for sample size.}
+\item{test_n}{Integer size of the test datasets used to evaluate performance (should be large).}
 
-\item{max_sample_size}{The maximum sample size assessed. This sets the upper bound of the search region for sample size.}
+\item{min_sample_size}{Integer lower bound of the sample-size search region.}
 
-\item{n_reps_total}{The total number of simulation reps run by pmsims.}
+\item{max_sample_size}{Integer upper bound of the sample-size search region.}
 
-\item{n_reps_per}{The number of reps run at each sample size.}
+\item{n_reps_total}{Integer total number of simulation replications allocated to the search.}
 
-\item{se_final}{A standard error which can be used as a stopping criteria. Either n_reps_total or se_final should be given.}
+\item{n_reps_per}{Integer number of replications evaluated at each candidate sample size.}
 
-\item{n_init}{The number of initial sample sizes to be used in the search before the algorithm passed in method is used}
+\item{se_final}{Numeric standard error threshold used for early stopping (supply either \code{n_reps_total} or \code{se_final}).}
 
-\item{method}{The method used to search for the minimum sample size. Options are "mlpwr", "crude" and "ga".}
+\item{n_init}{Integer number of initial sample sizes explored before the main search algorithm begins.}
 
-\item{verbose}{A logical controlling output}
+\item{method}{Character string selecting the search engine; currently \code{"mlpwr"}, \code{"bisection"}, or \code{"mlpwr-bs"}.}
 
-\item{...}{Other argments passed to the method function.}
+\item{verbose}{Logical flag controlling printed progress information.}
 
-\item{penalty_weight}{This is the weight that balances the objective and the cost of large sample size for the "ga" engine. Value 0 implies the focus is to minimize the abs difference.}
-
-\item{tol}{This is the minimum difference between performance at i and i+1 for the "bisection" engine, default is 1e-3.}
+\item{...}{Additional arguments passed to the chosen engine (for example \code{tol} for bisection or \code{penalty_weight} for GA-based methods).}
+}
+\value{
+An object of class \code{"pmsims"} containing the estimated minimum sample size and simulation diagnostics.
 }
 \description{
 Simulate Custom

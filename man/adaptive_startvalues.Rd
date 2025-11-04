@@ -2,7 +2,7 @@
 % Please edit documentation in R/engines.R
 \name{adaptive_startvalues}
 \alias{adaptive_startvalues}
-\title{adaptive_startvalues Derive adaptive sample sizes (TODO)}
+\title{adaptive_startvalues Derive adaptive sample sizes}
 \usage{
 adaptive_startvalues(
   output,
@@ -12,7 +12,18 @@ adaptive_startvalues(
   ci_q = 0.975
 )
 }
+\arguments{
+\item{output}{List-like object containing \code{track_bisection}, produced by \code{calculate_bisection()}.}
+
+\item{aggregate_fun}{Function used to summarise replicate performance values (for example, \code{mean} or a quantile function).}
+
+\item{var_bootstrap}{Function returning the bootstrap variance of the aggregated performance.}
+
+\item{target}{Numeric target performance threshold.}
+
+\item{ci_q}{Numeric quantile for confidence-interval construction (default 0.975 gives a two-sided 95\% interval).}
+}
 \description{
-adaptive_startvalues Derive adaptive sample sizes (TODO)
+adaptive_startvalues Derive adaptive sample sizes
 }
 \keyword{internal}

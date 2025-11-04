@@ -3,7 +3,7 @@
 \name{calculate_metrics_perf}
 \alias{calculate_metrics_perf}
 \title{Calculate performance metrics
-Calculates the performetrics for a model given a sample size n.}
+Calculates the performance metrics for a model given a sample size n.}
 \usage{
 calculate_metrics_perf(
   n,
@@ -14,15 +14,15 @@ calculate_metrics_perf(
 )
 }
 \arguments{
-\item{n}{is the sample size.}
+\item{n}{Integer sample size.}
 
-\item{value_on_error}{value to return if error.}
+\item{value_on_error}{Numeric fallback returned if the metric cannot be computed.}
 }
 \value{
 The calculated performance metric
 }
 \description{
 Calculate performance metrics
-Calculates the performetrics for a model given a sample size n.
+Calculates the performance metrics for a model given a sample size n.
 }
 \keyword{internal}

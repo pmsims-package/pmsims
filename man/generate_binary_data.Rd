@@ -28,7 +28,7 @@ generate_binary_data(
 
 \item{predictor_prop}{If predictor type is binary, the probability of a predictor taking value 1}
 
-\item{baseline_prob}{Baseline probability of outcome (i.e., probability when all predicors are 0)}
+\item{baseline_prob}{Baseline probability of outcome (i.e., probability when all predictors are 0)}
 }
 \value{
 A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns

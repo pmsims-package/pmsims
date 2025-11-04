@@ -2,16 +2,31 @@
 % Please edit documentation in R/plotting.R
 \name{plot.pmsims}
 \alias{plot.pmsims}
-\title{Plot the estimated Gaussian process curve from mlpwr}
+\title{Plot sample-size learning curves for \code{pmsims} outputs}
 \usage{
 \method{plot}{pmsims}(x, metric_label = NULL, plot = TRUE, ...)
 }
 \arguments{
-\item{x}{pmsims object}
+\item{x}{A \code{pmsims} object returned by \code{simulate_binary()},
+\code{simulate_continuous()}, \code{simulate_survival()}, or \code{simulate_custom()}.}
 
-\item{plot}{Whether to plot or data only}
+\item{metric_label}{Optional string used for the y-axis label when the object
+does not already record the metric name.}
+
+\item{plot}{Logical; if \code{TRUE} (default) the function prints the plot.
+If \code{FALSE}, the data used to build the plot are returned instead of
+drawing anything.}
+
+\item{...}{Currently unused.}
+}
+\value{
+Invisibly returns the \code{ggplot} object when \code{plot = TRUE}. When
+\code{plot = FALSE}, returns a list with two data frames: \code{observed_data}
+(simulated points) and \code{predicted_data} (Gaussian-process predictions).
 }
 \description{
-Plot the estimated Gaussian process curve from mlpwr
+Produces a ggplot showing the simulated points and the fitted
+Gaussian-process learning curve stored inside a \code{pmsims} object.
+Optionally returns the underlying data instead of drawing the plot.
 }
 \keyword{internal}

@@ -14,19 +14,20 @@ get_min_sample_size(
 )
 }
 \arguments{
-\item{npar}{integer. Number of predictors in the model}
+\item{npar}{Integer; number of predictors in the model.}
 
-\item{prevalence}{numeric \link{0,1}. An optional event rate or case‐fraction (binary or survival). Used for EPV calculations.}
+\item{prevalence}{Numeric in \link{0, 1}; optional event rate or case fraction used for EPV calculations.}
 
-\item{c_stat}{numeric >0.5. Anticipated c‐statistic (discrimination). (optional; factor >1/c_stat) (TODO: Explain)}
+\item{c_stat}{Numeric in (0.5, 1]; anticipated discrimination (C-statistic). Lower values inflate the heuristic.}
 
-\item{calib_slope}{numeric. Anticipated calibration slope. (optional; factor 1/calib_slope if <1) (TODO: Explain)}
+\item{calib_slope}{Numeric; anticipated calibration slope. Values below 1 trigger a modest inflation.}
 
-\item{outcome_type}{Outcome type. Must be one of "binary", "survival", or "continuous".}
+\item{epv_value}{Numeric; target events-per-variable (EPV) value applied when prevalence is supplied.}
+
+\item{outcome_type}{Character string; must be one of \code{"binary"}, \code{"survival"}, or \code{"continuous"}.}
 }
 \value{
-\if{html}{\out{<div class="sourceCode">}}\preformatted{            integer. Recommended starting value from which to calculate the minimum sample size
-}\if{html}{\out{</div>}}
+Integer recommended starting value from which to calculate the minimum sample size.
 }
 \description{
 get_min_sample_size: Heuristic starting-n for binary/continuous/survival prediction

@@ -22,33 +22,38 @@ calculate_mlpwr_bs(
 )
 }
 \arguments{
-\item{test_n}{The sample size used for test datasets. This should be a large number.}
+\item{test_n}{Integer size of the test datasets used to evaluate performance (should be large).}
 
-\item{n_reps_total}{The total number of simulation reps run by pmsims.}
+\item{n_reps_total}{Integer total number of simulation replications allocated to the search.}
 
-\item{n_reps_per}{The number of reps run at each sample size.}
+\item{n_reps_per}{Integer number of replications evaluated at each candidate sample size.}
 
-\item{se_final}{A standard error which can be used as a stopping criteria. Either n_reps_total or se_final should be given.}
+\item{se_final}{Numeric standard error threshold used for early stopping (supply either \code{n_reps_total} or \code{se_final}).}
 
-\item{min_sample_size}{The minimum sample size assessed. This sets the lower bound of the search region for sample size.}
+\item{min_sample_size}{Integer lower bound of the sample-size search region.}
 
-\item{max_sample_size}{The maximum sample size assessed. This sets the upper bound of the search region for sample size.}
+\item{max_sample_size}{Integer upper bound of the sample-size search region.}
 
-\item{target_performance}{The minimum desired model performance}
+\item{target_performance}{Numeric target performance threshold the algorithm must meet or exceed.}
 
-\item{mean_or_assurance}{Can be either "mean" or "assurance". If mean, sample size is calculated so that average model performance is greater than target_performance. If assurance model performance is greater than target performance 80\% of the time.}
+\item{c_statistic}{Numeric; anticipated large-sample discrimination used when tuning the data generator.}
 
-\item{verbose}{Whether to run mlpwr with verbose output}
+\item{mean_or_assurance}{Character string \code{"mean"} or \code{"assurance"} indicating which criterion defines the minimum sample size.}
 
-\item{data_function}{A function that returns datasets. Must have a single argmument, n, which controls the sample size.}
+\item{verbose}{Logical flag passed to \code{mlpwr}; when \code{TRUE} verbose output is printed.}
 
-\item{model_function}{A function that fits models to the data. Take the data object returned by data_funciton as only argument.}
+\item{data_function}{A function that returns datasets. Must have a single argument, \code{n}, which controls the sample size.}
+
+\item{model_function}{A function that fits models to the data. Takes the data object returned by \code{data_function} as its only argument.}
 
 \item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.}
 
-\item{value_on_error}{The value used if there is an error in fitting the model or calculating performance.}
+\item{value_on_error}{Numeric fallback value used if model fitting or metric calculation fails.}
 
-\item{n_init}{The number of initial sample sizes simulated before the gausian process search begins.}
+\item{n_init}{Integer number of initial sample sizes simulated before the Gaussian-process search begins.}
+}
+\value{
+List containing the combined bisection and mlpwr results (\code{results}, \code{summaries}, \code{min_n}, \code{perf_n}, and \code{mlpwr_ds}).
 }
 \description{
 mlpwr-bs Hybrid engine using bisection to determine initial range and mlpwr for search

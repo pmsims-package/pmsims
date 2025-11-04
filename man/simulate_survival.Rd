@@ -37,7 +37,7 @@ the binary predictors when \code{predictor_type = "binary"}. Ignored otherwise.}
 C-index for the survival model (used to tune the data-generating mechanism
 so that the model attains this performance for very large \eqn{n}).}
 
-\item{baseline_hazard}{Numeric > 0. Baseline hazard level used by the
+\item{baseline_hazard}{Numeric greater than 0. Baseline hazard level used by the
 data-generating mechanism (e.g., the constant hazard in an exponential
 baseline). Larger values imply shorter event times, all else equal.}
 

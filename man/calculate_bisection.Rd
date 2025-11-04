@@ -2,8 +2,7 @@
 % Please edit documentation in R/engines.R
 \name{calculate_bisection}
 \alias{calculate_bisection}
-\title{The Bisection Engine
-TODO: Add description.}
+\title{The Bisection Engine}
 \usage{
 calculate_bisection(
   data_function = data_function,
@@ -26,32 +25,46 @@ calculate_bisection(
 )
 }
 \arguments{
-\item{data_function}{A function that returns datasets. Must have a single argmument, n, which controls the sample size.}
+\item{data_function}{A function that returns datasets. Must have a single argument, \code{n}, which controls the sample size.}
 
-\item{model_function}{A function that fits models to the data. Take the data object returned by data_funciton as only argument.}
+\item{model_function}{A function that fits models to the data. Takes the data object returned by \code{data_function} as its only argument.}
 
 \item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.}
 
-\item{value_on_error}{}
+\item{value_on_error}{Numeric fallback returned when a simulation run fails.}
 
-\item{min_sample_size}{The minimum sample size assessed. This sets the lower bound of the search region for sample size.}
+\item{min_sample_size}{Integer lower bound of the sample-size search region.}
 
-\item{max_sample_size}{The maximum sample size assessed. This sets the upper bound of the search region for sample size.}
+\item{max_sample_size}{Integer upper bound of the sample-size search region.}
 
-\item{test_n}{The sample size used for test datasets. This should be a large number.}
+\item{test_n}{Integer size of the test datasets used to evaluate performance (should be large).}
 
-\item{n_reps_total}{The total number of simulation reps run by pmsims.}
+\item{n_reps_total}{Integer total number of simulation replications allocated to the search.}
 
-\item{n_reps_per}{The number of reps run at each sample size.}
+\item{n_reps_per}{Integer number of replications evaluated at each candidate sample size.}
 
-\item{target_performance}{The minimum desired model performance}
+\item{target_performance}{Numeric target performance threshold the algorithm must meet or exceed.}
 
-\item{mean_or_assurance}{Can be either "mean" or "assurance". If mean, sample size is calculated so that average model performance is greater than target_performance. If assurance model performance is greater than target performance 80\% of the time.}
+\item{c_statistic}{Numeric; anticipated large-sample discrimination used when tuning the data generator.}
 
-\item{verbose}{logical. Passed to mlpwr; return verbose output.}
+\item{mean_or_assurance}{Character string \code{"mean"} or \code{"assurance"} indicating which criterion defines the minimum sample size.}
+
+\item{tol}{Numeric tolerance controlling when the bisection loop stops.}
+
+\item{parallel}{Logical; if \code{TRUE} the per-sample-size simulations run in parallel via \code{foreach}.}
+
+\item{cores}{Integer number of cores to use when \code{parallel = TRUE}.}
+
+\item{verbose}{Logical flag passed to \code{mlpwr}; when \code{TRUE} verbose output is printed.}
+
+\item{budget}{Logical; if \code{TRUE} the algorithm halts once the evaluation budget is exhausted instead of using \code{tol}.}
+}
+\value{
+A list containing the simulation \code{results}, performance \code{summaries},
+optional tracking \code{history}, and the \code{track_bisection} records.
 }
 \description{
-The Bisection Engine
-TODO: Add description.
+Runs a bisection search over sample size using repeated simulations and
+summaries of the chosen performance metric.
 }
 \keyword{internal}

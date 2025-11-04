@@ -2,21 +2,47 @@
 % Please edit documentation in R/simulate_custom.R
 \name{parse_inputs}
 \alias{parse_inputs}
-\title{Title}
+\title{Parse and validate input specifications}
 \usage{
 parse_inputs(data_spec, metric, model)
 }
 \arguments{
-\item{data_spec}{A list with two items. The first named type which indicates the type of outcome. The second named args which is a list of arguments to be passed to the data generating function.}
+\item{data_spec}{A list containing two elements:
+\describe{
+\item{\code{type}}{A character string indicating the outcome type.}
+\item{\code{args}}{A list of arguments to be passed to the data-generating function.}
+}}
 
-\item{metric}{A string indicating the metric to be used.}
+\item{metric}{A character vector specifying one or more metrics to be used.
+Currently, only the first element is used.}
 
-\item{model}{A string indicating the model to be used.}
+\item{model}{A character string specifying the model to be used.}
 }
 \value{
-A list containing a data function, a model function, and a metric function.
+A list containing three elements:
+\describe{
+\item{\code{data_function}}{The data-generating function.}
+\item{\code{model_function}}{The model-generating function.}
+\item{\code{metric_function}}{The metric function corresponding to the chosen metric.}
+}
 }
 \description{
-Title
+This function validates the provided data, model, and metric specifications,
+and returns corresponding generator functions for each. It ensures that all
+required inputs are provided and correctly configured.
+}
+\details{
+This function calls \code{default_data_generators()}, \code{default_model_generators()},
+and \code{default_metric_generator()} to construct the appropriate functions based on
+the supplied inputs.
+}
+\examples{
+\dontrun{
+data_spec <- list(
+  type = "binary",
+  args = list(n = 100, p = 5)
+)
+parse_inputs(data_spec, metric = "auc", model = "glm")
+}
 }
 \keyword{internal}
