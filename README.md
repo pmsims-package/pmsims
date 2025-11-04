@@ -1,6 +1,4 @@
----
-title: "pmsims"
----
+# pmsims: Simulation-based Sample Size Tools for Prediction Models
 
 <img src="man/figures/logo.png" align="right" height="110" />
 
