@@ -1,83 +1,25 @@
 #' Plot sample-size learning curves for `pmsims` outputs
 #'
-#' Produces a ggplot showing the simulated/observed performance points and the
-#' fitted learning curve stored inside a `pmsims` object. Optionally returns the
-#' underlying data instead of drawing the plot.
+#' Produces a ggplot showing the simulated points and the fitted
+#' Gaussian-process learning curve stored inside a `pmsims` object.
+#' Optionally returns the underlying data instead of drawing the plot.
 #'
-#' The plot includes (when available in `x`):
-#' - a vertical dotted line at the estimated minimum sample size `min_n`;
-#' - a horizontal dashed line at the target performance `target_performance`;
-#' - a labelled point at \code{(min_n, perf_n)}.
+#' @param x A `pmsims` object returned by `simulate_binary()`,
+#'   `simulate_continuous()`, `simulate_survival()`, or `simulate_custom()`.
+#' @param metric_label Optional string used for the y-axis label when the object
+#'   does not already record the metric name.
+#' @param plot Logical; if `TRUE` (default) the function prints the plot.
+#'   If `FALSE`, the data used to build the plot are returned instead of
+#'   drawing anything.
+#' @param ... Currently unused.
 #'
-#' @param x A `pmsims` object (e.g., from `simulate_binary()`,
-#'   `simulate_continuous()`, or `simulate_survival()`) that may contain fields
-#'   used for plot annotations: `min_n`, `perf_n`, `target_performance`,
-#'   `metric`, and `mean_or_assurance`.
-#' @param metric_label Optional character string used as the metric name in the
-#'   y-axis label when the object does not already record it (overrides `x$metric`
-#'   if supplied).
-#' @param plot Logical; if `TRUE` (default) the function draws the plot to the
-#'   current graphics device. If `FALSE`, the function returns the data used to
-#'   build the plot instead of drawing anything.
-#' @param ... Currently unused; included for S3 method signature compatibility.
-#'
-#' @return If `plot = TRUE`, the plot is drawn and `NULL` is returned (invisibly).
-#'   If `plot = FALSE`, a list with two data frames is returned:
-#'   \describe{
-#'     \item{`observed_data`}{Two columns: `n` and `<metric_name>` containing the
-#'     aggregated observed performance by sample size.}
-#'     \item{`predicted_data`}{Two columns: `n` and `<metric_name>` containing the
-#'     fitted learning-curve values across the evaluated sample sizes.}
-#'   }
-#'
-#' @details
-#' - The x-axis is sample size \code{n}. The y-axis label is constructed as
-#'   \code{Performance(mean_or_assurance[metric])}, where `metric` is taken from
-#'   `metric_label` (if provided) or `x$metric`; and `mean_or_assurance` from
-#'   `x$mean_or_assurance` (if present).
-#' - Observed performance points are plotted alongside the fitted curve returned by
-#'   the internal fit function (\code{fit$fitfun}).
-#' - When `x$target_performance` is available, a horizontal dashed reference line
-#'   is added. When `x$min_n` and the corresponding performance are available, a
-#'   labelled point and vertical reference line are added.
-#'
-#' @section S3:
-#' This is the S3 method for `plot()` on objects of class `pmsims`.
-#'
-#' @seealso `simulate_binary()`, `simulate_continuous()`, `simulate_survival()`
-#'   for generating `pmsims` objects; `print.pmsims()` for a textual summary.
-#'
-#' @examples
-#' \dontrun{
-#' # Example using a simulated object (structure abbreviated):
-#' x <- simulate_binary(
-#'   signal_parameters = 5,
-#'   outcome_prevalence = 0.2,
-#'   large_sample_cstatistic = 0.75,
-#'   model = "glm",
-#'   metric = "calibration_slope",
-#'   minimum_acceptable_performance = 0.90,
-#'   n_reps_total = 1000,
-#'   mean_or_assurance = "assurance"
-#' )
-#'
-#' # Draw the plot
-#' plot(x)
-#'
-#' # Override the displayed metric label
-#' plot(x, metric_label = "C-slope")
-#'
-#' # Get the data used to build the plot
-#' pdata <- plot(x, plot = FALSE)
-#' str(pdata)
-#' }
-#'
-#' @keywords hplot
-#' @method plot pmsims
+#' @return Invisibly returns the `ggplot` object when `plot = TRUE`. When
+#'   `plot = FALSE`, returns a list with two data frames: `observed_data`
+#'   (simulated points) and `predicted_data` (Gaussian-process predictions).
+#' @keywords internal
 #' @export
-
 plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
-  ds <- ex2$mlpwr_ds
+  ds <- x$mlpwr_ds
   design <- NULL
 
   dat <- ds$dat
@@ -126,6 +68,7 @@ plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
     type = "Prediction"
   )
 
+  #### plot annotations
   min_n <- if (!is.null(x$min_n)) as.numeric(x$min_n) else NA_real_
   perf_n <- if (!is.null(x$perf_n)) {
     as.numeric(x$perf_n)
@@ -173,7 +116,6 @@ plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
       data = data.frame(n = min_n, mean = perf_n),
       size = 3
     )
-
   p <- p +
     ggplot2::annotate(
       "text",
@@ -219,8 +161,8 @@ plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
   if (plot) {
     print(p)
   } else {
-    observed_data = dat_obs
-    predicted_data = dat_pred[, -3]
+    observed_data <- dat_obs
+    predicted_data <- dat_pred[, -3]
     colnames(observed_data) <- colnames(predicted_data) <- c("n", metric_name)
     plot_data <- list(
       observed_data = observed_data,
