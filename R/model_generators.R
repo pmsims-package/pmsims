@@ -43,6 +43,8 @@ default_models <- list(
   )
 )
 
+#' @keywords internal
+#' @noRd
 default_model_generators <- function(outcome, model) {
   if (model %in% names(default_models[[outcome]])) {
     model_function <- default_models[[outcome]][[model]]

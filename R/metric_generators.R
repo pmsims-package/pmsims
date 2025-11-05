@@ -248,7 +248,7 @@ survival_calib_slope_free <- function(data, fit, model, eval_time = NULL) {
   # Compute IPCW weights for censoring at eval_time
   ipcw_obj <- try(
     pec::ipcw(
-      Surv(time, event) ~ 1,
+      survival::Surv(time, event) ~ 1,
       data = data,
       method = "marginal", # for Kaplan-meier
       # times = sort(unique(data$time)),

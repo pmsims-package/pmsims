@@ -41,7 +41,7 @@ survival_tuning <- function(
 
     # Calculate achieved event rate and C-index
     event_rate_achieved <- mean(event_ind)
-    surv_obj <- Surv(time_obs, event_ind)
+    surv_obj <- survival::Surv(time_obs, event_ind)
     cindex_achieved <- 1 - concordance(surv_obj ~ lp)$concordance
 
     # Sum of squared errors
@@ -77,7 +77,7 @@ survival_tuning <- function(
 
   # Calculate final metrics
   event_rate_final <- mean(event_ind_final)
-  surv_obj_final <- Surv(time_obs_final, event_ind_final)
+  surv_obj_final <- survival::Surv(time_obs_final, event_ind_final)
   cindex_final <- 1 - concordance(surv_obj_final ~ lp_final)$concordance
 
   # Compute beta_signal for features
