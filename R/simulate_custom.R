@@ -21,8 +21,6 @@
 #' @return An object of class `"pmsims"` containing the estimated minimum sample size and simulation diagnostics.
 #' @keywords internal
 #' @export
-#'
-#' @examples
 simulate_custom <- function(
   data_function = NULL,
   model_function = NULL,
@@ -198,15 +196,6 @@ simulate_custom <- function(
 #'
 #' @keywords internal
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' data_spec <- list(
-#'   type = "binary",
-#'   args = list(n = 100, p = 5)
-#' )
-#' parse_inputs(data_spec, metric = "auc", model = "glm")
-#' }
 parse_inputs <- function(data_spec, metric, model) {
   if (is.null(metric)) {
     stop("metric is missing")

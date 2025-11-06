@@ -22,7 +22,7 @@ assurance**. Rather than relying on simple rules of thumb or closed‑form
 formulae, pmsims uses **simulation** to:
 
 -   Generate synthetic datasets that reflect your target setting
-    (outcome type, prevalence or $R^2$, signal vs noise predictors);
+    (outcome type, prevalence or $R^2$, signal vs. noise predictors);
 -   Fit a specified **model** (e.g., logistic regression or linear
     regression);
 -   Evaluate a chosen **performance metric** (e.g., calibration slope,
@@ -30,26 +30,12 @@ formulae, pmsims uses **simulation** to:
 -   Trace a **learning curve** of performance as the training size
     increases.
 
-```{mermaid}
-#| eval: false
-flowchart LR
-    A[User inputs] --> B[Data generator]
-    A --> C[Prediction model]
-    A --> D[Metrics]
-
-    B --> E[Engine]
-    C --> E
-    D --> E
-
-    E --> F[N*]
-
-    style A fill:#f4cbd4,stroke:#7f2742,stroke-width:2px,color:#3b0a23
-    style B fill:#cbd9f4,stroke:#597fb0,stroke-width:2px
-    style C fill:#b8d3d3,stroke:#447273,stroke-width:2px
-    style D fill:#f9e6a3,stroke:#b89b30,stroke-width:2px
-    style E fill:#ffffff,stroke:#555,stroke-width:2px
-    style F fill:#ffffff,stroke:#000,stroke-width:2px
+```{=html}
+<div style="text-align:center;">
+  <img src="reference/figures/workflow.png" alt="A figure showing the package workflow." width="80%" />
+</div>
 ```
+
 
 The recommended design objective is **assurance**: the **smallest** $n$
 such that a high proportion of repeated studies (e.g., 80%) meet the
@@ -68,21 +54,119 @@ outcomes, respectively:
 All three functions share the same basic structure. The table below
 lists the key inputs.
 
-| Argument | <div style="width:200px">Applies to</div> | <div style="width:90px">Req</div> | Default | Description |
-|-----------|-------------|:---:|----------|--------------|
-| `signal_parameters` | all | ✓ | — | *(int)* Number of **true signal** predictors associated with the outcome. |
-| `noise_parameters` | all |  | `0` | *(int)* Number of **noise** predictors unrelated to the outcome. |
-| `predictor_type` | all |  | `"continuous"` | *(chr)* Type of simulated predictors (`"continuous"` or `"binary"`). |
-| `binary_predictor_prevalence` | all |  | `NULL` | *(num 0–1)* Prevalence for binary predictors (used only if `predictor_type = "binary"`). |
-| `outcome_prevalence` | binary only | ✓ | — | *(num 0–1)* Target prevalence of the binary outcome. |
-| `large_sample_cstatistic` | binary only | ✓ | — | *(num 0–1)* Expected **C-statistic** for a very large training sample. |
-| `large_sample_rsquared` | continuous only | ✓ | — | *(num 0–1)* Expected $R^2$ for a very large training sample. |
-| `large_sample_cindex` | survival only | ✓ | — | *(num 0–1)* Expected **concordance index** for a very large training sample. |
-| `model` | all |  | `"glm"` / `"lm"` / `"coxph"` | *(chr)* Model used for fitting (e.g. logistic, linear, or Cox). |
-| `metric` | all |  | `"calibration_slope"` | *(chr)* **Performance metric** used to estimate the **minimum required sample size** (e.g. calibration slope, $R^2$, C-statistic). |
-| `minimum_acceptable_performance` | all | ✓ | — | *(num)* **Minimum acceptable performance** in the **units of the chosen metric** (e.g. calibration slope ≥ 0.9). |
-| `n_reps_total` | all | ✓ | `1000` | *(int)* Total number of simulation replications. |
-| `mean_or_assurance` | all |  | `"assurance"` | *(chr)* Criterion for summarising results; `"assurance"` recommended. |
+```{=html}
+<table style="width:100%; border-collapse:collapse; table-layout:fixed;">
+  <colgroup>
+    <col style="width:220px;">
+    <col style="width:70px;">
+    <col style="width:70px;">
+    <col style="width:170px;">
+    <col style="width:50%;">
+  </colgroup>
+  <thead>
+    <tr>
+      <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Argument</th>
+      <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Applies to</th>
+      <th style="text-align:center; padding:8px; border-bottom:1px solid #ddd;">Req</th>
+      <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Default</th>
+      <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>signal_parameters</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(int)</em> Number of <strong>true signal</strong> predictors associated with the outcome.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>noise_parameters</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>0</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(int)</em> Number of <strong>noise</strong> predictors unrelated to the outcome.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>predictor_type</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>"continuous"</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(chr)</em> Type of simulated predictors (<code>"continuous"</code> or <code>"binary"</code>).</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>binary_predictor_prevalence</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>NULL</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(num 0–1)</em> Prevalence for binary predictors (used only if <code>predictor_type = "binary"</code>).</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>outcome_prevalence</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">binary only</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(num 0–1)</em> Target prevalence of the binary outcome.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>large_sample_cstatistic</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">binary only</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(num 0–1)</em> Expected <strong>C-statistic</strong> for a very large training sample.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>large_sample_rsquared</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">continuous only</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(num 0–1)</em> Expected R<sup>2</sup> for a very large training sample.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>large_sample_cindex</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">survival only</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(num 0–1)</em> Expected <strong>concordance index</strong> for a very large training sample.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>model</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>"glm"</code> / <code>"lm"</code> / <code>"coxph"</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(chr)</em> Model used for fitting (e.g. logistic, linear, or Cox).</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>metric</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>"calibration_slope"</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(chr)</em> <strong>Performance metric</strong> used to estimate the <strong>minimum required sample size</strong> (e.g. calibration slope, R<sup>2</sup>, C-statistic).</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>minimum_acceptable_performance</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(num)</em> <strong>Minimum acceptable performance</strong> in the <strong>units of the chosen metric</strong> (e.g. calibration slope ≥ 0.9).</td>
+    </tr>
+    <tr>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>n_reps_total</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>1000</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(int)</em> Total number of simulation replications.</td>
+    </tr>
+    <tr>
+      <td style="padding:8px;"><code>mean_or_assurance</code></td>
+      <td style="padding:8px;">all</td>
+      <td style="text-align:center; padding:8px;"></td>
+      <td style="padding:8px;"><code>"assurance"</code></td>
+      <td style="padding:8px;"><em>(chr)</em> Criterion for summarising results; <code>"assurance"</code> recommended.</td>
+    </tr>
+  </tbody>
+</table>
+```
 
 > Notes:
 >
@@ -104,6 +188,7 @@ library(pmsims)
 We target the smallest *n* that meets the **assurance** criterion.
 
 ```{r}
+#| eval: false
 set.seed(123)
 
 binary_example <- simulate_binary(
@@ -126,6 +211,7 @@ binary_example
 Plot the estimated learning curve and identified sample size:
 
 ```{r}
+#| eval: false
 plot(binary_example)
 ```
 

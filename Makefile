@@ -1,74 +1,73 @@
-# Makefile for an R package
-# Usage: `make help` for a list of targets
+# Usage: make help
 
-# ----- Config -----
-R ?= R
-RSCRIPT ?= Rscript
-PKG    := $(shell $(RSCRIPT) -e "cat(read.dcf('DESCRIPTION')[1,'Package'])")
-VER    := $(shell $(RSCRIPT) -e "cat(read.dcf('DESCRIPTION')[1,'Version'])")
-TARBALL := $(PKG)_$(VER).tar.gz
+R = R
+RSCRIPT = Rscript
 
-# Run R code quietly and fail fast
-R_Q := $(RSCRIPT) -e
+# Helper: run one-liners quietly
+RQ = $(RSCRIPT) -e
 
-# ----- Meta -----
-.PHONY: help document build install check test vignettes site clean distclean deps format lint
+help:
+	@printf "Targets:\n"
+	@printf "  help        - Show this help\n"
+	@printf "  deps        - Install package dependencies\n"
+	@printf "  document    - Generate Rd/NAMESPACE via roxygen2\n"
+	@printf "  build       - R CMD build\n"
+	@printf "  install     - R CMD INSTALL from source dir\n"
+	@printf "  test        - Run testthat tests\n"
+	@printf "  check       - R CMD check --as-cran (builds first)\n"
+	@printf "  vignettes   - Build vignettes\n"
+	@printf "  site        - Build pkgdown site\n"
+	@printf "  format      - Style code with styler\n"
+	@printf "  lint        - Lint with lintr\n"
+	@printf "  clean       - Remove build/check artefacts\n"
+	@printf "  distclean   - clean + remove pkgdown output\n"
+	@printf "  reinstall   - document then install from source\n"
+	@printf "  dev         - document then test\n"
 
-help: ## Show this help
-	@awk 'BEGIN{FS=":.*##"; printf "\nTargets:\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-	@echo ""
+deps:
+	@$(RQ) "if (!requireNamespace('remotes', quietly=TRUE)) install.packages('remotes'); remotes::install_deps(dependencies=TRUE)"
 
-# ----- Core workflow -----
-document: ## Generate Rd, NAMESPACE (roxygen2/devtools)
-	$(R_Q) "devtools::document(quiet = TRUE)"
+document:
+	@$(RQ) "if (!requireNamespace('roxygen2', quietly=TRUE)) install.packages('roxygen2'); roxygen2::roxygenise()"
 
-build: document ## Build source tarball (R CMD build)
-	$(R) CMD build .
+build:
+	@$(R) CMD build .
 
-install: document ## Install package (from source directory)
-	$(R) CMD INSTALL .
+install:
+	@$(R) CMD INSTALL --preclean .
 
-check: build ## R CMD check (CRAN-like)
-	$(R) CMD check --as-cran $(TARBALL)
+test:
+	@$(RQ) "if (!requireNamespace('testthat', quietly=TRUE)) install.packages('testthat'); testthat::test_dir('tests/testthat', reporter='summary')"
 
-test: ## Run tests (testthat)
-	$(R_Q) "devtools::test(stop_on_failure = TRUE)"
+# Build first, then compute tarball name in the shell (portable; no $(shell))
+check: build
+	@PKG=`$(RSCRIPT) -e "cat(read.dcf('DESCRIPTION')[1,'Package'])"`; \
+	VER=`$(RSCRIPT) -e "cat(read.dcf('DESCRIPTION')[1,'Version'])"`; \
+	TARBALL="$$PKG"_$$VER".tar.gz"; \
+	$(R) CMD check --as-cran "$$TARBALL"
 
-vignettes: ## Build vignettes
-	$(R_Q) "devtools::build_vignettes()"
+vignettes:
+	@$(RQ) "tools::buildVignettes(dir='.')"
 
-site: document ## Build pkgdown site (docs/)
-	$(R_Q) "pkgdown::build_site(lazy = TRUE)"
+site:
+	@$(RQ) "if (!requireNamespace('pkgdown', quietly=TRUE)) install.packages('pkgdown'); pkgdown::build_site()"
 
-# ----- Extras -----
-deps: ## Install package dependencies (incl. Suggests)
-	$(R_Q) "devtools::install_deps(dependencies = TRUE, upgrade = 'never')"
+format:
+	@$(RQ) "if (!requireNamespace('styler', quietly=TRUE)) install.packages('styler'); styler::style_pkg()"
 
-format: ## Style code with styler
-	$(R_Q) "if (!requireNamespace('styler', quietly=TRUE)) install.packages('styler'); styler::style_pkg()"
+lint:
+	@$(RQ) "if (!requireNamespace('lintr', quietly=TRUE)) install.packages('lintr'); print(lintr::lint_package())"
 
-lint: ## Lint package with lintr
-	$(R_Q) "if (!requireNamespace('lintr', quietly=TRUE)) install.packages('lintr'); print(lintr::lint_package())"
-
-clean: ## Remove build artefacts
+clean:
+	@rm -rf *.tar.gz
 	@rm -rf *.Rcheck
-	@rm -f  *.tar.gz
-	@rm -rf .Rproj.user
-	@rm -rf inst/doc
-	@rm -rf man/figures
-	@rm -rf .devcontainer
-	@rm -rf _pkgdown.yml~ _pkgdown .pkgdown
+	@rm -rf .Rhistory .RData
 
-distclean: clean ## Also remove pkgdown output and cache
-	@rm -rf docs
-	@rm -rf pkgdown
+distclean: clean
+	@rm -rf docs pkgdown
 
-# Convenience: build-and-install in one go
-reinstall: ## Document, then reinstall from source dir
-	$(MAKE) document
-	$(R) CMD INSTALL --preclean .
+reinstall: document
+	@$(R) CMD INSTALL --preclean .
 
-# Quick dev loop: document + test
-dev: ## Document and run tests
-	$(MAKE) document
-	$(MAKE) test
+dev: document
+	@$(MAKE) test

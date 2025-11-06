@@ -36,13 +36,4 @@ This function calls \code{default_data_generators()}, \code{default_model_genera
 and \code{default_metric_generator()} to construct the appropriate functions based on
 the supplied inputs.
 }
-\examples{
-\dontrun{
-data_spec <- list(
-  type = "binary",
-  args = list(n = 100, p = 5)
-)
-parse_inputs(data_spec, metric = "auc", model = "glm")
-}
-}
 \keyword{internal}

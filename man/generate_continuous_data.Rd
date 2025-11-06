@@ -32,11 +32,4 @@ A data frame with one outcome column and n_signal_parameters + noise_parameters 
 \description{
 Title Simulate continuous data
 }
-\examples{
-generate_continuous_data(
-  n = 100, n_signal_parameters = 10,
-  noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1,
-  beta_signal = 0.1
-)
-}
 \keyword{internal}

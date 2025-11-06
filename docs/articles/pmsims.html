@@ -37,12 +37,6 @@
       <ul class="navbar-nav me-auto">
 <li class="active nav-item"><a class="nav-link" href="../articles/pmsims.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/about.html">How pmsims works</a></li>
-  </ul>
-</li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -91,7 +85,7 @@ relying on simple rules of thumb or closed‑form formulae, pmsims uses
 <ul>
 <li>Generate synthetic datasets that reflect your target setting
 (outcome type, prevalence or <span class="math inline">\(R^2\)</span>,
-signal vs noise predictors);</li>
+signal vs. noise predictors);</li>
 <li>Fit a specified <strong>model</strong> (e.g., logistic regression or
 linear regression);</li>
 <li>Evaluate a chosen <strong>performance metric</strong> (e.g.,
@@ -99,23 +93,9 @@ calibration slope, AUC); and</li>
 <li>Trace a <strong>learning curve</strong> of performance as the
 training size increases.</li>
 </ul>
-<pre class="mermaid"><code>flowchart LR
-    A[User inputs] --&gt; B[Data generator]
-    A --&gt; C[Prediction model]
-    A --&gt; D[Metrics]
-
-    B --&gt; E[Engine]
-    C --&gt; E
-    D --&gt; E
-
-    E --&gt; F[N*]
-
-    style A fill:#f4cbd4,stroke:#7f2742,stroke-width:2px,color:#3b0a23
-    style B fill:#cbd9f4,stroke:#597fb0,stroke-width:2px
-    style C fill:#b8d3d3,stroke:#447273,stroke-width:2px
-    style D fill:#f9e6a3,stroke:#b89b30,stroke-width:2px
-    style E fill:#ffffff,stroke:#555,stroke-width:2px
-    style F fill:#ffffff,stroke:#000,stroke-width:2px</code></pre>
+<div style="text-align:center;">
+  <img src="reference/figures/workflow.png" alt="A figure showing the package workflow." width="80%">
+</div>
 <p>The recommended design objective is <strong>assurance</strong>: the
 <strong>smallest</strong> <span class="math inline">\(n\)</span> such
 that a high proportion of repeated studies (e.g., 80%) meet the target
@@ -135,141 +115,128 @@ survival outcomes, respectively:</p>
 </ul>
 <p>All three functions share the same basic structure. The table below
 lists the key inputs.</p>
-<table class="table">
+<table style="width:100%; border-collapse:collapse; table-layout:fixed;" class="table">
 <colgroup>
-<col width="20%">
-<col width="24%">
-<col width="9%">
-<col width="18%">
-<col width="26%">
+<col style="width:220px;">
+<col style="width:70px;">
+<col style="width:70px;">
+<col style="width:170px;">
+<col style="width:50%;">
 </colgroup>
-<thead><tr class="header">
-<th>Argument</th>
-<th></th>
-<th align="center"></th>
-<th>Default</th>
-<th>Description</th>
-</tr></thead>
+<thead><tr>
+<th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Argument</th>
+      <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Applies to</th>
+      <th style="text-align:center; padding:8px; border-bottom:1px solid #ddd;">Req</th>
+      <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Default</th>
+      <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Description</th>
+    </tr></thead>
 <tbody>
-<tr class="odd">
-<td><code>signal_parameters</code></td>
-<td>all</td>
-<td align="center">✓</td>
-<td>—</td>
-<td>
-<em>(int)</em> Number of <strong>true signal</strong> predictors
-associated with the outcome.</td>
-</tr>
-<tr class="even">
-<td><code>noise_parameters</code></td>
-<td>all</td>
-<td align="center"></td>
-<td><code>0</code></td>
-<td>
-<em>(int)</em> Number of <strong>noise</strong> predictors unrelated
-to the outcome.</td>
-</tr>
-<tr class="odd">
-<td><code>predictor_type</code></td>
-<td>all</td>
-<td align="center"></td>
-<td><code>"continuous"</code></td>
-<td>
-<em>(chr)</em> Type of simulated predictors
-(<code>"continuous"</code> or <code>"binary"</code>).</td>
-</tr>
-<tr class="even">
-<td><code>binary_predictor_prevalence</code></td>
-<td>all</td>
-<td align="center"></td>
-<td><code>NULL</code></td>
-<td>
-<em>(num 0–1)</em> Prevalence for binary predictors (used only if
-<code>predictor_type = "binary"</code>).</td>
-</tr>
-<tr class="odd">
-<td><code>outcome_prevalence</code></td>
-<td>binary only</td>
-<td align="center">✓</td>
-<td>—</td>
-<td>
+<tr>
+<td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>signal_parameters</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+<em>(int)</em> Number of <strong>true signal</strong> predictors associated with the outcome.</td>
+    </tr>
+<tr>
+<td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>noise_parameters</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>0</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+<em>(int)</em> Number of <strong>noise</strong> predictors unrelated to the outcome.</td>
+    </tr>
+<tr>
+<td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>predictor_type</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>"continuous"</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+<em>(chr)</em> Type of simulated predictors (<code>"continuous"</code> or <code>"binary"</code>).</td>
+    </tr>
+<tr>
+<td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>binary_predictor_prevalence</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>NULL</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+<em>(num 0–1)</em> Prevalence for binary predictors (used only if <code>predictor_type = "binary"</code>).</td>
+    </tr>
+<tr>
+<td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>outcome_prevalence</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">binary only</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
 <em>(num 0–1)</em> Target prevalence of the binary outcome.</td>
-</tr>
-<tr class="even">
-<td><code>large_sample_cstatistic</code></td>
-<td>binary only</td>
-<td align="center">✓</td>
-<td>—</td>
-<td>
-<em>(num 0–1)</em> Expected <strong>C-statistic</strong> for a very
-large training sample.</td>
-</tr>
-<tr class="odd">
-<td><code>large_sample_rsquared</code></td>
-<td>continuous only</td>
-<td align="center">✓</td>
-<td>—</td>
-<td>
-<em>(num 0–1)</em> Expected <span class="math inline">\(R^2\)</span>
-for a very large training sample.</td>
-</tr>
-<tr class="even">
-<td><code>large_sample_cindex</code></td>
-<td>survival only</td>
-<td align="center">✓</td>
-<td>—</td>
-<td>
-<em>(num 0–1)</em> Expected <strong>concordance index</strong> for a
-very large training sample.</td>
-</tr>
-<tr class="odd">
-<td><code>model</code></td>
-<td>all</td>
-<td align="center"></td>
-<td>
+    </tr>
+<tr>
+<td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>large_sample_cstatistic</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">binary only</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+<em>(num 0–1)</em> Expected <strong>C-statistic</strong> for a very large training sample.</td>
+    </tr>
+<tr>
+<td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>large_sample_rsquared</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">continuous only</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+<em>(num 0–1)</em> Expected R<sup>2</sup> for a very large training sample.</td>
+    </tr>
+<tr>
+<td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>large_sample_cindex</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">survival only</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+<em>(num 0–1)</em> Expected <strong>concordance index</strong> for a very large training sample.</td>
+    </tr>
+<tr>
+<td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>model</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
 <code>"glm"</code> / <code>"lm"</code> / <code>"coxph"</code>
 </td>
-<td>
-<em>(chr)</em> Model used for fitting (e.g. logistic, linear, or
-Cox).</td>
-</tr>
-<tr class="even">
-<td><code>metric</code></td>
-<td>all</td>
-<td align="center"></td>
-<td><code>"calibration_slope"</code></td>
-<td>
-<em>(chr)</em> <strong>Performance metric</strong> used to estimate
-the <strong>minimum required sample size</strong> (e.g. calibration
-slope, <span class="math inline">\(R^2\)</span>, C-statistic).</td>
-</tr>
-<tr class="odd">
-<td><code>minimum_acceptable_performance</code></td>
-<td>all</td>
-<td align="center">✓</td>
-<td>—</td>
-<td>
-<em>(num)</em> <strong>Minimum acceptable performance</strong> in
-the <strong>units of the chosen metric</strong> (e.g. calibration slope
-≥ 0.9).</td>
-</tr>
-<tr class="even">
-<td><code>n_reps_total</code></td>
-<td>all</td>
-<td align="center">✓</td>
-<td><code>1000</code></td>
-<td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+<em>(chr)</em> Model used for fitting (e.g. logistic, linear, or Cox).</td>
+    </tr>
+<tr>
+<td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>metric</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>"calibration_slope"</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+<em>(chr)</em> <strong>Performance metric</strong> used to estimate the <strong>minimum required sample size</strong> (e.g. calibration slope, R<sup>2</sup>, C-statistic).</td>
+    </tr>
+<tr>
+<td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>minimum_acceptable_performance</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+<em>(num)</em> <strong>Minimum acceptable performance</strong> in the <strong>units of the chosen metric</strong> (e.g. calibration slope ≥ 0.9).</td>
+    </tr>
+<tr>
+<td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>n_reps_total</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
+      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>1000</code></td>
+      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
 <em>(int)</em> Total number of simulation replications.</td>
-</tr>
-<tr class="odd">
-<td><code>mean_or_assurance</code></td>
-<td>all</td>
-<td align="center"></td>
-<td><code>"assurance"</code></td>
-<td>
-<em>(chr)</em> Criterion for summarising results;
-<code>"assurance"</code> recommended.</td>
-</tr>
+    </tr>
+<tr>
+<td style="padding:8px;"><code>mean_or_assurance</code></td>
+      <td style="padding:8px;">all</td>
+      <td style="text-align:center; padding:8px;"></td>
+      <td style="padding:8px;"><code>"assurance"</code></td>
+      <td style="padding:8px;">
+<em>(chr)</em> Criterion for summarising results; <code>"assurance"</code> recommended.</td>
+    </tr>
 </tbody>
 </table>
 <blockquote>
@@ -287,17 +254,17 @@ samples.</li>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
 <span><span class="co"># remotes::install_github("pmsims-package/pmsims")</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pmsims-package.github.io/pmsims/" class="external-link">pmsims</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pmsims-package.github.io/pmsims/">pmsims</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="binary-outcome-example">Binary-outcome example<a class="anchor" aria-label="anchor" href="#binary-outcome-example"></a>
 </h2>
 <p>We target the smallest <em>n</em> that meets the
 <strong>assurance</strong> criterion.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">binary_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_binary.html">simulate_binary</a></span><span class="op">(</span></span>
@@ -314,36 +281,15 @@ samples.</li>
 <span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">binary_example</span></span>
-<span><span class="co">#&gt;                     ┌────────────────────────────────────────┐</span></span>
-<span><span class="co">#&gt;                     │<span style="font-weight: bold;"> pmsims: Sample size simulation summary </span>│</span></span>
-<span><span class="co">#&gt;                     └────────────────────────────────────────┘</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────── Inputs ────────────────────────────────────</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                             Outcome</span> : binary</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                      Predictor type</span> : continuous</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                Number of predictors</span> : 15</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                    Noise predictors</span> : 0</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                          Prevalence</span> : 0.2</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">   Expected large-sample performance</span> : C-statistic ('cstatistic') = 0.800</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">Target for chosen performance metric</span> : Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.900</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                               Model</span> : glm</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                     Simulation reps</span> : 1,000</span></span>
-<span><span class="co">#&gt; ──────────────────────────────────── Results ───────────────────────────────────</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">           Final minimum sample size</span> : <span style="font-weight: bold;">1,556</span></span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">          Estimated performance at N</span> : 0.894 (Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.900)</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">                               Model</span> : glm</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">                                Mode</span> : Assurance</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">                        Running time</span> : 2 minutes 10 seconds</span></span>
-<span><span class="co">#&gt;     <span style="color: #555555; font-style: italic;">Assurance mode ensures the target metric is met with high probability across repeated datasets.</span></span></span></code></pre></div>
+<span><span class="va">binary_example</span></span></code></pre></div>
 <p>Plot the estimated learning curve and identified sample size:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">binary_example</span><span class="op">)</span></span></code></pre></div>
-<p><img src="pmsims_files/figure-html/unnamed-chunk-4-1.png" width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="continuous-outcome-example">Continuous-outcome example<a class="anchor" aria-label="anchor" href="#continuous-outcome-example"></a>
 </h2>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">continuous_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_continuous.html">simulate_continuous</a></span><span class="op">(</span></span>
 <span>  signal_parameters <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>  noise_parameters <span class="op">=</span> <span class="fl">0</span>,</span>
@@ -357,13 +303,13 @@ samples.</li>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">continuous_example</span></span></code></pre></div>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">continuous_example</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
 <span><span class="co">#&gt; Platform: aarch64-apple-darwin20</span></span>
@@ -386,20 +332,14 @@ samples.</li>
 <span><span class="co">#&gt; [1] pmsims_0.5.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] Matrix_1.7-4       rgenoud_5.9-0.11   gtable_0.3.6       jsonlite_2.0.0    </span></span>
-<span><span class="co">#&gt;  [5] dplyr_1.1.4        compiler_4.5.2     crayon_1.5.3       tidyselect_1.2.1  </span></span>
-<span><span class="co">#&gt;  [9] jquerylib_0.1.4    splines_4.5.2      systemfonts_1.3.1  scales_1.4.0      </span></span>
-<span><span class="co">#&gt; [13] textshaping_1.0.4  yaml_2.3.10        fastmap_1.2.0      lattice_0.22-7    </span></span>
-<span><span class="co">#&gt; [17] ggplot2_4.0.0      R6_2.6.1           labeling_0.4.3     generics_0.1.4    </span></span>
-<span><span class="co">#&gt; [21] knitr_1.50         htmlwidgets_1.6.4  randtoolbox_2.0.5  rngWELL_0.10-10   </span></span>
-<span><span class="co">#&gt; [25] tibble_3.3.0       desc_1.4.3         pillar_1.11.1      bslib_0.9.0       </span></span>
-<span><span class="co">#&gt; [29] RColorBrewer_1.1-3 rlang_1.1.6        cachem_1.1.0       xfun_0.54         </span></span>
-<span><span class="co">#&gt; [33] S7_0.2.0           fs_1.6.6           DiceKriging_1.6.1  sass_0.4.10       </span></span>
-<span><span class="co">#&gt; [37] cli_3.6.5          withr_3.0.2        magrittr_2.0.4     pkgdown_2.1.3     </span></span>
-<span><span class="co">#&gt; [41] digest_0.6.37      grid_4.5.2         lifecycle_1.0.4    mlpwr_1.1.1       </span></span>
-<span><span class="co">#&gt; [45] vctrs_0.6.5        evaluate_1.0.5     glue_1.8.0         farver_2.1.2      </span></span>
-<span><span class="co">#&gt; [49] ragg_1.5.0         survival_3.8-3     rmarkdown_2.30     pkgconfig_2.0.3   </span></span>
-<span><span class="co">#&gt; [53] tools_4.5.2        htmltools_0.5.8.1</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] cli_3.6.5         knitr_1.50        rlang_1.1.6       xfun_0.54        </span></span>
+<span><span class="co">#&gt;  [5] textshaping_1.0.4 jsonlite_2.0.0    htmltools_0.5.8.1 ragg_1.5.0       </span></span>
+<span><span class="co">#&gt;  [9] sass_0.4.10       rmarkdown_2.30    grid_4.5.2        evaluate_1.0.5   </span></span>
+<span><span class="co">#&gt; [13] jquerylib_0.1.4   fastmap_1.2.0     yaml_2.3.10       lifecycle_1.0.4  </span></span>
+<span><span class="co">#&gt; [17] compiler_4.5.2    fs_1.6.6          htmlwidgets_1.6.4 lattice_0.22-7   </span></span>
+<span><span class="co">#&gt; [21] systemfonts_1.3.1 digest_0.6.37     R6_2.6.1          splines_4.5.2    </span></span>
+<span><span class="co">#&gt; [25] bslib_0.9.0       Matrix_1.7-4      tools_4.5.2       survival_3.8-3   </span></span>
+<span><span class="co">#&gt; [29] pkgdown_2.1.3     cachem_1.1.0      desc_1.4.3</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
