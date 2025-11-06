@@ -39,12 +39,6 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="articles/pmsims.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/about.html">How pmsims works</a></li>
-  </ul>
-</li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -70,10 +64,9 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="pmsims-simulation-based-sample-size-tools-for-prediction-models">pmsims: Simulation-based Sample Size Tools for Prediction Models<a class="anchor" aria-label="anchor" href="#pmsims-simulation-based-sample-size-tools-for-prediction-models"></a>
 </h1></div>
-<p><img src="reference/figures/logo.png" align="right" height="110"></p>
 <p><strong>pmsims</strong> is an R package for estimating how much data are needed to develop reliable and generalisable prediction models. It uses a <strong>simulation-based learning curve</strong> approach to quantify how model performance improves with increasing sample size, supporting principled study planning and feasibility assessment.</p>
 <p>The package is fully model-agnostic: users can define how data are generated, how models are fitted, and how predictive performance is measured. It currently supports regression-based prediction models with continuous, binary, and time-to-event outcomes.</p>
-<p><strong>Developed at</strong> <a href="https://www.kcl.ac.uk/" class="external-link">King’s College London</a> (Department of Biostatistics &amp; Health Informatics) with input from researchers, clinicians, and patient partners. See also the <a href="https://pmsims-package.github.io/pmsims-website/" class="external-link">pmsims project site</a>.</p>
+<p>Developed at <a href="https://www.kcl.ac.uk/" class="external-link">King’s College London</a> (Department of Biostatistics &amp; Health Informatics) with input from researchers, clinicians, and patient partners. See the <a href="https://pmsims-package.github.io/pmsims-website/">pmsims project site</a> for further details.</p>
 <hr>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -87,27 +80,52 @@
 <h2 id="minimal-example">Minimal example<a class="anchor" aria-label="anchor" href="#minimal-example"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pmsims-package.github.io/pmsims/" class="external-link">pmsims</a></span><span class="op">)</span></span>
-<span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pmsims-package.github.io/pmsims/">pmsims</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">binary_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/simulate_binary.html">simulate_binary</a></span><span class="op">(</span></span>
+<span>  signal_parameters <span class="op">=</span> <span class="fl">15</span>,</span>
+<span>  noise_parameters  <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span>
+<span>  binary_predictor_prevalence <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  outcome_prevalence <span class="op">=</span> <span class="fl">0.20</span>,</span>
+<span>  large_sample_cstatistic <span class="op">=</span> <span class="fl">0.80</span>,</span>
+<span>  model <span class="op">=</span> <span class="st">"glm"</span>,</span>
+<span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span>
+<span>  minimum_acceptable_performance <span class="op">=</span> <span class="fl">0.90</span>,</span>
+<span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">binary_example</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
 <h2 id="get-in-touch">Get in touch<a class="anchor" aria-label="anchor" href="#get-in-touch"></a>
 </h2>
 <p>We welcome questions, suggestions, and collaboration enquiries.</p>
-<p align="center">
-<a href="mailto:pmsims@kcl.ac.uk?subject=pmsims%20enquiry"> <img src="https://img.shields.io/badge/Email%20the%20team-pmsims@kcl.ac.uk-003366?style=for-the-badge" alt="Email the pmsims team"></a>
-</p>
+<ul>
+<li>
+<strong>Email:</strong> <a href="mailto:pmsims@kcl.ac.uk?subject=pmsims%20enquiry">pmsims@kcl.ac.uk</a><br>
+</li>
+<li>
+<strong>Feedback or bugs:</strong> please <a href="https://github.com/pmsims-package/pmsims/issues" class="external-link">open a GitHub issue</a>
+</li>
+</ul>
 <hr>
 </div>
 <div class="section level2">
 <h2 id="funding">Funding<a class="anchor" aria-label="anchor" href="#funding"></a>
 </h2>
-<p>This work is supported by the <strong>National Institute for Health and Care Research (NIHR)</strong> under the <strong>Research for Patient Benefit (RfPB)</strong> Programme.</p>
+<div style="display:flex; justify-content:center; align-items:center; gap:100px; margin:20px 0;">
+  <div style="text-align:center;">
+    <img src="reference/figures/nihr-logo.png" alt="NIHR logo" height="100" width="560">
+</div>
+  <div style="text-align:center;">
+    <img src="reference/figures/kcl-logo.png" alt="King’s College London logo" width="150" height="120">
+</div>
+</div>
+<p>This work is supported by the <strong>National Institute for Health and Care Research (NIHR)</strong> under the<br><strong>Research for Patient Benefit (RfPB)</strong> Programme (<a href="https://www.fundingawards.nihr.ac.uk/award/NIHR206858" class="external-link"><em>NIHR206858</em></a>).</p>
 <p><em>The views expressed are those of the authors and not necessarily those of the NIHR or the Department of Health and Social Care.</em></p>
 </div>
 </div>
