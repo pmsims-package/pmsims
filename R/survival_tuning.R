@@ -20,8 +20,6 @@ survival_tuning <- function(
   N_sim_optim = 20000, # Sample size for optimization
   N_sim_final = 50000 # Sample size for final validation
 ) {
-  require(survival)
-
   # Objective function to minimize
   obj_fun <- function(x) {
     log_sigma <- x[1]
@@ -31,18 +29,18 @@ survival_tuning <- function(
 
     # Simulate survival data
     set.seed(123) # For reproducibility during optimization
-    lp <- rnorm(N_sim_optim, mean = 0, sd = sigma)
+    lp <- stats::rnorm(N_sim_optim, mean = 0, sd = sigma)
     hazard_rate <- lambda * exp(lp)
-    event_time <- rexp(N_sim_optim, rate = hazard_rate)
+    event_time <- stats::rexp(N_sim_optim, rate = hazard_rate)
     #censoring_time <- rep(1, N_sim_optim)  # Administrative censoring at t=1
-    censoring_time <- rep(quantile(event_time, target_prevalence), N_sim_optim) # Administrative censoring at t=c
+    censoring_time <- rep(stats::quantile(event_time, target_prevalence), N_sim_optim) # Administrative censoring at t=c
     time_obs <- pmin(event_time, censoring_time)
     event_ind <- as.numeric(event_time <= censoring_time)
 
     # Calculate achieved event rate and C-index
     event_rate_achieved <- mean(event_ind)
     surv_obj <- survival::Surv(time_obs, event_ind)
-    cindex_achieved <- 1 - concordance(surv_obj ~ lp)$concordance
+    cindex_achieved <- 1 - survival::concordance(surv_obj ~ lp)$concordance
 
     # Sum of squared errors
     (event_rate_achieved - target_prevalence)^2 +
@@ -50,7 +48,7 @@ survival_tuning <- function(
   }
 
   # Find optimal parameters
-  opt_result <- optim(
+  opt_result <- stats::optim(
     par = c(0, 0), # Initial guess (log_sigma=0, log_lambda=0)
     fn = obj_fun,
     method = "L-BFGS-B",
@@ -64,12 +62,12 @@ survival_tuning <- function(
   lambda_opt <- exp(opt_result$par[2])
 
   # Validate with large simulation
-  lp_final <- rnorm(N_sim_final, mean = 0, sd = sigma_opt)
+  lp_final <- stats::rnorm(N_sim_final, mean = 0, sd = sigma_opt)
   hazard_rate_final <- lambda_opt * exp(lp_final)
-  event_time_final <- rexp(N_sim_final, rate = hazard_rate_final)
+  event_time_final <- stats::rexp(N_sim_final, rate = hazard_rate_final)
   #censoring_time_final <- rep(1, N_sim_final)
   censoring_time_final <- rep(
-    quantile(event_time_final, target_prevalence),
+    stats::quantile(event_time_final, target_prevalence),
     N_sim_final
   )
   time_obs_final <- pmin(event_time_final, censoring_time_final)
@@ -78,7 +76,7 @@ survival_tuning <- function(
   # Calculate final metrics
   event_rate_final <- mean(event_ind_final)
   surv_obj_final <- survival::Surv(time_obs_final, event_ind_final)
-  cindex_final <- 1 - concordance(surv_obj_final ~ lp_final)$concordance
+  cindex_final <- 1 - survival::concordance(surv_obj_final ~ lp_final)$concordance
 
   # Compute beta_signal for features
   non_noise_predictors <- candidate_features -

@@ -2,13 +2,11 @@
 #'
 #' @param outcome type of outcome, possible options are: "binary".
 #' @return Model function.
-#'
-#' @examples default_model_generators("binary")
 #' @keywords internal
 default_models <- list(
   binary = list(
     glm = function(d) {
-      glm("y ~ .", data = d, family = "binomial")
+      stats::glm("y ~ .", data = d, family = "binomial")
     },
     lasso = function(d) {
       d <- as.matrix(d)
@@ -32,12 +30,12 @@ default_models <- list(
   ),
   continuous = list(
     lm = function(d) {
-      glm("y ~ .", data = d, family = "gaussian")
+      stats::glm("y ~ .", data = d, family = "gaussian")
     }
   ),
   survival = list(
     coxph = function(d) {
-      formula <- as.formula("survival::Surv(time, event) ~ .")
+      formula <- stats::as.formula("survival::Surv(time, event) ~ .")
       survival::coxph(formula, data = d)
     }
   )

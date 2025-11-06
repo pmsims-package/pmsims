@@ -183,8 +183,8 @@ adaptive_startvalues <- function(
     est <- aggregate_fun(performance_data)
     se <- sqrt(var_bootstrap(performance_data))
 
-    ll <- est - se * qnorm(ci_q)
-    ul <- est + se * qnorm(ci_q)
+    ll <- est - se * stats::qnorm(ci_q)
+    ul <- est + se * stats::qnorm(ci_q)
 
     bisection_summary[i, ] <- c(n, est, se, ll, ul)
   }
@@ -304,14 +304,14 @@ calculate_mlpwr <- function(
   if (mean_or_assurance == "mean") {
     aggregate_fun <- function(x) mean(x, na.rm = TRUE)
   } else if (mean_or_assurance == "assurance") {
-    aggregate_fun <- function(x) quantile(x, probs = .2, na.rm = TRUE)
+    aggregate_fun <- function(x) stats::quantile(x, probs = .2, na.rm = TRUE)
   } else {
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
   }
 
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
-    var(replicate(20, aggregate_fun(sample(x, length(x), replace = TRUE))))
+    stats::var(replicate(20, aggregate_fun(sample(x, length(x), replace = TRUE))))
   }
 
   # Calculate bootstrapped quantile variance
@@ -321,7 +321,7 @@ calculate_mlpwr <- function(
   # processing final_estimate_se
   # Auto-stopping or not
   if (!(is.null(se_final))) {
-    ci <- se_final * qnorm(0.975) * 2
+    ci <- se_final * stats::qnorm(0.975) * 2
     n_reps_total <- 10000 # setting large nreps so ci dominates.
   } else {
     ci <- NULL
@@ -468,11 +468,9 @@ calculate_bisection <- function(
   # Helper: summary of metric for n_reps_per repetitions
   summary_at_n <- function(n) {
     if (parallel) {
-      require(foreach)
-      require(doParallel)
       cl <- parallel::makeCluster(cores)
       doParallel::registerDoParallel(cl)
-      vals <- foreach(i = 1:n_reps_per, .combine = c) %dopar% single_run(n)
+      vals <- foreach::foreach(i = 1:n_reps_per, .combine = c) %dopar% single_run(n)
       parallel::stopCluster(cl)
     } else {
       vals <- vapply(
@@ -762,14 +760,14 @@ calculate_mlpwr_bs <- function(
   if (mean_or_assurance == "mean") {
     aggregate_fun <- function(x) mean(x, na.rm = TRUE)
   } else if (mean_or_assurance == "assurance") {
-    aggregate_fun <- function(x) quantile(x, probs = .2, na.rm = TRUE)
+    aggregate_fun <- function(x) stats::quantile(x, probs = .2, na.rm = TRUE)
   } else {
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
   }
 
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
-    var(replicate(100, aggregate_fun(sample(x, length(x), replace = TRUE))))
+    stats::var(replicate(100, aggregate_fun(sample(x, length(x), replace = TRUE))))
   }
 
   # Calculate bootstrapped quantile variance
@@ -779,7 +777,7 @@ calculate_mlpwr_bs <- function(
   # processing final_estimate_se
   # Auto-stopping or not
   if (!(is.null(se_final))) {
-    ci <- se_final * qnorm(0.975) * 2
+    ci <- se_final * stats::qnorm(0.975) * 2
     n_reps_total <- 10000 # setting large nreps so ci dominates.
   } else {
     ci <- NULL

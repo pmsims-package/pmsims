@@ -68,12 +68,12 @@ default_metric_generator <- function(metric, data_function) {
 #' @export
 predict_custom <- function(x, y, fit, model, type = "response") {
   if (model == "glm") {
-    predict(fit, newdata = x, type = type)
+    stats::predict(fit, newdata = x, type = type)
   } else if (model == "lasso") {
     x <- as.matrix(x)
-    predict(fit, newx = x, s = fit$lambda.1se, type = type)[, 1]
+    stats::predict(fit, newx = x, s = fit$lambda.1se, type = type)[, 1]
   } else if (model == "rf") {
-    response <- predict(fit, x, type = type)$predictions[, 1]
+    response <- stats::predict(fit, x, type = type)$predictions[, 1]
     if (type == "response") {
       return(response)
     } else {
@@ -98,13 +98,13 @@ binary_calib_slope <- function(data, fit, model) {
   #x = model.matrix(y~., data)[,-1]
   y_link <- predict_custom(x, y, fit, model, type = "link")
   slope <- try(
-    glm(y ~ y_link, family = binomial()),
+    stats::glm(y ~ y_link, family = stats::binomial()),
     silent = TRUE
   )
   if (class(slope)[1] == "try-error") {
     calib_slope <- NaN
   } else {
-    calib_slope <- as.numeric(coef(slope)[2])
+    calib_slope <- as.numeric(stats::coef(slope)[2])
   }
   return(calib_slope)
 }
@@ -116,13 +116,13 @@ binary_calib_itl <- function(data, fit, model) {
   x <- data[, names(data) != "y"]
   y_link <- predict_custom(x, y, fit, model, type = "link")
   slope_itl <- try(
-    glm(y ~ 1, offset = y_link, data = data, family = "binomial"),
+    stats::glm(y ~ 1, offset = y_link, data = data, family = stats::binomial()),
     silent = TRUE
   )
   if (class(slope_itl)[1] == "try-error") {
     return(NaN)
   } else {
-    return(abs(as.numeric(coef(slope_itl)[1])))
+    return(abs(as.numeric(stats::coef(slope_itl)[1])))
   }
 }
 
@@ -151,9 +151,9 @@ continuous_r2 <- function(data, fit, model) {
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
   n <- length(y)
-  y_hat <- predict(fit, x, type = "response")
+  y_hat <- stats::predict(fit, x, type = "response")
   mse <- sum((y_hat - y)^2) / n
-  mst <- var(y) * (n + 1) / n
+  mst <- stats::var(y) * (n + 1) / n
   r2 <- 1 - (mse / mst)
   return(r2)
 }
@@ -162,12 +162,12 @@ continuous_calib_slope <- function(data, fit, model) {
   # Computes calibration slope for logistic regression
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
-  y_hat <- predict(fit, x, type = "response")
-  slope <- try(lm(y ~ y_hat), silent = TRUE)
+  y_hat <- stats::predict(fit, x, type = "response")
+  slope <- try(stats::lm(y ~ y_hat), silent = TRUE)
   if (class(slope)[1] == "try-error") {
     return(NaN)
   } else {
-    return(as.numeric(coef(slope)[2]))
+    return(as.numeric(stats::coef(slope)[2]))
   }
 }
 
@@ -175,12 +175,12 @@ continuous_calib_itl <- function(data, fit, model) {
   # Computes calibration slope for logistic regression
   y <- data[, "y"]
   x <- data[, names(data) != "y"]
-  y_hat <- predict(fit, x, type = "response")
-  slope <- try(lm(y ~ 1, offset = y_hat), silent = TRUE)
+  y_hat <- stats::predict(fit, x, type = "response")
+  slope <- try(stats::lm(y ~ 1, offset = y_hat), silent = TRUE)
   if (class(slope)[1] == "try-error") {
     return(NaN)
   } else {
-    return(as.numeric(coef(slope)[1]))
+    return(as.numeric(stats::coef(slope)[1]))
   }
 }
 
@@ -191,7 +191,7 @@ survival_cindex <- function(data, fit, model) {
   x <- data[,
     names(data) != "time" & names(data) != "event" & names(data) != "id"
   ]
-  y_hat <- predict(fit, x, type = "lp")
+  y_hat <- stats::predict(fit, x, type = "lp")
   cf <- try(survival::concordancefit(y_surv, -1 * y_hat), silent = TRUE)
   if (class(cf)[1] == "try-error") {
     cindex <- NaN
@@ -212,7 +212,7 @@ survival_calib_slope <- function(data, fit, model) {
     names(data) != "time" & names(data) != "event" & names(data) != "id"
   ]
   y_hat <- survival:::predict.coxph(fit, x, type = "lp")
-  cf <- try(coef(survival::coxph(y_surv ~ y_hat)), silent = TRUE)
+  cf <- try(stats::coef(survival::coxph(y_surv ~ y_hat)), silent = TRUE)
   if (class(cf)[1] == "try-error" || is.null(cf)) {
     slope <- NaN
   } else {
@@ -268,16 +268,16 @@ survival_calib_slope_free <- function(data, fit, model, eval_time = NULL) {
     w <- ipcw_obj$IPCW.subjectTimes
 
     # Weighted logistic regression of observed on predicted LP
-    fit_slope <- try(suppressWarnings(glm(
+    fit_slope <- try(suppressWarnings(stats::glm(
       y_obs ~ y_hat,
       weights = w,
-      family = binomial
+      family = stats::binomial()
     )))
 
     if (class(fit_slope)[1] == "try-error" || is.null(fit_slope)) {
       slope <- NaN
     } else {
-      slope <- as.numeric(coef(fit_slope)[2])
+      slope <- as.numeric(stats::coef(fit_slope)[2])
     }
   }
 
@@ -291,7 +291,7 @@ survival_auc <- function(data, fit, model) {
   # available in the data
   y_surv <- survival::Surv(data$time, data$event)
   x <- data[, names(data) != "time" & names(data) != "event"]
-  y_hat <- predict(fit, x, type = "lp")
+  y_hat <- stats::predict(fit, x, type = "lp")
   if (
     class(try(
       survival::concordancefit(

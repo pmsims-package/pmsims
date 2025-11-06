@@ -56,7 +56,7 @@ generate_continuous_data <- function(
     beta_signal
   )
 
-  y <- rnorm(n, lp, 1) # error variance is 1
+  y <- stats::rnorm(n, lp, 1) # error variance is 1
   data <- cbind(y, X)
   return(as.data.frame(data))
 }
@@ -92,7 +92,7 @@ generate_binary_data <- function(
     beta_signal
   )
   y_prob <- stats::plogis(lp)
-  y <- rbinom(n, 1, y_prob)
+  y <- stats::rbinom(n, 1, y_prob)
   data <- cbind(y, X)
   return(as.data.frame(data))
 }
@@ -128,7 +128,7 @@ generate_survival_data <- function(
   )
 
   # Generate survival times
-  event_time <- rexp(n, rate = baseline_hazard * exp(lp))
+  event_time <- stats::rexp(n, rate = baseline_hazard * exp(lp))
   # Introduce right-censoring at a median time
   # T_observe <- -log(0.5) / baseline_hazard
   T_observe <- stats::quantile(event_time, 1 - censoring_rate)
@@ -156,9 +156,9 @@ update_arguments <- function(fn, opts) {
 
 generate_predictors <- function(n, parameters, type, predictor_prop) {
   if (type == "binary") {
-    X <- rbinom(n * parameters, 1, predictor_prop)
+    X <- stats::rbinom(n * parameters, 1, predictor_prop)
   } else if (type == "continuous") {
-    X <- rnorm(n * parameters)
+    X <- stats::rnorm(n * parameters)
   } else {
     stop("type must be one of binary or continuous")
   }

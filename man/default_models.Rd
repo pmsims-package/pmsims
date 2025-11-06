@@ -19,7 +19,4 @@ Model function.
 \description{
 default_model_generators Generate appropriate model based on input arguments
 }
-\examples{
-default_model_generators("binary")
-}
 \keyword{internal}
