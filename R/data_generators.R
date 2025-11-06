@@ -5,7 +5,6 @@
 #' For options that can be passed to the different default generators see \link{generate_continuous_data}, \link{generate_binary_data}, or \link{generate_survival_data}.
 #' @return A function with default arguments set to the values passed with opts
 #' @keywords internal
-
 default_data_generators <- function(opts) {
   type <- opts$type
   if (type == "binary") {
@@ -31,12 +30,6 @@ default_data_generators <- function(opts) {
 #'
 #' @return A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 #' @keywords internal
-
-#' @examples generate_continuous_data(
-#'   n = 100, n_signal_parameters = 10,
-#'   noise_parameters = 10, predictor_type = "binary", predictor_prop = 0.1,
-#'   beta_signal = 0.1
-#' )
 generate_continuous_data <- function(
   n,
   beta_signal,
@@ -69,8 +62,6 @@ generate_continuous_data <- function(
 #' @return A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 #' @keywords internal
 #' @export
-#'
-#' @examples generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 generate_binary_data <- function(
   n,
   mu_lp,
@@ -105,7 +96,6 @@ generate_binary_data <- function(
 #'
 #' @return A data frame with a time ("time"), event status ("event") (0 = censored, 1 = event), and n_signal_parameters + noise_parameters predictor columns ("x1", "x2", ... .)
 #' @keywords internal
-#' @examples generate_binary_data(n = 100, n_signal_parameters = 5, noise_parameters = 5, predictor_type = "continuous", beta_signal = 0.1, baseline_prob = 0.1)
 generate_survival_data <- function(
   n,
   beta_signal,
@@ -130,7 +120,6 @@ generate_survival_data <- function(
   # Generate survival times
   event_time <- stats::rexp(n, rate = baseline_hazard * exp(lp))
   # Introduce right-censoring at a median time
-  # T_observe <- -log(0.5) / baseline_hazard
   T_observe <- stats::quantile(event_time, 1 - censoring_rate)
   censor_time <- rep(T_observe, n)
   event <- as.numeric(event_time <= censor_time)

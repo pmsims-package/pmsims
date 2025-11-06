@@ -32,8 +32,4 @@ Integer recommended starting value from which to calculate the minimum sample si
 \description{
 get_min_sample_size: Heuristic starting-n for binary/continuous/survival prediction
 }
-\examples{
-get_min_sample_size(npar = 5, prevalence = 0.2, c_stat = 0.75,
-                    calib_slope = 0.9, outcome_type = "binary")
-}
 \keyword{internal}

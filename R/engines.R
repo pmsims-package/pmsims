@@ -37,10 +37,6 @@ get_summaries <- function(performance_matrix) {
 #' @param outcome_type Character string; must be one of `"binary"`, `"survival"`, or `"continuous"`.
 #' @return Integer recommended starting value from which to calculate the minimum sample size.
 #' @keywords internal
-#' @examples
-#' get_min_sample_size(npar = 5, prevalence = 0.2, c_stat = 0.75,
-#'                     calib_slope = 0.9, outcome_type = "binary")
-
 get_min_sample_size <- function(
   npar,
   prevalence = NULL,
@@ -156,7 +152,6 @@ get_min_sample_size <- function(
 #' @param target Numeric target performance threshold.
 #' @param ci_q Numeric quantile for confidence-interval construction (default 0.975 gives a two-sided 95% interval).
 #' @keywords internal
-#'
 adaptive_startvalues <- function(
   output,
   aggregate_fun,
@@ -311,7 +306,10 @@ calculate_mlpwr <- function(
 
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
-    stats::var(replicate(20, aggregate_fun(sample(x, length(x), replace = TRUE))))
+    stats::var(replicate(
+      20,
+      aggregate_fun(sample(x, length(x), replace = TRUE))
+    ))
   }
 
   # Calculate bootstrapped quantile variance
@@ -384,9 +382,6 @@ calculate_mlpwr <- function(
 #'   optional tracking `history`, and the `track_bisection` records.
 #' @keywords internal
 #' @export
-#'
-#' @examples
-
 calculate_bisection <- function(
   data_function = data_function,
   model_function = model_function,
@@ -470,7 +465,8 @@ calculate_bisection <- function(
     if (parallel) {
       cl <- parallel::makeCluster(cores)
       doParallel::registerDoParallel(cl)
-      vals <- foreach::foreach(i = 1:n_reps_per, .combine = c) %dopar% single_run(n)
+      vals <- foreach::foreach(i = 1:n_reps_per, .combine = c) %dopar%
+        single_run(n)
       parallel::stopCluster(cl)
     } else {
       vals <- vapply(
@@ -554,8 +550,6 @@ calculate_bisection <- function(
 #' @return List containing the combined bisection and mlpwr results (`results`, `summaries`, `min_n`, `perf_n`, and `mlpwr_ds`).
 #' @keywords internal
 #' @export
-#'
-#' @examples
 calculate_mlpwr_bs <- function(
   test_n,
   n_reps_total,
@@ -767,7 +761,10 @@ calculate_mlpwr_bs <- function(
 
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
-    stats::var(replicate(100, aggregate_fun(sample(x, length(x), replace = TRUE))))
+    stats::var(replicate(
+      100,
+      aggregate_fun(sample(x, length(x), replace = TRUE))
+    ))
   }
 
   # Calculate bootstrapped quantile variance
