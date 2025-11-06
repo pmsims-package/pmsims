@@ -57,15 +57,14 @@ binary_example
 
 We welcome questions, suggestions, and collaboration enquiries.
 
-- **Email:** <a href="mailto:pmsims@kcl.ac.uk?subject=pmsims%20enquiry">pmsims@kcl.ac.uk</a>  
-- **Feedback or bugs:** please <a href="https://github.com/pmsims-package/pmsims/issues">open a GitHub issue</a>  
+- **Email:** <a href="mailto:pmsims@kcl.ac.uk?subject=pmsims%20enquiry">pmsims@kcl.ac.uk</a>
+- **Feedback or bugs:** please <a href="https://github.com/pmsims-package/pmsims/issues">open a GitHub issue</a>
 
 ---
 
 ## Funding
 
 
-```{=html}
 <div style="display:flex; justify-content:center; align-items:center; gap:100px; margin:20px 0;">
   <div style="text-align:center;">
     <img src="man/figures/nihr-logo.png" alt="NIHR logo" height="100" width="560" />
@@ -74,9 +73,8 @@ We welcome questions, suggestions, and collaboration enquiries.
     <img src="man/figures/kcl-logo.png" alt="King’s College London logo" width="150" height="120" />
   </div>
 </div>
-```
 
-This work is supported by the **National Institute for Health and Care Research (NIHR)** under the  
+This work is supported by the **National Institute for Health and Care Research (NIHR)** under the
 **Research for Patient Benefit (RfPB)** Programme ([*NIHR206858*](https://www.fundingawards.nihr.ac.uk/award/NIHR206858)).
 
 *The views expressed are those of the authors and not necessarily those of the NIHR or the Department of Health and Social Care.*
