@@ -32,7 +32,7 @@ formulae, pmsims uses **simulation** to:
 
 ```{=html}
 <div style="text-align:center;">
-  <img src="reference/figures/workflow.png" alt="A figure showing the package workflow." width="80%" />
+  <img src="man/figures/workflow.png" alt="A figure showing the package workflow." width="80%" />
 </div>
 ```
 

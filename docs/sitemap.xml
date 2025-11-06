@@ -1,7 +1,6 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://pmsims-package.github.io/pmsims/404.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/LICENSE.html</loc></url>
-<url><loc>https://pmsims-package.github.io/pmsims/articles/about.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/articles/index.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/articles/pmsims.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/authors.html</loc></url>
@@ -16,7 +15,6 @@
 <url><loc>https://pmsims-package.github.io/pmsims/reference/continuous_tuning.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/default_data_generators.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/default_models.html</loc></url>
-<url><loc>https://pmsims-package.github.io/pmsims/reference/default_tune.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/generate_binary_data.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/generate_continuous_data.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/generate_survival_data.html</loc></url>
@@ -31,6 +29,5 @@
 <url><loc>https://pmsims-package.github.io/pmsims/reference/simulate_custom.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/simulate_survival.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/survival_tuning.html</loc></url>
-<url><loc>https://pmsims-package.github.io/pmsims/reference/tune_generate_data.html</loc></url>
 </urlset>
 
