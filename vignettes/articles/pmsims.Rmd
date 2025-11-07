@@ -6,6 +6,7 @@ title: "Getting started with pmsims"
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(
+  fig.path = "man/figures/",
   collapse = TRUE,
   comment = "#>",
   fig.width = 6, fig.height = 4,
@@ -30,9 +31,10 @@ formulae, pmsims uses **simulation** to:
 -   Trace a **learning curve** of performance as the training size
     increases.
 
+![](workflow.png)
 ```{=html}
 <div style="text-align:center;">
-  <img src="man/figures/workflow.png" alt="A figure showing the package workflow." width="80%" />
+  <img src="workflow.png" alt="A figure showing the package workflow." width="80%" />
 </div>
 ```
 

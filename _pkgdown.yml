@@ -14,6 +14,9 @@ template:
 
 output_dir: docs
 
+extra_files:
+  - man/figures
+
 home:
   title: "pmsims"
   description: >

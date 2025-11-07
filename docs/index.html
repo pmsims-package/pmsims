@@ -6,6 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>pmsims • pmsims</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" sizes="any" href="favicon.ico">
+<link rel="manifest" href="site.webmanifest">
 <!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
   window.MathJax = {
     chtml: {
@@ -19,6 +24,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="pmsims">
 <meta name="description" content="Simulation-based sample size estimation for prediction modelling.">
 <meta property="og:description" content="Simulation-based sample size estimation for prediction modelling.">
+<meta property="og:image" content="https://pmsims-package.github.io/pmsims/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -62,12 +68,16 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="pmsims-simulation-based-sample-size-tools-for-prediction-models">pmsims: Simulation-based Sample Size Tools for Prediction Models<a class="anchor" aria-label="anchor" href="#pmsims-simulation-based-sample-size-tools-for-prediction-models"></a>
-</h1></div>
+<div class="page-header">
+<img src="logo.png" class="logo" alt=""><h1 id="pmsims-simulation-based-sample-size-tools-for-prediction-models-">pmsims: Simulation-based Sample Size Tools for Prediction Models 
+<a class="anchor" aria-label="anchor" href="#pmsims-simulation-based-sample-size-tools-for-prediction-models-"></a>
+</h1>
+</div>
+<!-- badges: start -->
+<!-- badges: end -->
 <p><strong>pmsims</strong> is an R package for estimating how much data are needed to develop reliable and generalisable prediction models. It uses a <strong>simulation-based learning curve</strong> approach to quantify how model performance improves with increasing sample size, supporting principled study planning and feasibility assessment.</p>
 <p>The package is fully model-agnostic: users can define how data are generated, how models are fitted, and how predictive performance is measured. It currently supports regression-based prediction models with continuous, binary, and time-to-event outcomes.</p>
 <p>Developed at <a href="https://www.kcl.ac.uk/" class="external-link">King’s College London</a> (Department of Biostatistics &amp; Health Informatics) with input from researchers, clinicians, and patient partners. See the <a href="https://pmsims-package.github.io/pmsims-website/">pmsims project site</a> for further details.</p>
-<hr>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
