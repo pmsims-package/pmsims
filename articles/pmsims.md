@@ -20,10 +20,6 @@ formulae, pmsims uses **simulation** to:
 generator, model function, metrics function, which are passed to the
 simulation engine.](images/workflow.png)
 
-A diagram showing the pmsims workflow, consisting of the data generator,
-model function, metrics function, which are passed to the simulation
-engine.
-
 The recommended design objective is **assurance**: the **smallest**
 \\n\\ such that a high proportion of repeated studies (e.g., 80%) meet
 the target performance. In pmsims, this is implemented via the **20th
