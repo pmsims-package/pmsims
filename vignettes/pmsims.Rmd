@@ -32,7 +32,7 @@ formulae, pmsims uses **simulation** to:
     increases.
 
 <p align="center">
-![A diagram showing the pmsims workflow, consisting of the data generator, model function, metrics function, which are passed to the simulation engine.](images/workflow.png)
+  <img src="images/workflow.png" alt="A diagram showing the pmsims workflow, consisting of the data generator, model function, metrics function, which are passed to the simulation engine." width="100%">
 </p>
 
 The recommended design objective is **assurance**: the **smallest** $n$
