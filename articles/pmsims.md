@@ -113,7 +113,7 @@ binary_example
 #>             Estimated performance at N : 0.849 (Calibration slope ('calib_slope') = 0.850)
 #>                                  Model : glm
 #>                                   Mode : Assurance
-#>                           Running time : 2 minutes 23 seconds
+#>                           Running time : 2 minutes 22 seconds
 #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 ```
 
@@ -158,7 +158,7 @@ continuous_example
 #>             Estimated performance at N : 0.900 (Calibration slope ('calib_slope') = 0.900)
 #>                                  Model : lm
 #>                                   Mode : Assurance
-#>                           Running time : 39 seconds
+#>                           Running time : 38 seconds
 #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 ```
 
