@@ -6,13 +6,13 @@ title: "Getting started with pmsims"
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(
-  fig.path = "man/figures/",
   collapse = TRUE,
   comment = "#>",
   fig.width = 6, fig.height = 4,
   warning = FALSE,
   message = FALSE
 )
+use_cache <- TRUE
 ```
 
 ## What pmsims does
@@ -30,7 +30,6 @@ formulae, pmsims uses **simulation** to:
     AUC); and
 -   Trace a **learning curve** of performance as the training size
     increases.
-
 
 <p align="center">
 ![A diagram showing the pmsims workflow, consisting of the data generator, model function, metrics function, which are passed to the simulation engine.](images/workflow.png)
@@ -54,115 +53,207 @@ All three functions share the same basic structure. The table below
 lists the key inputs.
 
 ```{=html}
-<table style="width:100%; border-collapse:collapse; table-layout:fixed;">
-  <colgroup>
-    <col style="width:220px;">
-    <col style="width:70px;">
-    <col style="width:70px;">
-    <col style="width:170px;">
-    <col style="width:50%;">
-  </colgroup>
+<style>
+/* Compact, readable argument table */
+.arg-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: 0.95rem;
+}
+.arg-table th, .arg-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+.arg-table thead th {
+  text-align: left;
+  border-bottom: 2px solid #ddd;
+  position: sticky; top: 0; background: #fff;
+}
+.arg-table tbody tr:nth-child(even) { background: #fafafa; }
+.arg-table code { font-size: 0.95em; }
+
+/* Metadata badges below each description */
+.meta { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.badge--scope   { background:#f2f2f7; border-color:#e6e6ee; color:#444; }
+.badge--default { background:#eef6ff; border-color:#d6eaff; color:#1b5dab; }
+.badge--req     { background:#fdecea; border-color:#f7d6d2; color:#b73b2b; font-weight:600; }
+
+/* On narrow screens, let the description breathe */
+@media (max-width: 820px){
+  .arg-table th:nth-child(1){ width: 36%; }
+}
+</style>
+
+<table class="arg-table">
   <thead>
     <tr>
-      <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Argument</th>
-      <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Applies to</th>
-      <th style="text-align:center; padding:8px; border-bottom:1px solid #ddd;">Req</th>
-      <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Default</th>
-      <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Description</th>
+      <th>Argument</th>
+      <th>Description</th>
     </tr>
   </thead>
   <tbody>
+
     <tr>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>signal_parameters</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
-      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(int)</em> Number of <strong>true signal</strong> predictors associated with the outcome.</td>
+      <td><strong><code>signal_parameters</code></strong></td>
+      <td>
+        <em>(int)</em> Number of <strong>true signal</strong> predictors associated with the outcome.
+        <div class="meta">
+          <span class="badge badge--scope">Applies: all</span>
+          <span class="badge badge--default">Default: —</span>
+          <span class="badge badge--req">Required</span>
+        </div>
+      </td>
     </tr>
+
     <tr>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>noise_parameters</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
-      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>0</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(int)</em> Number of <strong>noise</strong> predictors unrelated to the outcome.</td>
+      <td><code>noise_parameters</code></td>
+      <td>
+        <em>(int)</em> Number of <strong>noise</strong> predictors unrelated to the outcome.
+        <div class="meta">
+          <span class="badge badge--scope">Applies: all</span>
+          <span class="badge badge--default">Default: <code>0</code></span>
+        </div>
+      </td>
     </tr>
+
     <tr>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>predictor_type</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
-      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>"continuous"</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(chr)</em> Type of simulated predictors (<code>"continuous"</code> or <code>"binary"</code>).</td>
+      <td><code>predictor_type</code></td>
+      <td>
+        <em>(chr)</em> Type of simulated predictors (<code>"continuous"</code> or <code>"binary"</code>).
+        <div class="meta">
+          <span class="badge badge--scope">Applies: all</span>
+          <span class="badge badge--default">Default: <code>"continuous"</code></span>
+        </div>
+      </td>
     </tr>
+
     <tr>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>binary_predictor_prevalence</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
-      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>NULL</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(num 0–1)</em> Prevalence for binary predictors (used only if <code>predictor_type = "binary"</code>).</td>
+      <td><code>binary_predictor_prevalence</code></td>
+      <td>
+        <em>(num 0–1)</em> Prevalence for binary predictors (used only if <code>predictor_type = "binary"</code>).
+        <div class="meta">
+          <span class="badge badge--scope">Applies: all</span>
+          <span class="badge badge--default">Default: <code>NULL</code></span>
+        </div>
+      </td>
     </tr>
+
     <tr>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>outcome_prevalence</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">binary only</td>
-      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(num 0–1)</em> Target prevalence of the binary outcome.</td>
+      <td><strong><code>outcome_prevalence</code></strong></td>
+      <td>
+        <em>(num 0–1)</em> Target prevalence of the binary outcome.
+        <div class="meta">
+          <span class="badge badge--scope">Applies: binary only</span>
+          <span class="badge badge--default">Default: —</span>
+          <span class="badge badge--req">Required</span>
+        </div>
+      </td>
     </tr>
+
     <tr>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>large_sample_cstatistic</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">binary only</td>
-      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(num 0–1)</em> Expected <strong>C-statistic</strong> for a very large training sample.</td>
+      <td><strong><code>large_sample_cstatistic</code></strong></td>
+      <td>
+        <em>(num 0–1)</em> Expected <strong>C-statistic</strong> for a very large training sample.
+        <div class="meta">
+          <span class="badge badge--scope">Applies: binary only</span>
+          <span class="badge badge--default">Default: —</span>
+          <span class="badge badge--req">Required</span>
+        </div>
+      </td>
     </tr>
+
     <tr>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>large_sample_rsquared</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">continuous only</td>
-      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(num 0–1)</em> Expected R<sup>2</sup> for a very large training sample.</td>
+      <td><strong><code>large_sample_rsquared</code></strong></td>
+      <td>
+        <em>(num 0–1)</em> Expected R<sup>2</sup> for a very large training sample.
+        <div class="meta">
+          <span class="badge badge--scope">Applies: continuous only</span>
+          <span class="badge badge--default">Default: —</span>
+          <span class="badge badge--req">Required</span>
+        </div>
+      </td>
     </tr>
+
     <tr>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>large_sample_cindex</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">survival only</td>
-      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(num 0–1)</em> Expected <strong>concordance index</strong> for a very large training sample.</td>
+      <td><strong><code>large_sample_cindex</code></strong></td>
+      <td>
+        <em>(num 0–1)</em> Expected <strong>concordance index</strong> for a very large training sample.
+        <div class="meta">
+          <span class="badge badge--scope">Applies: survival only</span>
+          <span class="badge badge--default">Default: —</span>
+          <span class="badge badge--req">Required</span>
+        </div>
+      </td>
     </tr>
+
     <tr>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>model</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
-      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>"glm"</code> / <code>"lm"</code> / <code>"coxph"</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(chr)</em> Model used for fitting (e.g. logistic, linear, or Cox).</td>
+      <td><code>model</code></td>
+      <td>
+        <em>(chr)</em> Model used for fitting (e.g. logistic, linear, or Cox).
+        <div class="meta">
+          <span class="badge badge--scope">Applies: all</span>
+          <span class="badge badge--default">Default: <code>"glm"</code> / <code>"lm"</code> / <code>"coxph"</code></span>
+        </div>
+      </td>
     </tr>
+
     <tr>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>metric</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
-      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;"></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>"calibration_slope"</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(chr)</em> <strong>Performance metric</strong> used to estimate the <strong>minimum required sample size</strong> (e.g. calibration slope, R<sup>2</sup>, C-statistic).</td>
+      <td><code>metric</code></td>
+      <td>
+        <em>(chr)</em> <strong>Performance metric</strong> used to estimate the minimum required sample size (e.g. calibration slope, R<sup>2</sup>, C-statistic).
+        <div class="meta">
+          <span class="badge badge--scope">Applies: all</span>
+          <span class="badge badge--default">Default: <code>"calibration_slope"</code></span>
+        </div>
+      </td>
     </tr>
+
     <tr>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>minimum_acceptable_performance</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
-      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">—</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(num)</em> <strong>Minimum acceptable performance</strong> in the <strong>units of the chosen metric</strong> (e.g. calibration slope ≥ 0.9).</td>
+      <td><strong><code>minimum_acceptable_performance</code></strong></td>
+      <td>
+        <em>(num)</em> <strong>Minimum acceptable performance</strong> in the units of the chosen metric (e.g. calibration slope ≥ 0.9).
+        <div class="meta">
+          <span class="badge badge--scope">Applies: all</span>
+          <span class="badge badge--default">Default: —</span>
+          <span class="badge badge--req">Required</span>
+        </div>
+      </td>
     </tr>
+
     <tr>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>n_reps_total</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;">all</td>
-      <td style="text-align:center; padding:8px; border-bottom:1px solid #f0f0f0;">✓</td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><code>1000</code></td>
-      <td style="padding:8px; border-bottom:1px solid #f0f0f0;"><em>(int)</em> Total number of simulation replications.</td>
+      <td><strong><code>n_reps_total</code></strong></td>
+      <td>
+        <em>(int)</em> Total number of simulation replications.
+        <div class="meta">
+          <span class="badge badge--scope">Applies: all</span>
+          <span class="badge badge--default">Default: <code>1000</code></span>
+          <span class="badge badge--req">Required</span>
+        </div>
+      </td>
     </tr>
+
     <tr>
-      <td style="padding:8px;"><code>mean_or_assurance</code></td>
-      <td style="padding:8px;">all</td>
-      <td style="text-align:center; padding:8px;"></td>
-      <td style="padding:8px;"><code>"assurance"</code></td>
-      <td style="padding:8px;"><em>(chr)</em> Criterion for summarising results; <code>"assurance"</code> recommended.</td>
+      <td><code>mean_or_assurance</code></td>
+      <td>
+        <em>(chr)</em> Criterion for summarising results; <code>"assurance"</code> recommended.
+        <div class="meta">
+          <span class="badge badge--scope">Applies: all</span>
+          <span class="badge badge--default">Default: <code>"assurance"</code></span>
+        </div>
+      </td>
     </tr>
+
   </tbody>
 </table>
 ```
@@ -187,6 +278,8 @@ library(pmsims)
 We target the smallest *n* that meets the **assurance** criterion.
 
 ```{r}
+#| echo: true
+#| eval: false
 set.seed(123)
 
 binary_example <- simulate_binary(
@@ -206,16 +299,43 @@ binary_example <- simulate_binary(
 binary_example
 ```
 
+```{r Run binary}
+#| echo: false
+if (use_cache) {
+  binary_example <- readRDS(".cache/binary.rds")
+} else {
+  set.seed(123)
+  binary_example <- simulate_binary(
+    signal_parameters = 20,
+    noise_parameters  = 0,
+    predictor_type = "continuous",
+    binary_predictor_prevalence = NULL,
+    outcome_prevalence = 0.30,
+    large_sample_cstatistic = 0.80,
+    model = "glm",
+    metric = "calibration_slope",
+    minimum_acceptable_performance = 0.85,
+    n_reps_total = 1000,
+    mean_or_assurance = "assurance"
+  )
+  saveRDS(binary_example, file = ".cache/binary.rds")
+}
+
+print(binary_example)
+```
+
+
 Plot the estimated learning curve and identified sample size:
 
-```{r}
-#| fig-keep: true
+```{r, fig.alt="Plot showing learning curve for binary outcome"}
 plot(binary_example)
 ```
 
 ## Continuous-outcome example
 
 ```{r}
+#| echo: true
+#| eval: false
 continuous_example <- simulate_continuous(
   signal_parameters = 15,
   noise_parameters = 0,
@@ -232,6 +352,29 @@ continuous_example
 ```
 
 ```{r}
+#| echo: false
+if (use_cache) {
+  continuous_example <- readRDS(".cache/continuous.rds")
+} else {
+  set.seed(123)
+  continuous_example <- simulate_continuous(
+    signal_parameters = 15,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    large_sample_rsquared = 0.50,
+    model = "lm",
+    metric = "calibration_slope",
+    minimum_acceptable_performance = 0.90,
+    n_reps_total = 1000,
+    mean_or_assurance = "assurance"
+  )
+  saveRDS(continuous_example, file = ".cache/continuous.rds")
+}
+
+print(continuous_example)
+```
+
+```{r, fig.alt="Plot showing learning curve for continuous outcome"}
 plot(continuous_example)
 ```
 
