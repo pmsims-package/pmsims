@@ -72,7 +72,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Getting started with pmsims</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/HEAD/vignettes/articles/pmsims.Rmd" class="external-link"><code>vignettes/articles/pmsims.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/HEAD/vignettes/pmsims.Rmd" class="external-link"><code>vignettes/pmsims.Rmd</code></a></small>
       <div class="d-none name"><code>pmsims.Rmd</code></div>
     </div>
 
@@ -97,10 +97,14 @@ calibration slope, AUC); and</li>
 <li>Trace a <strong>learning curve</strong> of performance as the
 training size increases.</li>
 </ul>
-<p><img src="workflow.png"></p>
-<div style="text-align:center;">
-  <img src="workflow.png" alt="A figure showing the package workflow." width="80%">
+<p align="center">
+</p>
+<div class="float">
+<img src="images/workflow.png" alt="A diagram showing the pmsims workflow, consisting of the data generator, model function, metrics function, which are passed to the simulation engine."><div class="figcaption">A diagram showing the pmsims workflow,
+consisting of the data generator, model function, metrics function,
+which are passed to the simulation engine.</div>
 </div>
+
 <p>The recommended design objective is <strong>assurance</strong>: the
 <strong>smallest</strong> <span class="math inline">\(n\)</span> such
 that a high proportion of repeated studies (e.g., 80%) meet the target
@@ -286,10 +290,31 @@ samples.</li>
 <span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">binary_example</span></span></code></pre></div>
+<span><span class="va">binary_example</span></span>
+<span><span class="co">#&gt;                     ┌────────────────────────────────────────┐</span></span>
+<span><span class="co">#&gt;                     │<span style="font-weight: bold;"> pmsims: Sample size simulation summary </span>│</span></span>
+<span><span class="co">#&gt;                     └────────────────────────────────────────┘</span></span>
+<span><span class="co">#&gt; ──────────────────────────────────── Inputs ────────────────────────────────────</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                             Outcome</span> : binary</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                      Predictor type</span> : continuous</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                Number of predictors</span> : 15</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                    Noise predictors</span> : 0</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                          Prevalence</span> : 0.2</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">   Expected large-sample performance</span> : C-statistic ('cstatistic') = 0.800</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">Target for chosen performance metric</span> : Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.900</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                               Model</span> : glm</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                     Simulation reps</span> : 1,000</span></span>
+<span><span class="co">#&gt; ──────────────────────────────────── Results ───────────────────────────────────</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">           Final minimum sample size</span> : <span style="font-weight: bold;">1,556</span></span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">          Estimated performance at N</span> : 0.894 (Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.900)</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">                               Model</span> : glm</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">                                Mode</span> : Assurance</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">                        Running time</span> : 55 seconds</span></span>
+<span><span class="co">#&gt;     <span style="color: #555555; font-style: italic;">Assurance mode ensures the target metric is met with high probability across repeated datasets.</span></span></span></code></pre></div>
 <p>Plot the estimated learning curve and identified sample size:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">binary_example</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/unnamed-chunk-3-1.png" width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="continuous-outcome-example">Continuous-outcome example<a class="anchor" aria-label="anchor" href="#continuous-outcome-example"></a>
@@ -307,9 +332,29 @@ samples.</li>
 <span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">continuous_example</span></span></code></pre></div>
+<span><span class="va">continuous_example</span></span>
+<span><span class="co">#&gt;                     ┌────────────────────────────────────────┐</span></span>
+<span><span class="co">#&gt;                     │<span style="font-weight: bold;"> pmsims: Sample size simulation summary </span>│</span></span>
+<span><span class="co">#&gt;                     └────────────────────────────────────────┘</span></span>
+<span><span class="co">#&gt; ──────────────────────────────────── Inputs ────────────────────────────────────</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                             Outcome</span> : continuous</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                      Predictor type</span> : continuous</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                Number of predictors</span> : 15</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                    Noise predictors</span> : 0</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">   Expected large-sample performance</span> : R² ('r2') = 0.500</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">Target for chosen performance metric</span> : Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.900</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                               Model</span> : lm</span></span>
+<span><span class="co">#&gt;   <span style="color: #00BBBB;">                     Simulation reps</span> : 1,000</span></span>
+<span><span class="co">#&gt; ──────────────────────────────────── Results ───────────────────────────────────</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">           Final minimum sample size</span> : <span style="font-weight: bold;">218</span></span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">          Estimated performance at N</span> : 0.899 (Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.900)</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">                               Model</span> : lm</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">                                Mode</span> : Assurance</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">                        Running time</span> : 13 seconds</span></span>
+<span><span class="co">#&gt;     <span style="color: #555555; font-style: italic;">Assurance mode ensures the target metric is met with high probability across repeated datasets.</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">continuous_example</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/unnamed-chunk-5-1.png" width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
@@ -337,14 +382,20 @@ samples.</li>
 <span><span class="co">#&gt; [1] pmsims_0.5.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] cli_3.6.5         knitr_1.50        rlang_1.1.6       xfun_0.54        </span></span>
-<span><span class="co">#&gt;  [5] textshaping_1.0.4 jsonlite_2.0.0    htmltools_0.5.8.1 ragg_1.5.0       </span></span>
-<span><span class="co">#&gt;  [9] sass_0.4.10       rmarkdown_2.30    grid_4.5.2        evaluate_1.0.5   </span></span>
-<span><span class="co">#&gt; [13] jquerylib_0.1.4   fastmap_1.2.0     yaml_2.3.10       lifecycle_1.0.4  </span></span>
-<span><span class="co">#&gt; [17] compiler_4.5.2    fs_1.6.6          htmlwidgets_1.6.4 lattice_0.22-7   </span></span>
-<span><span class="co">#&gt; [21] systemfonts_1.3.1 digest_0.6.37     R6_2.6.1          splines_4.5.2    </span></span>
-<span><span class="co">#&gt; [25] bslib_0.9.0       Matrix_1.7-4      tools_4.5.2       survival_3.8-3   </span></span>
-<span><span class="co">#&gt; [29] pkgdown_2.1.3     cachem_1.1.0      desc_1.4.3</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] Matrix_1.7-4       rgenoud_5.9-0.11   gtable_0.3.6       jsonlite_2.0.0    </span></span>
+<span><span class="co">#&gt;  [5] dplyr_1.1.4        compiler_4.5.2     crayon_1.5.3       tidyselect_1.2.1  </span></span>
+<span><span class="co">#&gt;  [9] jquerylib_0.1.4    splines_4.5.2      systemfonts_1.3.1  scales_1.4.0      </span></span>
+<span><span class="co">#&gt; [13] textshaping_1.0.4  yaml_2.3.10        fastmap_1.2.0      lattice_0.22-7    </span></span>
+<span><span class="co">#&gt; [17] ggplot2_4.0.0      R6_2.6.1           labeling_0.4.3     generics_0.1.4    </span></span>
+<span><span class="co">#&gt; [21] knitr_1.50         htmlwidgets_1.6.4  randtoolbox_2.0.5  rngWELL_0.10-10   </span></span>
+<span><span class="co">#&gt; [25] tibble_3.3.0       desc_1.4.3         pillar_1.11.1      bslib_0.9.0       </span></span>
+<span><span class="co">#&gt; [29] RColorBrewer_1.1-3 rlang_1.1.6        cachem_1.1.0       xfun_0.54         </span></span>
+<span><span class="co">#&gt; [33] S7_0.2.0           fs_1.6.6           DiceKriging_1.6.1  sass_0.4.10       </span></span>
+<span><span class="co">#&gt; [37] cli_3.6.5          withr_3.0.2        magrittr_2.0.4     pkgdown_2.1.3     </span></span>
+<span><span class="co">#&gt; [41] digest_0.6.37      grid_4.5.2         lifecycle_1.0.4    mlpwr_1.1.1       </span></span>
+<span><span class="co">#&gt; [45] vctrs_0.6.5        evaluate_1.0.5     glue_1.8.0         farver_2.1.2      </span></span>
+<span><span class="co">#&gt; [49] ragg_1.5.0         survival_3.8-3     rmarkdown_2.30     pkgconfig_2.0.3   </span></span>
+<span><span class="co">#&gt; [53] tools_4.5.2        htmltools_0.5.8.1</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -31,13 +31,10 @@ formulae, pmsims uses **simulation** to:
 -   Trace a **learning curve** of performance as the training size
     increases.
 
-![](workflow.png)
-```{=html}
-<div style="text-align:center;">
-  <img src="workflow.png" alt="A figure showing the package workflow." width="80%" />
-</div>
-```
 
+<p align="center">
+![A diagram showing the pmsims workflow, consisting of the data generator, model function, metrics function, which are passed to the simulation engine.](images/workflow.png)
+</p>
 
 The recommended design objective is **assurance**: the **smallest** $n$
 such that a high proportion of repeated studies (e.g., 80%) meet the
@@ -180,9 +177,16 @@ lists the key inputs.
 ## Installation
 
 ```{r}
+#| eval: false
 # install.packages("remotes")
 # remotes::install_github("pmsims-package/pmsims")
 library(pmsims)
+```
+
+```{r}
+#| echo: false
+#| results: "hide"
+devtools::load_all()
 ```
 
 ## Binary-outcome example
@@ -190,19 +194,18 @@ library(pmsims)
 We target the smallest *n* that meets the **assurance** criterion.
 
 ```{r}
-#| eval: false
 set.seed(123)
 
 binary_example <- simulate_binary(
-  signal_parameters = 15,
+  signal_parameters = 20,
   noise_parameters  = 0,
   predictor_type = "continuous",
   binary_predictor_prevalence = NULL,
-  outcome_prevalence = 0.20,
+  outcome_prevalence = 0.30,
   large_sample_cstatistic = 0.80,
   model = "glm",
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.90,
+  minimum_acceptable_performance = 0.85,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )
@@ -213,14 +216,13 @@ binary_example
 Plot the estimated learning curve and identified sample size:
 
 ```{r}
-#| eval: false
+#| fig-keep: true
 plot(binary_example)
 ```
 
 ## Continuous-outcome example
 
 ```{r}
-#| eval: false
 continuous_example <- simulate_continuous(
   signal_parameters = 15,
   noise_parameters = 0,
@@ -237,7 +239,6 @@ continuous_example
 ```
 
 ```{r}
-#| eval: false
 plot(continuous_example)
 ```
 
