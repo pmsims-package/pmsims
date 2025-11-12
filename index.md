@@ -64,18 +64,12 @@ We welcome questions, suggestions, and collaboration enquiries.
 
 ## Funding
 
-``` R
-<img src="man/figures/nihr-logo.png" alt="NIHR logo" height="100" width="560" />
-```
-
-``` R
-<img src="man/figures/kcl-logo.png" alt="King’s College London logo" width="150" height="120" />
-```
-
 This work is supported by the **National Institute for Health and Care
 Research (NIHR)** under the **Research for Patient Benefit (RfPB)**
 Programme
 ([*NIHR206858*](https://www.fundingawards.nihr.ac.uk/award/NIHR206858)).
+
+![NIHR and KCL logos](reference/figures/funder-logos.png)
 
 *The views expressed are those of the authors and not necessarily those
 of the NIHR or the Department of Health and Social Care.*
