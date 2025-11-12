@@ -41,21 +41,7 @@ outcomes, respectively:
 All three functions share the same basic structure. The table below
 lists the key inputs.
 
-| Argument                         | Applies to      | Req | Default                      | Description                                                                                                                     |
-|----------------------------------|-----------------|:---:|------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| `signal_parameters`              | all             |  ✓  | —                            | *(int)* Number of **true signal** predictors associated with the outcome.                                                       |
-| `noise_parameters`               | all             |     | `0`                          | *(int)* Number of **noise** predictors unrelated to the outcome.                                                                |
-| `predictor_type`                 | all             |     | `"continuous"`               | *(chr)* Type of simulated predictors (`"continuous"` or `"binary"`).                                                            |
-| `binary_predictor_prevalence`    | all             |     | `NULL`                       | *(num 0–1)* Prevalence for binary predictors (used only if `predictor_type = "binary"`).                                        |
-| `outcome_prevalence`             | binary only     |  ✓  | —                            | *(num 0–1)* Target prevalence of the binary outcome.                                                                            |
-| `large_sample_cstatistic`        | binary only     |  ✓  | —                            | *(num 0–1)* Expected **C-statistic** for a very large training sample.                                                          |
-| `large_sample_rsquared`          | continuous only |  ✓  | —                            | *(num 0–1)* Expected R² for a very large training sample.                                                                       |
-| `large_sample_cindex`            | survival only   |  ✓  | —                            | *(num 0–1)* Expected **concordance index** for a very large training sample.                                                    |
-| `model`                          | all             |     | `"glm"` / `"lm"` / `"coxph"` | *(chr)* Model used for fitting (e.g. logistic, linear, or Cox).                                                                 |
-| `metric`                         | all             |     | `"calibration_slope"`        | *(chr)* **Performance metric** used to estimate the **minimum required sample size** (e.g. calibration slope, R², C-statistic). |
-| `minimum_acceptable_performance` | all             |  ✓  | —                            | *(num)* **Minimum acceptable performance** in the **units of the chosen metric** (e.g. calibration slope ≥ 0.9).                |
-| `n_reps_total`                   | all             |  ✓  | `1000`                       | *(int)* Total number of simulation replications.                                                                                |
-| `mean_or_assurance`              | all             |     | `"assurance"`                | *(chr)* Criterion for summarising results; `"assurance"` recommended.                                                           |
+[TABLE]
 
 > Notes:
 >
@@ -95,27 +81,28 @@ binary_example <- simulate_binary(
 )
 
 binary_example
-#>                     ┌────────────────────────────────────────┐
-#>                     │ pmsims: Sample size simulation summary │
-#>                     └────────────────────────────────────────┘
-#> ──────────────────────────────────── Inputs ────────────────────────────────────
-#>                                Outcome : binary
-#>                         Predictor type : continuous
-#>                   Number of predictors : 20
-#>                       Noise predictors : 0
-#>                             Prevalence : 0.3
-#>      Expected large-sample performance : C-statistic ('cstatistic') = 0.800
-#>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.850
-#>                                  Model : glm
-#>                        Simulation reps : 1,000
-#> ──────────────────────────────────── Results ───────────────────────────────────
-#>              Final minimum sample size : 1,266
-#>             Estimated performance at N : 0.849 (Calibration slope ('calib_slope') = 0.850)
-#>                                  Model : glm
-#>                                   Mode : Assurance
-#>                           Running time : 2 minutes 22 seconds
-#>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 ```
+
+    #>                     ┌────────────────────────────────────────┐
+    #>                     │ pmsims: Sample size simulation summary │
+    #>                     └────────────────────────────────────────┘
+    #> ──────────────────────────────────── Inputs ────────────────────────────────────
+    #>                                Outcome : binary
+    #>                         Predictor type : continuous
+    #>                   Number of predictors : 20
+    #>                       Noise predictors : 0
+    #>                             Prevalence : 0.3
+    #>      Expected large-sample performance : C-statistic ('cstatistic') = 0.800
+    #>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.850
+    #>                                  Model : glm
+    #>                        Simulation reps : 1,000
+    #> ──────────────────────────────────── Results ───────────────────────────────────
+    #>              Final minimum sample size : 1,173
+    #>             Estimated performance at N : 0.849 (Calibration slope ('calib_slope') = 0.850)
+    #>                                  Model : glm
+    #>                                   Mode : Assurance
+    #>                           Running time : 1 minute
+    #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 Plot the estimated learning curve and identified sample size:
 
@@ -123,7 +110,8 @@ Plot the estimated learning curve and identified sample size:
 plot(binary_example)
 ```
 
-![](reference/figures/unnamed-chunk-3-1.png)
+![Plot showing learning curve for binary
+outcome](pmsims_files/figure-html/unnamed-chunk-3-1.png)
 
 ## Continuous-outcome example
 
@@ -141,32 +129,34 @@ continuous_example <- simulate_continuous(
 )
 
 continuous_example
-#>                     ┌────────────────────────────────────────┐
-#>                     │ pmsims: Sample size simulation summary │
-#>                     └────────────────────────────────────────┘
-#> ──────────────────────────────────── Inputs ────────────────────────────────────
-#>                                Outcome : continuous
-#>                         Predictor type : continuous
-#>                   Number of predictors : 15
-#>                       Noise predictors : 0
-#>      Expected large-sample performance : R² ('r2') = 0.500
-#>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.900
-#>                                  Model : lm
-#>                        Simulation reps : 1,000
-#> ──────────────────────────────────── Results ───────────────────────────────────
-#>              Final minimum sample size : 258
-#>             Estimated performance at N : 0.900 (Calibration slope ('calib_slope') = 0.900)
-#>                                  Model : lm
-#>                                   Mode : Assurance
-#>                           Running time : 38 seconds
-#>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 ```
+
+    #>                     ┌────────────────────────────────────────┐
+    #>                     │ pmsims: Sample size simulation summary │
+    #>                     └────────────────────────────────────────┘
+    #> ──────────────────────────────────── Inputs ────────────────────────────────────
+    #>                                Outcome : continuous
+    #>                         Predictor type : continuous
+    #>                   Number of predictors : 15
+    #>                       Noise predictors : 0
+    #>      Expected large-sample performance : R² ('r2') = 0.500
+    #>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.900
+    #>                                  Model : lm
+    #>                        Simulation reps : 1,000
+    #> ──────────────────────────────────── Results ───────────────────────────────────
+    #>              Final minimum sample size : 271
+    #>             Estimated performance at N : 0.899 (Calibration slope ('calib_slope') = 0.900)
+    #>                                  Model : lm
+    #>                                   Mode : Assurance
+    #>                           Running time : 14 seconds
+    #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 ``` r
 plot(continuous_example)
 ```
 
-![](reference/figures/unnamed-chunk-5-1.png)
+![Plot showing learning curve for continuous
+outcome](pmsims_files/figure-html/unnamed-chunk-6-1.png)
 
 ## Session info
 
@@ -196,16 +186,15 @@ sessionInfo()
 #> [1] pmsims_0.5.0
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] Matrix_1.7-4       rgenoud_5.9-0.11   gtable_0.3.6       jsonlite_2.0.0    
-#>  [5] compiler_4.5.2     crayon_1.5.3       jquerylib_0.1.4    splines_4.5.2     
-#>  [9] systemfonts_1.3.1  scales_1.4.0       textshaping_1.0.4  yaml_2.3.10       
-#> [13] fastmap_1.2.0      lattice_0.22-7     ggplot2_4.0.0      R6_2.6.1          
-#> [17] labeling_0.4.3     knitr_1.50         htmlwidgets_1.6.4  randtoolbox_2.0.5 
-#> [21] rngWELL_0.10-10    desc_1.4.3         bslib_0.9.0        RColorBrewer_1.1-3
-#> [25] rlang_1.1.6        cachem_1.1.0       xfun_0.54          S7_0.2.0          
-#> [29] fs_1.6.6           DiceKriging_1.6.1  sass_0.4.10        cli_3.6.5         
-#> [33] withr_3.0.2        pkgdown_2.2.0      digest_0.6.37      grid_4.5.2        
-#> [37] lifecycle_1.0.4    mlpwr_1.1.1        vctrs_0.6.5        evaluate_1.0.5    
-#> [41] glue_1.8.0         farver_2.1.2       ragg_1.5.0         survival_3.8-3    
-#> [45] rmarkdown_2.30     tools_4.5.2        htmltools_0.5.8.1
+#>  [1] Matrix_1.7-4       gtable_0.3.6       jsonlite_2.0.0     compiler_4.5.2    
+#>  [5] crayon_1.5.3       jquerylib_0.1.4    splines_4.5.2      systemfonts_1.3.1 
+#>  [9] scales_1.4.0       textshaping_1.0.4  yaml_2.3.10        fastmap_1.2.0     
+#> [13] lattice_0.22-7     ggplot2_4.0.0      R6_2.6.1           labeling_0.4.3    
+#> [17] knitr_1.50         htmlwidgets_1.6.4  desc_1.4.3         bslib_0.9.0       
+#> [21] RColorBrewer_1.1-3 rlang_1.1.6        cachem_1.1.0       xfun_0.54         
+#> [25] fs_1.6.6           DiceKriging_1.6.1  sass_0.4.10        S7_0.2.0          
+#> [29] cli_3.6.5          pkgdown_2.2.0      withr_3.0.2        digest_0.6.37     
+#> [33] grid_4.5.2         lifecycle_1.0.4    mlpwr_1.1.1        vctrs_0.6.5       
+#> [37] evaluate_1.0.5     glue_1.8.0         farver_2.1.2       ragg_1.5.0        
+#> [41] survival_3.8-3     rmarkdown_2.30     tools_4.5.2        htmltools_0.5.8.1
 ```
