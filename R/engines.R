@@ -812,7 +812,8 @@ calculate_mlpwr_bs <- function(
     pb_id <- cli::cli_progress_bar(
       "Estimating second stage (Gaussian process)",
       total = n_reps_total,
-      format = "{cli::pb_spin} {cli::pb_bar} {cli::pb_percent} ({cli::pb_eta})"
+      # shows: spinner, bar, "123/1000 sims", ETA
+      format = "{cli::pb_spin} {cli::pb_bar} {cli::pb_current}/{cli::pb_total} sims ({cli::pb_eta})"
     )
 
     patched_print_progress <- function(n_updates, evaluations_used, time_used) {
