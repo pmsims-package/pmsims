@@ -572,7 +572,6 @@ calculate_mlpwr_bs <- function(
   npar <- dim(data_function(1))[2] - 1
 
   # Infer the outcome type and compute data-driven minimum sample size
-  # Determine which outcome type applies
   formals_list <- formals(data_function)
   args_names <- names(formals_list)
 
@@ -717,6 +716,7 @@ calculate_mlpwr_bs <- function(
     prev_max_sample_size <- max_sample_size
   }
 
+  cat("Estimating first stage... (Bisection algorithm)\n")
   prev <- calculate_bisection(
     data_function = data_function,
     model_function = model_function,
@@ -798,6 +798,56 @@ calculate_mlpwr_bs <- function(
     mlpwrbs_max_sample_size <- max_sample_size
   }
 
+  cat("Estimating second stage... (Gaussian process algorithm)\n")
+  # Progress bar
+  orig_print_progress <- NULL
+  pb_id <- NULL
+  pb_txt <- NULL
+  use_cli <- FALSE
+
+  # Try using cli
+  if (requireNamespace("cli", quietly = TRUE)) {
+    use_cli <- TRUE
+
+    pb_id <- cli::cli_progress_bar(
+      "Estimating second stage (Gaussian process)",
+      total = n_reps_total,
+      format = "{cli::pb_spin} {cli::pb_bar} {cli::pb_percent} ({cli::pb_eta})"
+    )
+
+    patched_print_progress <- function(n_updates, evaluations_used, time_used) {
+      cli::cli_progress_update(id = pb_id, set = evaluations_used)
+    }
+  } else {
+    # Fallback to txtProgressBar
+    pb_txt <- utils::txtProgressBar(
+      min = 0,
+      max = n_reps_total,
+      style = 3
+    )
+
+    patched_print_progress <- function(n_updates, evaluations_used, time_used) {
+      utils::setTxtProgressBar(pb_txt, evaluations_used)
+    }
+  }
+
+  # Patch mlpwr::print_progress()
+  ns <- asNamespace("mlpwr")
+  orig_print_progress <- get("print_progress", envir = ns)
+  assignInNamespace("print_progress", patched_print_progress, ns)
+
+  # Ensure cleanup
+  on.exit(
+    {
+      assignInNamespace("print_progress", orig_print_progress, "mlpwr")
+      if (!is.null(pb_txt)) {
+        close(pb_txt)
+      }
+      if (!is.null(pb_id) && use_cli) cli::cli_progress_done(id = pb_id)
+    },
+    add = TRUE
+  )
+
   ds <-
     mlpwr::find.design(
       simfun = mlpwr_simulation_function,
@@ -810,7 +860,7 @@ calculate_mlpwr_bs <- function(
       evaluations = n_reps_total,
       ci = ci,
       n.startsets = 4,
-      silent = !verbose
+      silent = FALSE
     )
 
   # Process results from mlpwr
