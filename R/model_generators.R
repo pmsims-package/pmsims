@@ -65,7 +65,7 @@ default_models <- list(
       ranger::ranger(
         x = x,
         y = y,
-        num.threads = 20 
+        num.threads = 12 
       )
     },
     xgboost = function(d, nrounds = 100, params = list(objective = "reg:squarederror", eval_metric = "rmse")) {

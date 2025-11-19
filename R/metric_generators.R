@@ -94,8 +94,10 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
     if (!("glmnet" %in% rownames(utils::installed.packages()))) {
       warning("glmnet not installed; predict for lasso will fail.")
     }
-    s_val <- if (!is.null(fit$lambda.1se)) fit$lambda.1se else if (!is.null(fit$lambda.min)) fit$lambda.min else NULL
-    if (is.null(s_val)) s_val <- NULL
+    #s_val <- if (!is.null(fit$lambda.1se)) fit$lambda.1se else if (!is.null(fit$lambda.min)) fit$lambda.min else NULL
+    #if (is.null(s_val)) s_val <- NULL
+    
+    s_val = "lambda.min"
     
     # Choose glmnet type mapping
     glmnet_type <- switch(type,
@@ -103,7 +105,7 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
                           link = "link",
                           lp = "link",
                           stop("Type '", type, "' not supported for lasso."))
-    preds <- as.numeric(glmnet::predict.glmnet(fit, newx = x_mat, s = s_val, type = glmnet_type))
+    preds <- as.numeric(predict(fit, newx = x_mat, s = s_val, type = glmnet_type))
     # for binary response, glmnet::predict(..., type="response") returns probabilities
     # for cox (survival) family, glmnet::predict(..., type="link") returns linear predictor
     return(preds)
