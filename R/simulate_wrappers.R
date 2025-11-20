@@ -204,16 +204,21 @@ simulate_binary <- function(
 simulate_continuous <- function(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = "continuous",
+  predictor_type = c("continuous", "binary"),
   binary_predictor_prevalence = NULL,
   large_sample_rsquared,
-  model = "lm",
-  metric = "calibration_slope",
+  model = c("lm"), 
+  metric = c("calibration_slope", "r2"),
   minimum_acceptable_performance,
   n_reps_total = 1000,
-  mean_or_assurance = "assurance",
+  mean_or_assurance = c("assurance", "mean"),
   ...
 ) {
+  predictor_type <-  match.arg(predictor_type)
+  model <- match.arg(model)
+  metric <- match.arg(metric)
+  mean_or_assurance <- match.arg(mean_or_assurance)
+  
   validate_metric_constraints(
     metric = metric,
     minimum_acceptable_performance = minimum_acceptable_performance
