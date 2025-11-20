@@ -18,11 +18,11 @@ validate_metric_constraints <- function(metric,
     }
   }
 
-  if (!is.null(expected_performance) && metric_lower == "auc") {
+  if (!is.null(expected_performance) && metric_lower %in% c("auc","r2","cindex")) {
     if (expected_performance < minimum_acceptable_performance) {
       stop(
         paste(
-          "Requested minimum acceptable AUC exceeds the expected",
+          "Requested minimum acceptable", metric_lower, "exceeds the expected",
           "large-sample performance; adjust inputs and try again."
         ),
         call. = FALSE

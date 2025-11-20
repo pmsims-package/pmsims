@@ -211,8 +211,8 @@ simulate_continuous <- function(
 ) {
   validate_metric_constraints(
     metric = metric,
-    minimum_acceptable_performance = minimum_acceptable_performance
-  )
+    minimum_acceptable_performance = minimum_acceptable_performance,
+    expected_performance = large_sample_rsquared)
 
   # Tuning the data-generating function
   tune_param <- continuous_tuning(
