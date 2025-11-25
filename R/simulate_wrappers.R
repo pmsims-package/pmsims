@@ -30,7 +30,7 @@
 #' @param noise_parameters Integer. Number of candidate predictors not
 #'   associated with the outcome (noise features). Default is 0.
 #' @param predictor_type Character string, either `"continuous"` or `"binary"`.
-#'   Specifies the type of simulated candidate predictors.
+#'   Specifies the type of simulated candidate predictors. Defaults to `"continuous"`.
 #' @param binary_predictor_prevalence Optional numeric in (0, 1). Prevalence of
 #'   the binary predictors when `predictor_type = "binary"`. Ignored otherwise.
 #' @param outcome_prevalence Numeric in (0, 1). Target prevalence of the binary
@@ -42,7 +42,7 @@
 #'   `"glm"`). Passed to the internal model generator.
 #' @param metric Character string naming the performance metric used to assess
 #'   the sample size; defaults to `"calibration_slope"`. (Internally mapped to
-#'   the engine's metric identifiers.)
+#'   the engine's metric identifiers.).
 #' @param minimum_acceptable_performance Numeric. The target threshold
 #'   \eqn{M^\\*}; the algorithm searches for the smallest \eqn{n} meeting the
 #'   chosen criterion with respect to this threshold.
@@ -51,7 +51,7 @@
 #' @param mean_or_assurance Character string, either `"mean"` or `"assurance"`.
 #'   Controls whether the minimum \eqn{n} is defined by the mean-based criterion
 #'   or the assurance-based criterion (with the assurance level \eqn{\delta}
-#'   controlled by the engine's defaults or additional arguments in `...`).
+#'   controlled by the engine's defaults or additional arguments in `...`). Defaults to `"assurance"`.
 #' @param ... Additional options passed to [simulate_custom()] (e.g., assurance
 #'   level \eqn{\delta}, per-iteration settings).
 #'
@@ -80,17 +80,22 @@
 simulate_binary <- function(
   signal_parameters,                  # Predictors
   noise_parameters = 0,
-  predictor_type = "continuous",
+  predictor_type = c("continuous", "binary"),
   binary_predictor_prevalence = NULL,
   outcome_prevalence,                 # Outcome
   large_sample_cstatistic,
-  model = "glm",                      # Model
-  metric = "calibration_slope",       # Performance
+  model = c("glm"),                      # Model
+  metric = c("calibration_slope", "auc"), # Performance
   minimum_acceptable_performance,
   n_reps_total = 1000,                # Engine control
-  mean_or_assurance = "assurance",
+  mean_or_assurance = c("assurance", "mean"),
   ...
 ) {
+  predictor_type <-  match.arg(predictor_type)
+  model <- match.arg(model)
+  metric <- match.arg(metric)
+  mean_or_assurance <- match.arg(mean_or_assurance)
+  
   validate_metric_constraints(
     metric = metric,
     minimum_acceptable_performance = minimum_acceptable_performance,
@@ -199,16 +204,21 @@ simulate_binary <- function(
 simulate_continuous <- function(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = "continuous",
+  predictor_type = c("continuous", "binary"),
   binary_predictor_prevalence = NULL,
   large_sample_rsquared,
-  model = "lm",
-  metric = "calibration_slope",
+  model = c("lm"), 
+  metric = c("calibration_slope", "r2"),
   minimum_acceptable_performance,
   n_reps_total = 1000,
-  mean_or_assurance = "assurance",
+  mean_or_assurance = c("assurance", "mean"),
   ...
 ) {
+  predictor_type <-  match.arg(predictor_type)
+  model <- match.arg(model)
+  metric <- match.arg(metric)
+  mean_or_assurance <- match.arg(mean_or_assurance)
+  
   validate_metric_constraints(
     metric = metric,
     minimum_acceptable_performance = minimum_acceptable_performance
@@ -317,18 +327,24 @@ simulate_continuous <- function(
 simulate_survival <- function(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = "continuous",
+  predictor_type = c("continuous", "binary"),
   binary_predictor_prevalence = NULL,
   large_sample_cindex,
   baseline_hazard = 1,
   censoring_rate,
-  model = "coxph",
-  metric = "calibration_slope",
+  model = c("coxph"),
+  metric = c("calibration_slope", "cindex"), # Performance
   minimum_acceptable_performance,
   n_reps_total = 1000,
-  mean_or_assurance = "assurance",
+  mean_or_assurance = c("assurance", "mean"),
   ...
 ) {
+  predictor_type <-  match.arg(predictor_type)
+  model <- match.arg(model)
+  metric <- match.arg(metric)
+  mean_or_assurance <- match.arg(mean_or_assurance)
+  
+  
   validate_metric_constraints(
     metric = metric,
     minimum_acceptable_performance = minimum_acceptable_performance,
