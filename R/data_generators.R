@@ -145,6 +145,12 @@ update_arguments <- function(fn, opts) {
 
 generate_predictors <- function(n, parameters, type, predictor_prop) {
   if (type == "binary") {
+    if(is.null(predictor_prop)) {
+      stop("predictor_prop must be provided when predictor type is binary")
+    }
+    if (predictor_prop < 0 || predictor_prop > 1) {
+      stop("predictor_prop must be between 0 and 1")
+    }
     X <- stats::rbinom(n * parameters, 1, predictor_prop)
   } else if (type == "continuous") {
     X <- stats::rnorm(n * parameters)
