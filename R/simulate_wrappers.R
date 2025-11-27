@@ -96,11 +96,14 @@ simulate_binary <- function(
   metric <- check_pmsims_args(metric)
   mean_or_assurance <- check_pmsims_args(mean_or_assurance)
   
+
   validate_metric_constraints(
     metric = metric,
     minimum_acceptable_performance = minimum_acceptable_performance,
     expected_performance = large_sample_cstatistic
   )
+
+  validate_outcome_prevalence(outcome_prevalence)
 
   # Tune for data function
   tune_param <- binary_tuning(
@@ -207,18 +210,20 @@ simulate_continuous <- function(
   predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
   large_sample_rsquared,
-  model = c("lm"), 
+  model = c("lm"),
   metric = c("calibration_slope", "r2"),
   minimum_acceptable_performance,
   n_reps_total = 1000,
   mean_or_assurance = c("assurance", "mean"),
   ...
 ) {
+
   predictor_type <-  check_pmsims_args(predictor_type)
   model <- check_pmsims_args(model)
   metric <- check_pmsims_args(metric)
   mean_or_assurance <- check_pmsims_args(mean_or_assurance)
   
+
   validate_metric_constraints(
     metric = metric,
     minimum_acceptable_performance = minimum_acceptable_performance
@@ -344,7 +349,7 @@ simulate_survival <- function(
   metric <- check_pmsims_args(metric)
   mean_or_assurance <- check_pmsims_args(mean_or_assurance)
   
-  
+
   validate_metric_constraints(
     metric = metric,
     minimum_acceptable_performance = minimum_acceptable_performance,
