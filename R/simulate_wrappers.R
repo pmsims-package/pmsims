@@ -29,8 +29,8 @@
 #'   with the outcome (i.e., true signal features).
 #' @param noise_parameters Integer. Number of candidate predictors not
 #'   associated with the outcome (noise features). Default is 0.
-#' @param predictor_type Character string, either `"continuous"` or `"binary"`.
-#'   Specifies the type of simulated candidate predictors. Defaults to `"continuous"`.
+#' @param predictor_type Character string, currently only `"continuous"` supported, which is the default option.
+#'   Specifies the type of simulated candidate predictors.
 #' @param binary_predictor_prevalence Optional numeric in (0, 1). Prevalence of
 #'   the binary predictors when `predictor_type = "binary"`. Ignored otherwise.
 #' @param outcome_prevalence Numeric in (0, 1). Target prevalence of the binary
@@ -80,7 +80,6 @@
 simulate_binary <- function(
   signal_parameters,                  # Predictors
   noise_parameters = 0,
-  predictor_type = c("continuous", "binary"),
   predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
   outcome_prevalence,                 # Outcome
@@ -205,7 +204,7 @@ simulate_binary <- function(
 simulate_continuous <- function(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = c("continuous", "binary"),
+  predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
   large_sample_rsquared,
   model = c("lm"), 
@@ -328,7 +327,7 @@ simulate_continuous <- function(
 simulate_survival <- function(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = c("continuous", "binary"),
+  predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
   large_sample_cindex,
   baseline_hazard = 1,
