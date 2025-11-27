@@ -30,3 +30,17 @@ validate_metric_constraints <- function(metric,
     }
   }
 }
+
+validate_outcome_prevalence <- function(outcome_prevalence) {
+  if (is.null(outcome_prevalence)) {
+    cli::cli_abort("`outcome_prevalence` must be specified.")
+  }
+
+  if (outcome_prevalence < 0.05) {
+    cli::cli_alert_warning(
+      "Outcome prevalence is very low ({.val {outcome_prevalence}}). Recommended > {.val 0.05}; values below this haven’t been tested, and simulations may take a long time."
+    )
+  }
+
+  invisible(TRUE)
+}
