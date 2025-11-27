@@ -12,16 +12,16 @@ meeting the chosen performance criterion.
 simulate_survival(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = "continuous",
+  predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
   large_sample_cindex,
   baseline_hazard = 1,
   censoring_rate,
-  model = "coxph",
-  metric = "calibration_slope",
+  model = c("coxph"),
+  metric = c("calibration_slope", "cindex"),
   minimum_acceptable_performance,
   n_reps_total = 1000,
-  mean_or_assurance = "assurance",
+  mean_or_assurance = c("assurance", "mean"),
   ...
 )
 ```
@@ -40,8 +40,9 @@ simulate_survival(
 
 - predictor_type:
 
-  Character string, either `"continuous"` or `"binary"`. Specifies the
-  type of simulated candidate predictors.
+  Character string, currently only `"continuous"` supported, which is
+  the default option. Specifies the type of simulated candidate
+  predictors.
 
 - binary_predictor_prevalence:
 
@@ -74,7 +75,7 @@ simulate_survival(
 
   Character string naming the performance metric used to assess the
   sample size; defaults to `"calibration_slope"`. (Internally mapped to
-  the engine's metric identifiers.)
+  the engine's metric identifiers.).
 
 - minimum_acceptable_performance:
 
@@ -93,6 +94,7 @@ simulate_survival(
   the minimum \\n\\ is defined by the mean-based criterion or the
   assurance-based criterion (with the assurance level \\\delta\\
   controlled by the engine's defaults or additional arguments in `...`).
+  Defaults to `"assurance"`.
 
 - ...:
 

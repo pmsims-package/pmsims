@@ -47,7 +47,7 @@ searches for the smallest \(n\) meeting the chosen criterion."><meta property="o
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Minimum sample size for continuous‐outcome prediction models</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/R/simulate_wrappers.R" class="external-link"><code>R/simulate_wrappers.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/bug-fix-binary-predictors/R/simulate_wrappers.R" class="external-link"><code>R/simulate_wrappers.R</code></a></small>
       <div class="d-none name"><code>simulate_continuous.Rd</code></div>
     </div>
 
@@ -66,14 +66,14 @@ searches for the smallest \(n\) meeting the chosen criterion.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">simulate_continuous</span><span class="op">(</span></span>
 <span>  <span class="va">signal_parameters</span>,</span>
 <span>  noise_parameters <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span>
+<span>  predictor_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"continuous"</span><span class="op">)</span>,</span>
 <span>  binary_predictor_prevalence <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">large_sample_rsquared</span>,</span>
-<span>  model <span class="op">=</span> <span class="st">"lm"</span>,</span>
-<span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span>
+<span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lm"</span><span class="op">)</span>,</span>
+<span>  metric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"calibration_slope"</span>, <span class="st">"r2"</span><span class="op">)</span>,</span>
 <span>  <span class="va">minimum_acceptable_performance</span>,</span>
 <span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span>,</span>
+<span>  mean_or_assurance <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"assurance"</span>, <span class="st">"mean"</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -93,7 +93,7 @@ associated with the outcome (noise features). Default is 0.</p></dd>
 
 
 <dt id="arg-predictor-type">predictor_type<a class="anchor" aria-label="anchor" href="#arg-predictor-type"></a></dt>
-<dd><p>Character string, either <code>"continuous"</code> or <code>"binary"</code>.
+<dd><p>Character string, currently only <code>"continuous"</code> supported, which is the default option.
 Specifies the type of simulated candidate predictors.</p></dd>
 
 
@@ -116,7 +116,7 @@ the model attains this performance for very large \(n\)).</p></dd>
 <dt id="arg-metric">metric<a class="anchor" aria-label="anchor" href="#arg-metric"></a></dt>
 <dd><p>Character string naming the performance metric used to assess
 the sample size; defaults to <code>"calibration_slope"</code>. (Internally mapped to
-the engine's metric identifiers.)</p></dd>
+the engine's metric identifiers.).</p></dd>
 
 
 <dt id="arg-minimum-acceptable-performance">minimum_acceptable_performance<a class="anchor" aria-label="anchor" href="#arg-minimum-acceptable-performance"></a></dt>
@@ -134,7 +134,7 @@ the engine across the search.</p></dd>
 <dd><p>Character string, either <code>"mean"</code> or <code>"assurance"</code>.
 Controls whether the minimum \(n\) is defined by the mean-based criterion
 or the assurance-based criterion (with the assurance level \(\delta\)
-controlled by the engine's defaults or additional arguments in <code>...</code>).</p></dd>
+controlled by the engine's defaults or additional arguments in <code>...</code>). Defaults to <code>"assurance"</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
