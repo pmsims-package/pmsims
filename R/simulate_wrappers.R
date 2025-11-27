@@ -347,7 +347,6 @@ simulate_survival <- function(
   metric <- match.arg(metric)
   mean_or_assurance <- match.arg(mean_or_assurance)
 
-
   validate_metric_constraints(
     metric = metric,
     minimum_acceptable_performance = minimum_acceptable_performance,
