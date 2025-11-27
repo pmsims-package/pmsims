@@ -59,8 +59,8 @@ check_pmsims_args <- function(arg, choices, several.ok = FALSE) {
                     envir = sys.frame(sysP))
   }
   arg_name <- as.character(substitute(arg))
-  
-  if (is.null(arg)) 
+
+  if (is.null(arg)) {
     return(choices[1L])
   else if (!is.character(arg)) 
     stop(paste0(arg_name, " must be NULL or a character vector"))
