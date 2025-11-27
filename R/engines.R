@@ -381,7 +381,7 @@ calculate_mlpwr <- function(
 #' @return A list containing the simulation `results`, performance `summaries`,
 #'   optional tracking `history`, and the `track_bisection` records.
 #' @keywords internal
-#' @export
+
 calculate_bisection <- function(
   data_function = data_function,
   model_function = model_function,
@@ -549,7 +549,7 @@ calculate_bisection <- function(
 #'
 #' @return List containing the combined bisection and mlpwr results (`results`, `summaries`, `min_n`, `perf_n`, and `mlpwr_ds`).
 #' @keywords internal
-#' @export
+
 calculate_mlpwr_bs <- function(
   test_n,
   n_reps_total,

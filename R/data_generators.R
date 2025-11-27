@@ -61,7 +61,7 @@ generate_continuous_data <- function(
 #'
 #' @return A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
 #' @keywords internal
-#' @export
+
 generate_binary_data <- function(
   n,
   mu_lp,
