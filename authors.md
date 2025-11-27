@@ -21,7 +21,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/pmsims-package/pmsims/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/pmsims-package/pmsims/blob/bug-fix-beta-testing/DESCRIPTION)
 
 Carr E, Forbes G, Olaniran R, Shamsutdinova D, Stahl D, Markham S,
 Zimmer F (2025). *pmsims: Simulation-based Sample Size Tools for

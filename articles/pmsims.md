@@ -79,9 +79,7 @@ binary_example <- simulate_binary(
 binary_example
 ```
 
-    #>                     ┌────────────────────────────────────────┐
-    #>                     │ pmsims: Sample size simulation summary │
-    #>                     └────────────────────────────────────────┘
+    #> 
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
     #>                                Outcome : binary
     #>                         Predictor type : continuous
@@ -127,9 +125,7 @@ continuous_example <- simulate_continuous(
 continuous_example
 ```
 
-    #>                     ┌────────────────────────────────────────┐
-    #>                     │ pmsims: Sample size simulation summary │
-    #>                     └────────────────────────────────────────┘
+    #> 
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
     #>                                Outcome : continuous
     #>                         Predictor type : continuous
