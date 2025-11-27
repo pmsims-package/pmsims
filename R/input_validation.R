@@ -52,7 +52,7 @@ validate_outcome_prevalence <- function(outcome_prevalence) {
 #'
 #'@inherit base::match.arg
 #'
-check_pmsims_args <- function (arg, choices, several.ok = FALSE) {
+check_pmsims_args <- function(arg, choices, several.ok = FALSE) {
   if (missing(choices)) {
     formal.args <- formals(sys.function(sysP <- sys.parent()))
     choices <- eval(formal.args[[as.character(substitute(arg))]], 
