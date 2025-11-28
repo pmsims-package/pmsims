@@ -145,7 +145,7 @@ update_arguments <- function(fn, opts) {
 
 generate_predictors <- function(n, parameters, type, predictor_prop) {
   if (type == "binary") {
-    if(is.null(predictor_prop)) {
+    if (is.null(predictor_prop)) {
       stop("predictor_prop must be provided when predictor type is binary")
     }
     if (predictor_prop < 0 || predictor_prop > 1) {
