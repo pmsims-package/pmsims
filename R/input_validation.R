@@ -92,7 +92,8 @@ check_pmsims_args <- function(arg, choices, several.ok = FALSE) {
     )
   }
   i <- i[i > 0L]
-  if (!several.ok && length(i) > 1) 
+  if (!several.ok && length(i) > 1) {
     stop("there is more than one match in 'check_pmsims_args'")
+  }
   choices[i]
 }
