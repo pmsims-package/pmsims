@@ -84,10 +84,10 @@ simulate_binary <- function(
   binary_predictor_prevalence = NULL,
   outcome_prevalence, # Outcome
   large_sample_cstatistic,
-  model = c("glm"),                      # Model
+  model = c("glm"), # Model
   metric = c("calibration_slope", "auc"), # Performance
   minimum_acceptable_performance,
-  n_reps_total = 1000,                # Engine control
+  n_reps_total = 1000, # Engine control
   mean_or_assurance = c("assurance", "mean"),
   ...
 ) {
@@ -95,7 +95,6 @@ simulate_binary <- function(
   model <- check_pmsims_args(model)
   metric <- check_pmsims_args(metric)
   mean_or_assurance <- check_pmsims_args(mean_or_assurance)
-
 
   validate_metric_constraints(
     metric = metric,
@@ -222,7 +221,6 @@ simulate_continuous <- function(
   metric <- check_pmsims_args(metric)
   mean_or_assurance <- check_pmsims_args(mean_or_assurance)
 
-
   validate_metric_constraints(
     metric = metric,
     minimum_acceptable_performance = minimum_acceptable_performance
@@ -347,7 +345,6 @@ simulate_survival <- function(
   model <- check_pmsims_args(model)
   metric <- check_pmsims_args(metric)
   mean_or_assurance <- check_pmsims_args(mean_or_assurance)
-  
 
   validate_metric_constraints(
     metric = metric,
