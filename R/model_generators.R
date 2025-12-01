@@ -21,12 +21,16 @@ default_models <- list(
     },
     rf = function(d) {
       # expects column 1 = y (0/1) and remaining columns predictors
+      ncores <- parallel::detectCores(logical = FALSE)
+      nthreads <- ncores - 2
+      
       x <- d[, -1, drop = FALSE]
       y <- d[, 1]
       ranger::ranger(
         x = x,
         y = y,
-        probability = TRUE
+        probability = TRUE,
+        num.threads = nthreads
       )
     },
     xgboost = function(d, nrounds = 100, params = list(objective = "binary:logistic", eval_metric = "logloss")) {
@@ -60,12 +64,15 @@ default_models <- list(
     },
     rf = function(d) {
       # expects first column y (numeric), remaining columns predictors
+      ncores <- parallel::detectCores(logical = FALSE)
+      nthreads <- ncores - 2
+      
       x <- d[, -1, drop = FALSE]
       y <- d[, 1]
       ranger::ranger(
         x = x,
         y = y,
-        num.threads = 12 
+        num.threads = nthreads 
       )
     },
     xgboost = function(d, nrounds = 100, params = list(objective = "reg:squarederror", eval_metric = "rmse")) {
@@ -98,9 +105,12 @@ default_models <- list(
     },
     rf = function(d) {
       # ranger survival forest: formula interface with Surv()
+      ncores <- parallel::detectCores(logical = FALSE)
+      nthreads <- ncores - 2
+      
       stopifnot(all(c("time", "event") %in% colnames(d)))
       formula <- stats::as.formula("survival::Surv(time, event) ~ .")
-      ranger::ranger(formula, data = d)
+      ranger::ranger(formula, data = d, num.threads = nthreads)
     },
     xgboost = function(d, nrounds = 100, params = list(objective = "survival:cox", eval_metric = "cox-nloglik")) {
       # XGBoost Cox objective: uses times as label but does not directly take a censoring vector.

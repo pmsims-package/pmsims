@@ -121,7 +121,10 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
       stop("rf: model object not of class 'ranger' and generic predict failed.")
     }
     
-    pr <- predict(fit, data = x_df)
+    ncores <- parallel::detectCores(logical = FALSE)
+    nthreads <- ncores - 2
+    
+    pr <- predict(fit, data = x_df, num.threads = nthreads)
     preds <- pr$predictions
     
     # Classification (probabilities) => matrix with columns per class

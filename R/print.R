@@ -75,11 +75,15 @@ print.pmsims <- function(x, ..., max_width = 80) {
   model      <- x$model %||% NA_character_
   target     <- x$target_performance %||% x$minimum_acceptable_performance %||% NA_real_
   metric     <- x$metric %||% NA_character_
+  metric_2   <- x$metric_2 %||% NA_character_
   min_n      <- x$min_n %||% NA
   perf_at    <- x$perf_n %||% NA
+  perf2_at   <- x$metric_2_at_n %||% NA
   simtime    <- x$simulation_time %||% NA
   cstatistic <- x$cstatistic
   r2         <- x$r2
+  #statistic_2 <- ifelse(is.null(cstatistic), r2, cstatistic)
+  
 
   # --- Inputs table (non-null only)
   inputs <- list(
@@ -103,15 +107,21 @@ print.pmsims <- function(x, ..., max_width = 80) {
   inputs <- inputs[keep_inputs]
 
   # --- Results table
+  
   results <- list(
     "Final minimum sample size"  = bold(fmt_int(min_n)),
     "Estimated performance at N" = paste0(fmt_num(perf_at, 3),
                                           " (", pretty_metric(metric),
                                           " = ", fmt_num(target, 3), ")"),
+    "Estimated other metric at N" = paste0(fmt_num(perf2_at, 3),
+                                          " (", pretty_metric(metric_2), ")"),
     "Model"                      = model,
     "Mode"                       = if (tolower(moa) == "assurance") "Assurance" else "Mean",
     "Running time"               = fmt_duration(simtime)
   )
+
+  
+  
   keep_results <- vapply(results, is_present, logical(1))
   results <- results[keep_results]
 

@@ -405,7 +405,6 @@ calculate_bisection <- function(
   npar <- dim(data_function(1))[2] - 1
   
   # Infer the outcome type and compute data-driven minimum sample size
-  # Determine which outcome type applies
   formals_list <- formals(data_function)
   args_names <- names(formals_list)
   
@@ -448,7 +447,51 @@ calculate_bisection <- function(
   # Generate fixed test set once
   test_data <- data_function(test_n)
   
-  # Helper: run 1 simulation
+  # set up cluster once if parallel requested
+  
+  cl <- NULL
+  registered_parallel <- FALSE
+  if (isTRUE(parallel)) {
+    
+    # sensible default if user passed an invalid cores
+    if (is.null(cores) || !is.numeric(cores) || cores < 1) {
+      cores <- parallel::detectCores(logical = FALSE)
+    }
+    cores_to_use <- min(cores, parallel::detectCores())
+    
+    cl <- parallel::makeCluster(cores_to_use)
+    
+    # Export the core functions/objects themselves (so workers can call them)
+    core_names <- c("data_function", "model_function", "metric_function", "value_on_error", "test_data")
+    parallel::clusterExport(cl, varlist = core_names, envir = environment())
+    
+    # Export everything from the environments of the three functions.
+    envs <- unique(list(environment(data_function),
+                        environment(model_function),
+                        environment(metric_function)))
+    for (e in envs) {
+      if (!is.null(e)) {
+        objs <- ls(envir = e, all.names = TRUE)
+        # avoid exporting names that are obviously internal to base packages (optional)
+        if (length(objs) > 0) {
+          try(parallel::clusterExport(cl, varlist = objs, envir = e), silent = TRUE)
+        }
+      }
+    }
+    
+    
+    # Register backend for foreach
+    doParallel::registerDoParallel(cl)
+    registered_parallel <- TRUE
+    
+    # Ensure cluster is stopped when function exits (even on error)
+    on.exit({
+      try(parallel::stopCluster(cl), silent = TRUE)
+      try(doParallel::stopImplicitCluster(), silent = TRUE)
+    }, add = TRUE)
+  }
+  
+  # Helper: run 1 simulation (kept as regular R function)
   single_run <- function(n) {
     tryCatch(
       {
@@ -462,12 +505,23 @@ calculate_bisection <- function(
   
   # Helper: summary of metric for n_reps_per repetitions
   summary_at_n <- function(n) {
-    if (parallel) {
-      cl <- parallel::makeCluster(cores)
-      doParallel::registerDoParallel(cl)
-      vals <- foreach::foreach(i = 1:n_reps_per, .combine = c) %dopar%
-        single_run(n)
-      parallel::stopCluster(cl)
+    if (isTRUE(parallel) && registered_parallel) {
+      
+      if (!"package:foreach" %in% search()) library(foreach, quietly = TRUE)
+      if (!"package:doParallel" %in% search()) library(doParallel, quietly = TRUE)
+      
+      # Use foreach %dopar% on the already-registered cluster
+      vals <- foreach::foreach(i = seq_len(n_reps_per), .combine = c) %dopar% {
+        # Each worker will call single_run; single_run closes over data_function, etc.
+        tryCatch(
+          {
+            dat <- data_function(n)
+            fit <- model_function(dat)
+            metric_function(test_data, fit, attr(model_function, "model"))
+          },
+          error = function(e) value_on_error
+        )
+      }
     } else {
       vals <- vapply(
         seq_len(n_reps_per),
@@ -484,7 +538,6 @@ calculate_bisection <- function(
   }
   
   # Override adaptive min when provided
-  
   if (!is.null(min_sample_size)) {
     start_min_sample_size <- min_sample_size
   }
@@ -521,6 +574,12 @@ calculate_bisection <- function(
     }
     
     iter <- iter + 1
+  }
+  
+  # stop cluster if not already stopped (on.exit covers normal exit, but ensure here as well)
+  if (!is.null(cl)) {
+    try(parallel::stopCluster(cl), silent = TRUE)
+    try(doParallel::stopImplicitCluster(), silent = TRUE)
   }
   
   result <- list(
@@ -730,6 +789,7 @@ calculate_mlpwr_bs <- function(
     mean_or_assurance = mean_or_assurance,
     value_on_error = value_on_error,
     verbose = FALSE,
+    parallel = FALSE,
     budget = TRUE,
     test_n = test_n
   )
