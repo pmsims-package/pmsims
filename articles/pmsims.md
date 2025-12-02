@@ -180,7 +180,7 @@ sessionInfo()
 #> loaded via a namespace (and not attached):
 #>  [1] Matrix_1.7-4       gtable_0.3.6       jsonlite_2.0.0     compiler_4.5.2    
 #>  [5] crayon_1.5.3       jquerylib_0.1.4    splines_4.5.2      systemfonts_1.3.1 
-#>  [9] scales_1.4.0       textshaping_1.0.4  yaml_2.3.10        fastmap_1.2.0     
+#>  [9] scales_1.4.0       textshaping_1.0.4  yaml_2.3.11        fastmap_1.2.0     
 #> [13] lattice_0.22-7     ggplot2_4.0.1      R6_2.6.1           labeling_0.4.3    
 #> [17] knitr_1.50         htmlwidgets_1.6.4  desc_1.4.3         bslib_0.9.0       
 #> [21] RColorBrewer_1.1-3 rlang_1.1.6        cachem_1.1.0       xfun_0.54         
