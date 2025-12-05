@@ -16,7 +16,6 @@
 #'
 #' @return A single numeric: the objective value at \eqn{n}.
 #' @keywords internal
-#' @export
 #'
 #' @examples
 #' # \dontrun{

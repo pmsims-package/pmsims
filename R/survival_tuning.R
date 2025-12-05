@@ -5,7 +5,6 @@
 #' @param tolerance The tolerance in the large sample performance
 #' @return The optimal value for the tuning parameter
 #' @keywords internal
-#' @export
 #'
 #' @examples
 

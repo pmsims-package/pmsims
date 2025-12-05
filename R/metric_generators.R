@@ -65,7 +65,7 @@ default_metric_generator <- function(metric, data_function) {
 }
 
 #' @keywords internal
-#' @export
+
 predict_custom <- function(x, y, fit, model, type = "response") {
   if (model == "glm") {
     stats::predict(fit, newdata = x, type = type)

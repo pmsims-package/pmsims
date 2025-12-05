@@ -20,7 +20,7 @@
 #'
 #' @return An object of class `"pmsims"` containing the estimated minimum sample size and simulation diagnostics.
 #' @keywords internal
-#' @export
+
 simulate_custom <- function(
   data_function = NULL,
   model_function = NULL,
@@ -195,7 +195,7 @@ simulate_custom <- function(
 #' the supplied inputs.
 #'
 #' @keywords internal
-#' @export
+
 parse_inputs <- function(data_spec, metric, model) {
   if (is.null(metric)) {
     stop("metric is missing")
