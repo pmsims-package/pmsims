@@ -29,8 +29,8 @@
 #'   with the outcome (i.e., true signal features).
 #' @param noise_parameters Integer. Number of candidate predictors not
 #'   associated with the outcome (noise features). Default is 0.
-#' @param predictor_type Character string, either `"continuous"` or `"binary"`.
-#'   Specifies the type of simulated candidate predictors. Defaults to `"continuous"`.
+#' @param predictor_type Character string, currently only `"continuous"` supported, which is the default option.
+#'   Specifies the type of simulated candidate predictors.
 #' @param binary_predictor_prevalence Optional numeric in (0, 1). Prevalence of
 #'   the binary predictors when `predictor_type = "binary"`. Ignored otherwise.
 #' @param outcome_prevalence Numeric in (0, 1). Target prevalence of the binary
@@ -78,23 +78,23 @@
 #' }
 #' @export
 simulate_binary <- function(
-  signal_parameters,                  # Predictors
+  signal_parameters, # Predictors
   noise_parameters = 0,
-  predictor_type = c("continuous", "binary"),
+  predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
-  outcome_prevalence,                 # Outcome
+  outcome_prevalence, # Outcome
   large_sample_cstatistic,
-  model = c("glm"),                      # Model
+  model = c("glm"), # Model
   metric = c("calibration_slope", "auc"), # Performance
   minimum_acceptable_performance,
-  n_reps_total = 1000,                # Engine control
+  n_reps_total = 1000, # Engine control
   mean_or_assurance = c("assurance", "mean"),
   ...
 ) {
-  predictor_type <-  match.arg(predictor_type)
-  model <- match.arg(model)
-  metric <- match.arg(metric)
-  mean_or_assurance <- match.arg(mean_or_assurance)
+  predictor_type <- check_pmsims_args(predictor_type)
+  model <- check_pmsims_args(model)
+  metric <- check_pmsims_args(metric)
+  mean_or_assurance <- check_pmsims_args(mean_or_assurance)
 
   validate_metric_constraints(
     metric = metric,
@@ -206,7 +206,7 @@ simulate_binary <- function(
 simulate_continuous <- function(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = c("continuous", "binary"),
+  predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
   large_sample_rsquared,
   model = c("lm"),
@@ -216,10 +216,10 @@ simulate_continuous <- function(
   mean_or_assurance = c("assurance", "mean"),
   ...
 ) {
-  predictor_type <-  match.arg(predictor_type)
-  model <- match.arg(model)
-  metric <- match.arg(metric)
-  mean_or_assurance <- match.arg(mean_or_assurance)
+  predictor_type <- check_pmsims_args(predictor_type)
+  model <- check_pmsims_args(model)
+  metric <- check_pmsims_args(metric)
+  mean_or_assurance <- check_pmsims_args(mean_or_assurance)
 
   validate_metric_constraints(
     metric = metric,
@@ -329,7 +329,7 @@ simulate_continuous <- function(
 simulate_survival <- function(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = c("continuous", "binary"),
+  predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
   large_sample_cindex,
   baseline_hazard = 1,
@@ -341,10 +341,10 @@ simulate_survival <- function(
   mean_or_assurance = c("assurance", "mean"),
   ...
 ) {
-  predictor_type <-  match.arg(predictor_type)
-  model <- match.arg(model)
-  metric <- match.arg(metric)
-  mean_or_assurance <- match.arg(mean_or_assurance)
+  predictor_type <- check_pmsims_args(predictor_type)
+  model <- check_pmsims_args(model)
+  metric <- check_pmsims_args(metric)
+  mean_or_assurance <- check_pmsims_args(mean_or_assurance)
 
   validate_metric_constraints(
     metric = metric,
