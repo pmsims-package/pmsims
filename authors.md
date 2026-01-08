@@ -24,14 +24,14 @@ Source:
 [`DESCRIPTION`](https://github.com/pmsims-package/pmsims/blob/main/DESCRIPTION)
 
 Carr E, Forbes G, Olaniran R, Shamsutdinova D, Stahl D, Markham S,
-Zimmer F (2025). *pmsims: Simulation-based Sample Size Tools for
+Zimmer F (2026). *pmsims: Simulation-based Sample Size Tools for
 Prediction Models*. R package version 0.5.0,
 <https://pmsims-package.github.io/pmsims/>.
 
     @Manual{,
       title = {pmsims: Simulation-based Sample Size Tools for Prediction Models},
       author = {Ewan Carr and Gordon Forbes and Ridwan Olaniran and Diana Shamsutdinova and Daniel Stahl and Sarah Markham and Felix Zimmer},
-      year = {2025},
+      year = {2026},
       note = {R package version 0.5.0},
       url = {https://pmsims-package.github.io/pmsims/},
     }
