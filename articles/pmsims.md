@@ -186,7 +186,7 @@ sessionInfo()
 #> [21] RColorBrewer_1.1-3 rlang_1.1.6        cachem_1.1.0       xfun_0.55         
 #> [25] fs_1.6.6           DiceKriging_1.6.1  sass_0.4.10        S7_0.2.1          
 #> [29] cli_3.6.5          pkgdown_2.2.0      withr_3.0.2        digest_0.6.39     
-#> [33] grid_4.5.2         lifecycle_1.0.4    mlpwr_1.1.1        vctrs_0.6.5       
+#> [33] grid_4.5.2         lifecycle_1.0.5    mlpwr_1.1.1        vctrs_0.6.5       
 #> [37] evaluate_1.0.5     glue_1.8.0         farver_2.1.2       ragg_1.5.0        
 #> [41] survival_3.8-3     rmarkdown_2.30     tools_4.5.2        htmltools_0.5.9
 ```
