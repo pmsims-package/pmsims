@@ -1041,7 +1041,7 @@ calculate_mlpwr_bs <- function(
       evaluations = n_reps_total,
       ci = ci,
       n.startsets = 4,
-      silent = FALSE
+      silent = !verbose
     )
   
   # Process results from mlpwr
