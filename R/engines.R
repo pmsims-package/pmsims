@@ -763,13 +763,13 @@ calculate_mlpwr_bs <- function(
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
     stats::var(replicate(
-      100,
+      20,
       aggregate_fun(sample(x, length(x), replace = TRUE))
     ))
   }
 
   # Calculate bootstrapped quantile variance
-  noise_fun <- function(x) var_bootstrap(x$y) / 100
+  noise_fun <- function(x) var_bootstrap(x$y)
 
   # TODO Explain
   # processing final_estimate_se
