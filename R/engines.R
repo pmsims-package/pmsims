@@ -769,7 +769,7 @@ calculate_mlpwr_bs <- function(
   }
 
   # Calculate bootstrapped quantile variance
-  noise_fun <- function(x) var_bootstrap(x$y)
+  noise_fun <- function(x) var_bootstrap(x$y) / 100
 
   # TODO Explain
   # processing final_estimate_se
@@ -790,11 +790,13 @@ calculate_mlpwr_bs <- function(
     ci_q = 0.975
   )
 
- # mlpwrbs_min_sample_size <- get_start_bounds$min_value
- # mlpwrbs_max_sample_size <- get_start_bounds$max_value
+  mlpwrbs_min_sample_size <- get_start_bounds$min_value
+  mlpwrbs_max_sample_size <- get_start_bounds$max_value
   
-  mlpwrbs_min_sample_size <- round(get_start_bounds$min_value * 0.99)
-  mlpwrbs_max_sample_size <- round(get_start_bounds$max_value * 1.01)
+  mlpwrbs_max_sample_size <- ifelse((mlpwrbs_max_sample_size - 
+                                       mlpwrbs_min_sample_size) < 5,
+                                    round(mlpwrbs_min_sample_size * 1.2),
+                                    mlpwrbs_max_sample_size)
 
   # Override adaptive min and max when provided at stage 2
   if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
