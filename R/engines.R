@@ -853,39 +853,29 @@ calculate_bisection <- function(
 #'
 #' @return List containing the combined bisection and mlpwr results (`results`, `summaries`, `min_n`, `perf_n`, and `mlpwr_ds`).
 #' @keywords internal
-
+#' @export
 calculate_mlpwr_bs <- function(
-  test_n,
-  n_reps_total,
-  n_reps_per,
-  se_final,
-  min_sample_size,
-  max_sample_size,
-  target_performance,
-  c_statistic,
-  mean_or_assurance,
-  verbose,
-  data_function,
-  model_function,
-  metric_function,
-  value_on_error
+    test_n,
+    n_reps_total,
+    n_reps_per,
+    se_final,
+    min_sample_size,
+    max_sample_size,
+    target_performance,
+    c_statistic,
+    mean_or_assurance,
+    verbose,
+    data_function,
+    model_function,
+    metric_function,
+    value_on_error
 ) {
   # Calculate the first stage bisection
-
-  # get initial start values
- # start_values <- compute_start_sample_sizes(
- #   data_function = data_function,
- #   metric_function = metric_function,
- #   target_performance = target_performance,
- #   c_statistic = c_statistic,
- #   mean_or_assurance = mean_or_assurance
- # )
   
-  #prev_min_sample_size <- start_values$start_min_sample_size
-  #prev_max_sample_size <- start_values$start_max_sample_size
-  
+  # Determine number of predictors (excluding outcome column)
   npar <- dim(data_function(1))[2] - 1
   
+  cat("Estimating initial stage... (Adaptive starting values search algorithm)\n")
   bounds <- calculate_adaptive_bounds(
     data_function = data_function,
     model_function = model_function,
@@ -894,7 +884,7 @@ calculate_mlpwr_bs <- function(
     start_n =  5*npar,
     test_n = test_n,
     n_reps_per = n_reps_per,
-    n_reps_total = 200,
+    n_reps_total = 500,
     target_performance = target_performance,
     threshold = 0.0001,
     mean_or_assurance = mean_or_assurance,
@@ -904,16 +894,14 @@ calculate_mlpwr_bs <- function(
   prev_min_sample_size <- bounds$min_sample_size
   prev_max_sample_size <- bounds$max_sample_size
   
-
   # Override adaptive min and max when provided at stage 1
-
+  
   if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
     prev_min_sample_size <- min_sample_size
     prev_max_sample_size <- max_sample_size
   }
   
   cat("Estimating first stage... (Bisection algorithm)\n")
-  
   prev <- calculate_bisection(
     data_function = data_function,
     model_function = model_function,
@@ -927,10 +915,11 @@ calculate_mlpwr_bs <- function(
     mean_or_assurance = mean_or_assurance,
     value_on_error = value_on_error,
     verbose = FALSE,
+    parallel = FALSE,
     budget = TRUE,
     test_n = test_n
   )
-
+  
   # Calculate the second stage mlpwr
   test_data <- data_function(test_n)
   # Calculate the metrics for a sample size n
@@ -947,7 +936,7 @@ calculate_mlpwr_bs <- function(
       }
     )
   }
-
+  
   if (mean_or_assurance == "mean") {
     aggregate_fun <- function(x) mean(x, na.rm = TRUE)
   } else if (mean_or_assurance == "assurance") {
@@ -955,18 +944,18 @@ calculate_mlpwr_bs <- function(
   } else {
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
   }
-
+  
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
     stats::var(replicate(
-      20,
+      100,
       aggregate_fun(sample(x, length(x), replace = TRUE))
     ))
   }
-
+  
   # Calculate bootstrapped quantile variance
   noise_fun <- function(x) var_bootstrap(x$y)
-
+  
   # TODO Explain
   # processing final_estimate_se
   # Auto-stopping or not
@@ -976,7 +965,7 @@ calculate_mlpwr_bs <- function(
   } else {
     ci <- NULL
   }
-
+  
   # Perform search using mlpwr
   get_start_bounds = adaptive_startvalues(
     output = prev,
@@ -985,29 +974,15 @@ calculate_mlpwr_bs <- function(
     target = target_performance,
     ci_q = 0.975
   )
-
+  
   mlpwrbs_min_sample_size <- get_start_bounds$min_value
   mlpwrbs_max_sample_size <- get_start_bounds$max_value
   
-  mlpwrbs_max_sample_size <- ifelse((mlpwrbs_max_sample_size - 
-                                       mlpwrbs_min_sample_size) < 5,
-                                    round(mlpwrbs_min_sample_size * 1.2),
-                                    mlpwrbs_max_sample_size)
-
   # Override adaptive min and max when provided at stage 2
   if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
     mlpwrbs_min_sample_size <- min_sample_size
     mlpwrbs_max_sample_size <- max_sample_size
   }
-
-  
-  
-  # Perform search using mlpwr
-  
-  # New start values
-  
-  mlpwrbs_min_sample_size <- get_start_bounds$min_value
-  mlpwrbs_max_sample_size <- get_start_bounds$max_value
   
   cat("Estimating second stage... (Gaussian process algorithm)\n")
   # Progress bar
@@ -1094,7 +1069,7 @@ calculate_mlpwr_bs <- function(
     },
     add = TRUE
   )
-
+  
   ds <-
     mlpwr::find.design(
       simfun = mlpwr_simulation_function,
@@ -1107,9 +1082,9 @@ calculate_mlpwr_bs <- function(
       evaluations = n_reps_total,
       ci = ci,
       n.startsets = 4,
-      silent = !verbose
+      silent = FALSE
     )
-
+  
   # Process results from mlpwr
   perfs <- ds$dat
   perfs <- perfs[order(sapply(perfs, "[[", "x"))]
@@ -1119,14 +1094,14 @@ calculate_mlpwr_bs <- function(
   for (i in seq_along(perfs)) {
     results[i, seq(1, length(perfs[[i]]$y), 1)] <- perfs[[i]]$y
   }
-
+  
   mlpwr_summaries <- get_summaries(results)
-
+  
   return(list(
     results = perfs,
     summaries = mlpwr_summaries,
     min_n = as.numeric(ds$final$design),
-    perf_n = as.numeric(ds$final$power) ,
+    perf_n = as.numeric(ds$final$power),
     mlpwr_ds = ds
   ))
 }
