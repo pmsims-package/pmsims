@@ -926,7 +926,7 @@ calculate_mlpwr_bs <- function(
     model_function = model_function,
     metric_function = metric_function,
     value_on_error = NA,
-    start_n =  3*npar,
+    start_n =  2*npar,
     test_n = test_n,
     n_reps_per = n_reps_per,
     n_reps_total = 500,
