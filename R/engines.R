@@ -926,7 +926,7 @@ calculate_mlpwr_bs <- function(
     model_function = model_function,
     metric_function = metric_function,
     value_on_error = NA,
-    start_n =  2*npar,
+    start_n =  3*npar,
     test_n = test_n,
     n_reps_per = n_reps_per,
     n_reps_total = 500,
@@ -1022,6 +1022,11 @@ calculate_mlpwr_bs <- function(
   
   mlpwrbs_min_sample_size <- get_start_bounds$min_value
   mlpwrbs_max_sample_size <- get_start_bounds$max_value
+  
+  mlpwrbs_max_sample_size <- ifelse((mlpwrbs_max_sample_size - 
+                                      mlpwrbs_min_sample_size) < 2,
+                                    round(mlpwrbs_min_sample_size * 1.2),
+                                    mlpwrbs_max_sample_size)
   
   # Override adaptive min and max when provided at stage 2
   if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
