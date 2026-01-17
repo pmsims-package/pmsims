@@ -926,7 +926,7 @@ calculate_mlpwr_bs <- function(
     model_function = model_function,
     metric_function = metric_function,
     value_on_error = NA,
-    start_n =  3*npar,
+    start_n =  5*npar,
     test_n = test_n,
     n_reps_per = n_reps_per,
     n_reps_total = 500,
@@ -993,7 +993,7 @@ calculate_mlpwr_bs <- function(
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
     stats::var(replicate(
-      100,
+      20,
       aggregate_fun(sample(x, length(x), replace = TRUE))
     ))
   }
@@ -1024,7 +1024,7 @@ calculate_mlpwr_bs <- function(
   mlpwrbs_max_sample_size <- get_start_bounds$max_value
   
   mlpwrbs_max_sample_size <- ifelse((mlpwrbs_max_sample_size - 
-                                      mlpwrbs_min_sample_size) < 2,
+                                      mlpwrbs_min_sample_size) < 5,
                                     round(mlpwrbs_min_sample_size * 1.2),
                                     mlpwrbs_max_sample_size)
   
