@@ -676,13 +676,21 @@ calculate_mlpwr <- function(
   } else {
     ci <- NULL
   }
+  
+  # correction for tight bounds
+  start_max_sample_size <- ifelse((start_max_sample_size - 
+                                     start_min_sample_size) < 5,
+                                  round(start_min_sample_size * 1.2),
+                                  start_max_sample_size)
 
   # Override adaptive min when provided
   if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
     start_min_sample_size <- min_sample_size
     start_max_sample_size <- max_sample_size
   }
+  
 
+  
   # Perform search using mlpwr
   ds <-
     mlpwr::find.design(
@@ -1022,6 +1030,8 @@ calculate_mlpwr_bs <- function(
   
   mlpwrbs_min_sample_size <- get_start_bounds$min_value
   mlpwrbs_max_sample_size <- get_start_bounds$max_value
+  
+  # correction for tight bounds
   
   mlpwrbs_max_sample_size <- ifelse((mlpwrbs_max_sample_size - 
                                       mlpwrbs_min_sample_size) < 5,
