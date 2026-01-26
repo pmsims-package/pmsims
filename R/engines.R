@@ -622,7 +622,7 @@ calculate_mlpwr <- function(
     start_n =  5*npar,
     test_n = test_n,
     n_reps_per = n_reps_per,
-    n_reps_total = 500,
+    n_reps_total = 1000,
     target_performance = target_performance,
     threshold = 0.0001,
     mean_or_assurance = mean_or_assurance,
@@ -677,11 +677,6 @@ calculate_mlpwr <- function(
     ci <- NULL
   }
   
-  # correction for tight bounds
-  start_max_sample_size <- ifelse((start_max_sample_size - 
-                                     start_min_sample_size) < 5,
-                                  round(start_min_sample_size * 1.2),
-                                  start_max_sample_size)
 
   # Override adaptive min when provided
   if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
