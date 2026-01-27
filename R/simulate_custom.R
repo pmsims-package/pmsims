@@ -1,22 +1,25 @@
 #' Simulate Custom
-#' 'simulate_custom' is the interface for pmsims at the most basic level. It performs no processing of arguments and allows all possible options to be customised.
+#' 'simulate_custom' is the interface for pmsims at the most basic level. It takes a data, model, and metric funciton as inputs and allows full control over other parameters.
 #'
 #' @param data_function A function that returns datasets. Must have a single argument, `n`, which controls the sample size.
 #' @param model_function A function that fits models to the data. Takes the data object returned by `data_function` as its only argument.
 #' @param metric_function A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.
-#' @param target_performance Numeric target performance threshold the algorithm must meet or exceed.
-#' @param c_statistic Numeric; anticipated large-sample discrimination used when tuning the data generator.
+#' @param minimum_acceptable_performance Numeric. The target threshold
+#'   \eqn{M^\\*}; the algorithm searches for the smallest \eqn{n} meeting the
+#'   chosen criterion with respect to this threshold.
+#' @param c_statistic Numeric; anticipated large-sample discrimination used when tuning the data generator, if the outcome is binary or survival. 
+#'  This is used to determine the appropriate starting values for the search. **********Non generalisable
 #' @param mean_or_assurance Character string `"mean"` or `"assurance"` indicating which criterion defines the minimum sample size.
-#' @param test_n Integer size of the test datasets used to evaluate performance (should be large).
-#' @param min_sample_size Integer lower bound of the sample-size search region.
-#' @param max_sample_size Integer upper bound of the sample-size search region.
-#' @param n_reps_total Integer total number of simulation replications allocated to the search.
+#' @param test_n Integer size of the test datasets used to evaluate performance (should be large). Default is 30000.
+#' @param min_sample_size Integer lower bound of the sample-size search region. ******CHECK: IF SPECIFIED THESE MAY OVERIDE THE ADAPTIVE STARTING VALUES. MAY WANT TO DEFAULT TO NULL.
+#' @param max_sample_size Integer upper bound of the sample-size search region. ****** CHECK IF SPECIFIED THESE MAY OVERIDE THE ADAPTIVE STARTING VALUES. MAY WANT TO DEFAULT TO NULL.
+#' @param n_reps_total Integer total number of simulation replications allocated to the search. The search will look at n_reps_total/n_reps_per candidate sample sizes. Supply either `n_reps_total` or `se_final`.
 #' @param n_reps_per Integer number of replications evaluated at each candidate sample size.
-#' @param se_final Numeric standard error threshold used for early stopping (supply either `n_reps_total` or `se_final`).
-#' @param n_init Integer number of initial sample sizes explored before the main search algorithm begins.
-#' @param method Character string selecting the search engine; currently `"mlpwr"`, `"bisection"`, or `"mlpwr-bs"`.
+#' @param se_final Numeric standard error threshold used for early stopping (supply either `n_reps_total` or `se_final`). **********CURRENTLY UNUSED. REMOVE
+#' @param n_init Integer number of initial sample sizes explored before the main search algorithm begins. **********DOES THIS DO ANYTHING
+#' @param method Character string selecting the search engine; currently `"mlpwr"`, `"bisection"`, or `"mlpwr-bs"`. **********SHOULD SET DEFAULT TO OUR FAVOURITE
 #' @param verbose Logical flag controlling printed progress information.
-#' @param ... Additional arguments passed to the chosen engine (for example `tol` for bisection or `penalty_weight` for GA-based methods).
+#' @param ... Additional arguments passed to the chosen engine. (for example `tol` for bisection). **********SHOULD MAKE EXPLICIT IF REQUIRED
 #'
 #' @return An object of class `"pmsims"` containing the estimated minimum sample size and simulation diagnostics.
 #' @keywords internal
@@ -25,7 +28,7 @@ simulate_custom <- function(
   data_function = NULL,
   model_function = NULL,
   metric_function = NULL,
-  target_performance,
+  minimum_acceptable_performance,
   c_statistic,
   mean_or_assurance = "assurance",
   test_n = 30000,
@@ -91,7 +94,7 @@ simulate_custom <- function(
       se_final = se_final,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
-      target_performance = target_performance,
+      target_performance = minimum_acceptable_performance,
       c_statistic = c_statistic,
       mean_or_assurance,
       n_init = n_init,
@@ -130,7 +133,7 @@ simulate_custom <- function(
       se_final = se_final,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
-      target_performance = target_performance,
+      target_performance = minimum_acceptable_performance,
       c_statistic = c_statistic,
       mean_or_assurance,
       verbose = verbose,
@@ -156,7 +159,7 @@ simulate_custom <- function(
       output$perf_n
     ),
     mlpwr_ds = output$mlpwr_ds,
-    target_performance = target_performance,
+    target_performance = minimum_acceptable_performance,
     summaries = output$summaries,
     data = output$results,
     train_size = rownames(output$results),
