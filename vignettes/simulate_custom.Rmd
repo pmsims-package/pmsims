@@ -1,0 +1,69 @@
+---
+title: "Simulate Custom"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Simulate Custom}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(pmsims)
+```
+
+## Motivation
+The `simulate_custom()` function allows users to define their own data generation, model fitting, and performance metric  functions. This provides flexibility to calucate sample sizes for any prediction model, data type or performance metric. The `pmsims` built in sample size functions eg. `simulate_binary()` use simulate custrom under the hood.
+
+## Usage
+To use `simualte_custom()`, you need to provide three key functions:
+1. **Data Function**: A function that generates synthetic datasets based on specified parameters.
+2. **Model Function**: A function that fits a prediction model to the generated data.
+3. **Metric Function**: A function that calculates the performance metric of interest.
+
+In this example we will define a data function from a pre-existing dataset, use lasso regression, and assess performance using Brier Score.
+
+### Defining the data generator
+For this example we will use the built in mtcars data set. We will use the synthpop package to generate a very large synthetic dataset. We will then sample this dataset to give a required dataset of any size.
+
+```{r}
+real_data = datasets::mtcars
+synthetic_data <- synthpop::syn(real_data, k = 1000000)
+
+
+my_data_generator <- function(n, data = synthetic_data$syn) {
+  return(sample(data, n))
+}
+
+example_data <- my_data_generator(n = 10)
+print(example_data)
+```
+
+### Defining the model function
+Next we need to define the model function. The model function needs to take only the data returned by the data function as an argument. It needs to return a fitted model object that can be used with our metric function. we will use the glmnet package to fit a lasso regression model. For this funciton the data must be in the form of a matrix. We look to predict mpg, which is the first column, with the remaining columns in the dataset. 
+
+```{r}
+my_model_function = function(data) {
+      data <- as.matrix(data)
+      
+      data_matrix <- as.matrix(data)
+      x <- d[, -1, drop = FALSE]
+      y <- d[, 1]
+      my_model <- glmnet::cv.glmnet(
+        x,
+        y,
+        family = "binomial",
+        alpha = 1
+      )
+      return(my_model)
+}
+      
+example_data <- my_data_generator(n = 100)
+example__fitted_model <- my_model_function(example_data)
+```
