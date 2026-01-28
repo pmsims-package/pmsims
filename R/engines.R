@@ -599,19 +599,19 @@ calculate_mlpwr <- function(
 ) {
   
   # Determine start values
- # start_values <- compute_start_sample_sizes(
-  #  data_function = data_function,
-  #  metric_function = metric_function,
-  #  target_performance = target_performance,
-  #  c_statistic = c_statistic,
-  #  mean_or_assurance = mean_or_assurance
- # )
+  start_values <- compute_start_sample_sizes(
+    data_function = data_function,
+    metric_function = metric_function,
+    target_performance = target_performance,
+    c_statistic = c_statistic,
+    mean_or_assurance = mean_or_assurance
+  )
   
   #start_min_sample_size <- start_values$start_min_sample_size
   #start_max_sample_size <- start_values$start_max_sample_size
   
   
-  npar <- dim(data_function(1))[2] - 1
+  #npar <- dim(data_function(1))[2] - 1
   
   
   start_values <- calculate_adaptive_bounds(
@@ -619,10 +619,10 @@ calculate_mlpwr <- function(
     model_function = model_function,
     metric_function = metric_function,
     value_on_error = NA,
-    start_n =  5*npar,
+    start_n =  start_values$start_min_sample_size,
     test_n = test_n,
     n_reps_per = n_reps_per,
-    n_reps_total = 1000,
+    n_reps_total = 500,
     target_performance = target_performance,
     threshold = 0.0001,
     mean_or_assurance = mean_or_assurance,
@@ -760,27 +760,28 @@ calculate_bisection <- function(
   
   # get initial start values
   
- # start_values <- compute_start_sample_sizes(
- #   data_function = data_function,
- #   metric_function = metric_function,
- #   target_performance = target_performance,
-#    c_statistic = c_statistic,
- #   mean_or_assurance = mean_or_assurance
- # )
+  # Determine start values
+  start_values <- compute_start_sample_sizes(
+    data_function = data_function,
+    metric_function = metric_function,
+    target_performance = target_performance,
+    c_statistic = c_statistic,
+    mean_or_assurance = mean_or_assurance
+  )
   
- # start_min_sample_size <- start_values$start_min_sample_size
+  #start_min_sample_size <- start_values$start_min_sample_size
   #start_max_sample_size <- start_values$start_max_sample_size
   
-  # Determine number of predictors (excluding outcome column)
-  npar <- dim(data_function(1))[2] - 1
+  
+  #npar <- dim(data_function(1))[2] - 1
   
   
- start_values <- calculate_adaptive_bounds(
+  start_values <- calculate_adaptive_bounds(
     data_function = data_function,
     model_function = model_function,
     metric_function = metric_function,
     value_on_error = NA,
-    start_n =  5*npar,
+    start_n =  start_values$start_min_sample_size,
     test_n = test_n,
     n_reps_per = n_reps_per,
     n_reps_total = 500,
@@ -921,15 +922,27 @@ calculate_mlpwr_bs <- function(
   # Calculate the first stage bisection
   
   # Determine number of predictors (excluding outcome column)
-  npar <- dim(data_function(1))[2] - 1
+  # Determine start values
+  start_values <- compute_start_sample_sizes(
+    data_function = data_function,
+    metric_function = metric_function,
+    target_performance = target_performance,
+    c_statistic = c_statistic,
+    mean_or_assurance = mean_or_assurance
+  )
+  
+  #start_min_sample_size <- start_values$start_min_sample_size
+  #start_max_sample_size <- start_values$start_max_sample_size
   
   
-  bounds <- calculate_adaptive_bounds(
+  #npar <- dim(data_function(1))[2] - 1
+  
+  start_values <- calculate_adaptive_bounds(
     data_function = data_function,
     model_function = model_function,
     metric_function = metric_function,
     value_on_error = NA,
-    start_n =  5*npar,
+    start_n =  start_values$start_min_sample_size,
     test_n = test_n,
     n_reps_per = n_reps_per,
     n_reps_total = 500,
