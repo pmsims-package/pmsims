@@ -952,8 +952,8 @@ calculate_mlpwr_bs <- function(
     verbose = FALSE
   )
   
-  prev_min_sample_size <- bounds$min_sample_size
-  prev_max_sample_size <- bounds$max_sample_size
+  prev_min_sample_size <- start_values$min_sample_size
+  prev_max_sample_size <- start_values$max_sample_size
   
   # Override adaptive min and max when provided at stage 1
   
