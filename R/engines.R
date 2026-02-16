@@ -622,7 +622,7 @@ calculate_mlpwr <- function(
     start_n =  start_values$start_min_sample_size,
     test_n = test_n,
     n_reps_per = n_reps_per,
-    n_reps_total = 500,
+    n_reps_total = 1000,
     target_performance = target_performance,
     threshold = 0.0001,
     mean_or_assurance = mean_or_assurance,
