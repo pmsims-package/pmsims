@@ -119,7 +119,7 @@ simulate_custom <- function(
       parallel = FALSE,
       cores = 20,
       verbose = FALSE,
-      budget = FALSE,
+      budget = TRUE,
       ...
     )
   } else if (method == "mlpwr-bs") {
