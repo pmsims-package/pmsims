@@ -150,6 +150,20 @@ simulate_binary <- function(
     )
   )
 
+    metric_2 <- if (metric == "calib_slope") "auc" else "calib_slope"
+    
+    test_n = 30000
+    metric_2 <- "auc"
+    metric_function_2 <- default_metric_generator(metric_2, data_function)
+    
+    data_2 <- data_function(output$min_n)
+    test_data_2 <- data_function(test_n)
+    fit_2 <- model_function(data_2)
+    metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
+
+  output$metric_2_at_n <- metric_2_at_n
+  output$metric_2 <- metric_2
+  
   output$parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$predictor_type <- predictor_type
@@ -223,8 +237,8 @@ simulate_continuous <- function(
 
   validate_metric_constraints(
     metric = metric,
-    minimum_acceptable_performance = minimum_acceptable_performance
-  )
+    minimum_acceptable_performance = minimum_acceptable_performance,
+    expected_performance = large_sample_rsquared)
 
   # Tuning the data-generating function
   tune_param <- continuous_tuning(
@@ -267,7 +281,22 @@ simulate_continuous <- function(
       test_n = 30000
     )
   )
+  
+  
+    metric_2 <- if (metric == "calib_slope") "r2" else "calib_slope"
+    
+    metric_function_2 <- default_metric_generator(metric_2, data_function)
+    
+    test_n = 30000
+    data_2 <- data_function(output$min_n)
+    test_data_2 <- data_function(test_n)
+    fit_2 <- model_function(data_2)
+    metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
 
+  
+  output$metric_2_at_n <- metric_2_at_n
+  output$metric_2 <- metric_2
+  
   output$parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$predictor_type <- predictor_type
@@ -396,7 +425,23 @@ simulate_survival <- function(
       test_n = 30000
     )
   )
+  
+  
+  
+    metric_2 <- if (metric == "calib_slope") "cindex" else "calib_slope"
+    
+    test_n = 30000
+    metric_function_2 <- default_metric_generator(metric_2, data_function)
+    
+    data_2 <- data_function(output$min_n)
+    test_data_2 <- data_function(test_n)
+    fit_2 <- model_function(data_2)
+    metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
 
+  
+  output$metric_2_at_n <- metric_2_at_n
+  output$metric_2 <- metric_2
+  
   # Append input parameters
   output$parameters <- signal_parameters
   output$noise_parameters <- noise_parameters

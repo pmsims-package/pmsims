@@ -156,6 +156,7 @@ print.pmsims <- function(x, ..., max_width = 80) {
   inputs <- inputs[keep_inputs]
 
   # --- Results table
+  
   results <- list(
     "Final minimum sample size" = bold(fmt_int(min_n)),
     "Estimated performance at N" = paste0(
@@ -170,6 +171,9 @@ print.pmsims <- function(x, ..., max_width = 80) {
     "Mode" = if (tolower(moa) == "assurance") "Assurance" else "Mean",
     "Running time" = fmt_duration(simtime)
   )
+
+  
+  
   keep_results <- vapply(results, is_present, logical(1))
   results <- results[keep_results]
 
