@@ -79,7 +79,9 @@ binary_example <- simulate_binary(
 binary_example
 ```
 
-    #> 
+    #>                     ┌────────────────────────────────────────┐
+    #>                     │ pmsims: Sample size simulation summary │
+    #>                     └────────────────────────────────────────┘
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
     #>                                Outcome : binary
     #>                         Predictor type : continuous
@@ -93,6 +95,7 @@ binary_example
     #> ──────────────────────────────────── Results ───────────────────────────────────
     #>              Final minimum sample size : 1,173
     #>             Estimated performance at N : 0.849 (Calibration slope ('calib_slope') = 0.850)
+    #>            Estimated other metric at N : <NA> ()
     #>                                  Model : glm
     #>                                   Mode : Assurance
     #>                           Running time : 1 minute
@@ -125,7 +128,9 @@ continuous_example <- simulate_continuous(
 continuous_example
 ```
 
-    #> 
+    #>                     ┌────────────────────────────────────────┐
+    #>                     │ pmsims: Sample size simulation summary │
+    #>                     └────────────────────────────────────────┘
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
     #>                                Outcome : continuous
     #>                         Predictor type : continuous
@@ -138,6 +143,7 @@ continuous_example
     #> ──────────────────────────────────── Results ───────────────────────────────────
     #>              Final minimum sample size : 271
     #>             Estimated performance at N : 0.899 (Calibration slope ('calib_slope') = 0.900)
+    #>            Estimated other metric at N : <NA> ()
     #>                                  Model : lm
     #>                                   Mode : Assurance
     #>                           Running time : 14 seconds
