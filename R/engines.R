@@ -669,6 +669,8 @@ calculate_mlpwr_bs <- function(
     min_n = as.numeric(ds$final$design),
     perf_n = as.numeric(ds$final$power) ,
     mlpwr_ds = list(data = ds$dat, fit = ds$fit,
-                    boundaries = ds$boundaries, final = ds$final)
+                    boundaries = ds$boundaries, 
+                    final = ds$final, 
+                    aggregate_fun = ds$aggregate_fun)
   ))
 }
