@@ -1,3 +1,13 @@
+#' Get Performance
+#'
+#' @param results 
+#' @param p 
+#' @param mean 
+#'
+#' @returns
+#' @export
+#'
+#' @examples
 get_perf <- function(results, p = NULL, mean = FALSE) {
   if (is.null(p) && !mean) {
     stop("Either p or mean must be specified")
@@ -25,6 +35,78 @@ get_summaries <- function(performance_matrix) {
     quant95_performance = get_perf(performance_matrix, p = 0.95)
   )
 }
+
+#' adaptive_startvalues Derive adaptive sample sizes
+#'
+#' @param output List-like object containing `track_bisection`, produced by `calculate_bisection()`.
+#' @param aggregate_fun Function used to summarise replicate performance values (for example, `mean` or a quantile function).
+#' @param var_bootstrap Function returning the bootstrap variance of the aggregated performance.
+#' @param target Numeric target performance threshold.
+#' @param ci_q Numeric quantile for confidence-interval construction (default 0.975 gives a two-sided 95% interval).
+#' @keywords internal
+adaptive_startvalues <- function(
+    output,
+    aggregate_fun,
+    var_bootstrap,
+    target,
+    ci_q = 0.975
+) {
+  bisection_output <- output$track_bisection
+  n_iter <- length(bisection_output)
+  
+  # Matrix: n, est, se, ll, ul
+  bisection_summary <- matrix(
+    NA,
+    nrow = n_iter,
+    ncol = 5,
+    dimnames = list(NULL, c("n", "est", "se", "ll", "ul"))
+  )
+  
+  for (i in seq_len(n_iter)) {
+    results <- bisection_output[[i]]
+    n <- results$x
+    performance_data <- results$y
+    
+    est <- aggregate_fun(performance_data)
+    se <- sqrt(var_bootstrap(performance_data))
+    
+    ll <- est - se * stats::qnorm(ci_q)
+    ul <- est + se * stats::qnorm(ci_q)
+    
+    bisection_summary[i, ] <- c(n, est, se, ll, ul)
+  }
+  
+  ## --- Find min value ---
+  ordered_by_ul <- bisection_summary[
+    order(bisection_summary[, "ul"], decreasing = TRUE),
+  ]
+  below_target <- ordered_by_ul[ordered_by_ul[, "ul"] < target, , drop = FALSE]
+  
+  if (nrow(below_target) == 0) {
+    min_value <- min(bisection_summary[, "n"] * 0.8)
+  } else {
+    min_value <- max(below_target[, "n"])
+  }
+  
+  ## --- Find max value ---
+  ordered_by_ll <- bisection_summary[
+    order(bisection_summary[, "ll"], decreasing = TRUE),
+  ]
+  above_target <- ordered_by_ll[ordered_by_ll[, "ll"] > target, , drop = FALSE]
+  
+  if (nrow(above_target) == 0) {
+    max_value <- max(bisection_summary[, "n"] * 1.2)
+  } else {
+    max_value <- min(above_target[, "n"])
+  }
+  
+  return(list(
+    summary = bisection_summary,
+    min_value = round(min_value),
+    max_value = round(max_value)
+  ))
+}
+
 
 
 #### New adaptive start values code
