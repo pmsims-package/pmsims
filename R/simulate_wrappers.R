@@ -137,7 +137,7 @@ simulate_binary <- function(
       se_final = NULL,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
-      method = "mlpwr-bs",
+      method = "mlpwr",
       mean_or_assurance = mean_or_assurance,
       test_n = 30000
     )
@@ -146,7 +146,6 @@ simulate_binary <- function(
   metric_2 <- if (metric == "calib_slope") "auc" else "calib_slope"
   
   test_n = 30000
-  metric_2 <- "auc"
   metric_function_2 <- default_metric_generator(metric_2, data_function)
   
   data_2 <- data_function(output$min_n)
@@ -264,7 +263,7 @@ simulate_continuous <- function(
       se_final = NULL,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
-      method = "mlpwr-bs",
+      method = "mlpwr",
       mean_or_assurance = mean_or_assurance,
       test_n = 30000
     )
@@ -403,7 +402,7 @@ simulate_survival <- function(
       se_final = NULL,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
-      method = "mlpwr-bs",
+      method = "mlpwr",
       mean_or_assurance = mean_or_assurance,
       test_n = 30000
     )
