@@ -7,15 +7,15 @@
 #' @param ci_q Numeric quantile for confidence-interval construction (default 0.975 gives a two-sided 95% interval).
 #' @keywords internal
 adaptive_startvalues <- function(
-  output,
-  aggregate_fun,
-  var_bootstrap,
-  target,
-  ci_q = 0.975
+    output,
+    aggregate_fun,
+    var_bootstrap,
+    target,
+    ci_q = 0.975
 ) {
   bisection_output <- output$track_bisection
   n_iter <- length(bisection_output)
-
+  
   # Matrix: n, est, se, ll, ul
   bisection_summary <- matrix(
     NA,
@@ -23,45 +23,45 @@ adaptive_startvalues <- function(
     ncol = 5,
     dimnames = list(NULL, c("n", "est", "se", "ll", "ul"))
   )
-
+  
   for (i in seq_len(n_iter)) {
     results <- bisection_output[[i]]
     n <- results$x
     performance_data <- results$y
-
+    
     est <- aggregate_fun(performance_data)
     se <- sqrt(var_bootstrap(performance_data))
-
+    
     ll <- est - se * stats::qnorm(ci_q)
     ul <- est + se * stats::qnorm(ci_q)
-
+    
     bisection_summary[i, ] <- c(n, est, se, ll, ul)
   }
-
+  
   ## --- Find min value ---
   ordered_by_ul <- bisection_summary[
     order(bisection_summary[, "ul"], decreasing = TRUE),
   ]
   below_target <- ordered_by_ul[ordered_by_ul[, "ul"] < target, , drop = FALSE]
-
+  
   if (nrow(below_target) == 0) {
     min_value <- min(bisection_summary[, "n"] * 0.8)
   } else {
     min_value <- max(below_target[, "n"])
   }
-
+  
   ## --- Find max value ---
   ordered_by_ll <- bisection_summary[
     order(bisection_summary[, "ll"], decreasing = TRUE),
   ]
   above_target <- ordered_by_ll[ordered_by_ll[, "ll"] > target, , drop = FALSE]
-
+  
   if (nrow(above_target) == 0) {
     max_value <- max(bisection_summary[, "n"] * 1.2)
   } else {
     max_value <- min(above_target[, "n"])
   }
-
+  
   return(list(
     summary = bisection_summary,
     min_value = round(min_value),
@@ -77,21 +77,21 @@ adaptive_startvalues <- function(
 #' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
 #' @keywords internal
 calculate_mlpwr <- function(
-  test_n,
-  n_reps_total,
-  n_reps_per,
-  se_final,
-  min_sample_size,
-  max_sample_size,
-  target_performance,
-  c_statistic,
-  mean_or_assurance,
-  n_init,
-  verbose,
-  data_function,
-  model_function,
-  metric_function,
-  value_on_error
+    test_n,
+    n_reps_total,
+    n_reps_per,
+    se_final,
+    min_sample_size,
+    max_sample_size,
+    target_performance,
+    c_statistic,
+    mean_or_assurance,
+    n_init,
+    verbose,
+    data_function,
+    model_function,
+    metric_function,
+    value_on_error
 ) {
   
   # Determine initial start values
@@ -138,7 +138,7 @@ calculate_mlpwr <- function(
       }
     )
   }
-
+  
   if (mean_or_assurance == "mean") {
     aggregate_fun <- function(x) mean(x, na.rm = TRUE)
   } else if (mean_or_assurance == "assurance") {
@@ -146,7 +146,7 @@ calculate_mlpwr <- function(
   } else {
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
   }
-
+  
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
     stats::var(replicate(
@@ -154,10 +154,10 @@ calculate_mlpwr <- function(
       aggregate_fun(sample(x, length(x), replace = TRUE))
     ))
   }
-
+  
   # Calculate bootstrapped quantile variance
   noise_fun <- function(x) var_bootstrap(x$y)
-
+  
   # TODO: Explain this better
   # processing final_estimate_se
   # Auto-stopping or not
@@ -280,7 +280,7 @@ calculate_mlpwr <- function(
       n.startsets = n_init,
       silent = FALSE
     )
-
+  
   # Process results from mlpwr
   perfs <- ds$dat
   perfs <- perfs[order(sapply(perfs, "[[", "x"))]
@@ -290,9 +290,9 @@ calculate_mlpwr <- function(
   for (i in seq_along(perfs)) {
     results[i, seq(1, length(perfs[[i]]$y), 1)] <- perfs[[i]]$y
   }
-
+  
   mlpwr_summaries <- get_summaries(results)
-
+  
   return(list(
     results = perfs,
     summaries = mlpwr_summaries,
@@ -380,11 +380,55 @@ calculate_bisection <- function(
   
   
   max_iter <- round(n_reps_total / n_reps_per)
-
+  
   # Generate fixed test set once
   test_data <- data_function(test_n)
-
-  # Helper: run 1 simulation
+  
+  # set up cluster once if parallel requested
+  
+  cl <- NULL
+  registered_parallel <- FALSE
+  if (isTRUE(parallel)) {
+    
+    # sensible default if user passed an invalid cores
+    if (is.null(cores) || !is.numeric(cores) || cores < 1) {
+      cores <- parallel::detectCores(logical = FALSE)
+    }
+    cores_to_use <- min(cores, parallel::detectCores())
+    
+    cl <- parallel::makeCluster(cores_to_use)
+    
+    # Export the core functions/objects themselves (so workers can call them)
+    core_names <- c("data_function", "model_function", "metric_function", "value_on_error", "test_data")
+    parallel::clusterExport(cl, varlist = core_names, envir = environment())
+    
+    # Export everything from the environments of the three functions.
+    envs <- unique(list(environment(data_function),
+                        environment(model_function),
+                        environment(metric_function)))
+    for (e in envs) {
+      if (!is.null(e)) {
+        objs <- ls(envir = e, all.names = TRUE)
+        # avoid exporting names that are obviously internal to base packages (optional)
+        if (length(objs) > 0) {
+          try(parallel::clusterExport(cl, varlist = objs, envir = e), silent = TRUE)
+        }
+      }
+    }
+    
+    
+    # Register backend for foreach
+    doParallel::registerDoParallel(cl)
+    registered_parallel <- TRUE
+    
+    # Ensure cluster is stopped when function exits (even on error)
+    on.exit({
+      try(parallel::stopCluster(cl), silent = TRUE)
+      try(doParallel::stopImplicitCluster(), silent = TRUE)
+    }, add = TRUE)
+  }
+  
+  # Helper: run 1 simulation (kept as regular R function)
   single_run <- function(n) {
     tryCatch(
       {
@@ -395,15 +439,26 @@ calculate_bisection <- function(
       error = function(e) value_on_error
     )
   }
-
+  
   # Helper: summary of metric for n_reps_per repetitions
   summary_at_n <- function(n) {
-    if (parallel) {
-      cl <- parallel::makeCluster(cores)
-      doParallel::registerDoParallel(cl)
-      vals <- foreach::foreach(i = 1:n_reps_per, .combine = c) %dopar%
-        single_run(n)
-      parallel::stopCluster(cl)
+    if (isTRUE(parallel) && registered_parallel) {
+      
+      if (!"package:foreach" %in% search()) library(foreach, quietly = TRUE)
+      if (!"package:doParallel" %in% search()) library(doParallel, quietly = TRUE)
+      
+      # Use foreach %dopar% on the already-registered cluster
+      vals <- foreach::foreach(i = seq_len(n_reps_per), .combine = c) %dopar% {
+        # Each worker will call single_run; single_run closes over data_function, etc.
+        tryCatch(
+          {
+            dat <- data_function(n)
+            fit <- model_function(dat)
+            metric_function(test_data, fit, attr(model_function, "model"))
+          },
+          error = function(e) value_on_error
+        )
+      }
     } else {
       vals <- vapply(
         seq_len(n_reps_per),
@@ -418,14 +473,14 @@ calculate_bisection <- function(
       list(y_summary = s$quant20_performance, y = vals)
     }
   }
-
+  
   # Override adaptive min when provided
 
   if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
     start_min_sample_size <- min_sample_size
     start_max_sample_size <- max_sample_size
   }
-
+  
   # Initial bounds
   p_lo <- summary_at_n(start_min_sample_size)$y_summary
   p_hi <- summary_at_n(start_max_sample_size)$y_summary
@@ -433,22 +488,22 @@ calculate_bisection <- function(
   iter <- 0
   history <- list()
   track_bisection <- list()
-
+  
   # Bisection loop with condition depending on 'budget'
   while (
     (budget && iter < max_iter) ||
-      (!budget && (p_hi - p_lo) >= tol && iter < max_iter)
+    (!budget && (p_hi - p_lo) >= tol && iter < max_iter)
   ) {
     mid <- floor((start_min_sample_size + start_max_sample_size) / 2)
     mid_result <- summary_at_n(mid)
     p_mid <- mid_result$y_summary
-
+    
     track_bisection[[iter + 1]] <- list(x = mid, y = mid_result$y)
-
+    
     if (verbose) {
       history[[iter + 1]] <- list(iter = iter + 1, mid = mid, p_mid = p_mid)
     }
-
+    
     if (p_mid >= target_performance) {
       start_max_sample_size <- mid
       p_hi <- p_mid
@@ -456,10 +511,16 @@ calculate_bisection <- function(
       start_min_sample_size <- mid
       p_lo <- p_mid
     }
-
+    
     iter <- iter + 1
   }
-
+  
+  # stop cluster if not already stopped (on.exit covers normal exit, but ensure here as well)
+  if (!is.null(cl)) {
+    try(parallel::stopCluster(cl), silent = TRUE)
+    try(doParallel::stopImplicitCluster(), silent = TRUE)
+  }
+  
   result <- list(
     min_n = start_max_sample_size,
     performance = p_hi,
@@ -470,11 +531,11 @@ calculate_bisection <- function(
     iterations = iter,
     track_bisection = track_bisection
   )
-
+  
   if (verbose) {
     result$history <- history
   }
-
+  
   return(result)
 }
 
@@ -648,7 +709,7 @@ calculate_mlpwr_bs <- function(
       evaluations = n_reps_total,
       ci = ci,
       n.startsets = 4,
-      silent = !verbose
+      silent = FALSE
     )
   
   # Process results from mlpwr
