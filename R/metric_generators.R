@@ -65,15 +65,116 @@ default_metric_generator <- function(metric, data_function) {
 }
 
 #' @keywords internal
-
-predict_custom <- function(x, y, fit, model, type = "response") {
-  if (model == "glm") {
-    stats::predict(fit, newdata = x, type = type)
-  } else if (model == "lasso") {
-    x <- as.matrix(x)
-    stats::predict(fit, newx = x, s = fit$lambda.1se, type = type)[, 1]
-  } else if (model == "rf") {
-    response <- stats::predict(fit, x, type = type)$predictions[, 1]
+#' @export
+predict_custom <- function(x, y = NULL, fit, model, type = "response") {
+  # x: data.frame or matrix of predictors (no outcome column)
+  # y: optional (not used here, kept for API compatibility)
+  # fit: fitted model object
+  # model: string identifying model type: "lm", "glm", "lasso", "rf", "xgboost", "coxph" etc.
+  # type: "response", "link", "lp", "survival" (if supported)
+  # return: numeric vector (or matrix for survival probabilities when appropriate)
+  
+  # Ensure x is data.frame or matrix for predict functions
+  if (is.data.frame(x)) {
+    x_df <- x
+    x_mat <- as.matrix(x)
+  } else {
+    x_df <- as.data.frame(x)
+    x_mat <- as.matrix(x)
+  }
+  
+  # GLM (base R)
+  if (model %in% c("lm","glm")) {
+    return(stats::predict(fit, newdata = x_df, type = type))
+  }
+  
+  # LASSO (glmnet::cv.glmnet)
+  if (model == "lasso") {
+    # Expect fit is cv.glmnet (or glmnet object) and x_mat is numeric matrix
+    if (!("glmnet" %in% rownames(utils::installed.packages()))) {
+      warning("glmnet not installed; predict for lasso will fail.")
+    }
+    #s_val <- if (!is.null(fit$lambda.1se)) fit$lambda.1se else if (!is.null(fit$lambda.min)) fit$lambda.min else NULL
+    #if (is.null(s_val)) s_val <- NULL
+    
+    s_val = "lambda.min"
+    
+    # Choose glmnet type mapping
+    glmnet_type <- switch(type,
+                          response = "response",
+                          link = "link",
+                          lp = "link",
+                          stop("Type '", type, "' not supported for lasso."))
+    preds <- as.numeric(predict(fit, newx = x_mat, s = s_val, type = glmnet_type))
+    # for binary response, glmnet::predict(..., type="response") returns probabilities
+    # for cox (survival) family, glmnet::predict(..., type="link") returns linear predictor
+    return(preds)
+  }
+  
+  # Random forest via ranger
+  if (model == "rf" || model == "ranger") {
+    # Expect fit is a ranger object
+    if (!inherits(fit, "ranger")) {
+      # try calling base predict if it's not a ranger object
+      pr <- try(stats::predict(fit, newdata = x_df), silent = TRUE)
+      if (!inherits(pr, "try-error")) return(pr)
+      stop("rf: model object not of class 'ranger' and generic predict failed.")
+    }
+    
+    ncores <- parallel::detectCores(logical = FALSE)
+    nthreads <- ncores - 2
+    
+    pr <- predict(fit, data = x_df, num.threads = nthreads)
+    preds <- pr$predictions
+    
+    # Classification (probabilities) => matrix with columns per class
+    if (is.matrix(preds) && ncol(preds) >= 2) {
+      # assume second column corresponds to "1" (if factor levels present, check)
+      # If type = "response", return probability of positive class (second column)
+      if (type == "response") {
+        return(as.numeric(preds[, ncol(preds)]))
+      }
+      # If type = "link", return logit of probability
+      if (type == "link") {
+        p <- as.numeric(preds[, ncol(preds)])
+        # avoid division by zero
+        p <- pmin(pmax(p, .Machine$double.eps), 1 - .Machine$double.eps)
+        return(stats::qlogis(p))
+      }
+    }
+    
+    # Regression or single numeric prediction
+    if (is.numeric(preds) && is.vector(preds)) {
+      return(as.numeric(preds))
+    }
+    
+    # Survival: ranger returns a matrix of survival probabilities by timepoint
+    if (is.matrix(preds) && inherits(fit, "ranger") && fit$treetype == "Surv") {
+      # If user asks for survival probabilities, return the matrix
+      if (type == "survival") {
+        return(preds)
+      }
+      # For linear predictor / risk score, convert survival curves to a summary risk:
+      # pragmatic approach: use negative mean survival (higher => worse risk)
+      if (type == "lp") {
+        lp <- -rowMeans(preds, na.rm = TRUE)
+        return(as.numeric(lp))
+      }
+    }
+    
+    stop("rf (ranger) prediction type not supported or unknown prediction structure.")
+  }
+  
+  # xgboost
+  if (model == "xgboost" || inherits(fit, "xgb.Booster")) {
+    if (!("xgboost" %in% rownames(utils::installed.packages()))) {
+      warning("xgboost not installed; predict for xgboost will fail.")
+    }
+    # xgboost predict expects a matrix or xgb.DMatrix
+    dmat <- xgboost::xgb.DMatrix(data = x_mat)
+    preds <- stats::predict(fit, dmat)
+    
+    # For binary: preds are probabilities (objective = binary:logistic)
     if (type == "response") {
       return(as.numeric(preds))
     }

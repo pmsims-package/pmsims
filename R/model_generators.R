@@ -70,23 +70,23 @@ default_models <- list(
       x <- d[, -1, drop = FALSE]
       y <- d[, 1]
       
-     # cvranger <- cv.ranger_tune(data = d, formula = y ~ .,
+      # cvranger <- cv.ranger_tune(data = d, formula = y ~ .,
       #                      type = "regression",
       ##                      num.trees = 300,
       #                      iters = 30,
       #                      iters.warmup = 30,
       #                      time.budget = NULL,
       #                      num.threads = nthreads,
-     #                       tune.parameters = "mtry",
-     #                       measure = NULL,
-     #                       build.final.model = TRUE,
-     #                       show.info = FALSE)
+      #                       tune.parameters = "mtry",
+      #                       measure = NULL,
+      #                       build.final.model = TRUE,
+      #                       show.info = FALSE)
       
       #maxd <- cvranger$max.depth[which.max(cvranger$mean_metric)]
       
       # best model
       
-     # cvranger$model$learner.model
+      # cvranger$model$learner.model
       
       ff <- NULL
       invisible(
@@ -97,7 +97,7 @@ default_models <- list(
       
       bestmtry <- data.frame(ff)
       mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
-        
+      
       ranger::ranger(
         x = x,
         y = y,
