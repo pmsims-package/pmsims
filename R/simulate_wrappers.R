@@ -364,7 +364,7 @@ simulate_survival <- function(
   )
   
   # Tune the data-generating function
-  tune_param <- binary_tuning(
+  tune_param <- survival_tuning(
     target_prevalence = 1 - censoring_rate,
     target_performance = large_sample_cindex,
     candidate_features = signal_parameters,
