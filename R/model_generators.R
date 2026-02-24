@@ -25,13 +25,29 @@ default_models <- list(
       nthreads <- ncores - 2
       
       x <- d[, -1, drop = FALSE]
-      y <- d[, 1]
+      y <- as.factor(d[, 1])
+
+      #### new
+      
+      ff <- NULL
+      invisible(
+        capture.output(
+          ff <- randomForest::tuneRF(x, y, trace = FALSE, plot = FALSE)
+        )
+      )
+      
+      bestmtry <- data.frame(ff)
+      mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
+      
       ranger::ranger(
         x = x,
         y = y,
+        mtry = mtry_best,
         probability = TRUE,
-        num.threads = nthreads
+        num.trees = 300,
+        num.threads = nthreads 
       )
+      
     },
     xgboost = function(d, nrounds = 100, params = list(objective = "binary:logistic", eval_metric = "logloss")) {
       # expects first column y (0/1), remaining columns predictors
@@ -141,7 +157,7 @@ default_models <- list(
       
       stopifnot(all(c("time", "event") %in% colnames(d)))
       formula <- stats::as.formula("survival::Surv(time, event) ~ .")
-      ranger::ranger(formula, data = d, num.threads = nthreads)
+      ranger::ranger(formula, data = d,  num.trees = 300, num.threads = nthreads)
     },
     xgboost = function(d, nrounds = 100, params = list(objective = "survival:cox", eval_metric = "cox-nloglik")) {
       # XGBoost Cox objective: uses times as label but does not directly take a censoring vector.

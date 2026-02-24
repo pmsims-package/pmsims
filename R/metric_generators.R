@@ -149,16 +149,34 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
     }
     
     # Survival: ranger returns a matrix of survival probabilities by timepoint
-    if (is.matrix(preds) && inherits(fit, "ranger") && fit$treetype == "Surv") {
-      # If user asks for survival probabilities, return the matrix
+    if (is.matrix(pr$survival) && inherits(fit, "ranger") && fit$treetype == "Survival") {
+      # If user asks for survival probabilities, return the survival matrix
       if (type == "survival") {
-        return(preds)
+        
+        times <- pr$unique.death.times
+        surv_matrix <- pr$survival
+        
+        return(surv_matrix)
       }
-      # For linear predictor / risk score, convert survival curves to a summary risk:
-      # pragmatic approach: use negative mean survival (higher => worse risk)
+      # For linear predictor / risk score, convert survival to linear predictor using
+      # logit = (S(t) / 1- S(t)) or
+      # lp = log(H(t)) where H(t) = sum(h(t))
       if (type == "lp") {
-        lp <- -rowMeans(preds, na.rm = TRUE)
-        return(as.numeric(lp))
+        
+        #times <- pr$unique.death.times
+        #surv_matrix <- pr$survival
+        
+        # obtain the survival at an ith observation unique time
+        #surv_vec <- sapply(1:nrow(x_df), function(i) {
+        #   t_i <- x_df$time[i]
+        #   idx <- which.min(abs(times - t_i))
+        #  surv_matrix[i, idx]
+        # })
+        
+        # get lp from survival vector + adjust S(t) = 1 by subtracting 1e-8
+        # surv_vec_to_lp <- qlogis(surv_vec - 1e-8)
+        # chf n x times matrix: summing over times gives cumulative hazard
+        return(log(rowSums(pr$chf)))
       }
     }
     
@@ -306,7 +324,9 @@ continuous_calib_itl <- function(data, fit, model) {
 
 survival_cindex <- function(data, fit, model) {
   y_surv <- survival::Surv(data$time, data$event)
-  x <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
+  
+    x <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
+  
   # request linear predictor / risk score
   y_hat <- try(predict_custom(x, NULL, fit, model, type = "lp"), silent = TRUE)
   if (inherits(y_hat, "try-error")) {
@@ -322,7 +342,9 @@ survival_cindex <- function(data, fit, model) {
 # Cox-like calibration slope (uses linear predictor)
 survival_calib_slope <- function(data, fit, model) {
   y_surv <- survival::Surv(data$time, data$event)
+  
   x <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
+  
   y_hat <- try(predict_custom(x, NULL, fit, model, type = "lp"), silent = TRUE)
   if (inherits(y_hat, "try-error")) {
     return(NaN)
