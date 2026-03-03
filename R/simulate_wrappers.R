@@ -101,8 +101,8 @@ simulate_binary <- function(
   tune_param <- binary_tuning(
     target_prevalence = outcome_prevalence,
     target_performance = large_sample_cstatistic,
-    candidate_features = signal_parameters,
-    proportion_noise_features = noise_parameters
+    candidate_features = signal_parameters + noise_parameters,
+    proportion_noise_features = noise_parameters / (signal_parameters + noise_parameters)
   )[c(1, 3)] # extract mean of linear predictor as new intercept and beta_signal scaled by var of lp
   
   data_spec <- list(
@@ -230,8 +230,8 @@ simulate_continuous <- function(
   # Tuning the data-generating function
   tune_param <- continuous_tuning(
     r2 = large_sample_rsquared,
-    candidate_features = signal_parameters,
-    proportion_noise_features = noise_parameters
+    candidate_features = signal_parameters + noise_parameters,
+    proportion_noise_features = noise_parameters / (signal_parameters + noise_parameters)
   )
   
   data_spec <- list(
@@ -364,11 +364,11 @@ simulate_survival <- function(
   )
   
   # Tune the data-generating function
-  tune_param <- binary_tuning(
+  tune_param <- survival_tuning(
     target_prevalence = 1 - censoring_rate,
     target_performance = large_sample_cindex,
-    candidate_features = signal_parameters,
-    proportion_noise_features = noise_parameters
+    candidate_features = signal_parameters + noise_parameters,
+    proportion_noise_features = noise_parameters / (signal_parameters + noise_parameters)
   )[c(1, 3)] # extract mean of linear predictor as new intercept and beta_signal scaled by var of lp
   
   data_spec <- list(
