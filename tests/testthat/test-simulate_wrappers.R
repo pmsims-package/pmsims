@@ -7,9 +7,9 @@ test_that("simulate_binary returns a pmsims object", {
     noise_parameters = 0,
     predictor_type = "continuous",
     outcome_prevalence = 0.2,
-    large_sample_cstatistic = 0.75,
+    tuning_cstatistic = 0.75,
     metric = "calibration_slope",
-    minimum_acceptable_performance = 0.9,
+    target_performance = 0.9,
     n_reps_total = 1000,
     mean_or_assurance = "assurance"
   )
@@ -29,9 +29,9 @@ test_that("simulate_continuous returns a pmsims object", {
     signal_parameters = 10,
     noise_parameters = 0,
     predictor_type = "continuous",
-    large_sample_rsquared = 0.5,
+    tuning_rsquared = 0.5,
     metric = "calibration_slope",
-    minimum_acceptable_performance = 0.9,
+    target_performance = 0.9,
     n_reps_total = 1000,
     mean_or_assurance = "assurance"
   )
@@ -51,11 +51,11 @@ test_that("simulate_survival returns a pmsims object", {
     signal_parameters = 10,
     noise_parameters = 0,
     predictor_type = "continuous",
-    large_sample_cindex = 0.75,
+    tuning_cindex = 0.75,
     baseline_hazard = 0.01,
     censoring_rate = 0.3,
     metric = "calibration_slope",
-    minimum_acceptable_performance = 0.9,
+    target_performance = 0.9,
     n_reps_total = 1000,
     mean_or_assurance = "assurance"
   )
@@ -74,13 +74,13 @@ test_that("wrapper calibration slope bounds are enforced", {
       noise_parameters = 0,
       predictor_type = "continuous",
       outcome_prevalence = 0.2,
-      large_sample_cstatistic = 0.75,
+      tuning_cstatistic = 0.75,
       metric = "calibration_slope",
-      minimum_acceptable_performance = 0.7,
+      target_performance = 0.7,
       n_reps_total = 1000,
       mean_or_assurance = "assurance"
     ),
-    "Suggested calibration slope is too low; check and try again.",
+    "Requested target calibration slope is too low; check and try again.",
     fixed = TRUE
   )
 
@@ -89,13 +89,13 @@ test_that("wrapper calibration slope bounds are enforced", {
       signal_parameters = 10,
       noise_parameters = 0,
       predictor_type = "continuous",
-      large_sample_rsquared = 0.5,
+      tuning_rsquared = 0.5,
       metric = "calibration_slope",
-      minimum_acceptable_performance = 1.3,
+      target_performance = 1.3,
       n_reps_total = 1000,
       mean_or_assurance = "assurance"
     ),
-    "Suggested calibration slope is too high; check and try again.",
+    "Requested target calibration slope is too high; check and try again.",
     fixed = TRUE
   )
 
@@ -104,15 +104,15 @@ test_that("wrapper calibration slope bounds are enforced", {
       signal_parameters = 10,
       noise_parameters = 0,
       predictor_type = "continuous",
-      large_sample_cindex = 0.75,
+      tuning_cindex = 0.75,
       baseline_hazard = 0.01,
       censoring_rate = 0.3,
       metric = "calibration_slope",
-      minimum_acceptable_performance = 0.7,
+      target_performance = 0.7,
       n_reps_total = 1000,
       mean_or_assurance = "assurance"
     ),
-    "Suggested calibration slope is too low; check and try again.",
+    "Requested target calibration slope is too low; check and try again.",
     fixed = TRUE
   )
 })
@@ -124,13 +124,13 @@ test_that("simulate_binary requires achievable AUC targets", {
       noise_parameters = 0,
       predictor_type = "continuous",
       outcome_prevalence = 0.2,
-      large_sample_cstatistic = 0.80,
+      tuning_cstatistic = 0.80,
       metric = "auc",
-      minimum_acceptable_performance = 0.9,
+      target_performance = 0.9,
       n_reps_total = 1000,
       mean_or_assurance = "assurance"
     ),
-    "Requested minimum acceptable AUC exceeds the expected large-sample performance; adjust inputs and try again.",
+    "Requested target AUC exceeds the tuning performance (expected large-sample performance); adjust inputs and try again.",
     fixed = TRUE
   )
 })

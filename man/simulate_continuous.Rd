@@ -9,10 +9,10 @@ simulate_continuous(
   noise_parameters = 0,
   predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
-  large_sample_rsquared,
+  tuning_rsquared,
   model = c("lm"),
   metric = c("calibration_slope", "r2"),
-  minimum_acceptable_performance,
+  target_performance,
   n_reps_total = 1000,
   mean_or_assurance = c("assurance", "mean"),
   ...
@@ -31,9 +31,9 @@ Specifies the type of simulated candidate predictors.}
 \item{binary_predictor_prevalence}{Optional numeric in (0, 1). Prevalence of
 the binary predictors when \code{predictor_type = "binary"}. Ignored otherwise.}
 
-\item{large_sample_rsquared}{Numeric in (0, 1). Expected large-sample
-\eqn{R^2} for the model (used to tune the data-generating mechanism so that
-the model attains this performance for very large \eqn{n}).}
+\item{tuning_rsquared}{Numeric in (0, 1). Tuning target for expected
+large-sample \eqn{R^2}. This calibrates the data-generating mechanism and
+is not the minimum acceptable performance threshold.}
 
 \item{model}{Character string specifying the modelling algorithm (e.g.,
 \code{"glm"}). Passed to the internal model generator.}
@@ -42,9 +42,9 @@ the model attains this performance for very large \eqn{n}).}
 the sample size; defaults to \code{"calibration_slope"}. (Internally mapped to
 the engine's metric identifiers.).}
 
-\item{minimum_acceptable_performance}{Numeric. The target threshold
-\eqn{M^\\*}; the algorithm searches for the smallest \eqn{n} meeting the
-chosen criterion with respect to this threshold.}
+\item{target_performance}{Numeric. Minimum acceptable value of the selected
+performance metric \eqn{M^\\*}; the algorithm searches for the smallest
+\eqn{n} meeting the chosen criterion with respect to this threshold.}
 
 \item{n_reps_total}{Integer. Total number of simulation replications used by
 the engine across the search.}
@@ -66,8 +66,8 @@ evaluations, and summary metrics).
 Compute the minimum sample size required to develop a prediction model with a
 \strong{continuous} outcome. This wraps the same simulation engine as
 \code{\link[=simulate_binary]{simulate_binary()}}, combining bisection search with Gaussian-process
-learning-curve modelling. From user inputs (expected large-sample
-performance, minimum acceptable performance, etc.) it constructs a
+learning-curve modelling. From user inputs (tuning performance, target
+performance, etc.) it constructs a
 data-generating function, model-fitting function, and metric function, then
 searches for the smallest \eqn{n} meeting the chosen criterion.
 }
@@ -96,9 +96,9 @@ est <- simulate_continuous(
   signal_parameters = 8,
   noise_parameters = 8,
   predictor_type = "continuous",
-  large_sample_rsquared = 0.50,
+  tuning_rsquared = 0.50,
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.9,
+  target_performance = 0.9,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )

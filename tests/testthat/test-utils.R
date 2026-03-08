@@ -32,36 +32,58 @@ test_that("validate_metric_constraints enforces calibration slope limits", {
   expect_error(
     validate_metric_constraints(
       metric = "calibration_slope",
-      minimum_acceptable_performance = 0.7
+      target_performance = 0.7
     ),
-    "Suggested calibration slope is too low; check and try again.",
+    "Requested target calibration slope is too low; check and try again.",
     fixed = TRUE
   )
 
   expect_error(
     validate_metric_constraints(
       metric = "calibration_slope",
-      minimum_acceptable_performance = 1.3
+      target_performance = 1.3
     ),
-    "Suggested calibration slope is too high; check and try again.",
+    "Requested target calibration slope is too high; check and try again.",
     fixed = TRUE
   )
 
   expect_error(
     validate_metric_constraints(
       metric = "auc",
-      minimum_acceptable_performance = 0.8,
-      expected_performance = 0.75
+      target_performance = 0.8,
+      tuning_performance = 0.75
     ),
-    "Requested minimum acceptable AUC exceeds the expected large-sample performance; adjust inputs and try again.",
+    "Requested target AUC exceeds the tuning performance (expected large-sample performance); adjust inputs and try again.",
     fixed = TRUE
   )
 
   expect_silent(
     validate_metric_constraints(
       metric = "auc",
-      minimum_acceptable_performance = 0.75,
-      expected_performance = 0.8
+      target_performance = 0.75,
+      tuning_performance = 0.8
+    )
+  )
+})
+
+test_that("validate_metric_constraints warns when tuning and target are equal", {
+  expect_warning(
+    validate_metric_constraints(
+      metric = "auc",
+      target_performance = 0.8,
+      tuning_performance = 0.8
+    ),
+    "Target AUC equals tuning performance.",
+    fixed = TRUE
+  )
+})
+
+test_that("validate_metric_constraints does not warn for non-comparable metrics", {
+  expect_silent(
+    validate_metric_constraints(
+      metric = "calibration_slope",
+      target_performance = 0.9,
+      tuning_performance = 0.9
     )
   )
 })

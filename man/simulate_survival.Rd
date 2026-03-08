@@ -9,12 +9,12 @@ simulate_survival(
   noise_parameters = 0,
   predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
-  large_sample_cindex,
+  tuning_cindex,
   baseline_hazard = 1,
   censoring_rate,
   model = c("coxph"),
   metric = c("calibration_slope", "cindex"),
-  minimum_acceptable_performance,
+  target_performance,
   n_reps_total = 1000,
   mean_or_assurance = c("assurance", "mean"),
   ...
@@ -33,9 +33,9 @@ Specifies the type of simulated candidate predictors.}
 \item{binary_predictor_prevalence}{Optional numeric in (0, 1). Prevalence of
 the binary predictors when \code{predictor_type = "binary"}. Ignored otherwise.}
 
-\item{large_sample_cindex}{Numeric in (0, 1). Expected large-sample
-C-index for the survival model (used to tune the data-generating mechanism
-so that the model attains this performance for very large \eqn{n}).}
+\item{tuning_cindex}{Numeric in (0, 1). Tuning target for expected
+large-sample C-index. This calibrates the data-generating mechanism and is
+not the minimum acceptable performance threshold.}
 
 \item{baseline_hazard}{Numeric greater than 0. Baseline hazard level used by the
 data-generating mechanism (e.g., the constant hazard in an exponential
@@ -51,9 +51,9 @@ censoring). Higher values imply fewer observed events for a fixed \eqn{n}.}
 the sample size; defaults to \code{"calibration_slope"}. (Internally mapped to
 the engine's metric identifiers.).}
 
-\item{minimum_acceptable_performance}{Numeric. The target threshold
-\eqn{M^\\*}; the algorithm searches for the smallest \eqn{n} meeting the
-chosen criterion with respect to this threshold.}
+\item{target_performance}{Numeric. Minimum acceptable value of the selected
+performance metric \eqn{M^\\*}; the algorithm searches for the smallest
+\eqn{n} meeting the chosen criterion with respect to this threshold.}
 
 \item{n_reps_total}{Integer. Total number of simulation replications used by
 the engine across the search.}
@@ -103,11 +103,11 @@ est <- simulate_survival(
   signal_parameters = 10,
   noise_parameters = 10,
   predictor_type = "continuous",
-  large_sample_cindex = 0.70,
+  tuning_cindex = 0.70,
   baseline_hazard = 0.01,
   censoring_rate = 0.30,
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.9,
+  target_performance = 0.9,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )
