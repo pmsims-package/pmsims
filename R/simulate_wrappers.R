@@ -78,33 +78,34 @@
 #' }
 #' @export
 simulate_binary <- function(
-    signal_parameters,                  # Predictors
-    noise_parameters = 0,
-    predictor_type = "continuous",
-    binary_predictor_prevalence = NULL,
-    outcome_prevalence,                 # Outcome
-    tuning_cstatistic,
-    model = "glm",                      # Model
-    metric = "calibration_slope",       # Performance
-    target_performance,
-    n_reps_total = 1000,                # Engine control
-    mean_or_assurance = "assurance",
-    ...
+  signal_parameters, # Predictors
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  binary_predictor_prevalence = NULL,
+  outcome_prevalence, # Outcome
+  tuning_cstatistic,
+  model = "glm", # Model
+  metric = "calibration_slope", # Performance
+  target_performance,
+  n_reps_total = 1000, # Engine control
+  mean_or_assurance = "assurance",
+  ...
 ) {
   validate_metric_constraints(
     metric = metric,
     target_performance = target_performance,
     tuning_performance = tuning_cstatistic
   )
-  
+
   # Tune for data function
   tune_param <- binary_tuning(
     target_prevalence = outcome_prevalence,
     target_performance = tuning_cstatistic,
     candidate_features = signal_parameters + noise_parameters,
-    proportion_noise_features = noise_parameters / (signal_parameters + noise_parameters)
+    proportion_noise_features = noise_parameters /
+      (signal_parameters + noise_parameters)
   )[c(1, 3)] # extract mean of linear predictor as new intercept and beta_signal scaled by var of lp
-  
+
   data_spec <- list(
     type = "binary",
     args = list(
@@ -117,14 +118,14 @@ simulate_binary <- function(
       baseline_prob = outcome_prevalence
     )
   )
-  
+
   data_function <- default_data_generators(data_spec)
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
-  
+
   # Redefine metrics to internal syntax lang
   metric = ifelse(metric == "calibration_slope", "calib_slope", metric)
-  
+
   suppressWarnings(
     output <- simulate_custom(
       metric_function = default_metric_generator(metric, data_function),
@@ -142,20 +143,20 @@ simulate_binary <- function(
       test_n = 30000
     )
   )
-  
+
   metric_2 <- if (metric == "calib_slope") "auc" else "calib_slope"
-  
+
   test_n = 30000
   metric_function_2 <- default_metric_generator(metric_2, data_function)
-  
+
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
   fit_2 <- model_function(data_2)
   metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
-  
+
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
-  
+
   output$parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$predictor_type <- predictor_type
@@ -210,30 +211,32 @@ simulate_binary <- function(
 #' }
 #' @export
 simulate_continuous <- function(
-    signal_parameters,
-    noise_parameters = 0,
-    predictor_type = "continuous",
-    binary_predictor_prevalence = NULL,
-    tuning_rsquared,
-    model = "lm",
-    metric = "calibration_slope",
-    target_performance,
-    n_reps_total = 1000,
-    mean_or_assurance = "assurance",
-    ...
+  signal_parameters,
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  binary_predictor_prevalence = NULL,
+  tuning_rsquared,
+  model = "lm",
+  metric = "calibration_slope",
+  target_performance,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance",
+  ...
 ) {
   validate_metric_constraints(
     metric = metric,
     target_performance = target_performance,
-    tuning_performance = tuning_rsquared)
-  
+    tuning_performance = tuning_rsquared
+  )
+
   # Tuning the data-generating function
   tune_param <- continuous_tuning(
     r2 = tuning_rsquared,
     candidate_features = signal_parameters + noise_parameters,
-    proportion_noise_features = noise_parameters / (signal_parameters + noise_parameters)
+    proportion_noise_features = noise_parameters /
+      (signal_parameters + noise_parameters)
   )
-  
+
   data_spec <- list(
     type = "continuous",
     args = list(
@@ -244,13 +247,13 @@ simulate_continuous <- function(
       predictor_prop = binary_predictor_prevalence
     )
   )
-  
+
   data_function <- default_data_generators(data_spec)
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
-  
+
   metric <- ifelse(metric == "calibration_slope", "calib_slope", metric)
-  
+
   suppressWarnings(
     output <- simulate_custom(
       metric_function = default_metric_generator(metric, data_function),
@@ -268,22 +271,20 @@ simulate_continuous <- function(
       test_n = 30000
     )
   )
-  
-  
+
   metric_2 <- if (metric == "calib_slope") "r2" else "calib_slope"
-  
+
   metric_function_2 <- default_metric_generator(metric_2, data_function)
-  
+
   test_n = 30000
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
   fit_2 <- model_function(data_2)
   metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
-  
-  
+
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
-  
+
   output$parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$predictor_type <- predictor_type
@@ -343,34 +344,35 @@ simulate_continuous <- function(
 #' }
 #' @export
 simulate_survival <- function(
-    signal_parameters,
-    noise_parameters = 0,
-    predictor_type = "continuous",
-    binary_predictor_prevalence = NULL,
-    tuning_cindex,
-    baseline_hazard = 1,
-    censoring_rate,
-    model = "coxph",
-    metric = "calibration_slope",
-    target_performance,
-    n_reps_total = 1000,
-    mean_or_assurance = "assurance",
-    ...
+  signal_parameters,
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  binary_predictor_prevalence = NULL,
+  tuning_cindex,
+  baseline_hazard = 1,
+  censoring_rate,
+  model = "coxph",
+  metric = "calibration_slope",
+  target_performance,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance",
+  ...
 ) {
   validate_metric_constraints(
     metric = metric,
     target_performance = target_performance,
     tuning_performance = tuning_cindex
   )
-  
+
   # Tune the data-generating function
   tune_param <- survival_tuning(
     target_prevalence = 1 - censoring_rate,
     target_performance = tuning_cindex,
     candidate_features = signal_parameters + noise_parameters,
-    proportion_noise_features = noise_parameters / (signal_parameters + noise_parameters)
+    proportion_noise_features = noise_parameters /
+      (signal_parameters + noise_parameters)
   )[c(1, 3)] # extract mean of linear predictor as new intercept and beta_signal scaled by var of lp
-  
+
   data_spec <- list(
     type = "survival",
     args = list(
@@ -383,13 +385,13 @@ simulate_survival <- function(
       censoring_rate = censoring_rate
     )
   )
-  
+
   data_function <- default_data_generators(data_spec)
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
-  
+
   metric <- ifelse(metric == "calibration_slope", "calib_slope", metric)
-  
+
   suppressWarnings(
     output <- simulate_custom(
       metric_function = default_metric_generator(metric, data_function),
@@ -407,23 +409,20 @@ simulate_survival <- function(
       test_n = 30000
     )
   )
-  
-  
-  
+
   metric_2 <- if (metric == "calib_slope") "cindex" else "calib_slope"
-  
+
   test_n = 30000
   metric_function_2 <- default_metric_generator(metric_2, data_function)
-  
+
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
   fit_2 <- model_function(data_2)
   metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
-  
-  
+
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
-  
+
   # Append input parameters
   output$parameters <- signal_parameters
   output$noise_parameters <- noise_parameters

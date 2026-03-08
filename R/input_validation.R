@@ -1,6 +1,8 @@
-validate_metric_constraints <- function(metric,
-                                        target_performance,
-                                        tuning_performance = NULL) {
+validate_metric_constraints <- function(
+  metric,
+  target_performance,
+  tuning_performance = NULL
+) {
   metric_lower <- tolower(metric)
   metric_label <- switch(
     metric_lower,
@@ -25,11 +27,15 @@ validate_metric_constraints <- function(metric,
     }
   }
 
-  if (!is.null(tuning_performance) && metric_lower %in% c("auc", "r2", "cindex")) {
+  if (
+    !is.null(tuning_performance) && metric_lower %in% c("auc", "r2", "cindex")
+  ) {
     if (tuning_performance < target_performance) {
       stop(
         paste(
-          "Requested target", metric_label, "exceeds the tuning performance",
+          "Requested target",
+          metric_label,
+          "exceeds the tuning performance",
           "(expected large-sample performance); adjust inputs and try again."
         ),
         call. = FALSE
@@ -39,7 +45,9 @@ validate_metric_constraints <- function(metric,
     if (isTRUE(all.equal(tuning_performance, target_performance))) {
       warning(
         paste(
-          "Target", metric_label, "equals tuning performance.",
+          "Target",
+          metric_label,
+          "equals tuning performance.",
           "These have different roles: tuning performance calibrates the data generator,",
           "while target performance is the minimum acceptable developed-model performance."
         ),
@@ -48,8 +56,6 @@ validate_metric_constraints <- function(metric,
     }
   }
 }
-
-
 
 
 validate_outcome_prevalence <- function(outcome_prevalence) {
