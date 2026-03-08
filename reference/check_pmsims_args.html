@@ -37,7 +37,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>check_pmsims_args - a custom version of the base R match.arg function with improved error message</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/R/input_validation.R" class="external-link"><code>R/input_validation.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/feature/argument-relabel/R/input_validation.R" class="external-link"><code>R/input_validation.R</code></a></small>
       <div class="d-none name"><code>check_pmsims_args.Rd</code></div>
     </div>
 
@@ -118,9 +118,9 @@
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Cauchy.html" class="external-link">rcauchy</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">center</span><span class="op">(</span><span class="va">x</span>, <span class="st">"t"</span><span class="op">)</span>       <span class="co"># Works</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.187598</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.123753</span>
 <span class="r-in"><span><span class="fu">center</span><span class="op">(</span><span class="va">x</span>, <span class="st">"med"</span><span class="op">)</span>     <span class="co"># Works</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.2808194</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.14126</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">center</span><span class="op">(</span><span class="va">x</span>, <span class="st">"m"</span><span class="op">)</span><span class="op">)</span>  <span class="co"># Error</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error in match.arg(type) : </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   'arg' should be one of “mean”, “median”, “trimmed”</span>

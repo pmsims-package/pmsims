@@ -8,14 +8,14 @@
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Minimum sample size for binary-outcome prediction models — simulate_binary"><meta name="description" content="Compute the minimum sample size required to develop a prediction model with a
 binary outcome. The function wraps a simulation-based engine that combines a
 bisection search with Gaussian-process curve fitting. From user inputs
-(outcome prevalence, expected large-sample performance, minimum acceptable
-performance, etc.) it constructs a data-generating function, a model-fitting
+(outcome prevalence, tuning performance, target performance, etc.) it
+constructs a data-generating function, a model-fitting
 function, and a metric function, then searches for the smallest \(n\) that
 meets the chosen performance criterion."><meta property="og:description" content="Compute the minimum sample size required to develop a prediction model with a
 binary outcome. The function wraps a simulation-based engine that combines a
 bisection search with Gaussian-process curve fitting. From user inputs
-(outcome prevalence, expected large-sample performance, minimum acceptable
-performance, etc.) it constructs a data-generating function, a model-fitting
+(outcome prevalence, tuning performance, target performance, etc.) it
+constructs a data-generating function, a model-fitting
 function, and a metric function, then searches for the smallest \(n\) that
 meets the chosen performance criterion."><meta property="og:image" content="https://pmsims-package.github.io/pmsims/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -47,7 +47,7 @@ meets the chosen performance criterion."><meta property="og:image" content="http
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Minimum sample size for binary-outcome prediction models</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/R/simulate_wrappers.R" class="external-link"><code>R/simulate_wrappers.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/feature/argument-relabel/R/simulate_wrappers.R" class="external-link"><code>R/simulate_wrappers.R</code></a></small>
       <div class="d-none name"><code>simulate_binary.Rd</code></div>
     </div>
 
@@ -55,8 +55,8 @@ meets the chosen performance criterion."><meta property="og:image" content="http
     <p>Compute the minimum sample size required to develop a prediction model with a
 binary outcome. The function wraps a simulation-based engine that combines a
 bisection search with Gaussian-process curve fitting. From user inputs
-(outcome prevalence, expected large-sample performance, minimum acceptable
-performance, etc.) it constructs a data-generating function, a model-fitting
+(outcome prevalence, tuning performance, target performance, etc.) it
+constructs a data-generating function, a model-fitting
 function, and a metric function, then searches for the smallest \(n\) that
 meets the chosen performance criterion.</p>
     </div>
@@ -69,10 +69,10 @@ meets the chosen performance criterion.</p>
 <span>  predictor_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"continuous"</span><span class="op">)</span>,</span>
 <span>  binary_predictor_prevalence <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">outcome_prevalence</span>,</span>
-<span>  <span class="va">large_sample_cstatistic</span>,</span>
+<span>  <span class="va">tuning_cstatistic</span>,</span>
 <span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"glm"</span><span class="op">)</span>,</span>
 <span>  metric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"calibration_slope"</span>, <span class="st">"auc"</span><span class="op">)</span>,</span>
-<span>  <span class="va">minimum_acceptable_performance</span>,</span>
+<span>  <span class="va">target_performance</span>,</span>
 <span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  mean_or_assurance <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"assurance"</span>, <span class="st">"mean"</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -108,10 +108,10 @@ the binary predictors when <code>predictor_type = "binary"</code>. Ignored other
 outcome in the intended modelling context.</p></dd>
 
 
-<dt id="arg-large-sample-cstatistic">large_sample_cstatistic<a class="anchor" aria-label="anchor" href="#arg-large-sample-cstatistic"></a></dt>
-<dd><p>Numeric in (0, 1). Expected C-statistic for a
-model developed on a very large sample (used to tune the data-generating
-mechanism).</p></dd>
+<dt id="arg-tuning-cstatistic">tuning_cstatistic<a class="anchor" aria-label="anchor" href="#arg-tuning-cstatistic"></a></dt>
+<dd><p>Numeric in (0, 1). Tuning target for the expected
+large-sample C-statistic. This calibrates the data-generating mechanism and
+is not the minimum acceptable performance threshold.</p></dd>
 
 
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
@@ -125,10 +125,10 @@ the sample size; defaults to <code>"calibration_slope"</code>. (Internally mappe
 the engine's metric identifiers.).</p></dd>
 
 
-<dt id="arg-minimum-acceptable-performance">minimum_acceptable_performance<a class="anchor" aria-label="anchor" href="#arg-minimum-acceptable-performance"></a></dt>
-<dd><p>Numeric. The target threshold
-\(M^\\*\); the algorithm searches for the smallest \(n\) meeting the
-chosen criterion with respect to this threshold.</p></dd>
+<dt id="arg-target-performance">target_performance<a class="anchor" aria-label="anchor" href="#arg-target-performance"></a></dt>
+<dd><p>Numeric. Minimum acceptable value of the selected
+performance metric \(M^\\*\); the algorithm searches for the smallest
+\(n\) meeting the chosen criterion with respect to this threshold.</p></dd>
 
 
 <dt id="arg-n-reps-total">n_reps_total<a class="anchor" aria-label="anchor" href="#arg-n-reps-total"></a></dt>
@@ -183,9 +183,9 @@ with higher variance typically require larger \(n\) to satisfy it.</p>
 <span class="r-in"><span>  noise_parameters <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span></span>
 <span class="r-in"><span>  outcome_prevalence <span class="op">=</span> <span class="fl">0.2</span>,</span></span>
-<span class="r-in"><span>  large_sample_cstatistic <span class="op">=</span> <span class="fl">0.75</span>,</span></span>
+<span class="r-in"><span>  tuning_cstatistic <span class="op">=</span> <span class="fl">0.75</span>,</span></span>
 <span class="r-in"><span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span></span>
-<span class="r-in"><span>  minimum_acceptable_performance <span class="op">=</span> <span class="fl">0.9</span>,</span></span>
+<span class="r-in"><span>  target_performance <span class="op">=</span> <span class="fl">0.9</span>,</span></span>
 <span class="r-in"><span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span></span>
 <span class="r-in"><span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>

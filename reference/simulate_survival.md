@@ -14,12 +14,12 @@ simulate_survival(
   noise_parameters = 0,
   predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
-  large_sample_cindex,
+  tuning_cindex,
   baseline_hazard = 1,
   censoring_rate,
   model = c("coxph"),
   metric = c("calibration_slope", "cindex"),
-  minimum_acceptable_performance,
+  target_performance,
   n_reps_total = 1000,
   mean_or_assurance = c("assurance", "mean"),
   ...
@@ -49,11 +49,11 @@ simulate_survival(
   Optional numeric in (0, 1). Prevalence of the binary predictors when
   `predictor_type = "binary"`. Ignored otherwise.
 
-- large_sample_cindex:
+- tuning_cindex:
 
-  Numeric in (0, 1). Expected large-sample C-index for the survival
-  model (used to tune the data-generating mechanism so that the model
-  attains this performance for very large \\n\\).
+  Numeric in (0, 1). Tuning target for expected large-sample C-index.
+  This calibrates the data-generating mechanism and is not the minimum
+  acceptable performance threshold.
 
 - baseline_hazard:
 
@@ -77,11 +77,11 @@ simulate_survival(
   sample size; defaults to `"calibration_slope"`. (Internally mapped to
   the engine's metric identifiers.).
 
-- minimum_acceptable_performance:
+- target_performance:
 
-  Numeric. The target threshold \\M^\\\*\\; the algorithm searches for
-  the smallest \\n\\ meeting the chosen criterion with respect to this
-  threshold.
+  Numeric. Minimum acceptable value of the selected performance metric
+  \\M^\\\*\\; the algorithm searches for the smallest \\n\\ meeting the
+  chosen criterion with respect to this threshold.
 
 - n_reps_total:
 
@@ -141,11 +141,11 @@ est <- simulate_survival(
   signal_parameters = 10,
   noise_parameters = 10,
   predictor_type = "continuous",
-  large_sample_cindex = 0.70,
+  tuning_cindex = 0.70,
   baseline_hazard = 0.01,
   censoring_rate = 0.30,
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.9,
+  target_performance = 0.9,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )

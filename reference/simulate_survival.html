@@ -43,7 +43,7 @@ criterion."><meta property="og:image" content="https://pmsims-package.github.io/
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Minimum sample size for survival‐outcome prediction models</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/R/simulate_wrappers.R" class="external-link"><code>R/simulate_wrappers.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/feature/argument-relabel/R/simulate_wrappers.R" class="external-link"><code>R/simulate_wrappers.R</code></a></small>
       <div class="d-none name"><code>simulate_survival.Rd</code></div>
     </div>
 
@@ -62,12 +62,12 @@ criterion.</p>
 <span>  noise_parameters <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  predictor_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"continuous"</span><span class="op">)</span>,</span>
 <span>  binary_predictor_prevalence <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">large_sample_cindex</span>,</span>
+<span>  <span class="va">tuning_cindex</span>,</span>
 <span>  baseline_hazard <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  <span class="va">censoring_rate</span>,</span>
 <span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"coxph"</span><span class="op">)</span>,</span>
 <span>  metric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"calibration_slope"</span>, <span class="st">"cindex"</span><span class="op">)</span>,</span>
-<span>  <span class="va">minimum_acceptable_performance</span>,</span>
+<span>  <span class="va">target_performance</span>,</span>
 <span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  mean_or_assurance <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"assurance"</span>, <span class="st">"mean"</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -98,10 +98,10 @@ Specifies the type of simulated candidate predictors.</p></dd>
 the binary predictors when <code>predictor_type = "binary"</code>. Ignored otherwise.</p></dd>
 
 
-<dt id="arg-large-sample-cindex">large_sample_cindex<a class="anchor" aria-label="anchor" href="#arg-large-sample-cindex"></a></dt>
-<dd><p>Numeric in (0, 1). Expected large-sample
-C-index for the survival model (used to tune the data-generating mechanism
-so that the model attains this performance for very large \(n\)).</p></dd>
+<dt id="arg-tuning-cindex">tuning_cindex<a class="anchor" aria-label="anchor" href="#arg-tuning-cindex"></a></dt>
+<dd><p>Numeric in (0, 1). Tuning target for expected
+large-sample C-index. This calibrates the data-generating mechanism and is
+not the minimum acceptable performance threshold.</p></dd>
 
 
 <dt id="arg-baseline-hazard">baseline_hazard<a class="anchor" aria-label="anchor" href="#arg-baseline-hazard"></a></dt>
@@ -126,10 +126,10 @@ the sample size; defaults to <code>"calibration_slope"</code>. (Internally mappe
 the engine's metric identifiers.).</p></dd>
 
 
-<dt id="arg-minimum-acceptable-performance">minimum_acceptable_performance<a class="anchor" aria-label="anchor" href="#arg-minimum-acceptable-performance"></a></dt>
-<dd><p>Numeric. The target threshold
-\(M^\\*\); the algorithm searches for the smallest \(n\) meeting the
-chosen criterion with respect to this threshold.</p></dd>
+<dt id="arg-target-performance">target_performance<a class="anchor" aria-label="anchor" href="#arg-target-performance"></a></dt>
+<dd><p>Numeric. Minimum acceptable value of the selected
+performance metric \(M^\\*\); the algorithm searches for the smallest
+\(n\) meeting the chosen criterion with respect to this threshold.</p></dd>
 
 
 <dt id="arg-n-reps-total">n_reps_total<a class="anchor" aria-label="anchor" href="#arg-n-reps-total"></a></dt>
@@ -183,11 +183,11 @@ with higher variance typically require larger \(n\) to satisfy it.</p>
 <span class="r-in"><span>  signal_parameters <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>  noise_parameters <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span></span>
-<span class="r-in"><span>  large_sample_cindex <span class="op">=</span> <span class="fl">0.70</span>,</span></span>
+<span class="r-in"><span>  tuning_cindex <span class="op">=</span> <span class="fl">0.70</span>,</span></span>
 <span class="r-in"><span>  baseline_hazard <span class="op">=</span> <span class="fl">0.01</span>,</span></span>
 <span class="r-in"><span>  censoring_rate <span class="op">=</span> <span class="fl">0.30</span>,</span></span>
 <span class="r-in"><span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span></span>
-<span class="r-in"><span>  minimum_acceptable_performance <span class="op">=</span> <span class="fl">0.9</span>,</span></span>
+<span class="r-in"><span>  target_performance <span class="op">=</span> <span class="fl">0.9</span>,</span></span>
 <span class="r-in"><span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span></span>
 <span class="r-in"><span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>

@@ -4,10 +4,10 @@ Compute the minimum sample size required to develop a prediction model
 with a **continuous** outcome. This wraps the same simulation engine as
 [`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md),
 combining bisection search with Gaussian-process learning-curve
-modelling. From user inputs (expected large-sample performance, minimum
-acceptable performance, etc.) it constructs a data-generating function,
-model-fitting function, and metric function, then searches for the
-smallest \\n\\ meeting the chosen criterion.
+modelling. From user inputs (tuning performance, target performance,
+etc.) it constructs a data-generating function, model-fitting function,
+and metric function, then searches for the smallest \\n\\ meeting the
+chosen criterion.
 
 ## Usage
 
@@ -17,10 +17,10 @@ simulate_continuous(
   noise_parameters = 0,
   predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
-  large_sample_rsquared,
+  tuning_rsquared,
   model = c("lm"),
   metric = c("calibration_slope", "r2"),
-  minimum_acceptable_performance,
+  target_performance,
   n_reps_total = 1000,
   mean_or_assurance = c("assurance", "mean"),
   ...
@@ -50,11 +50,11 @@ simulate_continuous(
   Optional numeric in (0, 1). Prevalence of the binary predictors when
   `predictor_type = "binary"`. Ignored otherwise.
 
-- large_sample_rsquared:
+- tuning_rsquared:
 
-  Numeric in (0, 1). Expected large-sample \\R^2\\ for the model (used
-  to tune the data-generating mechanism so that the model attains this
-  performance for very large \\n\\).
+  Numeric in (0, 1). Tuning target for expected large-sample \\R^2\\.
+  This calibrates the data-generating mechanism and is not the minimum
+  acceptable performance threshold.
 
 - model:
 
@@ -67,11 +67,11 @@ simulate_continuous(
   sample size; defaults to `"calibration_slope"`. (Internally mapped to
   the engine's metric identifiers.).
 
-- minimum_acceptable_performance:
+- target_performance:
 
-  Numeric. The target threshold \\M^\\\*\\; the algorithm searches for
-  the smallest \\n\\ meeting the chosen criterion with respect to this
-  threshold.
+  Numeric. Minimum acceptable value of the selected performance metric
+  \\M^\\\*\\; the algorithm searches for the smallest \\n\\ meeting the
+  chosen criterion with respect to this threshold.
 
 - n_reps_total:
 
@@ -131,9 +131,9 @@ est <- simulate_continuous(
   signal_parameters = 8,
   noise_parameters = 8,
   predictor_type = "continuous",
-  large_sample_rsquared = 0.50,
+  tuning_rsquared = 0.50,
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.9,
+  target_performance = 0.9,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )

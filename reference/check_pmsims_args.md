@@ -69,9 +69,9 @@ center <- function(x, type = c("mean", "median", "trimmed")) {
 }
 x <- rcauchy(10)
 center(x, "t")       # Works
-#> [1] 1.187598
+#> [1] 1.123753
 center(x, "med")     # Works
-#> [1] 0.2808194
+#> [1] 0.14126
 try(center(x, "m"))  # Error
 #> Error in match.arg(type) : 
 #>   'arg' should be one of “mean”, “median”, “trimmed”
