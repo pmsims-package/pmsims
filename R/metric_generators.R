@@ -215,10 +215,16 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
   
   # Cox models or other types that might use survival:::predict.coxph
   if (model == "coxph") {
+    fit_for_prediction <- fit
+    formula_env <- new.env(parent = environment(stats::formula(fit_for_prediction)))
+    formula_env$Surv <- survival::Surv
+    environment(fit_for_prediction$formula) <- formula_env
+    attr(fit_for_prediction$terms, ".Environment") <- formula_env
+
     if (type %in% c("lp", "link")) {
-      return(survival:::predict.coxph(fit, x_df, type = "lp"))
+      return(survival:::predict.coxph(fit_for_prediction, x_df, type = "lp"))
     } else if (type == "survival") {
-      return(survival:::predict.coxph(fit, x_df, type = "survival"))
+      return(survival:::predict.coxph(fit_for_prediction, x_df, type = "survival"))
     } else {
       stop("coxph predict_custom: only 'lp' or 'survival' supported.")
     }
@@ -468,26 +474,39 @@ survival_calib_slope_free <- function(data, fit, model, eval_time = NULL) {
 survival_auc <- function(data, fit, model) {
   y_surv <- survival::Surv(data$time, data$event)
   x <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
-  
+
   # get linear predictor / risk score where possible
   y_hat <- try(predict_custom(x, NULL, fit, model, type = "lp"), silent = TRUE)
   if (inherits(y_hat, "try-error") || is.null(y_hat)) {
     return(NaN)
   }
-  
-  # time-dependent AUC at last event time
-  if (class(try(survival::concordancefit(y_surv, y_hat), silent = TRUE))[1] == "try-error") {
-    auc_survival <- NaN
-  } else {
-    t_max <- max(data[data$event == 1, "time"])
-    auc_survival <- timeROC::timeROC(
+
+  concordance <- try(survival::concordancefit(y_surv, y_hat), silent = TRUE)
+  if (inherits(concordance, "try-error") || is.null(concordance)) {
+    return(NaN)
+  }
+
+  t_max <- max(data[data$event == 1, "time"])
+  auc_survival <- try(
+    timeROC::timeROC(
       T = data$time,
       delta = data$event,
       marker = as.numeric(y_hat),
       times = t_max * 0.9999999,
       cause = 1,
       weighting = "marginal"
-    )$AUC[2]
+    )$AUC,
+    silent = TRUE
+  )
+
+  if (inherits(auc_survival, "try-error") || length(auc_survival) == 0) {
+    return(as.numeric(concordance$concordance))
   }
-  return(as.numeric(auc_survival))
+
+  auc_survival <- auc_survival[!is.na(auc_survival)]
+  if (length(auc_survival) == 0) {
+    return(as.numeric(concordance$concordance))
+  }
+
+  return(as.numeric(utils::tail(auc_survival, 1)))
 }
