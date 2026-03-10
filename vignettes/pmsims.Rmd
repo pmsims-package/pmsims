@@ -162,9 +162,10 @@ lists the key inputs.
     </tr>
 
     <tr>
-      <td><strong><code>large_sample_cstatistic</code></strong></td>
+      <td><strong><code>maximum_achievable_cstatistic</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Expected <strong>C-statistic</strong> for a very large training sample.
+        <em>(num 0–1)</em> Maximum achievable <strong>C-statistic</strong> with effectively unlimited data.
+        This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: binary only</span>
           <span class="badge badge--default">Default: —</span>
@@ -174,9 +175,10 @@ lists the key inputs.
     </tr>
 
     <tr>
-      <td><strong><code>large_sample_rsquared</code></strong></td>
+      <td><strong><code>maximum_achievable_rsquared</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Expected R<sup>2</sup> for a very large training sample.
+        <em>(num 0–1)</em> Maximum achievable R<sup>2</sup> with effectively unlimited data.
+        This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: continuous only</span>
           <span class="badge badge--default">Default: —</span>
@@ -186,9 +188,10 @@ lists the key inputs.
     </tr>
 
     <tr>
-      <td><strong><code>large_sample_cindex</code></strong></td>
+      <td><strong><code>maximum_achievable_cindex</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Expected <strong>concordance index</strong> for a very large training sample.
+        <em>(num 0–1)</em> Maximum achievable <strong>concordance index</strong> with effectively unlimited data.
+        This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: survival only</span>
           <span class="badge badge--default">Default: —</span>
@@ -220,9 +223,10 @@ lists the key inputs.
     </tr>
 
     <tr>
-      <td><strong><code>minimum_acceptable_performance</code></strong></td>
+      <td><strong><code>target_performance</code></strong></td>
       <td>
-        <em>(num)</em> <strong>Minimum acceptable performance</strong> in the units of the chosen metric (e.g. calibration slope ≥ 0.9).
+        <em>(num)</em> <strong>Minimum acceptable performance</strong> in the units of the chosen metric (e.g. calibration slope ≥ 0.9),
+        used as the threshold for selecting the required sample size.
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: —</span>
@@ -260,9 +264,10 @@ lists the key inputs.
 
 > Notes:
 >
-> - The engine automatically tunes the data generator so the
->   chosen model reaches the specified **large‑sample performance**
->   (C‑statistic or $R^2$) on very large samples.
+> - `maximum_achievable_*` represents the best plausible performance with
+>   effectively unlimited data and calibrates the data generator.
+> - `target_performance` is the minimum acceptable performance threshold used
+>   to determine the required sample size.
 > - For reproducibility, set a random seed (`set.seed()`).
 
 ## Installation
@@ -288,10 +293,10 @@ binary_example <- simulate_binary(
   predictor_type = "continuous",
   binary_predictor_prevalence = NULL,
   outcome_prevalence = 0.30,
-  large_sample_cstatistic = 0.80,
+  maximum_achievable_cstatistic = 0.80,
   model = "glm",
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.85,
+  target_performance = 0.85,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )
@@ -311,10 +316,10 @@ if (use_cache) {
     predictor_type = "continuous",
     binary_predictor_prevalence = NULL,
     outcome_prevalence = 0.30,
-    large_sample_cstatistic = 0.80,
+    maximum_achievable_cstatistic = 0.80,
     model = "glm",
     metric = "calibration_slope",
-    minimum_acceptable_performance = 0.85,
+    target_performance = 0.85,
     n_reps_total = 1000,
     mean_or_assurance = "assurance"
   )
@@ -340,10 +345,10 @@ continuous_example <- simulate_continuous(
   signal_parameters = 15,
   noise_parameters = 0,
   predictor_type = "continuous",
-  large_sample_rsquared = 0.50,
+  maximum_achievable_rsquared = 0.50,
   model = "lm",
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.90,
+  target_performance = 0.90,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )
@@ -361,10 +366,10 @@ if (use_cache) {
     signal_parameters = 15,
     noise_parameters = 0,
     predictor_type = "continuous",
-    large_sample_rsquared = 0.50,
+    maximum_achievable_rsquared = 0.50,
     model = "lm",
     metric = "calibration_slope",
-    minimum_acceptable_performance = 0.90,
+    target_performance = 0.90,
     n_reps_total = 1000,
     mean_or_assurance = "assurance"
   )

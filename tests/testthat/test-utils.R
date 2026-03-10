@@ -32,36 +32,80 @@ test_that("validate_metric_constraints enforces calibration slope limits", {
   expect_error(
     validate_metric_constraints(
       metric = "calibration_slope",
-      minimum_acceptable_performance = 0.7
+      target_performance = 0.7
     ),
-    "Suggested calibration slope is too low; check and try again.",
+    "Requested target calibration slope is too low; check and try again.",
     fixed = TRUE
   )
 
   expect_error(
     validate_metric_constraints(
       metric = "calibration_slope",
-      minimum_acceptable_performance = 1.3
+      target_performance = 1.3
     ),
-    "Suggested calibration slope is too high; check and try again.",
+    "Requested target calibration slope is too high; check and try again.",
     fixed = TRUE
   )
 
   expect_error(
     validate_metric_constraints(
       metric = "auc",
-      minimum_acceptable_performance = 0.8,
-      expected_performance = 0.75
+      target_performance = 0.8,
+      maximum_achievable_performance = 0.75
     ),
-    "Requested minimum acceptable AUC exceeds the expected large-sample performance; adjust inputs and try again.",
+    "Requested target AUC must be less than the maximum achievable AUC because both are specified on the same metric scale.",
     fixed = TRUE
   )
 
   expect_silent(
     validate_metric_constraints(
       metric = "auc",
-      minimum_acceptable_performance = 0.75,
-      expected_performance = 0.8
+      target_performance = 0.75,
+      maximum_achievable_performance = 0.8
+    )
+  )
+})
+
+test_that("validate_metric_constraints errors when maximum achievable equals target", {
+  expect_error(
+    validate_metric_constraints(
+      metric = "auc",
+      target_performance = 0.8,
+      maximum_achievable_performance = 0.8
+    ),
+    "Requested target AUC must be less than the maximum achievable AUC because both are specified on the same metric scale.",
+    fixed = TRUE
+  )
+})
+
+test_that("validate_metric_constraints errors for equal or higher target on r2 and cindex", {
+  expect_error(
+    validate_metric_constraints(
+      metric = "r2",
+      target_performance = 0.6,
+      maximum_achievable_performance = 0.6
+    ),
+    "Requested target R2 must be less than the maximum achievable R2 because both are specified on the same metric scale.",
+    fixed = TRUE
+  )
+
+  expect_error(
+    validate_metric_constraints(
+      metric = "cindex",
+      target_performance = 0.76,
+      maximum_achievable_performance = 0.75
+    ),
+    "Requested target C-index must be less than the maximum achievable C-index because both are specified on the same metric scale.",
+    fixed = TRUE
+  )
+})
+
+test_that("validate_metric_constraints does not compare non-comparable metrics", {
+  expect_silent(
+    validate_metric_constraints(
+      metric = "calibration_slope",
+      target_performance = 0.9,
+      maximum_achievable_performance = 0.9
     )
   )
 })
