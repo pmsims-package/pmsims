@@ -10,7 +10,7 @@ simulate_binary(
   predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
   outcome_prevalence,
-  tuning_cstatistic,
+  maximum_achievable_cstatistic,
   model = c("glm"),
   metric = c("calibration_slope", "auc"),
   target_performance,
@@ -35,9 +35,9 @@ the binary predictors when \code{predictor_type = "binary"}. Ignored otherwise.}
 \item{outcome_prevalence}{Numeric in (0, 1). Target prevalence of the binary
 outcome in the intended modelling context.}
 
-\item{tuning_cstatistic}{Numeric in (0, 1). Tuning target for the expected
-large-sample C-statistic. This calibrates the data-generating mechanism and
-is not the minimum acceptable performance threshold.}
+\item{maximum_achievable_cstatistic}{Numeric in (0, 1). Maximum achievable
+C-statistic with effectively unlimited data. This is used to calibrate the
+data-generating mechanism and is not the minimum acceptable threshold.}
 
 \item{model}{Character string specifying the modelling algorithm (e.g.,
 \code{"glm"}). Passed to the internal model generator.}
@@ -70,7 +70,7 @@ evaluations, and summary metrics).
 Compute the minimum sample size required to develop a prediction model with a
 binary outcome. The function wraps a simulation-based engine that combines a
 bisection search with Gaussian-process curve fitting. From user inputs
-(outcome prevalence, tuning performance, target performance, etc.) it
+(outcome prevalence, maximum achievable performance, target performance, etc.) it
 constructs a data-generating function, a model-fitting
 function, and a metric function, then searches for the smallest \eqn{n} that
 meets the chosen performance criterion.
@@ -101,7 +101,7 @@ est <- simulate_binary(
   noise_parameters = 10,
   predictor_type = "continuous",
   outcome_prevalence = 0.2,
-  tuning_cstatistic = 0.75,
+  maximum_achievable_cstatistic = 0.75,
   metric = "calibration_slope",
   target_performance = 0.9,
   n_reps_total = 1000,

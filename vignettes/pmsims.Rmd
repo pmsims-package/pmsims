@@ -162,9 +162,9 @@ lists the key inputs.
     </tr>
 
     <tr>
-      <td><strong><code>tuning_cstatistic</code></strong></td>
+      <td><strong><code>maximum_achievable_cstatistic</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Tuning target for the expected <strong>C-statistic</strong> with effectively unlimited data.
+        <em>(num 0–1)</em> Maximum achievable <strong>C-statistic</strong> with effectively unlimited data.
         This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: binary only</span>
@@ -175,9 +175,9 @@ lists the key inputs.
     </tr>
 
     <tr>
-      <td><strong><code>tuning_rsquared</code></strong></td>
+      <td><strong><code>maximum_achievable_rsquared</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Tuning target for expected large-sample R<sup>2</sup>.
+        <em>(num 0–1)</em> Maximum achievable R<sup>2</sup> with effectively unlimited data.
         This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: continuous only</span>
@@ -188,9 +188,9 @@ lists the key inputs.
     </tr>
 
     <tr>
-      <td><strong><code>tuning_cindex</code></strong></td>
+      <td><strong><code>maximum_achievable_cindex</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Tuning target for expected large-sample <strong>concordance index</strong>.
+        <em>(num 0–1)</em> Maximum achievable <strong>concordance index</strong> with effectively unlimited data.
         This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: survival only</span>
@@ -264,8 +264,8 @@ lists the key inputs.
 
 > Notes:
 >
-> - `tuning_*` calibrates the data generator to a plausible **large-sample**
->   performance level.
+> - `maximum_achievable_*` represents the best plausible performance with
+>   effectively unlimited data and calibrates the data generator.
 > - `target_performance` is the minimum acceptable performance threshold used
 >   to determine the required sample size.
 > - For reproducibility, set a random seed (`set.seed()`).
@@ -293,7 +293,7 @@ binary_example <- simulate_binary(
   predictor_type = "continuous",
   binary_predictor_prevalence = NULL,
   outcome_prevalence = 0.30,
-  tuning_cstatistic = 0.80,
+  maximum_achievable_cstatistic = 0.80,
   model = "glm",
   metric = "calibration_slope",
   target_performance = 0.85,
@@ -316,7 +316,7 @@ if (use_cache) {
     predictor_type = "continuous",
     binary_predictor_prevalence = NULL,
     outcome_prevalence = 0.30,
-    tuning_cstatistic = 0.80,
+    maximum_achievable_cstatistic = 0.80,
     model = "glm",
     metric = "calibration_slope",
     target_performance = 0.85,
@@ -345,7 +345,7 @@ continuous_example <- simulate_continuous(
   signal_parameters = 15,
   noise_parameters = 0,
   predictor_type = "continuous",
-  tuning_rsquared = 0.50,
+  maximum_achievable_rsquared = 0.50,
   model = "lm",
   metric = "calibration_slope",
   target_performance = 0.90,
@@ -366,7 +366,7 @@ if (use_cache) {
     signal_parameters = 15,
     noise_parameters = 0,
     predictor_type = "continuous",
-    tuning_rsquared = 0.50,
+    maximum_achievable_rsquared = 0.50,
     model = "lm",
     metric = "calibration_slope",
     target_performance = 0.90,

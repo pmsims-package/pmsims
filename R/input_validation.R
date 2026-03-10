@@ -1,7 +1,7 @@
 validate_metric_constraints <- function(
   metric,
   target_performance,
-  tuning_performance = NULL
+  maximum_achievable_performance = NULL
 ) {
   metric_lower <- tolower(metric)
   metric_label <- switch(
@@ -28,28 +28,17 @@ validate_metric_constraints <- function(
   }
 
   if (
-    !is.null(tuning_performance) && metric_lower %in% c("auc", "r2", "cindex")
+    !is.null(maximum_achievable_performance) &&
+      metric_lower %in% c("auc", "r2", "cindex")
   ) {
-    if (tuning_performance < target_performance) {
+    if (target_performance >= maximum_achievable_performance) {
       stop(
         paste(
           "Requested target",
           metric_label,
-          "exceeds the tuning performance",
-          "(expected large-sample performance); adjust inputs and try again."
-        ),
-        call. = FALSE
-      )
-    }
-
-    if (isTRUE(all.equal(tuning_performance, target_performance))) {
-      warning(
-        paste(
-          "Target",
+          "must be less than the maximum achievable",
           metric_label,
-          "equals tuning performance.",
-          "These have different roles: tuning performance calibrates the data generator,",
-          "while target performance is the minimum acceptable developed-model performance."
+          "because both are specified on the same metric scale."
         ),
         call. = FALSE
       )

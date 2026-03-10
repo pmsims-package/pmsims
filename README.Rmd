@@ -55,7 +55,7 @@ binary_example <- simulate_binary(
   predictor_type = "continuous",
   binary_predictor_prevalence = NULL,
   outcome_prevalence = 0.20,
-  tuning_cstatistic = 0.80,
+  maximum_achievable_cstatistic = 0.80,
   model = "glm",
   metric = "calibration_slope",
   target_performance = 0.90,
@@ -66,9 +66,9 @@ binary_example <- simulate_binary(
 binary_example
 ```
 
-`tuning_cstatistic` and `target_performance` have different roles:
+`maximum_achievable_cstatistic` and `target_performance` have different roles:
 
-- `tuning_cstatistic` calibrates the data generator to a plausible large-sample performance level.
+- `maximum_achievable_cstatistic` represents the best plausible C-statistic with effectively unlimited data and calibrates the data generator.
 - `target_performance` is the minimum acceptable metric value used to determine the required sample size.
 
 ---

@@ -7,7 +7,7 @@ test_that("simulate_binary returns a pmsims object", {
     noise_parameters = 0,
     predictor_type = "continuous",
     outcome_prevalence = 0.2,
-    tuning_cstatistic = 0.75,
+    maximum_achievable_cstatistic = 0.75,
     metric = "calibration_slope",
     target_performance = 0.9,
     n_reps_total = 1000,
@@ -29,7 +29,7 @@ test_that("simulate_continuous returns a pmsims object", {
     signal_parameters = 10,
     noise_parameters = 0,
     predictor_type = "continuous",
-    tuning_rsquared = 0.5,
+    maximum_achievable_rsquared = 0.5,
     metric = "calibration_slope",
     target_performance = 0.9,
     n_reps_total = 1000,
@@ -51,7 +51,7 @@ test_that("simulate_survival returns a pmsims object", {
     signal_parameters = 10,
     noise_parameters = 0,
     predictor_type = "continuous",
-    tuning_cindex = 0.75,
+    maximum_achievable_cindex = 0.75,
     baseline_hazard = 0.01,
     censoring_rate = 0.3,
     metric = "calibration_slope",
@@ -74,7 +74,7 @@ test_that("wrapper calibration slope bounds are enforced", {
       noise_parameters = 0,
       predictor_type = "continuous",
       outcome_prevalence = 0.2,
-      tuning_cstatistic = 0.75,
+      maximum_achievable_cstatistic = 0.75,
       metric = "calibration_slope",
       target_performance = 0.7,
       n_reps_total = 1000,
@@ -89,7 +89,7 @@ test_that("wrapper calibration slope bounds are enforced", {
       signal_parameters = 10,
       noise_parameters = 0,
       predictor_type = "continuous",
-      tuning_rsquared = 0.5,
+      maximum_achievable_rsquared = 0.5,
       metric = "calibration_slope",
       target_performance = 1.3,
       n_reps_total = 1000,
@@ -104,7 +104,7 @@ test_that("wrapper calibration slope bounds are enforced", {
       signal_parameters = 10,
       noise_parameters = 0,
       predictor_type = "continuous",
-      tuning_cindex = 0.75,
+      maximum_achievable_cindex = 0.75,
       baseline_hazard = 0.01,
       censoring_rate = 0.3,
       metric = "calibration_slope",
@@ -124,13 +124,31 @@ test_that("simulate_binary requires achievable AUC targets", {
       noise_parameters = 0,
       predictor_type = "continuous",
       outcome_prevalence = 0.2,
-      tuning_cstatistic = 0.80,
+      maximum_achievable_cstatistic = 0.80,
       metric = "auc",
       target_performance = 0.9,
       n_reps_total = 1000,
       mean_or_assurance = "assurance"
     ),
-    "Requested target AUC exceeds the tuning performance (expected large-sample performance); adjust inputs and try again.",
+    "Requested target AUC must be less than the maximum achievable AUC because both are specified on the same metric scale.",
+    fixed = TRUE
+  )
+})
+
+test_that("simulate_binary errors when maximum achievable AUC equals target", {
+  expect_error(
+    simulate_binary(
+      signal_parameters = 10,
+      noise_parameters = 0,
+      predictor_type = "continuous",
+      outcome_prevalence = 0.2,
+      maximum_achievable_cstatistic = 0.8,
+      metric = "auc",
+      target_performance = 0.8,
+      n_reps_total = 1000,
+      mean_or_assurance = "assurance"
+    ),
+    "Requested target AUC must be less than the maximum achievable AUC because both are specified on the same metric scale.",
     fixed = TRUE
   )
 })
