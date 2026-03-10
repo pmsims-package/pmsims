@@ -14,7 +14,7 @@ simulate_survival(
   noise_parameters = 0,
   predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
-  tuning_cindex,
+  maximum_achievable_cindex,
   baseline_hazard = 1,
   censoring_rate,
   model = c("coxph"),
@@ -49,11 +49,11 @@ simulate_survival(
   Optional numeric in (0, 1). Prevalence of the binary predictors when
   `predictor_type = "binary"`. Ignored otherwise.
 
-- tuning_cindex:
+- maximum_achievable_cindex:
 
-  Numeric in (0, 1). Tuning target for expected large-sample C-index.
-  This calibrates the data-generating mechanism and is not the minimum
-  acceptable performance threshold.
+  Numeric in (0, 1). Maximum achievable C-index with effectively
+  unlimited data. This is used to calibrate the data-generating
+  mechanism and is not the minimum acceptable threshold.
 
 - baseline_hazard:
 
@@ -141,7 +141,7 @@ est <- simulate_survival(
   signal_parameters = 10,
   noise_parameters = 10,
   predictor_type = "continuous",
-  tuning_cindex = 0.70,
+  maximum_achievable_cindex = 0.70,
   baseline_hazard = 0.01,
   censoring_rate = 0.30,
   metric = "calibration_slope",

@@ -62,7 +62,7 @@ criterion.</p>
 <span>  noise_parameters <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  predictor_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"continuous"</span><span class="op">)</span>,</span>
 <span>  binary_predictor_prevalence <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">tuning_cindex</span>,</span>
+<span>  <span class="va">maximum_achievable_cindex</span>,</span>
 <span>  baseline_hazard <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  <span class="va">censoring_rate</span>,</span>
 <span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"coxph"</span><span class="op">)</span>,</span>
@@ -98,10 +98,10 @@ Specifies the type of simulated candidate predictors.</p></dd>
 the binary predictors when <code>predictor_type = "binary"</code>. Ignored otherwise.</p></dd>
 
 
-<dt id="arg-tuning-cindex">tuning_cindex<a class="anchor" aria-label="anchor" href="#arg-tuning-cindex"></a></dt>
-<dd><p>Numeric in (0, 1). Tuning target for expected
-large-sample C-index. This calibrates the data-generating mechanism and is
-not the minimum acceptable performance threshold.</p></dd>
+<dt id="arg-maximum-achievable-cindex">maximum_achievable_cindex<a class="anchor" aria-label="anchor" href="#arg-maximum-achievable-cindex"></a></dt>
+<dd><p>Numeric in (0, 1). Maximum achievable
+C-index with effectively unlimited data. This is used to calibrate the
+data-generating mechanism and is not the minimum acceptable threshold.</p></dd>
 
 
 <dt id="arg-baseline-hazard">baseline_hazard<a class="anchor" aria-label="anchor" href="#arg-baseline-hazard"></a></dt>
@@ -183,7 +183,7 @@ with higher variance typically require larger \(n\) to satisfy it.</p>
 <span class="r-in"><span>  signal_parameters <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>  noise_parameters <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span></span>
-<span class="r-in"><span>  tuning_cindex <span class="op">=</span> <span class="fl">0.70</span>,</span></span>
+<span class="r-in"><span>  maximum_achievable_cindex <span class="op">=</span> <span class="fl">0.70</span>,</span></span>
 <span class="r-in"><span>  baseline_hazard <span class="op">=</span> <span class="fl">0.01</span>,</span></span>
 <span class="r-in"><span>  censoring_rate <span class="op">=</span> <span class="fl">0.30</span>,</span></span>
 <span class="r-in"><span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span></span>

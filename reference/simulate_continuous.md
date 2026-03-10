@@ -4,10 +4,10 @@ Compute the minimum sample size required to develop a prediction model
 with a **continuous** outcome. This wraps the same simulation engine as
 [`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md),
 combining bisection search with Gaussian-process learning-curve
-modelling. From user inputs (tuning performance, target performance,
-etc.) it constructs a data-generating function, model-fitting function,
-and metric function, then searches for the smallest \\n\\ meeting the
-chosen criterion.
+modelling. From user inputs (maximum achievable performance, target
+performance, etc.) it constructs a data-generating function,
+model-fitting function, and metric function, then searches for the
+smallest \\n\\ meeting the chosen criterion.
 
 ## Usage
 
@@ -17,7 +17,7 @@ simulate_continuous(
   noise_parameters = 0,
   predictor_type = c("continuous"),
   binary_predictor_prevalence = NULL,
-  tuning_rsquared,
+  maximum_achievable_rsquared,
   model = c("lm"),
   metric = c("calibration_slope", "r2"),
   target_performance,
@@ -50,11 +50,11 @@ simulate_continuous(
   Optional numeric in (0, 1). Prevalence of the binary predictors when
   `predictor_type = "binary"`. Ignored otherwise.
 
-- tuning_rsquared:
+- maximum_achievable_rsquared:
 
-  Numeric in (0, 1). Tuning target for expected large-sample \\R^2\\.
-  This calibrates the data-generating mechanism and is not the minimum
-  acceptable performance threshold.
+  Numeric in (0, 1). Maximum achievable \\R^2\\ with effectively
+  unlimited data. This is used to calibrate the data-generating
+  mechanism and is not the minimum acceptable threshold.
 
 - model:
 
@@ -131,7 +131,7 @@ est <- simulate_continuous(
   signal_parameters = 8,
   noise_parameters = 8,
   predictor_type = "continuous",
-  tuning_rsquared = 0.50,
+  maximum_achievable_rsquared = 0.50,
   metric = "calibration_slope",
   target_performance = 0.9,
   n_reps_total = 1000,

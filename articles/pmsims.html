@@ -210,9 +210,9 @@ lists the key inputs.</p>
       </td>
     </tr>
 <tr>
-<td><strong><code>tuning_cstatistic</code></strong></td>
+<td><strong><code>maximum_achievable_cstatistic</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Tuning target for the expected <strong>C-statistic</strong> with effectively unlimited data.
+        <em>(num 0–1)</em> Maximum achievable <strong>C-statistic</strong> with effectively unlimited data.
         This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: binary only</span>
@@ -222,9 +222,9 @@ lists the key inputs.</p>
       </td>
     </tr>
 <tr>
-<td><strong><code>tuning_rsquared</code></strong></td>
+<td><strong><code>maximum_achievable_rsquared</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Tuning target for expected large-sample R<sup>2</sup>.
+        <em>(num 0–1)</em> Maximum achievable R<sup>2</sup> with effectively unlimited data.
         This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: continuous only</span>
@@ -234,9 +234,9 @@ lists the key inputs.</p>
       </td>
     </tr>
 <tr>
-<td><strong><code>tuning_cindex</code></strong></td>
+<td><strong><code>maximum_achievable_cindex</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Tuning target for expected large-sample <strong>concordance index</strong>.
+        <em>(num 0–1)</em> Maximum achievable <strong>concordance index</strong> with effectively unlimited data.
         This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: survival only</span>
@@ -304,8 +304,9 @@ lists the key inputs.</p>
 <p>Notes:</p>
 <ul>
 <li>
-<code>tuning_*</code> calibrates the data generator to a plausible
-<strong>large-sample</strong> performance level.</li>
+<code>maximum_achievable_*</code> represents the best plausible
+performance with effectively unlimited data and calibrates the data
+generator.</li>
 <li>
 <code>target_performance</code> is the minimum acceptable
 performance threshold used to determine the required sample size.</li>
@@ -336,7 +337,7 @@ performance threshold used to determine the required sample size.</li>
 <span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span>
 <span>  binary_predictor_prevalence <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  outcome_prevalence <span class="op">=</span> <span class="fl">0.30</span>,</span>
-<span>  tuning_cstatistic <span class="op">=</span> <span class="fl">0.80</span>,</span>
+<span>  maximum_achievable_cstatistic <span class="op">=</span> <span class="fl">0.80</span>,</span>
 <span>  model <span class="op">=</span> <span class="st">"glm"</span>,</span>
 <span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span>
 <span>  target_performance <span class="op">=</span> <span class="fl">0.85</span>,</span>
@@ -379,7 +380,7 @@ performance threshold used to determine the required sample size.</li>
 <span>  signal_parameters <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>  noise_parameters <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span>
-<span>  tuning_rsquared <span class="op">=</span> <span class="fl">0.50</span>,</span>
+<span>  maximum_achievable_rsquared <span class="op">=</span> <span class="fl">0.50</span>,</span>
 <span>  model <span class="op">=</span> <span class="st">"lm"</span>,</span>
 <span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span>
 <span>  target_performance <span class="op">=</span> <span class="fl">0.90</span>,</span>

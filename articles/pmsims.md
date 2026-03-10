@@ -41,8 +41,8 @@ lists the key inputs.
 
 > Notes:
 >
-> - `tuning_*` calibrates the data generator to a plausible
->   **large-sample** performance level.
+> - `maximum_achievable_*` represents the best plausible performance
+>   with effectively unlimited data and calibrates the data generator.
 > - `target_performance` is the minimum acceptable performance threshold
 >   used to determine the required sample size.
 > - For reproducibility, set a random seed
@@ -69,7 +69,7 @@ binary_example <- simulate_binary(
   predictor_type = "continuous",
   binary_predictor_prevalence = NULL,
   outcome_prevalence = 0.30,
-  tuning_cstatistic = 0.80,
+  maximum_achievable_cstatistic = 0.80,
   model = "glm",
   metric = "calibration_slope",
   target_performance = 0.85,
@@ -118,7 +118,7 @@ continuous_example <- simulate_continuous(
   signal_parameters = 15,
   noise_parameters = 0,
   predictor_type = "continuous",
-  tuning_rsquared = 0.50,
+  maximum_achievable_rsquared = 0.50,
   model = "lm",
   metric = "calibration_slope",
   target_performance = 0.90,
