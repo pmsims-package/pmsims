@@ -3,8 +3,8 @@
 #' Compute the minimum sample size required to develop a prediction model with a
 #' binary outcome. The function wraps a simulation-based engine that combines a
 #' bisection search with Gaussian-process curve fitting. From user inputs
-#' (outcome prevalence, expected large-sample performance, minimum acceptable
-#' performance, etc.) it constructs a data-generating function, a model-fitting
+#' (outcome prevalence, maximum achievable performance, target performance, etc.) it
+#' constructs a data-generating function, a model-fitting
 #' function, and a metric function, then searches for the smallest \eqn{n} that
 #' meets the chosen performance criterion.
 #'
@@ -35,17 +35,17 @@
 #'   the binary predictors when `predictor_type = "binary"`. Ignored otherwise.
 #' @param outcome_prevalence Numeric in (0, 1). Target prevalence of the binary
 #'   outcome in the intended modelling context.
-#' @param large_sample_cstatistic Numeric in (0, 1). Expected C-statistic for a
-#'   model developed on a very large sample (used to tune the data-generating
-#'   mechanism).
+#' @param maximum_achievable_cstatistic Numeric in (0, 1). Maximum achievable
+#'   C-statistic with effectively unlimited data. This is used to calibrate the
+#'   data-generating mechanism and is not the minimum acceptable threshold.
 #' @param model Character string specifying the modelling algorithm (e.g.,
 #'   `"glm"`). Passed to the internal model generator.
 #' @param metric Character string naming the performance metric used to assess
 #'   the sample size; defaults to `"calibration_slope"`. (Internally mapped to
 #'   the engine's metric identifiers.)
-#' @param minimum_acceptable_performance Numeric. The target threshold
-#'   \eqn{M^\\*}; the algorithm searches for the smallest \eqn{n} meeting the
-#'   chosen criterion with respect to this threshold.
+#' @param target_performance Numeric. Minimum acceptable value of the selected
+#'   performance metric \eqn{M^\\*}; the algorithm searches for the smallest
+#'   \eqn{n} meeting the chosen criterion with respect to this threshold.
 #' @param n_reps_total Integer. Total number of simulation replications used by
 #'   the engine across the search.
 #' @param mean_or_assurance Character string, either `"mean"` or `"assurance"`.
@@ -68,9 +68,9 @@
 #'   noise_parameters = 10,
 #'   predictor_type = "continuous",
 #'   outcome_prevalence = 0.2,
-#'   large_sample_cstatistic = 0.75,
+#'   maximum_achievable_cstatistic = 0.75,
 #'   metric = "calibration_slope",
-#'   minimum_acceptable_performance = 0.9,
+#'   target_performance = 0.9,
 #'   n_reps_total = 1000,
 #'   mean_or_assurance = "assurance"
 #' )
@@ -78,33 +78,34 @@
 #' }
 #' @export
 simulate_binary <- function(
-    signal_parameters,                  # Predictors
-    noise_parameters = 0,
-    predictor_type = "continuous",
-    binary_predictor_prevalence = NULL,
-    outcome_prevalence,                 # Outcome
-    large_sample_cstatistic,
-    model = "glm",                      # Model
-    metric = "calibration_slope",       # Performance
-    minimum_acceptable_performance,
-    n_reps_total = 1000,                # Engine control
-    mean_or_assurance = "assurance",
-    ...
+  signal_parameters, # Predictors
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  binary_predictor_prevalence = NULL,
+  outcome_prevalence, # Outcome
+  maximum_achievable_cstatistic,
+  model = "glm", # Model
+  metric = "calibration_slope", # Performance
+  target_performance,
+  n_reps_total = 1000, # Engine control
+  mean_or_assurance = "assurance",
+  ...
 ) {
   validate_metric_constraints(
     metric = metric,
-    minimum_acceptable_performance = minimum_acceptable_performance,
-    expected_performance = large_sample_cstatistic
+    target_performance = target_performance,
+    maximum_achievable_performance = maximum_achievable_cstatistic
   )
-  
+
   # Tune for data function
   tune_param <- binary_tuning(
     target_prevalence = outcome_prevalence,
-    target_performance = large_sample_cstatistic,
+    target_performance = maximum_achievable_cstatistic,
     candidate_features = signal_parameters + noise_parameters,
-    proportion_noise_features = noise_parameters / (signal_parameters + noise_parameters)
+    proportion_noise_features = noise_parameters /
+      (signal_parameters + noise_parameters)
   )[c(1, 3)] # extract mean of linear predictor as new intercept and beta_signal scaled by var of lp
-  
+
   data_spec <- list(
     type = "binary",
     args = list(
@@ -117,19 +118,19 @@ simulate_binary <- function(
       baseline_prob = outcome_prevalence
     )
   )
-  
+
   data_function <- default_data_generators(data_spec)
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
-  
+
   # Redefine metrics to internal syntax lang
   metric = ifelse(metric == "calibration_slope", "calib_slope", metric)
-  
+
   suppressWarnings(
     output <- simulate_custom(
       metric_function = default_metric_generator(metric, data_function),
-      target_performance = minimum_acceptable_performance,
-      c_statistic = large_sample_cstatistic,
+      target_performance = target_performance,
+      c_statistic = maximum_achievable_cstatistic,
       data_function = data_function,
       model_function = model_function,
       min_sample_size = NULL,
@@ -142,26 +143,26 @@ simulate_binary <- function(
       test_n = 30000
     )
   )
-  
+
   metric_2 <- if (metric == "calib_slope") "auc" else "calib_slope"
-  
+
   test_n = 30000
   metric_function_2 <- default_metric_generator(metric_2, data_function)
-  
+
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
   fit_2 <- model_function(data_2)
   metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
-  
+
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
-  
+
   output$parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$predictor_type <- predictor_type
   output$binary_predictor_prevalence <- output$predictor_type
   output$prevalence <- outcome_prevalence
-  output$cstatistic <- large_sample_cstatistic
+  output$cstatistic <- maximum_achievable_cstatistic
   output$model <- model
   output$metric <- metric
   output$n_reps_total <- n_reps_total
@@ -176,17 +177,17 @@ simulate_binary <- function(
 #' Compute the minimum sample size required to develop a prediction model with a
 #' **continuous** outcome. This wraps the same simulation engine as
 #' [simulate_binary()], combining bisection search with Gaussian-process
-#' learning-curve modelling. From user inputs (expected large-sample
-#' performance, minimum acceptable performance, etc.) it constructs a
+#' learning-curve modelling. From user inputs (maximum achievable performance, target
+#' performance, etc.) it constructs a
 #' data-generating function, model-fitting function, and metric function, then
 #' searches for the smallest \eqn{n} meeting the chosen criterion.
 #'
 #' @inheritSection simulate_binary Criteria
 #'
 #' @inheritParams simulate_binary
-#' @param large_sample_rsquared Numeric in (0, 1). Expected large-sample
-#'   \eqn{R^2} for the model (used to tune the data-generating mechanism so that
-#'   the model attains this performance for very large \eqn{n}).
+#' @param maximum_achievable_rsquared Numeric in (0, 1). Maximum achievable
+#'   \eqn{R^2} with effectively unlimited data. This is used to calibrate the
+#'   data-generating mechanism and is not the minimum acceptable threshold.
 #'
 #' @return An object of class `"pmsims"` containing the estimated minimum sample
 #'   size and simulation diagnostics (inputs, fitted GP curve, intermediate
@@ -200,9 +201,9 @@ simulate_binary <- function(
 #'   signal_parameters = 8,
 #'   noise_parameters = 8,
 #'   predictor_type = "continuous",
-#'   large_sample_rsquared = 0.50,
+#'   maximum_achievable_rsquared = 0.50,
 #'   metric = "calibration_slope",
-#'   minimum_acceptable_performance = 0.9,
+#'   target_performance = 0.9,
 #'   n_reps_total = 1000,
 #'   mean_or_assurance = "assurance"
 #' )
@@ -210,30 +211,32 @@ simulate_binary <- function(
 #' }
 #' @export
 simulate_continuous <- function(
-    signal_parameters,
-    noise_parameters = 0,
-    predictor_type = "continuous",
-    binary_predictor_prevalence = NULL,
-    large_sample_rsquared,
-    model = "lm",
-    metric = "calibration_slope",
-    minimum_acceptable_performance,
-    n_reps_total = 1000,
-    mean_or_assurance = "assurance",
-    ...
+  signal_parameters,
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  binary_predictor_prevalence = NULL,
+  maximum_achievable_rsquared,
+  model = "lm",
+  metric = "calibration_slope",
+  target_performance,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance",
+  ...
 ) {
   validate_metric_constraints(
     metric = metric,
-    minimum_acceptable_performance = minimum_acceptable_performance,
-    expected_performance = large_sample_rsquared)
-  
+    target_performance = target_performance,
+    maximum_achievable_performance = maximum_achievable_rsquared
+  )
+
   # Tuning the data-generating function
   tune_param <- continuous_tuning(
-    r2 = large_sample_rsquared,
+    r2 = maximum_achievable_rsquared,
     candidate_features = signal_parameters + noise_parameters,
-    proportion_noise_features = noise_parameters / (signal_parameters + noise_parameters)
+    proportion_noise_features = noise_parameters /
+      (signal_parameters + noise_parameters)
   )
-  
+
   data_spec <- list(
     type = "continuous",
     args = list(
@@ -244,18 +247,18 @@ simulate_continuous <- function(
       predictor_prop = binary_predictor_prevalence
     )
   )
-  
+
   data_function <- default_data_generators(data_spec)
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
-  
+
   metric <- ifelse(metric == "calibration_slope", "calib_slope", metric)
-  
+
   suppressWarnings(
     output <- simulate_custom(
       metric_function = default_metric_generator(metric, data_function),
-      target_performance = minimum_acceptable_performance,
-      c_statistic = large_sample_rsquared,
+      target_performance = target_performance,
+      c_statistic = maximum_achievable_rsquared,
       data_function = data_function,
       model_function = model_function,
       min_sample_size = NULL,
@@ -268,27 +271,25 @@ simulate_continuous <- function(
       test_n = 30000
     )
   )
-  
-  
+
   metric_2 <- if (metric == "calib_slope") "r2" else "calib_slope"
-  
+
   metric_function_2 <- default_metric_generator(metric_2, data_function)
-  
+
   test_n = 30000
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
   fit_2 <- model_function(data_2)
   metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
-  
-  
+
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
-  
+
   output$parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$predictor_type <- predictor_type
   output$binary_predictor_prevalence <- output$predictor_type
-  output$r2 <- large_sample_rsquared
+  output$r2 <- maximum_achievable_rsquared
   output$model <- model
   output$metric <- metric
   output$n_reps_total <- n_reps_total
@@ -308,9 +309,9 @@ simulate_continuous <- function(
 #' @inheritSection simulate_binary Criteria
 #'
 #' @inheritParams simulate_binary
-#' @param large_sample_cindex Numeric in (0, 1). Expected large-sample
-#'   C-index for the survival model (used to tune the data-generating mechanism
-#'   so that the model attains this performance for very large \eqn{n}).
+#' @param maximum_achievable_cindex Numeric in (0, 1). Maximum achievable
+#'   C-index with effectively unlimited data. This is used to calibrate the
+#'   data-generating mechanism and is not the minimum acceptable threshold.
 #' @param baseline_hazard Numeric greater than 0. Baseline hazard level used by the
 #'   data-generating mechanism (e.g., the constant hazard in an exponential
 #'   baseline). Larger values imply shorter event times, all else equal.
@@ -331,11 +332,11 @@ simulate_continuous <- function(
 #'   signal_parameters = 10,
 #'   noise_parameters = 10,
 #'   predictor_type = "continuous",
-#'   large_sample_cindex = 0.70,
+#'   maximum_achievable_cindex = 0.70,
 #'   baseline_hazard = 0.01,
 #'   censoring_rate = 0.30,
 #'   metric = "calibration_slope",
-#'   minimum_acceptable_performance = 0.9,
+#'   target_performance = 0.9,
 #'   n_reps_total = 1000,
 #'   mean_or_assurance = "assurance"
 #' )
@@ -343,34 +344,35 @@ simulate_continuous <- function(
 #' }
 #' @export
 simulate_survival <- function(
-    signal_parameters,
-    noise_parameters = 0,
-    predictor_type = "continuous",
-    binary_predictor_prevalence = NULL,
-    large_sample_cindex,
-    baseline_hazard = 1,
-    censoring_rate,
-    model = "coxph",
-    metric = "calibration_slope",
-    minimum_acceptable_performance,
-    n_reps_total = 1000,
-    mean_or_assurance = "assurance",
-    ...
+  signal_parameters,
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  binary_predictor_prevalence = NULL,
+  maximum_achievable_cindex,
+  baseline_hazard = 1,
+  censoring_rate,
+  model = "coxph",
+  metric = "calibration_slope",
+  target_performance,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance",
+  ...
 ) {
   validate_metric_constraints(
     metric = metric,
-    minimum_acceptable_performance = minimum_acceptable_performance,
-    expected_performance = large_sample_cindex
+    target_performance = target_performance,
+    maximum_achievable_performance = maximum_achievable_cindex
   )
-  
+
   # Tune the data-generating function
   tune_param <- survival_tuning(
     target_prevalence = 1 - censoring_rate,
-    target_performance = large_sample_cindex,
+    target_performance = maximum_achievable_cindex,
     candidate_features = signal_parameters + noise_parameters,
-    proportion_noise_features = noise_parameters / (signal_parameters + noise_parameters)
+    proportion_noise_features = noise_parameters /
+      (signal_parameters + noise_parameters)
   )[c(1, 3)] # extract mean of linear predictor as new intercept and beta_signal scaled by var of lp
-  
+
   data_spec <- list(
     type = "survival",
     args = list(
@@ -383,18 +385,18 @@ simulate_survival <- function(
       censoring_rate = censoring_rate
     )
   )
-  
+
   data_function <- default_data_generators(data_spec)
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
-  
+
   metric <- ifelse(metric == "calibration_slope", "calib_slope", metric)
-  
+
   suppressWarnings(
     output <- simulate_custom(
       metric_function = default_metric_generator(metric, data_function),
-      target_performance = minimum_acceptable_performance,
-      c_statistic = large_sample_cindex,
+      target_performance = target_performance,
+      c_statistic = maximum_achievable_cindex,
       data_function = data_function,
       model_function = model_function,
       min_sample_size = NULL,
@@ -407,23 +409,20 @@ simulate_survival <- function(
       test_n = 30000
     )
   )
-  
-  
-  
+
   metric_2 <- if (metric == "calib_slope") "cindex" else "calib_slope"
-  
+
   test_n = 30000
   metric_function_2 <- default_metric_generator(metric_2, data_function)
-  
+
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
   fit_2 <- model_function(data_2)
   metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
-  
-  
+
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
-  
+
   # Append input parameters
   output$parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
@@ -431,7 +430,7 @@ simulate_survival <- function(
   output$binary_predictor_prevalence <- output$predictor_type
   output$baseline_hazard <- baseline_hazard
   output$censoring_rate <- censoring_rate
-  output$cstatistic <- large_sample_cindex
+  output$cstatistic <- maximum_achievable_cindex
   output$model <- model
   output$metric <- metric
   output$n_reps_total <- n_reps_total

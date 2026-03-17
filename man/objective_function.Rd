@@ -10,7 +10,10 @@ objective_function(
   target_performance,
   min_sample_size,
   max_sample_size,
-  value_on_error
+  value_on_error,
+  data_function = NULL,
+  model_function = NULL,
+  metric_function = NULL
 )
 }
 \arguments{
@@ -26,6 +29,12 @@ objective_function(
 \item{max_sample_size}{Maximum sample size considered (upper bound of search).}
 
 \item{value_on_error}{Value to return if the objective cannot be evaluated.}
+
+\item{data_function}{Data generator passed to \code{\link{calculate_metrics_perf}()}.}
+
+\item{model_function}{Model-fitting function passed to \code{\link{calculate_metrics_perf}()}.}
+
+\item{metric_function}{Metric function passed to \code{\link{calculate_metrics_perf}()}.}
 }
 \value{
 A single numeric: the objective value at \eqn{n}.

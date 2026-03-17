@@ -91,15 +91,22 @@
 <span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span>
 <span>  binary_predictor_prevalence <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  outcome_prevalence <span class="op">=</span> <span class="fl">0.20</span>,</span>
-<span>  large_sample_cstatistic <span class="op">=</span> <span class="fl">0.80</span>,</span>
+<span>  maximum_achievable_cstatistic <span class="op">=</span> <span class="fl">0.80</span>,</span>
 <span>  model <span class="op">=</span> <span class="st">"glm"</span>,</span>
 <span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span>
-<span>  minimum_acceptable_performance <span class="op">=</span> <span class="fl">0.90</span>,</span>
+<span>  target_performance <span class="op">=</span> <span class="fl">0.90</span>,</span>
 <span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">binary_example</span></span></code></pre></div>
+<p><code>maximum_achievable_cstatistic</code> and <code>target_performance</code> have different roles:</p>
+<ul>
+<li>
+<code>maximum_achievable_cstatistic</code> represents the best plausible C-statistic with effectively unlimited data and calibrates the data generator.</li>
+<li>
+<code>target_performance</code> is the minimum acceptable metric value used to determine the required sample size.</li>
+</ul>
 <hr>
 </div>
 <div class="section level2">

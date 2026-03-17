@@ -1,8 +1,8 @@
 #' Get Performance
 #'
-#' @param results 
-#' @param p 
-#' @param mean 
+#' @param results
+#' @param p
+#' @param mean
 #'
 #' @returns
 #' @export
@@ -45,15 +45,15 @@ get_summaries <- function(performance_matrix) {
 #' @param ci_q Numeric quantile for confidence-interval construction (default 0.975 gives a two-sided 95% interval).
 #' @keywords internal
 adaptive_startvalues <- function(
-    output,
-    aggregate_fun,
-    var_bootstrap,
-    target,
-    ci_q = 0.975
+  output,
+  aggregate_fun,
+  var_bootstrap,
+  target,
+  ci_q = 0.975
 ) {
   bisection_output <- output$track_bisection
   n_iter <- length(bisection_output)
-  
+
   # Matrix: n, est, se, ll, ul
   bisection_summary <- matrix(
     NA,
@@ -61,45 +61,45 @@ adaptive_startvalues <- function(
     ncol = 5,
     dimnames = list(NULL, c("n", "est", "se", "ll", "ul"))
   )
-  
+
   for (i in seq_len(n_iter)) {
     results <- bisection_output[[i]]
     n <- results$x
     performance_data <- results$y
-    
+
     est <- aggregate_fun(performance_data)
     se <- sqrt(var_bootstrap(performance_data))
-    
+
     ll <- est - se * stats::qnorm(ci_q)
     ul <- est + se * stats::qnorm(ci_q)
-    
+
     bisection_summary[i, ] <- c(n, est, se, ll, ul)
   }
-  
+
   ## --- Find min value ---
   ordered_by_ul <- bisection_summary[
     order(bisection_summary[, "ul"], decreasing = TRUE),
   ]
   below_target <- ordered_by_ul[ordered_by_ul[, "ul"] < target, , drop = FALSE]
-  
+
   if (nrow(below_target) == 0) {
     min_value <- min(bisection_summary[, "n"] * 0.8)
   } else {
     min_value <- max(below_target[, "n"])
   }
-  
+
   ## --- Find max value ---
   ordered_by_ll <- bisection_summary[
     order(bisection_summary[, "ll"], decreasing = TRUE),
   ]
   above_target <- ordered_by_ll[ordered_by_ll[, "ll"] > target, , drop = FALSE]
-  
+
   if (nrow(above_target) == 0) {
     max_value <- max(bisection_summary[, "n"] * 1.2)
   } else {
     max_value <- min(above_target[, "n"])
   }
-  
+
   return(list(
     summary = bisection_summary,
     min_value = round(min_value),
@@ -108,59 +108,57 @@ adaptive_startvalues <- function(
 }
 
 
-
 #### New adaptive start values code
 
 #' Adaptive starting value searching (model/metrics) agnostic.
 #'
-#' @param data_function 
-#' @param model_function 
-#' @param metric_function 
-#' @param value_on_error 
-#' @param start_n 
-#' @param test_n 
-#' @param n_reps_per 
-#' @param n_reps_total 
-#' @param target_performance 
-#' @param threshold 
-#' @param mean_or_assurance 
-#' @param c_statistic 
-#' @param parallel 
-#' @param cores 
-#' @param verbose 
+#' @param data_function
+#' @param model_function
+#' @param metric_function
+#' @param value_on_error
+#' @param start_n
+#' @param test_n
+#' @param n_reps_per
+#' @param n_reps_total
+#' @param target_performance
+#' @param threshold
+#' @param mean_or_assurance
+#' @param c_statistic
+#' @param parallel
+#' @param cores
+#' @param verbose
 #'
 #' @returns
 #' @export
 #'
 #' @examples
 calculate_adaptive_bounds <- function(
-    data_function,
-    model_function,
-    metric_function,
-    value_on_error,
-    start_n,
-    test_n,
-    n_reps_per,
-    n_reps_total,
-    target_performance,
-    threshold = 0.01,
-    mean_or_assurance = "mean",
-    c_statistic = NULL,
-    parallel = FALSE,
-    cores = 20,
-    verbose = FALSE
+  data_function,
+  model_function,
+  metric_function,
+  value_on_error,
+  start_n,
+  test_n,
+  n_reps_per,
+  n_reps_total,
+  target_performance,
+  threshold = 0.01,
+  mean_or_assurance = "mean",
+  c_statistic = NULL,
+  parallel = FALSE,
+  cores = 20,
+  verbose = FALSE
 ) {
-  
   # ---------------------------------------------------------
   # Budget
   # ---------------------------------------------------------
   max_iter <- floor(n_reps_total / n_reps_per)
-  
+
   # ---------------------------------------------------------
   # Fixed test set
   # ---------------------------------------------------------
   test_data <- data_function(test_n)
-  
+
   # ---------------------------------------------------------
   # Single run
   # ---------------------------------------------------------
@@ -174,20 +172,20 @@ calculate_adaptive_bounds <- function(
       error = function(e) value_on_error
     )
   }
-  
+
   # ---------------------------------------------------------
   # Summary at n
   # ---------------------------------------------------------
   summary_at_n <- function(n) {
-    
     if (parallel) {
       cl <- parallel::makeCluster(cores)
       doParallel::registerDoParallel(cl)
-      
-      vals <- foreach::foreach(i = 1:n_reps_per, .combine = c) %dopar% {
-        single_run(n)
-      }
-      
+
+      vals <- foreach::foreach(i = 1:n_reps_per, .combine = c) %dopar%
+        {
+          single_run(n)
+        }
+
       parallel::stopCluster(cl)
     } else {
       vals <- vapply(
@@ -196,31 +194,31 @@ calculate_adaptive_bounds <- function(
         FUN.VALUE = numeric(1)
       )
     }
-    
+
     s <- get_summaries(matrix(vals, nrow = 1))
-    
+
     if (mean_or_assurance == "mean") {
       list(y_summary = s$mean_performance, y = vals)
     } else {
       list(y_summary = s$quant20_performance, y = vals)
     }
   }
-  
+
   # ---------------------------------------------------------
   # Initial evaluation
   # ---------------------------------------------------------
   iter <- 1
   track <- list()
-  
+
   res <- summary_at_n(start_n)
   perf <- res$y_summary
-  
+
   track[[iter]] <- list(n = start_n, performance = perf, raw = res$y)
-  
+
   if (verbose) {
     message(sprintf("Iter %d | n = %d | perf = %.4f", iter, start_n, perf))
   }
-  
+
   # ---------------------------------------------------------
   # Decide direction
   # ---------------------------------------------------------
@@ -237,34 +235,35 @@ calculate_adaptive_bounds <- function(
     lower_n <- NA
     lower_perf <- NA
   }
-  
+
   n_current <- start_n
-  
+
   # ---------------------------------------------------------
   # Adaptive loop
   # ---------------------------------------------------------
   while (iter < max_iter) {
-    
     iter <- iter + 1
-    
+
     if (direction == "up") {
       n_new <- n_current * 2
     } else {
       n_new <- max(1, floor(n_current / 2))
     }
-    
+
     # Stop if no movement
-    if (n_new == n_current) break
-    
+    if (n_new == n_current) {
+      break
+    }
+
     res <- summary_at_n(n_new)
     perf <- res$y_summary
-    
+
     track[[iter]] <- list(n = n_new, performance = perf, raw = res$y)
-    
+
     if (verbose) {
       message(sprintf("Iter %d | n = %d | perf = %.4f", iter, n_new, perf))
     }
-    
+
     if (direction == "up") {
       if (perf >= target_performance - threshold) {
         upper_n <- n_new
@@ -284,10 +283,10 @@ calculate_adaptive_bounds <- function(
         upper_perf <- perf
       }
     }
-    
+
     n_current <- n_new
   }
-  
+
   # ---------------------------------------------------------
   # Return bounds
   # ---------------------------------------------------------
@@ -305,47 +304,46 @@ calculate_adaptive_bounds <- function(
 
 #' Get initial starting values before using adaptive searching
 #'
-#' @param data_function 
-#' @param metric_function 
-#' @param target_performance 
-#' @param c_statistic 
-#' @param mean_or_assurance 
+#' @param data_function
+#' @param metric_function
+#' @param target_performance
+#' @param c_statistic
+#' @param mean_or_assurance
 #'
 #' @returns
 #' @export
 #'
 #' @examples
 compute_start_sample_sizes <- function(
-    data_function,
-    metric_function,
-    target_performance,
-    c_statistic = NULL,
-    mean_or_assurance = c("mean", "assurance")
+  data_function,
+  metric_function,
+  target_performance,
+  c_statistic = NULL,
+  mean_or_assurance = c("mean", "assurance")
 ) {
   mean_or_assurance <- match.arg(mean_or_assurance)
-  
+
   # 1. Number of predictors (exclude outcome column)
   npar <- dim(data_function(1))[2] - 1
-  
+
   # 2. Inspect data_function formals to infer outcome type
   formals_list <- formals(data_function)
   args_names <- names(formals_list)
-  
+
   metric_used <- attr(metric_function, "metric")
   if (is.null(metric_used)) {
     stop("metric_function must have a 'metric' attribute.")
   }
-  
+
   ## -----------------------
   ## SURVIVAL OUTCOME
   ## -----------------------
   if ("censoring_rate" %in% args_names) {
-    
     censoring_rate <- eval(
       formals_list[["censoring_rate"]],
       environment(data_function)
     )
-    
+
     if (metric_used == "cindex") {
       prev_min_sample_size <- get_min_sample_size(
         npar = npar,
@@ -355,9 +353,8 @@ compute_start_sample_sizes <- function(
         epv_value = 3 * (1 - censoring_rate),
         outcome_type = "survival"
       )
-      
+
       prev_max_sample_size <- 100 * npar
-      
     } else {
       prev_min_sample_size <- get_min_sample_size(
         npar = npar,
@@ -367,34 +364,34 @@ compute_start_sample_sizes <- function(
         epv_value = 10,
         outcome_type = "survival"
       )
-      
+
       prev_max_sample_size <- 10 * prev_min_sample_size
     }
-    
+
     ## -----------------------
     ## BINARY OUTCOME
     ## -----------------------
   } else if ("baseline_prob" %in% args_names) {
-    
     baseline_prob <- eval(
       formals_list[["baseline_prob"]],
       envir = environment(data_function)
     )
-    
+
     # Validate baseline_prob
-    if (!is.numeric(baseline_prob) ||
+    if (
+      !is.numeric(baseline_prob) ||
         length(baseline_prob) != 1 ||
-        is.na(baseline_prob)) {
+        is.na(baseline_prob)
+    ) {
       stop("baseline_prob must be a single numeric value (not NA).")
     }
     if (baseline_prob <= 0 || baseline_prob >= 1) {
       stop("baseline_prob must be between 0 and 1 (exclusive).")
     }
-    
+
     if (metric_used == "auc") {
-      
       epv_val <- 3 * baseline_prob
-      
+
       prev_min_sample_size <- get_min_sample_size(
         npar = npar,
         prevalence = baseline_prob,
@@ -403,17 +400,16 @@ compute_start_sample_sizes <- function(
         epv_value = epv_val,
         outcome_type = "binary"
       )
-      
+
       prev_max_sample_size <- 100 * npar
-      
     } else {
-      
-      if (baseline_prob <= 0.2 &&
+      if (
+        baseline_prob <= 0.2 &&
           c_statistic <= 0.7 &&
-          mean_or_assurance == "assurance") {
-        
+          mean_or_assurance == "assurance"
+      ) {
         epv_val <- 30L
-        
+
         prev_min_sample_size <- get_min_sample_size(
           npar = npar,
           prevalence = baseline_prob,
@@ -422,13 +418,11 @@ compute_start_sample_sizes <- function(
           epv_value = epv_val,
           outcome_type = "binary"
         )
-        
+
         prev_max_sample_size <- 5 * prev_min_sample_size
-        
       } else if (baseline_prob <= 0.2) {
-        
         epv_val <- 10L
-        
+
         prev_min_sample_size <- get_min_sample_size(
           npar = npar,
           prevalence = baseline_prob,
@@ -437,13 +431,11 @@ compute_start_sample_sizes <- function(
           epv_value = epv_val,
           outcome_type = "binary"
         )
-        
+
         prev_max_sample_size <- 2 * prev_min_sample_size
-        
       } else {
-        
         epv_val <- 10L
-        
+
         prev_min_sample_size <- get_min_sample_size(
           npar = npar,
           prevalence = baseline_prob,
@@ -452,18 +444,16 @@ compute_start_sample_sizes <- function(
           epv_value = epv_val,
           outcome_type = "binary"
         )
-        
+
         prev_max_sample_size <- 10 * prev_min_sample_size
       }
     }
-    
+
     ## -----------------------
     ## CONTINUOUS OUTCOME
     ## -----------------------
   } else {
-    
     if (metric_used == "calib_slope") {
-      
       prev_min_sample_size <- get_min_sample_size(
         npar = npar,
         prevalence = NULL,
@@ -471,11 +461,9 @@ compute_start_sample_sizes <- function(
         calib_slope = target_performance,
         outcome_type = "continuous"
       )
-      
+
       prev_max_sample_size <- 100 * npar
-      
     } else {
-      
       prev_min_sample_size <- get_min_sample_size(
         npar = npar,
         prevalence = NULL,
@@ -483,7 +471,7 @@ compute_start_sample_sizes <- function(
         calib_slope = NULL,
         outcome_type = "continuous"
       )
-      
+
       if (target_performance <= 0.5) {
         prev_max_sample_size <- 200 * npar
       } else {
@@ -491,7 +479,7 @@ compute_start_sample_sizes <- function(
       }
     }
   }
-  
+
   # Return results
   list(
     npar = npar,
@@ -512,18 +500,18 @@ compute_start_sample_sizes <- function(
 #' @return Integer recommended starting value from which to calculate the minimum sample size.
 #' @keywords internal
 get_min_sample_size <- function(
-    npar,
-    prevalence = NULL,
-    c_stat = NULL,
-    calib_slope = NULL,
-    epv_value = NULL,
-    outcome_type = c("binary", "survival", "continuous")
+  npar,
+  prevalence = NULL,
+  c_stat = NULL,
+  calib_slope = NULL,
+  epv_value = NULL,
+  outcome_type = c("binary", "survival", "continuous")
 ) {
   outcome_type <- match.arg(outcome_type)
-  
+
   # --- 1) Base rule: 3 * npar (absolute minimum)
   n0 <- 3 * npar
-  
+
   # --- 2) Outcome-specific rules ---
   if (outcome_type == "binary") {
     # Recommended: ≥10 EPV (Riley et al., 2020)
@@ -555,11 +543,11 @@ get_min_sample_size <- function(
     n0 <- max(n0, n_epv)
   } else if (outcome_type == "survival") {
     # Recommended: ≥20 EPV (Riley et al., 2020)
-    
+
     epv <- epv_value
     if (!is.null(prevalence) && prevalence > 0 && prevalence < 1) {
       n_epv <- round(epv * npar / prevalence)
-      
+
       # Optional adjustments:
       if (!is.null(c_stat)) {
         if (c_stat <= 0 || c_stat > 1) {
@@ -582,12 +570,12 @@ get_min_sample_size <- function(
         n_epv <- round(n_epv * adj)
       }
     }
-    
+
     n0 <- max(n0, n_epv)
   } else if (outcome_type == "continuous") {
     # Continuous outcome: ≥20 obs per predictor (Steyerberg, 2019)
     n_cont <- 3 * npar
-    
+
     # Optional adjustments:
     if (!is.null(c_stat)) {
       if (c_stat <= 0 || c_stat > 1) {
@@ -597,7 +585,7 @@ get_min_sample_size <- function(
       adj <- 1 / max(c_stat, 0.2) # avoid extreme inflation
       n_cont <- round(n_cont * adj)
     }
-    
+
     if (!is.null(calib_slope)) {
       if (calib_slope > 0 && calib_slope < 1) {
         # Lower slope means more shrinkage needed → increase N slightly
@@ -610,9 +598,9 @@ get_min_sample_size <- function(
         n_cont <- round(n_cont * adj)
       }
     }
-    
+
     n0 <- max(n0, n_cont)
   }
-  
+
   return(as.integer(n0))
 }
