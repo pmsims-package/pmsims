@@ -15,7 +15,10 @@ objective_function(
   target_performance,
   min_sample_size,
   max_sample_size,
-  value_on_error
+  value_on_error,
+  data_function = NULL,
+  model_function = NULL,
+  metric_function = NULL
 )
 ```
 
@@ -45,6 +48,21 @@ objective_function(
 - value_on_error:
 
   Value to return if the objective cannot be evaluated.
+
+- data_function:
+
+  Data generator passed to
+  [`calculate_metrics_perf()`](https://pmsims-package.github.io/pmsims/reference/calculate_metrics_perf.md).
+
+- model_function:
+
+  Model-fitting function passed to
+  [`calculate_metrics_perf()`](https://pmsims-package.github.io/pmsims/reference/calculate_metrics_perf.md).
+
+- metric_function:
+
+  Metric function passed to
+  [`calculate_metrics_perf()`](https://pmsims-package.github.io/pmsims/reference/calculate_metrics_perf.md).
 
 ## Value
 

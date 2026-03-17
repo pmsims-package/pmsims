@@ -43,7 +43,7 @@ target performance, \(C(n)\) is a cost term increasing with \(n\), and
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Objective function for pmsims</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/feature/argument-relabel/R/pmsims_objective_function.R" class="external-link"><code>R/pmsims_objective_function.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/feature/test-refresh/R/pmsims_objective_function.R" class="external-link"><code>R/pmsims_objective_function.R</code></a></small>
       <div class="d-none name"><code>objective_function.Rd</code></div>
     </div>
 
@@ -63,7 +63,10 @@ target performance, \(C(n)\) is a cost term increasing with \(n\), and
 <span>  <span class="va">target_performance</span>,</span>
 <span>  <span class="va">min_sample_size</span>,</span>
 <span>  <span class="va">max_sample_size</span>,</span>
-<span>  <span class="va">value_on_error</span></span>
+<span>  <span class="va">value_on_error</span>,</span>
+<span>  data_function <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  model_function <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  metric_function <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -94,6 +97,18 @@ target performance, \(C(n)\) is a cost term increasing with \(n\), and
 
 <dt id="arg-value-on-error">value_on_error<a class="anchor" aria-label="anchor" href="#arg-value-on-error"></a></dt>
 <dd><p>Value to return if the objective cannot be evaluated.</p></dd>
+
+
+<dt id="arg-data-function">data_function<a class="anchor" aria-label="anchor" href="#arg-data-function"></a></dt>
+<dd><p>Data generator passed to <code><a href="calculate_metrics_perf.html">calculate_metrics_perf()</a></code>.</p></dd>
+
+
+<dt id="arg-model-function">model_function<a class="anchor" aria-label="anchor" href="#arg-model-function"></a></dt>
+<dd><p>Model-fitting function passed to <code><a href="calculate_metrics_perf.html">calculate_metrics_perf()</a></code>.</p></dd>
+
+
+<dt id="arg-metric-function">metric_function<a class="anchor" aria-label="anchor" href="#arg-metric-function"></a></dt>
+<dd><p>Metric function passed to <code><a href="calculate_metrics_perf.html">calculate_metrics_perf()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
