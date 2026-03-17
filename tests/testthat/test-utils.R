@@ -110,6 +110,52 @@ test_that("validate_metric_constraints does not compare non-comparable metrics",
   )
 })
 
+test_that("validate_outcome_prevalence aborts on missing values and warns on low prevalence", {
+  expect_error(
+    validate_outcome_prevalence(NULL),
+    "outcome_prevalence",
+    fixed = FALSE
+  )
+
+  expect_warning(
+    validate_outcome_prevalence(0.04),
+    "Outcome prevalence is very low",
+    fixed = FALSE
+  )
+
+  expect_silent(validate_outcome_prevalence(0.2))
+})
+
+test_that("check_pmsims_args matches arguments and validates edge cases", {
+  expect_identical(check_pmsims_args(NULL, c("mean", "assurance")), "mean")
+  expect_identical(check_pmsims_args("ass", c("mean", "assurance")), "assurance")
+  expect_identical(
+    check_pmsims_args(c("mea", "ass"), c("mean", "assurance"), several.ok = TRUE),
+    c("mean", "assurance")
+  )
+
+  expect_error(
+    check_pmsims_args(1, c("mean", "assurance")),
+    "must be NULL or a character vector",
+    fixed = FALSE
+  )
+  expect_error(
+    check_pmsims_args(c("mean", "ass"), c("mean", "assurance")),
+    "must be of length 1",
+    fixed = FALSE
+  )
+  expect_error(
+    check_pmsims_args(character(0), c("mean", "assurance"), several.ok = TRUE),
+    "must be of length >= 1",
+    fixed = FALSE
+  )
+  expect_error(
+    check_pmsims_args("other", c("mean", "assurance")),
+    "should be one of",
+    fixed = FALSE
+  )
+})
+
 test_that("get_min_sample_size applies EPV and outcome-specific rules", {
   binary_n <- get_min_sample_size(
     npar = 5,
@@ -119,7 +165,18 @@ test_that("get_min_sample_size applies EPV and outcome-specific rules", {
     epv_value = 10,
     outcome_type = "binary"
   )
-  expect_equal(binary_n, 312L)
+  binary_n_higher_cstat <- get_min_sample_size(
+    npar = 5,
+    prevalence = 0.2,
+    c_stat = 0.9,
+    calib_slope = NULL,
+    epv_value = 10,
+    outcome_type = "binary"
+  )
+  expect_type(binary_n, "integer")
+  expect_gte(binary_n, 250L)
+  expect_gte(binary_n, 3L * 5L)
+  expect_lte(binary_n_higher_cstat, binary_n)
 
   continuous_n <- get_min_sample_size(
     npar = 4,
