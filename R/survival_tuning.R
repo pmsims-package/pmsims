@@ -32,7 +32,10 @@ survival_tuning <- function(
     hazard_rate <- lambda * exp(lp)
     event_time <- stats::rexp(N_sim_optim, rate = hazard_rate)
     #censoring_time <- rep(1, N_sim_optim)  # Administrative censoring at t=1
-    censoring_time <- rep(stats::quantile(event_time, target_prevalence), N_sim_optim) # Administrative censoring at t=c
+    censoring_time <- rep(
+      stats::quantile(event_time, target_prevalence),
+      N_sim_optim
+    ) # Administrative censoring at t=c
     time_obs <- pmin(event_time, censoring_time)
     event_ind <- as.numeric(event_time <= censoring_time)
 
@@ -75,7 +78,8 @@ survival_tuning <- function(
   # Calculate final metrics
   event_rate_final <- mean(event_ind_final)
   surv_obj_final <- survival::Surv(time_obs_final, event_ind_final)
-  cindex_final <- 1 - survival::concordance(surv_obj_final ~ lp_final)$concordance
+  cindex_final <- 1 -
+    survival::concordance(surv_obj_final ~ lp_final)$concordance
 
   # Compute beta_signal for features
   non_noise_predictors <- candidate_features -

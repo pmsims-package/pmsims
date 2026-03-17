@@ -53,7 +53,7 @@ validate_outcome_prevalence <- function(outcome_prevalence) {
   }
 
   if (outcome_prevalence < 0.05) {
-    cli::cli_alert_warning(
+    cli::cli_warn(
       "Outcome prevalence is very low ({.val {outcome_prevalence}}). Recommended > {.val 0.05}; values below this haven’t been tested, and simulations may take a long time."
     )
   }

@@ -1,10 +1,22 @@
 test_that("default_model_generators returns functions with model metadata", {
   expect_equal(attr(default_model_generators("binary", "glm"), "model"), "glm")
-  expect_equal(attr(default_model_generators("continuous", "lm"), "model"), "lm")
-  expect_equal(attr(default_model_generators("survival", "coxph"), "model"), "coxph")
-  expect_equal(attr(default_model_generators("binary", "lasso"), "model"), "lasso")
+  expect_equal(
+    attr(default_model_generators("continuous", "lm"), "model"),
+    "lm"
+  )
+  expect_equal(
+    attr(default_model_generators("survival", "coxph"), "model"),
+    "coxph"
+  )
+  expect_equal(
+    attr(default_model_generators("binary", "lasso"), "model"),
+    "lasso"
+  )
   expect_equal(attr(default_model_generators("binary", "rf"), "model"), "rf")
-  expect_equal(attr(default_model_generators("binary", "xgboost"), "model"), "xgboost")
+  expect_equal(
+    attr(default_model_generators("binary", "xgboost"), "model"),
+    "xgboost"
+  )
 })
 
 test_that("default_model_generators validates outcome and model names", {
@@ -21,13 +33,22 @@ test_that("default_model_generators validates outcome and model names", {
 })
 
 test_that("cheap model generators fit expected model classes", {
-  binary_fit <- default_model_generators("binary", "glm")(make_binary_fixture_data())
+  binary_fit <- default_model_generators(
+    "binary",
+    "glm"
+  )(make_binary_fixture_data())
   expect_s3_class(binary_fit, "glm")
 
-  continuous_fit <- default_model_generators("continuous", "lm")(make_continuous_fixture_data())
+  continuous_fit <- default_model_generators(
+    "continuous",
+    "lm"
+  )(make_continuous_fixture_data())
   expect_s3_class(continuous_fit, "glm")
 
-  survival_fit <- default_model_generators("survival", "coxph")(make_survival_fixture_data())
+  survival_fit <- default_model_generators(
+    "survival",
+    "coxph"
+  )(make_survival_fixture_data())
   expect_s3_class(survival_fit, "coxph")
 })
 
@@ -36,7 +57,9 @@ test_that("cv.ranger_tune reports missing optional dependencies clearly", {
   installed <- rownames(utils::installed.packages())
 
   if (all(required %in% installed)) {
-    skip("All optional dependencies are installed; skipping missing-dependency branch.")
+    skip(
+      "All optional dependencies are installed; skipping missing-dependency branch."
+    )
   }
 
   expect_error(

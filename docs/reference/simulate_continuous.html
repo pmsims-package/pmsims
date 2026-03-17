@@ -8,14 +8,14 @@
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Minimum sample size for continuous‐outcome prediction models — simulate_continuous"><meta name="description" content="Compute the minimum sample size required to develop a prediction model with a
 continuous outcome. This wraps the same simulation engine as
 simulate_binary(), combining bisection search with Gaussian-process
-learning-curve modelling. From user inputs (expected large-sample
-performance, minimum acceptable performance, etc.) it constructs a
+learning-curve modelling. From user inputs (maximum achievable performance, target
+performance, etc.) it constructs a
 data-generating function, model-fitting function, and metric function, then
 searches for the smallest \(n\) meeting the chosen criterion."><meta property="og:description" content="Compute the minimum sample size required to develop a prediction model with a
 continuous outcome. This wraps the same simulation engine as
 simulate_binary(), combining bisection search with Gaussian-process
-learning-curve modelling. From user inputs (expected large-sample
-performance, minimum acceptable performance, etc.) it constructs a
+learning-curve modelling. From user inputs (maximum achievable performance, target
+performance, etc.) it constructs a
 data-generating function, model-fitting function, and metric function, then
 searches for the smallest \(n\) meeting the chosen criterion."><meta property="og:image" content="https://pmsims-package.github.io/pmsims/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -55,8 +55,8 @@ searches for the smallest \(n\) meeting the chosen criterion."><meta property="o
     <p>Compute the minimum sample size required to develop a prediction model with a
 <strong>continuous</strong> outcome. This wraps the same simulation engine as
 <code><a href="simulate_binary.html">simulate_binary()</a></code>, combining bisection search with Gaussian-process
-learning-curve modelling. From user inputs (expected large-sample
-performance, minimum acceptable performance, etc.) it constructs a
+learning-curve modelling. From user inputs (maximum achievable performance, target
+performance, etc.) it constructs a
 data-generating function, model-fitting function, and metric function, then
 searches for the smallest \(n\) meeting the chosen criterion.</p>
     </div>
@@ -66,14 +66,14 @@ searches for the smallest \(n\) meeting the chosen criterion.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">simulate_continuous</span><span class="op">(</span></span>
 <span>  <span class="va">signal_parameters</span>,</span>
 <span>  noise_parameters <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span>
+<span>  predictor_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"continuous"</span><span class="op">)</span>,</span>
 <span>  binary_predictor_prevalence <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">large_sample_rsquared</span>,</span>
-<span>  model <span class="op">=</span> <span class="st">"lm"</span>,</span>
-<span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span>
-<span>  <span class="va">minimum_acceptable_performance</span>,</span>
+<span>  <span class="va">maximum_achievable_rsquared</span>,</span>
+<span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lm"</span><span class="op">)</span>,</span>
+<span>  metric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"calibration_slope"</span>, <span class="st">"r2"</span><span class="op">)</span>,</span>
+<span>  <span class="va">target_performance</span>,</span>
 <span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span>,</span>
+<span>  mean_or_assurance <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"assurance"</span>, <span class="st">"mean"</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -93,7 +93,7 @@ associated with the outcome (noise features). Default is 0.</p></dd>
 
 
 <dt id="arg-predictor-type">predictor_type<a class="anchor" aria-label="anchor" href="#arg-predictor-type"></a></dt>
-<dd><p>Character string, either <code>"continuous"</code> or <code>"binary"</code>.
+<dd><p>Character string, currently only <code>"continuous"</code> supported, which is the default option.
 Specifies the type of simulated candidate predictors.</p></dd>
 
 
@@ -102,10 +102,10 @@ Specifies the type of simulated candidate predictors.</p></dd>
 the binary predictors when <code>predictor_type = "binary"</code>. Ignored otherwise.</p></dd>
 
 
-<dt id="arg-large-sample-rsquared">large_sample_rsquared<a class="anchor" aria-label="anchor" href="#arg-large-sample-rsquared"></a></dt>
-<dd><p>Numeric in (0, 1). Expected large-sample
-\(R^2\) for the model (used to tune the data-generating mechanism so that
-the model attains this performance for very large \(n\)).</p></dd>
+<dt id="arg-maximum-achievable-rsquared">maximum_achievable_rsquared<a class="anchor" aria-label="anchor" href="#arg-maximum-achievable-rsquared"></a></dt>
+<dd><p>Numeric in (0, 1). Maximum achievable
+\(R^2\) with effectively unlimited data. This is used to calibrate the
+data-generating mechanism and is not the minimum acceptable threshold.</p></dd>
 
 
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
@@ -116,13 +116,13 @@ the model attains this performance for very large \(n\)).</p></dd>
 <dt id="arg-metric">metric<a class="anchor" aria-label="anchor" href="#arg-metric"></a></dt>
 <dd><p>Character string naming the performance metric used to assess
 the sample size; defaults to <code>"calibration_slope"</code>. (Internally mapped to
-the engine's metric identifiers.)</p></dd>
+the engine's metric identifiers.).</p></dd>
 
 
-<dt id="arg-minimum-acceptable-performance">minimum_acceptable_performance<a class="anchor" aria-label="anchor" href="#arg-minimum-acceptable-performance"></a></dt>
-<dd><p>Numeric. The target threshold
-\(M^\\*\); the algorithm searches for the smallest \(n\) meeting the
-chosen criterion with respect to this threshold.</p></dd>
+<dt id="arg-target-performance">target_performance<a class="anchor" aria-label="anchor" href="#arg-target-performance"></a></dt>
+<dd><p>Numeric. Minimum acceptable value of the selected
+performance metric \(M^\\*\); the algorithm searches for the smallest
+\(n\) meeting the chosen criterion with respect to this threshold.</p></dd>
 
 
 <dt id="arg-n-reps-total">n_reps_total<a class="anchor" aria-label="anchor" href="#arg-n-reps-total"></a></dt>
@@ -134,7 +134,7 @@ the engine across the search.</p></dd>
 <dd><p>Character string, either <code>"mean"</code> or <code>"assurance"</code>.
 Controls whether the minimum \(n\) is defined by the mean-based criterion
 or the assurance-based criterion (with the assurance level \(\delta\)
-controlled by the engine's defaults or additional arguments in <code>...</code>).</p></dd>
+controlled by the engine's defaults or additional arguments in <code>...</code>). Defaults to <code>"assurance"</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -176,9 +176,9 @@ with higher variance typically require larger \(n\) to satisfy it.</p>
 <span class="r-in"><span>  signal_parameters <span class="op">=</span> <span class="fl">8</span>,</span></span>
 <span class="r-in"><span>  noise_parameters <span class="op">=</span> <span class="fl">8</span>,</span></span>
 <span class="r-in"><span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span></span>
-<span class="r-in"><span>  large_sample_rsquared <span class="op">=</span> <span class="fl">0.50</span>,</span></span>
+<span class="r-in"><span>  maximum_achievable_rsquared <span class="op">=</span> <span class="fl">0.50</span>,</span></span>
 <span class="r-in"><span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span></span>
-<span class="r-in"><span>  minimum_acceptable_performance <span class="op">=</span> <span class="fl">0.9</span>,</span></span>
+<span class="r-in"><span>  target_performance <span class="op">=</span> <span class="fl">0.9</span>,</span></span>
 <span class="r-in"><span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span></span>
 <span class="r-in"><span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>

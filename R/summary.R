@@ -1,20 +1,21 @@
 #' @keywords internal
 #' @export
-summary.pmsims <- function(result) {
+summary.pmsims <- function(object, ...) {
   cat(
     "\n",
     "---------------------------------",
     "\n",
     "Target performance:     ",
-    result$target_performance,
+    object$target_performance,
     "\n",
     # "Number of parameters:   ", result$parameters, "\n",
     "---------------------------------",
     "\n",
     "Minimum sample size:    ",
-    result$min_n,
+    object$min_n,
     "\n",
     "---------------------------------",
     "\n"
   )
+  invisible(object)
 }

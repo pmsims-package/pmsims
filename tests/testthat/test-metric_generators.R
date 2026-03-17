@@ -37,16 +37,29 @@ make_survival_inputs <- function(metric) {
 }
 
 test_that("default_metric_generator dispatches by outcome and validates metrics", {
-  binary_fn <- default_metric_generator("brier_score", make_binary_data_function())
+  binary_fn <- default_metric_generator(
+    "brier_score",
+    make_binary_data_function()
+  )
   expect_equal(attr(binary_fn, "metric"), "brier_score")
 
-  continuous_fn <- default_metric_generator("r2", make_continuous_data_function())
+  continuous_fn <- default_metric_generator(
+    "r2",
+    make_continuous_data_function()
+  )
 
-  survival_fn <- default_metric_generator("cindex", make_survival_data_function())
+  survival_fn <- default_metric_generator(
+    "cindex",
+    make_survival_data_function()
+  )
 
   probs <- c(0.25, 0.70, 0.62, 0.65, 0.60, 0.40)
   y_hat_continuous <- c(1.05, 1.55, 1.95, 2.55, 2.95, 3.45)
-  y_hat_survival <- seq(-0.75, 0.75, length.out = nrow(make_survival_fixture_data()))
+  y_hat_survival <- seq(
+    -0.75,
+    0.75,
+    length.out = nrow(make_survival_fixture_data())
+  )
   local_mocked_bindings(
     predict_custom = function(x, y, fit, model, type = "response") {
       if (nrow(x) == length(probs)) {
@@ -100,7 +113,12 @@ test_that("predict_custom returns response predictions for lm", {
   fit <- inputs$model_function(data)
   x <- data[, names(data) != "y", drop = FALSE]
 
-  preds <- pmsims:::predict_custom(x, fit = fit, model = "lm", type = "response")
+  preds <- pmsims:::predict_custom(
+    x,
+    fit = fit,
+    model = "lm",
+    type = "response"
+  )
 
   expect_type(preds, "double")
   expect_length(preds, nrow(x))
@@ -203,9 +221,16 @@ test_that("survival metrics cover finite and fallback paths", {
   )
 
   expect_true(is.finite(survival_cindex(data, fit = NULL, model = "coxph")))
-  expect_true(is.finite(survival_calib_slope(data, fit = NULL, model = "coxph")))
+  expect_true(is.finite(survival_calib_slope(
+    data,
+    fit = NULL,
+    model = "coxph"
+  )))
 
-  concordance <- survival::concordancefit(survival::Surv(data$time, data$event), y_hat)$concordance
+  concordance <- survival::concordancefit(
+    survival::Surv(data$time, data$event),
+    y_hat
+  )$concordance
 
   local_mocked_bindings(
     timeROC = function(...) stop("boom"),

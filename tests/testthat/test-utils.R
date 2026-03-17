@@ -128,9 +128,16 @@ test_that("validate_outcome_prevalence aborts on missing values and warns on low
 
 test_that("check_pmsims_args matches arguments and validates edge cases", {
   expect_identical(check_pmsims_args(NULL, c("mean", "assurance")), "mean")
-  expect_identical(check_pmsims_args("ass", c("mean", "assurance")), "assurance")
   expect_identical(
-    check_pmsims_args(c("mea", "ass"), c("mean", "assurance"), several.ok = TRUE),
+    check_pmsims_args("ass", c("mean", "assurance")),
+    "assurance"
+  )
+  expect_identical(
+    check_pmsims_args(
+      c("mea", "ass"),
+      c("mean", "assurance"),
+      several.ok = TRUE
+    ),
     c("mean", "assurance")
   )
 

@@ -60,16 +60,16 @@ criterion.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">simulate_survival</span><span class="op">(</span></span>
 <span>  <span class="va">signal_parameters</span>,</span>
 <span>  noise_parameters <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span>
+<span>  predictor_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"continuous"</span><span class="op">)</span>,</span>
 <span>  binary_predictor_prevalence <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">large_sample_cindex</span>,</span>
+<span>  <span class="va">maximum_achievable_cindex</span>,</span>
 <span>  baseline_hazard <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  <span class="va">censoring_rate</span>,</span>
-<span>  model <span class="op">=</span> <span class="st">"coxph"</span>,</span>
-<span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span>
-<span>  <span class="va">minimum_acceptable_performance</span>,</span>
+<span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"coxph"</span><span class="op">)</span>,</span>
+<span>  metric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"calibration_slope"</span>, <span class="st">"cindex"</span><span class="op">)</span>,</span>
+<span>  <span class="va">target_performance</span>,</span>
 <span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span>,</span>
+<span>  mean_or_assurance <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"assurance"</span>, <span class="st">"mean"</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -89,7 +89,7 @@ associated with the outcome (noise features). Default is 0.</p></dd>
 
 
 <dt id="arg-predictor-type">predictor_type<a class="anchor" aria-label="anchor" href="#arg-predictor-type"></a></dt>
-<dd><p>Character string, either <code>"continuous"</code> or <code>"binary"</code>.
+<dd><p>Character string, currently only <code>"continuous"</code> supported, which is the default option.
 Specifies the type of simulated candidate predictors.</p></dd>
 
 
@@ -98,10 +98,10 @@ Specifies the type of simulated candidate predictors.</p></dd>
 the binary predictors when <code>predictor_type = "binary"</code>. Ignored otherwise.</p></dd>
 
 
-<dt id="arg-large-sample-cindex">large_sample_cindex<a class="anchor" aria-label="anchor" href="#arg-large-sample-cindex"></a></dt>
-<dd><p>Numeric in (0, 1). Expected large-sample
-C-index for the survival model (used to tune the data-generating mechanism
-so that the model attains this performance for very large \(n\)).</p></dd>
+<dt id="arg-maximum-achievable-cindex">maximum_achievable_cindex<a class="anchor" aria-label="anchor" href="#arg-maximum-achievable-cindex"></a></dt>
+<dd><p>Numeric in (0, 1). Maximum achievable
+C-index with effectively unlimited data. This is used to calibrate the
+data-generating mechanism and is not the minimum acceptable threshold.</p></dd>
 
 
 <dt id="arg-baseline-hazard">baseline_hazard<a class="anchor" aria-label="anchor" href="#arg-baseline-hazard"></a></dt>
@@ -123,13 +123,13 @@ censoring). Higher values imply fewer observed events for a fixed \(n\).</p></dd
 <dt id="arg-metric">metric<a class="anchor" aria-label="anchor" href="#arg-metric"></a></dt>
 <dd><p>Character string naming the performance metric used to assess
 the sample size; defaults to <code>"calibration_slope"</code>. (Internally mapped to
-the engine's metric identifiers.)</p></dd>
+the engine's metric identifiers.).</p></dd>
 
 
-<dt id="arg-minimum-acceptable-performance">minimum_acceptable_performance<a class="anchor" aria-label="anchor" href="#arg-minimum-acceptable-performance"></a></dt>
-<dd><p>Numeric. The target threshold
-\(M^\\*\); the algorithm searches for the smallest \(n\) meeting the
-chosen criterion with respect to this threshold.</p></dd>
+<dt id="arg-target-performance">target_performance<a class="anchor" aria-label="anchor" href="#arg-target-performance"></a></dt>
+<dd><p>Numeric. Minimum acceptable value of the selected
+performance metric \(M^\\*\); the algorithm searches for the smallest
+\(n\) meeting the chosen criterion with respect to this threshold.</p></dd>
 
 
 <dt id="arg-n-reps-total">n_reps_total<a class="anchor" aria-label="anchor" href="#arg-n-reps-total"></a></dt>
@@ -141,7 +141,7 @@ the engine across the search.</p></dd>
 <dd><p>Character string, either <code>"mean"</code> or <code>"assurance"</code>.
 Controls whether the minimum \(n\) is defined by the mean-based criterion
 or the assurance-based criterion (with the assurance level \(\delta\)
-controlled by the engine's defaults or additional arguments in <code>...</code>).</p></dd>
+controlled by the engine's defaults or additional arguments in <code>...</code>). Defaults to <code>"assurance"</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -183,11 +183,11 @@ with higher variance typically require larger \(n\) to satisfy it.</p>
 <span class="r-in"><span>  signal_parameters <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>  noise_parameters <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span></span>
-<span class="r-in"><span>  large_sample_cindex <span class="op">=</span> <span class="fl">0.70</span>,</span></span>
+<span class="r-in"><span>  maximum_achievable_cindex <span class="op">=</span> <span class="fl">0.70</span>,</span></span>
 <span class="r-in"><span>  baseline_hazard <span class="op">=</span> <span class="fl">0.01</span>,</span></span>
 <span class="r-in"><span>  censoring_rate <span class="op">=</span> <span class="fl">0.30</span>,</span></span>
 <span class="r-in"><span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span></span>
-<span class="r-in"><span>  minimum_acceptable_performance <span class="op">=</span> <span class="fl">0.9</span>,</span></span>
+<span class="r-in"><span>  target_performance <span class="op">=</span> <span class="fl">0.9</span>,</span></span>
 <span class="r-in"><span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span></span>
 <span class="r-in"><span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>

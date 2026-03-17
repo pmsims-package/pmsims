@@ -7,7 +7,11 @@ mock_simulate_custom <- function(...) {
     perf_n = args$target_performance,
     target_performance = args$target_performance,
     summaries = list(mean_performance = c(`80` = args$target_performance)),
-    results = matrix(args$target_performance, nrow = 1, dimnames = list("80", NULL)),
+    results = matrix(
+      args$target_performance,
+      nrow = 1,
+      dimnames = list("80", NULL)
+    ),
     mlpwr_ds = NULL
   )
 }
@@ -65,7 +69,9 @@ test_that("simulate_continuous returns a pmsims object", {
 
 test_that("simulate_survival returns a pmsims object", {
   local_mocked_bindings(
-    survival_tuning = function(...) c(lambda_opt = 0.1, sigma_sq = 0.2, beta_signal = 0.3),
+    survival_tuning = function(...) {
+      c(lambda_opt = 0.1, sigma_sq = 0.2, beta_signal = 0.3)
+    },
     simulate_custom = mock_simulate_custom,
     .package = "pmsims"
   )

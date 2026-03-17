@@ -13,6 +13,9 @@
 #' @param min_sample_size Minimum sample size considered (lower bound of search).
 #' @param max_sample_size Maximum sample size considered (upper bound of search).
 #' @param value_on_error Value to return if the objective cannot be evaluated.
+#' @param data_function Data generator passed to [calculate_metrics_perf()].
+#' @param model_function Model-fitting function passed to [calculate_metrics_perf()].
+#' @param metric_function Metric function passed to [calculate_metrics_perf()].
 #'
 #' @return A single numeric: the objective value at \eqn{n}.
 #' @keywords internal
@@ -36,7 +39,10 @@ objective_function <- function(
   target_performance,
   min_sample_size,
   max_sample_size,
-  value_on_error
+  value_on_error,
+  data_function = NULL,
+  model_function = NULL,
+  metric_function = NULL
 ) {
   n <- round(n)
   if (n < min_sample_size) {
@@ -46,7 +52,13 @@ objective_function <- function(
   tryCatch(
     {
       # Calculate performance metric
-      performance <- calculate_metrics_perf(n, value_on_error)
+      performance <- calculate_metrics_perf(
+        n = n,
+        data_function = data_function,
+        model_function = model_function,
+        metric_function = metric_function,
+        value_on_error = value_on_error
+      )
 
       # Calculate penalty term (normalized by max sample size)
       penalty <- penalty_weight * (n / max_sample_size)
