@@ -25,7 +25,7 @@ Useful links:
 Authors:
 \itemize{
   \item Gordon Forbes (\href{https://orcid.org/0000-0001-8662-3636}{ORCID})
-  \item Ridwan Olaniran
+  \item Ridwan Olaniran (\href{https://orcid.org/0000-0001-7342-8639}{ORCID})
   \item Diana Shamsutdinova (\href{https://orcid.org/0000-0003-2434-3641}{ORCID})
   \item Daniel Stahl (\href{https://orcid.org/0000-0001-7987-6619}{ORCID})
   \item Sarah Markham (\href{https://orcid.org/0000-0002-8755-5935}{ORCID})

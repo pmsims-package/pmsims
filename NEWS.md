@@ -21,8 +21,3 @@
   regularised regression, random forest, and XGBoost.
 - These machine-learning methods have not yet undergone the package's main
   validation study and should be treated as experimental in `0.5.0`.
-
-### Documentation
-
-- The release includes a getting-started vignette covering the core wrapper
-  workflows and the main inputs required to run a simulation study.

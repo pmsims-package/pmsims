@@ -12,8 +12,8 @@ simulate_custom(
   c_statistic,
   mean_or_assurance = "assurance",
   test_n = 30000,
-  min_sample_size,
-  max_sample_size,
+  min_sample_size = NULL,
+  max_sample_size = NULL,
   n_reps_total = NULL,
   n_reps_per = 50,
   se_final = NULL,
@@ -99,8 +99,9 @@ model_fun <- function(dat) {
 
 metric_fun <- function(test_data, fit, model) {
   preds <- stats::predict(fit, newdata = test_data, type = "response")
-  as.numeric(pROC::auc(test_data$y, preds))
+  as.numeric(pROC::auc(test_data$y, preds, quiet = TRUE))
 }
+attr(metric_fun, "metric") <- "auc"
 
 est <- simulate_custom(
   data_function = data_fun,
@@ -109,8 +110,8 @@ est <- simulate_custom(
   target_performance = 0.75,
   c_statistic = 0.80,
   mean_or_assurance = "assurance",
-  n_reps_total = 200,
-  n_reps_per = 20,
+  n_reps_total = 40,
+  n_reps_per = 10,
   method = "mlpwr"
 )
 est
