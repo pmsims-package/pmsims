@@ -1,0 +1,102 @@
+# Version 0.5.0
+
+`pmsims` 0.5.0 is the initial public release of the package. It provides
+a simulation-based approach to minimum sample size estimation for
+prediction modelling, with a particular focus on settings where simple
+rules of thumb are not sufficient. The methods and package are described
+in the accompanying preprint, “Sample Size Calculations for Developing
+Clinical Prediction Models: Overview and pmsims R package”
+([Shamsutdinova et al., 2026](https://arxiv.org/abs/2602.23507)).
+
+## Why pmsims?
+
+When planning a prediction model study, the key question is often not
+just how many observations are available, but whether that sample size
+is large enough to produce a model with acceptable predictive
+performance. `pmsims` addresses that problem by repeatedly simulating
+data, fitting models, and evaluating performance across a range of
+training sample sizes.
+
+Rather than relying only on closed-form approximations, the package
+estimates a learning curve and identifies the smallest training size
+that achieves the chosen performance target.
+
+## Core workflows
+
+The package provides three main wrapper functions:
+
+- [`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md)
+  for binary outcomes
+- [`simulate_continuous()`](https://pmsims-package.github.io/pmsims/reference/simulate_continuous.md)
+  for continuous outcomes
+- [`simulate_survival()`](https://pmsims-package.github.io/pmsims/reference/simulate_survival.md)
+  for time-to-event outcomes
+
+These wrappers are designed to make the most common use cases
+straightforward. Users specify the outcome setting, the expected signal
+strength, the modelling approach, and the target level of performance,
+and `pmsims` estimates the minimum sample size needed under repeated
+sampling.
+
+The wrappers support both mean-based and assurance-based criteria. In
+practice, the assurance formulation is often the more useful design
+target, because it focuses on achieving acceptable performance with high
+probability rather than only on average.
+
+``` r
+library(pmsims)
+
+set.seed(123)
+
+binary_example <- simulate_binary(
+  signal_parameters = 15,
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  outcome_prevalence = 0.20,
+  maximum_achievable_cstatistic = 0.80,
+  model = "glm",
+  metric = "calibration_slope",
+  target_performance = 0.90,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance"
+)
+```
+
+## Custom simulation studies
+
+For more specialised study designs, `pmsims` also provides
+[`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md).
+This lower-level interface allows users to define their own
+data-generating mechanism, model-fitting function, and performance
+metric, while still using the package’s simulation-based sample size
+search framework.
+
+In practice, the wrappers are the right place to start when the default
+outcome types and modelling workflows match the intended study.
+[`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md)
+is most useful when a project requires a bespoke simulation design or a
+non-standard evaluation metric.
+
+## Experimental machine-learning support
+
+The wrapper workflows also include experimental machine-learning options
+via regularised regression, random forest, and XGBoost.
+
+These options are available in `0.5.0`, but they should be treated as
+experimental. In this context, experimental means that these methods
+have not yet undergone the package’s main validation study, unlike the
+core regression workflows.
+
+## Getting started
+
+The package website includes a getting-started vignette that introduces
+the main wrapper functions and explains the key simulation inputs.
+
+Install `pmsims` from GitHub with:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("pmsims-package/pmsims")
+```
+
+Version `0.5.0` is available from GitHub and is not yet a CRAN release.

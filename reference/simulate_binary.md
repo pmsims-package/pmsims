@@ -14,15 +14,15 @@ smallest \\n\\ that meets the chosen performance criterion.
 simulate_binary(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = c("continuous"),
+  predictor_type = "continuous",
   binary_predictor_prevalence = NULL,
   outcome_prevalence,
   maximum_achievable_cstatistic,
-  model = c("glm"),
-  metric = c("calibration_slope", "auc"),
+  model = "glm",
+  metric = "calibration_slope",
   target_performance,
   n_reps_total = 1000,
-  mean_or_assurance = c("assurance", "mean"),
+  mean_or_assurance = "assurance",
   ...
 )
 ```
@@ -41,9 +41,8 @@ simulate_binary(
 
 - predictor_type:
 
-  Character string, currently only `"continuous"` supported, which is
-  the default option. Specifies the type of simulated candidate
-  predictors.
+  Character string, either `"continuous"` or `"binary"`. Specifies the
+  type of simulated candidate predictors.
 
 - binary_predictor_prevalence:
 
@@ -63,19 +62,23 @@ simulate_binary(
 
 - model:
 
-  Character string specifying the modelling algorithm (e.g., `"glm"`).
-  Passed to the internal model generator.
+  Character string specifying the modelling algorithm. Supported values
+  are `"glm"` (logistic regression), `"lasso"` **\[experimental\]**
+  (regularised logistic regression), `"rf"` **\[experimental\]** (random
+  forest), and `"xgboost"` **\[experimental\]** (gradient-boosted
+  trees). The machine-learning options are experimental because they
+  have not yet undergone the package's main validation study.
 
 - metric:
 
   Character string naming the performance metric used to assess the
   sample size; defaults to `"calibration_slope"`. (Internally mapped to
-  the engine's metric identifiers.).
+  the engine's metric identifiers.)
 
 - target_performance:
 
   Numeric. Minimum acceptable value of the selected performance metric
-  \\M^\\\*\\; the algorithm searches for the smallest \\n\\ meeting the
+  \\M^\*\\; the algorithm searches for the smallest \\n\\ meeting the
   chosen criterion with respect to this threshold.
 
 - n_reps_total:
@@ -89,7 +92,6 @@ simulate_binary(
   the minimum \\n\\ is defined by the mean-based criterion or the
   assurance-based criterion (with the assurance level \\\delta\\
   controlled by the engine's defaults or additional arguments in `...`).
-  Defaults to `"assurance"`.
 
 - ...:
 

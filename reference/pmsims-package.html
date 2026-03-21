@@ -6,8 +6,8 @@
     }
   };
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="pmsims: Simulation-based Sample Size Tools for Prediction Models — pmsims-package"><meta name="description" content="
-pmsims is a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects stability, accuracy, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with a range of regression-based modelling approaches. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models."><meta property="og:description" content="
-pmsims is a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects stability, accuracy, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with a range of regression-based modelling approaches. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models."><meta property="og:image" content="https://pmsims-package.github.io/pmsims/logo.png"></head><body>
+pmsims is a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects stability, accuracy, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with a range of regression-based modelling approaches, with experimental support for selected machine-learning methods. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models."><meta property="og:description" content="
+pmsims is a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects stability, accuracy, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with a range of regression-based modelling approaches, with experimental support for selected machine-learning methods. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models."><meta property="og:image" content="https://pmsims-package.github.io/pmsims/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -25,7 +25,13 @@ pmsims is a flexible, simulation-based toolkit for exploring how much data are n
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/pmsims.html">Get started</a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-news"><li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="../articles/release-0-5-0.html">Version 0.5.0</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
+  </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/pmsims-package/pmsims/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -37,13 +43,13 @@ pmsims is a flexible, simulation-based toolkit for exploring how much data are n
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>pmsims: Simulation-based Sample Size Tools for Prediction Models</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/feature/test-refresh/R/pmsims-package.R" class="external-link"><code>R/pmsims-package.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/prepare-version/R/pmsims-package.R" class="external-link"><code>R/pmsims-package.R</code></a></small>
       <div class="d-none name"><code>pmsims-package.Rd</code></div>
     </div>
 
     <div class="ref-description section level2">
     <p></p>
-<p>pmsims is a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects stability, accuracy, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with a range of regression-based modelling approaches. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models.</p>
+<p>pmsims is a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects stability, accuracy, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with a range of regression-based modelling approaches, with experimental support for selected machine-learning methods. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models.</p>
     </div>
 
 
@@ -58,7 +64,7 @@ pmsims is a flexible, simulation-based toolkit for exploring how much data are n
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
     <p><strong>Maintainer</strong>: Ewan Carr <a href="mailto:pmsims@kcl.ac.uk">pmsims@kcl.ac.uk</a> (<a href="https://orcid.org/0000-0002-1146-4922" class="external-link">ORCID</a>)</p>
 <p>Authors:</p><ul><li><p>Gordon Forbes (<a href="https://orcid.org/0000-0001-8662-3636" class="external-link">ORCID</a>)</p></li>
-<li><p>Ridwan Olaniran</p></li>
+<li><p>Ridwan Olaniran (<a href="https://orcid.org/0000-0001-7342-8639" class="external-link">ORCID</a>)</p></li>
 <li><p>Diana Shamsutdinova (<a href="https://orcid.org/0000-0003-2434-3641" class="external-link">ORCID</a>)</p></li>
 <li><p>Daniel Stahl (<a href="https://orcid.org/0000-0001-7987-6619" class="external-link">ORCID</a>)</p></li>
 <li><p>Sarah Markham (<a href="https://orcid.org/0000-0002-8755-5935" class="external-link">ORCID</a>)</p></li>

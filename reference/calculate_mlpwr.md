@@ -28,13 +28,13 @@ calculate_mlpwr(
 
 - test_n:
 
-  Integer size of the test datasets used to evaluate performance (should
-  be large).
+  Integer size of the fixed test dataset used to evaluate predictive
+  performance. This should generally be large.
 
 - n_reps_total:
 
   Integer total number of simulation replications allocated to the
-  search.
+  search. Supply exactly one of `n_reps_total` or `se_final`.
 
 - n_reps_per:
 
@@ -43,31 +43,28 @@ calculate_mlpwr(
 
 - se_final:
 
-  Numeric standard error threshold used for early stopping (supply
-  either `n_reps_total` or `se_final`).
+  Optional numeric standard error target for early stopping. Supply
+  exactly one of `n_reps_total` or `se_final`.
 
-- min_sample_size:
+- min_sample_size, max_sample_size:
 
-  Integer lower bound of the sample-size search region.
-
-- max_sample_size:
-
-  Integer upper bound of the sample-size search region.
+  Optional integer lower and upper bounds for the sample-size search. If
+  omitted, engine-specific heuristics are used to choose starting
+  bounds.
 
 - target_performance:
 
-  Numeric target performance threshold the algorithm must meet or
-  exceed.
+  Numeric threshold the algorithm must meet or exceed.
 
 - c_statistic:
 
-  Numeric; anticipated large-sample discrimination used when tuning the
-  data generator.
+  Optional numeric anticipated large-sample discrimination measure used
+  by the internal search heuristics when needed.
 
 - mean_or_assurance:
 
-  Character string `"mean"` or `"assurance"` indicating which criterion
-  defines the minimum sample size.
+  Character string, either `"mean"` or `"assurance"`, specifying how
+  performance is summarised when defining the minimum sample size.
 
 - n_init:
 
@@ -80,19 +77,17 @@ calculate_mlpwr(
 
 - data_function:
 
-  A function that returns datasets. Must have a single argument, `n`,
-  which controls the sample size.
+  Function taking a single integer argument `n` and returning a dataset
+  of size `n`.
 
 - model_function:
 
-  A function that fits models to the data. Takes the data object
-  returned by `data_function` as its only argument.
+  Function that fits a model to the dataset returned by `data_function`.
 
 - metric_function:
 
-  A function that returns a performance metric. Must take test data, a
-  fitted model and a model function as arguments. Must return a single
-  value.
+  Function that takes test data, a fitted model object, and a model
+  identifier, and returns a single numeric performance value.
 
 - value_on_error:
 

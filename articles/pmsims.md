@@ -190,7 +190,7 @@ sessionInfo()
 #>  [9] scales_1.4.0       textshaping_1.0.5  yaml_2.3.12        fastmap_1.2.0     
 #> [13] lattice_0.22-9     ggplot2_4.0.2      R6_2.6.1           labeling_0.4.3    
 #> [17] knitr_1.51         htmlwidgets_1.6.4  desc_1.4.3         bslib_0.10.0      
-#> [21] RColorBrewer_1.1-3 rlang_1.1.7        cachem_1.1.0       xfun_0.56         
+#> [21] RColorBrewer_1.1-3 rlang_1.1.7        cachem_1.1.0       xfun_0.57         
 #> [25] fs_1.6.7           DiceKriging_1.6.1  sass_0.4.10        S7_0.2.1          
 #> [29] cli_3.6.5          pkgdown_2.2.0      withr_3.0.2        digest_0.6.39     
 #> [33] grid_4.5.3         lifecycle_1.0.5    mlpwr_1.1.1        vctrs_0.7.1       

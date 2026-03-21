@@ -15,14 +15,14 @@ smallest \\n\\ meeting the chosen criterion.
 simulate_continuous(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = c("continuous"),
+  predictor_type = "continuous",
   binary_predictor_prevalence = NULL,
   maximum_achievable_rsquared,
-  model = c("lm"),
-  metric = c("calibration_slope", "r2"),
+  model = "lm",
+  metric = "calibration_slope",
   target_performance,
   n_reps_total = 1000,
-  mean_or_assurance = c("assurance", "mean"),
+  mean_or_assurance = "assurance",
   ...
 )
 ```
@@ -41,9 +41,8 @@ simulate_continuous(
 
 - predictor_type:
 
-  Character string, currently only `"continuous"` supported, which is
-  the default option. Specifies the type of simulated candidate
-  predictors.
+  Character string, either `"continuous"` or `"binary"`. Specifies the
+  type of simulated candidate predictors.
 
 - binary_predictor_prevalence:
 
@@ -58,19 +57,23 @@ simulate_continuous(
 
 - model:
 
-  Character string specifying the modelling algorithm (e.g., `"glm"`).
-  Passed to the internal model generator.
+  Character string specifying the modelling algorithm. Supported values
+  are `"lm"` (linear regression), `"lasso"` **\[experimental\]**
+  (regularised linear regression), `"rf"` **\[experimental\]** (random
+  forest), and `"xgboost"` **\[experimental\]** (gradient-boosted
+  trees). The machine-learning options are experimental because they
+  have not yet undergone the package's main validation study.
 
 - metric:
 
   Character string naming the performance metric used to assess the
   sample size; defaults to `"calibration_slope"`. (Internally mapped to
-  the engine's metric identifiers.).
+  the engine's metric identifiers.)
 
 - target_performance:
 
   Numeric. Minimum acceptable value of the selected performance metric
-  \\M^\\\*\\; the algorithm searches for the smallest \\n\\ meeting the
+  \\M^\*\\; the algorithm searches for the smallest \\n\\ meeting the
   chosen criterion with respect to this threshold.
 
 - n_reps_total:
@@ -84,7 +87,6 @@ simulate_continuous(
   the minimum \\n\\ is defined by the mean-based criterion or the
   assurance-based criterion (with the assurance level \\\delta\\
   controlled by the engine's defaults or additional arguments in `...`).
-  Defaults to `"assurance"`.
 
 - ...:
 

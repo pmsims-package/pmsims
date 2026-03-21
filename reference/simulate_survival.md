@@ -12,16 +12,16 @@ meeting the chosen performance criterion.
 simulate_survival(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = c("continuous"),
+  predictor_type = "continuous",
   binary_predictor_prevalence = NULL,
   maximum_achievable_cindex,
   baseline_hazard = 1,
   censoring_rate,
-  model = c("coxph"),
-  metric = c("calibration_slope", "cindex"),
+  model = "coxph",
+  metric = "calibration_slope",
   target_performance,
   n_reps_total = 1000,
-  mean_or_assurance = c("assurance", "mean"),
+  mean_or_assurance = "assurance",
   ...
 )
 ```
@@ -40,9 +40,8 @@ simulate_survival(
 
 - predictor_type:
 
-  Character string, currently only `"continuous"` supported, which is
-  the default option. Specifies the type of simulated candidate
-  predictors.
+  Character string, either `"continuous"` or `"binary"`. Specifies the
+  type of simulated candidate predictors.
 
 - binary_predictor_prevalence:
 
@@ -69,18 +68,24 @@ simulate_survival(
 
 - model:
 
-  Character string; currently `"coxph"` (Cox proportional hazards).
+  Character string specifying the modelling algorithm. Supported values
+  are `"coxph"` (Cox proportional hazards), `"lasso"`
+  **\[experimental\]** (regularised Cox regression), `"rf"`
+  **\[experimental\]** (random survival forest), and `"xgboost"`
+  **\[experimental\]** (gradient boosting with a Cox objective). The
+  machine-learning options are experimental because they have not yet
+  undergone the package's main validation study.
 
 - metric:
 
   Character string naming the performance metric used to assess the
   sample size; defaults to `"calibration_slope"`. (Internally mapped to
-  the engine's metric identifiers.).
+  the engine's metric identifiers.)
 
 - target_performance:
 
   Numeric. Minimum acceptable value of the selected performance metric
-  \\M^\\\*\\; the algorithm searches for the smallest \\n\\ meeting the
+  \\M^\*\\; the algorithm searches for the smallest \\n\\ meeting the
   chosen criterion with respect to this threshold.
 
 - n_reps_total:
@@ -94,7 +99,6 @@ simulate_survival(
   the minimum \\n\\ is defined by the mean-based criterion or the
   assurance-based criterion (with the assurance level \\\delta\\
   controlled by the engine's defaults or additional arguments in `...`).
-  Defaults to `"assurance"`.
 
 - ...:
 
