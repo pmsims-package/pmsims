@@ -21,7 +21,22 @@ survival_tuning(
 
 \item{target_performance}{The desired model performance in a large sample}
 
+\item{min.opt}{Numeric vector of lower bounds for the optimisation
+parameters.}
+
+\item{max.opt}{Numeric vector of upper bounds for the optimisation
+parameters.}
+
 \item{tolerance}{The tolerance in the large sample performance}
+
+\item{proportion_noise_features}{Proportion of candidate features that should
+behave as noise features.}
+
+\item{candidate_features}{Total number of candidate predictors.}
+
+\item{N_sim_optim}{Integer optimisation-phase simulation size.}
+
+\item{N_sim_final}{Integer validation-phase simulation size.}
 }
 \value{
 The optimal value for the tuning parameter

@@ -7,15 +7,15 @@
 simulate_binary(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = c("continuous"),
+  predictor_type = "continuous",
   binary_predictor_prevalence = NULL,
   outcome_prevalence,
   maximum_achievable_cstatistic,
-  model = c("glm"),
-  metric = c("calibration_slope", "auc"),
+  model = "glm",
+  metric = "calibration_slope",
   target_performance,
   n_reps_total = 1000,
-  mean_or_assurance = c("assurance", "mean"),
+  mean_or_assurance = "assurance",
   ...
 )
 }
@@ -26,7 +26,7 @@ with the outcome (i.e., true signal features).}
 \item{noise_parameters}{Integer. Number of candidate predictors not
 associated with the outcome (noise features). Default is 0.}
 
-\item{predictor_type}{Character string, currently only \code{"continuous"} supported, which is the default option.
+\item{predictor_type}{Character string, either \code{"continuous"} or \code{"binary"}.
 Specifies the type of simulated candidate predictors.}
 
 \item{binary_predictor_prevalence}{Optional numeric in (0, 1). Prevalence of
@@ -39,15 +39,20 @@ outcome in the intended modelling context.}
 C-statistic with effectively unlimited data. This is used to calibrate the
 data-generating mechanism and is not the minimum acceptable threshold.}
 
-\item{model}{Character string specifying the modelling algorithm (e.g.,
-\code{"glm"}). Passed to the internal model generator.}
+\item{model}{Character string specifying the modelling algorithm. Supported
+values are \code{"glm"} (logistic regression), \code{"lasso"}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} (regularised logistic regression),
+\code{"rf"} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} (random forest), and
+\code{"xgboost"} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} (gradient-boosted
+trees). The machine-learning options are experimental because they have not
+yet undergone the package's main validation study.}
 
 \item{metric}{Character string naming the performance metric used to assess
 the sample size; defaults to \code{"calibration_slope"}. (Internally mapped to
-the engine's metric identifiers.).}
+the engine's metric identifiers.)}
 
 \item{target_performance}{Numeric. Minimum acceptable value of the selected
-performance metric \eqn{M^\\*}; the algorithm searches for the smallest
+performance metric \eqn{M^*}; the algorithm searches for the smallest
 \eqn{n} meeting the chosen criterion with respect to this threshold.}
 
 \item{n_reps_total}{Integer. Total number of simulation replications used by
@@ -56,7 +61,7 @@ the engine across the search.}
 \item{mean_or_assurance}{Character string, either \code{"mean"} or \code{"assurance"}.
 Controls whether the minimum \eqn{n} is defined by the mean-based criterion
 or the assurance-based criterion (with the assurance level \eqn{\delta}
-controlled by the engine's defaults or additional arguments in \code{...}). Defaults to \code{"assurance"}.}
+controlled by the engine's defaults or additional arguments in \code{...}).}
 
 \item{...}{Additional options passed to \code{\link[=simulate_custom]{simulate_custom()}} (e.g., assurance
 level \eqn{\delta}, per-iteration settings).}

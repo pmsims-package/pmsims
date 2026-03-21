@@ -23,33 +23,45 @@ calculate_mlpwr(
 )
 }
 \arguments{
-\item{test_n}{Integer size of the test datasets used to evaluate performance (should be large).}
+\item{test_n}{Integer size of the fixed test dataset used to evaluate
+predictive performance. This should generally be large.}
 
-\item{n_reps_total}{Integer total number of simulation replications allocated to the search.}
+\item{n_reps_total}{Integer total number of simulation replications
+allocated to the search. Supply exactly one of \code{n_reps_total} or
+\code{se_final}.}
 
-\item{n_reps_per}{Integer number of replications evaluated at each candidate sample size.}
+\item{n_reps_per}{Integer number of replications evaluated at each candidate
+sample size.}
 
-\item{se_final}{Numeric standard error threshold used for early stopping (supply either \code{n_reps_total} or \code{se_final}).}
+\item{se_final}{Optional numeric standard error target for early stopping.
+Supply exactly one of \code{n_reps_total} or \code{se_final}.}
 
-\item{min_sample_size}{Integer lower bound of the sample-size search region.}
+\item{min_sample_size, max_sample_size}{Optional integer lower and upper
+bounds for the sample-size search. If omitted, engine-specific heuristics
+are used to choose starting bounds.}
 
-\item{max_sample_size}{Integer upper bound of the sample-size search region.}
+\item{target_performance}{Numeric threshold the algorithm must meet or
+exceed.}
 
-\item{target_performance}{Numeric target performance threshold the algorithm must meet or exceed.}
+\item{c_statistic}{Optional numeric anticipated large-sample discrimination
+measure used by the internal search heuristics when needed.}
 
-\item{c_statistic}{Numeric; anticipated large-sample discrimination used when tuning the data generator.}
-
-\item{mean_or_assurance}{Character string \code{"mean"} or \code{"assurance"} indicating which criterion defines the minimum sample size.}
+\item{mean_or_assurance}{Character string, either \code{"mean"} or \code{"assurance"},
+specifying how performance is summarised when defining the minimum sample
+size.}
 
 \item{n_init}{Integer number of initial sample sizes simulated before the Gaussian-process search begins.}
 
 \item{verbose}{Logical flag passed to \code{mlpwr}; when \code{TRUE} verbose output is printed.}
 
-\item{data_function}{A function that returns datasets. Must have a single argument, \code{n}, which controls the sample size.}
+\item{data_function}{Function taking a single integer argument \code{n} and
+returning a dataset of size \code{n}.}
 
-\item{model_function}{A function that fits models to the data. Takes the data object returned by \code{data_function} as its only argument.}
+\item{model_function}{Function that fits a model to the dataset returned by
+\code{data_function}.}
 
-\item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.}
+\item{metric_function}{Function that takes test data, a fitted model object,
+and a model identifier, and returns a single numeric performance value.}
 
 \item{value_on_error}{Numeric fallback value used if model fitting or metric calculation fails.}
 }

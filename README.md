@@ -5,6 +5,11 @@
 
 <!-- badges: start -->
 
+[![GitHub
+release](https://img.shields.io/github/v/release/pmsims-package/pmsims?display_name=release)](https://github.com/pmsims-package/pmsims/releases)
+[![R-CMD-check](https://github.com/pmsims-package/pmsims/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pmsims-package/pmsims/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/pmsims-package/pmsims/graph/badge.svg)](https://app.codecov.io/gh/pmsims-package/pmsims)
 <!-- badges: end -->
 
 **pmsims** is an R package for estimating how much data are needed to
@@ -17,6 +22,11 @@ The package is fully model-agnostic: users can define how data are
 generated, how models are fitted, and how predictive performance is
 measured. It currently supports regression-based prediction models with
 continuous, binary, and time-to-event outcomes.
+
+`pmsims` also includes experimental machine-learning model options via
+regularised regression, random forest, and XGBoost. These options have
+not yet undergone the package’s main validation study and should be
+treated as experimental in `0.5.0`.
 
 Developed at [King’s College London](https://www.kcl.ac.uk/) (Department
 of Biostatistics & Health Informatics) with input from researchers,
@@ -56,10 +66,14 @@ binary_example <- simulate_binary(
 binary_example
 ```
 
-`maximum_achievable_cstatistic` and `target_performance` have different roles:
+`maximum_achievable_cstatistic` and `target_performance` have different
+roles:
 
-- `maximum_achievable_cstatistic` represents the best plausible C-statistic with effectively unlimited data and calibrates the data generator.
-- `target_performance` is the minimum acceptable metric value used to determine the required sample size.
+- `maximum_achievable_cstatistic` represents the best plausible
+  C-statistic with effectively unlimited data and calibrates the data
+  generator.
+- `target_performance` is the minimum acceptable metric value used to
+  determine the required sample size.
 
 ------------------------------------------------------------------------
 

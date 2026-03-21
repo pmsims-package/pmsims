@@ -5,16 +5,15 @@
 \alias{default_models}
 \title{default_model_generators Generate appropriate model based on input arguments}
 \format{
-An object of class \code{list} of length 3.
+A named list of default model generator functions grouped by outcome
+type.
 }
 \usage{
 default_models
 }
-\arguments{
-\item{outcome}{type of outcome, possible options are: "binary".}
-}
 \value{
-Model function.
+\code{default_models} is a list containing built-in model generators for
+binary, continuous, and survival outcomes.
 }
 \description{
 default_model_generators Generate appropriate model based on input arguments

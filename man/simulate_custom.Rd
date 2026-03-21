@@ -2,8 +2,7 @@
 % Please edit documentation in R/simulate_custom.R
 \name{simulate_custom}
 \alias{simulate_custom}
-\title{Simulate Custom
-'simulate_custom' is the interface for pmsims at the most basic level. It performs no processing of arguments and allows all possible options to be customised.}
+\title{Minimum sample size for custom simulation workflows}
 \usage{
 simulate_custom(
   data_function = NULL,
@@ -25,43 +24,98 @@ simulate_custom(
 )
 }
 \arguments{
-\item{data_function}{A function that returns datasets. Must have a single argument, \code{n}, which controls the sample size.}
+\item{data_function}{Function taking a single integer argument \code{n} and
+returning a dataset of size \code{n}.}
 
-\item{model_function}{A function that fits models to the data. Takes the data object returned by \code{data_function} as its only argument.}
+\item{model_function}{Function that fits a model to the dataset returned by
+\code{data_function}.}
 
-\item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.}
+\item{metric_function}{Function that takes test data, a fitted model object,
+and a model identifier, and returns a single numeric performance value.}
 
-\item{target_performance}{Numeric target performance threshold the algorithm must meet or exceed.}
+\item{target_performance}{Numeric threshold the algorithm must meet or
+exceed.}
 
-\item{c_statistic}{Numeric; anticipated large-sample discrimination used when tuning the data generator.}
+\item{c_statistic}{Optional numeric anticipated large-sample discrimination
+measure used by the internal search heuristics when needed.}
 
-\item{mean_or_assurance}{Character string \code{"mean"} or \code{"assurance"} indicating which criterion defines the minimum sample size.}
+\item{mean_or_assurance}{Character string, either \code{"mean"} or \code{"assurance"},
+specifying how performance is summarised when defining the minimum sample
+size.}
 
-\item{test_n}{Integer size of the test datasets used to evaluate performance (should be large).}
+\item{test_n}{Integer size of the fixed test dataset used to evaluate
+predictive performance. This should generally be large.}
 
-\item{min_sample_size}{Integer lower bound of the sample-size search region.}
+\item{min_sample_size, max_sample_size}{Optional integer lower and upper
+bounds for the sample-size search. If omitted, engine-specific heuristics
+are used to choose starting bounds.}
 
-\item{max_sample_size}{Integer upper bound of the sample-size search region.}
+\item{n_reps_total}{Integer total number of simulation replications
+allocated to the search. Supply exactly one of \code{n_reps_total} or
+\code{se_final}.}
 
-\item{n_reps_total}{Integer total number of simulation replications allocated to the search.}
+\item{n_reps_per}{Integer number of replications evaluated at each candidate
+sample size.}
 
-\item{n_reps_per}{Integer number of replications evaluated at each candidate sample size.}
+\item{se_final}{Optional numeric standard error target for early stopping.
+Supply exactly one of \code{n_reps_total} or \code{se_final}.}
 
-\item{se_final}{Numeric standard error threshold used for early stopping (supply either \code{n_reps_total} or \code{se_final}).}
+\item{n_init}{Integer number of initial sample sizes explored before the
+Gaussian-process stage when relevant.}
 
-\item{n_init}{Integer number of initial sample sizes explored before the main search algorithm begins.}
+\item{method}{Character string selecting the search engine; currently
+\code{"mlpwr"}, \code{"bisection"}, or \code{"mlpwr-bs"}.}
 
-\item{method}{Character string selecting the search engine; currently \code{"mlpwr"}, \code{"bisection"}, or \code{"mlpwr-bs"}.}
+\item{verbose}{Logical; if \code{TRUE}, print progress information from the
+selected search engine.}
 
-\item{verbose}{Logical flag controlling printed progress information.}
-
-\item{...}{Additional arguments passed to the chosen engine (for example \code{tol} for bisection or \code{penalty_weight} for GA-based methods).}
+\item{...}{Additional arguments passed to the selected engine (for example
+\code{tol} for bisection).}
 }
 \value{
-An object of class \code{"pmsims"} containing the estimated minimum sample size and simulation diagnostics.
+An object of class \code{"pmsims"} containing the estimated minimum sample
+size and simulation diagnostics.
 }
 \description{
-Simulate Custom
-'simulate_custom' is the interface for pmsims at the most basic level. It performs no processing of arguments and allows all possible options to be customised.
+Compute the minimum sample size required to achieve a target level of
+predictive performance using user-defined simulation components.
+\code{simulate_custom()} is the low-level interface in \code{pmsims}: users supply a
+data-generating function, a model-fitting function, and a metric function,
+and the chosen search engine estimates the smallest \eqn{n} meeting the
+selected performance criterion.
 }
-\keyword{internal}
+\examples{
+\dontrun{
+data_fun <- function(n) {
+  x1 <- rnorm(n)
+  x2 <- rnorm(n)
+  y <- rbinom(n, 1, plogis(0.5 * x1 - 0.25 * x2))
+  data.frame(y = y, x1 = x1, x2 = x2)
+}
+
+model_fun <- function(dat) {
+  stats::glm(y ~ ., data = dat, family = stats::binomial())
+}
+
+metric_fun <- function(test_data, fit, model) {
+  preds <- stats::predict(fit, newdata = test_data, type = "response")
+  as.numeric(pROC::auc(test_data$y, preds))
+}
+
+est <- simulate_custom(
+  data_function = data_fun,
+  model_function = model_fun,
+  metric_function = metric_fun,
+  target_performance = 0.75,
+  c_statistic = 0.80,
+  mean_or_assurance = "assurance",
+  n_reps_total = 200,
+  n_reps_per = 20,
+  method = "mlpwr"
+)
+est
+}
+}
+\seealso{
+\code{\link[=simulate_binary]{simulate_binary()}}, \code{\link[=simulate_continuous]{simulate_continuous()}}, \code{\link[=simulate_survival]{simulate_survival()}}
+}

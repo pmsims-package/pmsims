@@ -30,11 +30,11 @@ objective_function(
 
 \item{value_on_error}{Value to return if the objective cannot be evaluated.}
 
-\item{data_function}{Data generator passed to \code{\link{calculate_metrics_perf}()}.}
+\item{data_function}{Data generator passed to \code{\link[=calculate_metrics_perf]{calculate_metrics_perf()}}.}
 
-\item{model_function}{Model-fitting function passed to \code{\link{calculate_metrics_perf}()}.}
+\item{model_function}{Model-fitting function passed to \code{\link[=calculate_metrics_perf]{calculate_metrics_perf()}}.}
 
-\item{metric_function}{Metric function passed to \code{\link{calculate_metrics_perf}()}.}
+\item{metric_function}{Metric function passed to \code{\link[=calculate_metrics_perf]{calculate_metrics_perf()}}.}
 }
 \value{
 A single numeric: the objective value at \eqn{n}.
