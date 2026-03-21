@@ -38,13 +38,18 @@
 #' @param maximum_achievable_cstatistic Numeric in (0, 1). Maximum achievable
 #'   C-statistic with effectively unlimited data. This is used to calibrate the
 #'   data-generating mechanism and is not the minimum acceptable threshold.
-#' @param model Character string specifying the modelling algorithm (e.g.,
-#'   `"glm"`). Passed to the internal model generator.
+#' @param model Character string specifying the modelling algorithm. Supported
+#'   values are `"glm"` (logistic regression), `"lasso"`
+#'   `r lifecycle::badge("experimental")` (regularised logistic regression),
+#'   `"rf"` `r lifecycle::badge("experimental")` (random forest), and
+#'   `"xgboost"` `r lifecycle::badge("experimental")` (gradient-boosted
+#'   trees). The machine-learning options are experimental because they have not
+#'   yet undergone the package's main validation study.
 #' @param metric Character string naming the performance metric used to assess
 #'   the sample size; defaults to `"calibration_slope"`. (Internally mapped to
 #'   the engine's metric identifiers.)
 #' @param target_performance Numeric. Minimum acceptable value of the selected
-#'   performance metric \eqn{M^\\*}; the algorithm searches for the smallest
+#'   performance metric \eqn{M^*}; the algorithm searches for the smallest
 #'   \eqn{n} meeting the chosen criterion with respect to this threshold.
 #' @param n_reps_total Integer. Total number of simulation replications used by
 #'   the engine across the search.
@@ -188,6 +193,13 @@ simulate_binary <- function(
 #' @param maximum_achievable_rsquared Numeric in (0, 1). Maximum achievable
 #'   \eqn{R^2} with effectively unlimited data. This is used to calibrate the
 #'   data-generating mechanism and is not the minimum acceptable threshold.
+#' @param model Character string specifying the modelling algorithm. Supported
+#'   values are `"lm"` (linear regression), `"lasso"`
+#'   `r lifecycle::badge("experimental")` (regularised linear regression),
+#'   `"rf"` `r lifecycle::badge("experimental")` (random forest), and
+#'   `"xgboost"` `r lifecycle::badge("experimental")` (gradient-boosted
+#'   trees). The machine-learning options are experimental because they have not
+#'   yet undergone the package's main validation study.
 #'
 #' @return An object of class `"pmsims"` containing the estimated minimum sample
 #'   size and simulation diagnostics (inputs, fitted GP curve, intermediate
@@ -318,7 +330,13 @@ simulate_continuous <- function(
 #' @param censoring_rate Numeric in [0, 1). Proportion of individuals expected
 #'   to be censored in the simulated datasets (administrative or random
 #'   censoring). Higher values imply fewer observed events for a fixed \eqn{n}.
-#' @param model Character string; currently `"coxph"` (Cox proportional hazards).
+#' @param model Character string specifying the modelling algorithm. Supported
+#'   values are `"coxph"` (Cox proportional hazards), `"lasso"`
+#'   `r lifecycle::badge("experimental")` (regularised Cox regression), `"rf"`
+#'   `r lifecycle::badge("experimental")` (random survival forest), and
+#'   `"xgboost"` `r lifecycle::badge("experimental")` (gradient boosting with a
+#'   Cox objective). The machine-learning options are experimental because they
+#'   have not yet undergone the package's main validation study.
 #'
 #' @return An object of class `"pmsims"` containing the estimated minimum sample
 #'   size and simulation diagnostics (inputs, fitted GP curve, intermediate
