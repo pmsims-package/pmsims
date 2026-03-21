@@ -16,7 +16,36 @@ output_dir: docs
 extra_files:
   - man/figures
 
+navbar:
+  structure:
+    left: [get-started, reference, news]
+  components:
+    get-started:
+      text: Get started
+      href: articles/pmsims.html
+    reference:
+      text: Reference
+      href: reference/index.html
+    news:
+      text: News
+      menu:
+        - text: Releases
+        - text: Version 0.5.0
+          href: articles/release-0-5-0.html
+        - text: "--------"
+        - text: Changelog
+          href: news/index.html
+
 home:
   title: "pmsims"
   description: >
-    Simulation-based sample size estimation for prediction modelling.
+    Simulation-based sample size estimation for prediction modelling, with
+    experimental machine-learning extensions.
+
+reference:
+  - title: Main functions
+    contents:
+      - simulate_binary
+      - simulate_continuous
+      - simulate_survival
+      - simulate_custom

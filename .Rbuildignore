@@ -5,3 +5,12 @@
 ^LICENSE\.md$
 ^vignettes/articles$
 ^README\.Rmd$
+^README\.html$
+^_pkgdown\.yml$
+^pkgdown$
+^docs$
+^docker$
+^air\.toml$
+^release-notes$
+^vignettes/\.cache$
+^vignettes/\.cache/.*
