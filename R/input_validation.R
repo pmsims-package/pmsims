@@ -54,7 +54,7 @@ validate_outcome_prevalence <- function(outcome_prevalence) {
 
   if (outcome_prevalence < 0.05) {
     cli::cli_warn(
-      "Outcome prevalence is very low ({.val {outcome_prevalence}}). Recommended > {.val 0.05}; values below this haven’t been tested, and simulations may take a long time."
+      "Outcome prevalence is very low ({.val {outcome_prevalence}}). Recommended > {.val 0.05}; values below this haven't been tested, and simulations may take a long time."
     )
   }
 
@@ -63,7 +63,9 @@ validate_outcome_prevalence <- function(outcome_prevalence) {
 
 #' check_pmsims_args - a custom version of the base R match.arg function with improved error message
 #'
-#'@inherit base::match.arg
+#' @inherit base::match.arg
+#' @keywords internal
+#' @noRd
 #'
 check_pmsims_args <- function(arg, choices, several.ok = FALSE) {
   if (missing(choices)) {

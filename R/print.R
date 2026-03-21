@@ -142,7 +142,7 @@ print.pmsims <- function(x, ..., max_width = 80) {
   }
   if (is_present(r2)) {
     inputs[["Expected large-sample performance"]] <- paste0(
-      "R² ('r2') = ",
+      "R\u00B2 ('r2') = ",
       fmt_num(r2, 3)
     )
   }

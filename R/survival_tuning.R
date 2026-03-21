@@ -2,11 +2,18 @@
 #'
 #' @param target_performance The desired model performance in a large sample
 #' @param target_prevalence The desired model performance in a large sample
+#' @param min.opt Numeric vector of lower bounds for the optimisation
+#'   parameters.
+#' @param max.opt Numeric vector of upper bounds for the optimisation
+#'   parameters.
 #' @param tolerance The tolerance in the large sample performance
+#' @param proportion_noise_features Proportion of candidate features that should
+#'   behave as noise features.
+#' @param candidate_features Total number of candidate predictors.
+#' @param N_sim_optim Integer optimisation-phase simulation size.
+#' @param N_sim_final Integer validation-phase simulation size.
 #' @return The optimal value for the tuning parameter
 #' @keywords internal
-#'
-#' @examples
 
 survival_tuning <- function(
   target_prevalence, # Target event rate (proportion of events)
