@@ -145,10 +145,7 @@ calculate_mlpwr <- function(
 
       # Round / coerce to integer and clamp to [0, total]
       safe_eval <- as.integer(round(safe_eval, 0))
-      total_val <- tryCatch(
-        cli::cli_progress_get(pb_id)$total,
-        error = function(e) NA_integer_
-      )
+      total_val <- n_reps_total
       if (is.na(total_val) || !is.finite(total_val) || total_val <= 0) {
         # fallback to the n_reps_total captured in closure if available, otherwise don't call
         total_val <- n_reps_total
@@ -183,12 +180,12 @@ calculate_mlpwr <- function(
   # Patch mlpwr::print_progress()
   ns <- asNamespace("mlpwr")
   orig_print_progress <- get("print_progress", envir = ns)
-  assignInNamespace("print_progress", patched_print_progress, ns)
+  utils::assignInNamespace("print_progress", patched_print_progress, ns)
 
   # Ensure cleanup
   on.exit(
     {
-      assignInNamespace("print_progress", orig_print_progress, "mlpwr")
+      utils::assignInNamespace("print_progress", orig_print_progress, "mlpwr")
       if (!is.null(pb_txt)) {
         close(pb_txt)
       }
@@ -319,6 +316,11 @@ calculate_bisection <- function(
   cl <- NULL
   registered_parallel <- FALSE
   if (isTRUE(parallel)) {
+    require_optional_packages(
+      c("doParallel", "foreach"),
+      "parallel bisection simulations"
+    )
+
     # sensible default if user passed an invalid cores
     if (is.null(cores) || !is.numeric(cores) || cores < 1) {
       cores <- parallel::detectCores(logical = FALSE)
@@ -385,15 +387,8 @@ calculate_bisection <- function(
   # Helper: summary of metric for n_reps_per repetitions
   summary_at_n <- function(n) {
     if (isTRUE(parallel) && registered_parallel) {
-      if (!"package:foreach" %in% search()) {
-        library(foreach, quietly = TRUE)
-      }
-      if (!"package:doParallel" %in% search()) {
-        library(doParallel, quietly = TRUE)
-      }
-
-      # Use foreach %dopar% on the already-registered cluster
-      vals <- foreach::foreach(i = seq_len(n_reps_per), .combine = c) %dopar%
+      vals <- foreach::`%dopar%`(
+        foreach::foreach(i = seq_len(n_reps_per), .combine = c),
         {
           # Each worker will call single_run; single_run closes over data_function, etc.
           tryCatch(
@@ -405,6 +400,7 @@ calculate_bisection <- function(
             error = function(e) value_on_error
           )
         }
+      )
     } else {
       vals <- vapply(
         seq_len(n_reps_per),
@@ -487,13 +483,12 @@ calculate_bisection <- function(
 
 #' mlpwr-bs Hybrid engine using bisection to determine initial range and mlpwr for search
 #' @inheritParams simulate_custom
-#' @param n_init Integer number of initial sample sizes simulated before the Gaussian-process search begins.
 #' @param verbose Logical flag passed to `mlpwr`; when `TRUE` verbose output is printed.
 #' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
 #'
 #' @return List containing the combined bisection and mlpwr results (`results`, `summaries`, `min_n`, `perf_n`, and `mlpwr_ds`).
 #' @keywords internal
-#' @export
+#' @noRd
 calculate_mlpwr_bs <- function(
   test_n,
   n_reps_total,

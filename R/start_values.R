@@ -1,13 +1,18 @@
 #' Get Performance
 #'
-#' @param results
-#' @param p
-#' @param mean
+#' @param results Numeric matrix of replicate performance values, with one row
+#'   per evaluated sample size.
+#' @param p Optional numeric quantile in `(0, 1)` used when `mean = FALSE`.
+#' @param mean Logical; if `TRUE`, return row means instead of quantiles.
 #'
-#' @returns
-#' @export
+#' @return Numeric vector of aggregated performance summaries, one value per row
+#'   of `results`.
+#' @keywords internal
+#' @noRd
 #'
 #' @examples
+#' perf <- matrix(c(0.81, 0.83, 0.86, 0.88), nrow = 2, byrow = TRUE)
+#' get_perf(perf, mean = TRUE)
 get_perf <- function(results, p = NULL, mean = FALSE) {
   if (is.null(p) && !mean) {
     stop("Either p or mean must be specified")
@@ -112,26 +117,34 @@ adaptive_startvalues <- function(
 
 #' Adaptive starting value searching (model/metrics) agnostic.
 #'
-#' @param data_function
-#' @param model_function
-#' @param metric_function
-#' @param value_on_error
-#' @param start_n
-#' @param test_n
-#' @param n_reps_per
-#' @param n_reps_total
-#' @param target_performance
-#' @param threshold
-#' @param mean_or_assurance
-#' @param c_statistic
-#' @param parallel
-#' @param cores
-#' @param verbose
+#' @param data_function Function that generates a dataset when called with a
+#'   sample size `n`.
+#' @param model_function Function that fits a model to the generated data.
+#' @param metric_function Function used to evaluate predictive performance on a
+#'   test set.
+#' @param value_on_error Numeric fallback value returned when model fitting or
+#'   metric calculation fails.
+#' @param start_n Integer starting sample size for the adaptive search.
+#' @param test_n Integer size of the fixed test dataset used for evaluation.
+#' @param n_reps_per Integer number of simulation replicates per candidate
+#'   sample size.
+#' @param n_reps_total Integer total simulation budget used to cap the search.
+#' @param target_performance Numeric target threshold used to determine the
+#'   direction of the adaptive search.
+#' @param threshold Numeric tolerance around `target_performance` used to stop
+#'   the search once bounds are found.
+#' @param mean_or_assurance Character string selecting the performance summary
+#'   used in the search: `"mean"` or `"assurance"`.
+#' @param c_statistic Optional anticipated large-sample discrimination measure,
+#'   retained for compatibility with downstream heuristics.
+#' @param parallel Logical; if `TRUE`, evaluate replicates in parallel.
+#' @param cores Integer number of worker processes to use when `parallel = TRUE`.
+#' @param verbose Logical; if `TRUE`, print progress at each adaptive step.
 #'
-#' @returns
-#' @export
-#'
-#' @examples
+#' @return A list containing lower and upper sample-size bounds, the associated
+#'   performance summaries, and the search trace.
+#' @keywords internal
+#' @noRd
 calculate_adaptive_bounds <- function(
   data_function,
   model_function,
@@ -178,13 +191,20 @@ calculate_adaptive_bounds <- function(
   # ---------------------------------------------------------
   summary_at_n <- function(n) {
     if (parallel) {
+      require_optional_packages(
+        c("doParallel", "foreach"),
+        "parallel adaptive-bound calculations"
+      )
+
       cl <- parallel::makeCluster(cores)
       doParallel::registerDoParallel(cl)
 
-      vals <- foreach::foreach(i = 1:n_reps_per, .combine = c) %dopar%
+      vals <- foreach::`%dopar%`(
+        foreach::foreach(i = 1:n_reps_per, .combine = c),
         {
           single_run(n)
         }
+      )
 
       parallel::stopCluster(cl)
     } else {
@@ -304,16 +324,21 @@ calculate_adaptive_bounds <- function(
 
 #' Get initial starting values before using adaptive searching
 #'
-#' @param data_function
-#' @param metric_function
-#' @param target_performance
-#' @param c_statistic
-#' @param mean_or_assurance
+#' @param data_function Function that generates data for a requested sample
+#'   size.
+#' @param metric_function Function used to evaluate performance; must carry a
+#'   `"metric"` attribute.
+#' @param target_performance Numeric target threshold for the chosen
+#'   performance metric.
+#' @param c_statistic Optional anticipated discrimination measure used by the
+#'   heuristic rules for some outcome types.
+#' @param mean_or_assurance Character string selecting whether the search
+#'   targets the mean-based or assurance-based criterion.
 #'
-#' @returns
-#' @export
-#'
-#' @examples
+#' @return A list containing the inferred number of predictors, the detected
+#'   metric, and heuristic starting minimum and maximum sample sizes.
+#' @keywords internal
+#' @noRd
 compute_start_sample_sizes <- function(
   data_function,
   metric_function,
@@ -492,7 +517,8 @@ compute_start_sample_sizes <- function(
 #' get_min_sample_size: Heuristic starting-n for binary/continuous/survival prediction
 #'
 #' @param npar Integer; number of predictors in the model.
-#' @param prevalence Numeric in [0, 1]; optional event rate or case fraction used for EPV calculations.
+#' @param prevalence Numeric in `[0, 1]`; optional event rate or case fraction
+#'   used for EPV calculations.
 #' @param c_stat Numeric in (0.5, 1]; anticipated discrimination (C-statistic). Lower values inflate the heuristic.
 #' @param calib_slope Numeric; anticipated calibration slope. Values below 1 trigger a modest inflation.
 #' @param epv_value Numeric; target events-per-variable (EPV) value applied when prevalence is supplied.

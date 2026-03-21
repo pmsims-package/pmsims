@@ -1,7 +1,9 @@
 #' default_model_generators Generate appropriate model based on input arguments
 #'
-#' @param outcome type of outcome, possible options are: "binary".
-#' @return Model function.
+#' @format A named list of default model generator functions grouped by outcome
+#'   type.
+#' @return `default_models` is a list containing built-in model generators for
+#'   binary, continuous, and survival outcomes.
 #' @keywords internal
 default_models <- list(
   binary = list(
@@ -9,6 +11,8 @@ default_models <- list(
       stats::glm("y ~ .", data = d, family = "binomial")
     },
     lasso = function(d) {
+      require_optional_packages("glmnet", "lasso models")
+
       # expects first column y (0/1) and remaining columns predictors
       d <- as.matrix(d)
       x <- d[, -1, drop = FALSE]
@@ -20,6 +24,11 @@ default_models <- list(
       )
     },
     rf = function(d) {
+      require_optional_packages(
+        c("randomForest", "ranger"),
+        "random-forest models"
+      )
+
       # expects column 1 = y (0/1) and remaining columns predictors
       ncores <- parallel::detectCores(logical = FALSE)
       nthreads <- ncores - 2
@@ -53,6 +62,8 @@ default_models <- list(
       nrounds = 100,
       params = list(objective = "binary:logistic", eval_metric = "logloss")
     ) {
+      require_optional_packages("xgboost", "xgboost models")
+
       # expects first column y (0/1), remaining columns predictors
       x <- as.matrix(d[, -1, drop = FALSE])
       y <- as.numeric(d[, 1])
@@ -71,6 +82,8 @@ default_models <- list(
       stats::glm("y ~ .", data = d, family = "gaussian")
     },
     lasso = function(d) {
+      require_optional_packages("glmnet", "lasso models")
+
       # expects first column y (numeric), remaining columns predictors
       dmat <- as.matrix(d)
       x <- dmat[, -1, drop = FALSE]
@@ -82,6 +95,11 @@ default_models <- list(
       )
     },
     rf = function(d) {
+      require_optional_packages(
+        c("randomForest", "ranger"),
+        "random-forest models"
+      )
+
       # expects first column y (numeric), remaining columns predictors
       ncores <- parallel::detectCores(logical = FALSE)
       nthreads <- ncores - 2
@@ -130,6 +148,8 @@ default_models <- list(
       nrounds = 100,
       params = list(objective = "reg:squarederror", eval_metric = "rmse")
     ) {
+      require_optional_packages("xgboost", "xgboost models")
+
       # expects first column y (numeric), remaining columns predictors
       x <- as.matrix(d[, -1, drop = FALSE])
       y <- as.numeric(d[, 1])
@@ -150,6 +170,8 @@ default_models <- list(
       survival::coxph(formula, data = d)
     },
     lasso = function(d) {
+      require_optional_packages("glmnet", "lasso models")
+
       # glmnet with 'cox' family: predictors as matrix, response as Surv(time, event)
       # Remove time/event from predictors
       stopifnot(all(c("time", "event") %in% colnames(d)))
@@ -161,6 +183,8 @@ default_models <- list(
       glmnet::cv.glmnet(x, y, family = "cox")
     },
     rf = function(d) {
+      require_optional_packages("ranger", "random-forest models")
+
       # ranger survival forest: formula interface with Surv()
       ncores <- parallel::detectCores(logical = FALSE)
       nthreads <- ncores - 2
@@ -174,6 +198,8 @@ default_models <- list(
       nrounds = 100,
       params = list(objective = "survival:cox", eval_metric = "cox-nloglik")
     ) {
+      require_optional_packages("xgboost", "xgboost models")
+
       # XGBoost Cox objective: uses times as label but does not directly take a censoring vector.
       # We pass the observed times as the label and include event as a weight (1=event, 0=censored)
       # NOTE: This is a pragmatic/commonly-used approach — consult xgboost docs and consider
@@ -243,17 +269,10 @@ cv.ranger_tune <- function(
   ...
 ) {
   # ===== dependencies =====
-  required <- c("tuneRanger", "mlr", "ranger")
-  missing_pkgs <- setdiff(required, rownames(installed.packages()))
-  if (length(missing_pkgs) > 0) {
-    stop(
-      "Please install required packages: ",
-      paste(missing_pkgs, collapse = ", ")
-    )
-  }
-  library(tuneRanger)
-  library(mlr)
-  library(ranger)
+  require_optional_packages(
+    c("tuneRanger", "mlr", "ranger"),
+    "ranger tuning"
+  )
 
   type <- match.arg(type)
   set.seed(seed)
@@ -269,7 +288,7 @@ cv.ranger_tune <- function(
     }
     time_col <- surv_vars[1]
     status_col <- surv_vars[2]
-    task <- makeSurvTask(data = data, target = c(time_col, status_col))
+    task <- mlr::makeSurvTask(data = data, target = c(time_col, status_col))
   } else {
     resp <- all.vars(formula)[1]
     if (type == "classification") {
@@ -277,12 +296,12 @@ cv.ranger_tune <- function(
         warning("Converting response to factor for classification.")
         data[[resp]] <- as.factor(data[[resp]])
       }
-      task <- makeClassifTask(data = data, target = resp)
+      task <- mlr::makeClassifTask(data = data, target = resp)
     } else {
       if (!is.numeric(data[[resp]])) {
         warning("Regression target is not numeric.")
       }
-      task <- makeRegrTask(data = data, target = resp)
+      task <- mlr::makeRegrTask(data = data, target = resp)
     }
   }
 
@@ -375,7 +394,7 @@ print.cv.ranger_tune <- function(x, ...) {
   cat("Recommended parameters:\n")
   print(x$recommended.pars)
   cat("\nTop tuning results (first 6 rows):\n")
-  print(head(x$results))
+  print(utils::head(x$results))
   if (!is.null(x$model)) {
     cat("\nFinal model attached as $model\n")
   }

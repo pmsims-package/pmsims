@@ -26,7 +26,7 @@ plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
   fit <- ds$fit
   aggregate_fun <- ds$aggregate_fun
 
-  dat_obs <- mlpwr:::todataframe(
+  dat_obs <- mlpwr_results_to_dataframe(
     dat,
     aggregate = TRUE,
     aggregate_fun = aggregate_fun
@@ -178,4 +178,37 @@ plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
     )
     plot_data
   }
+}
+
+#' Convert stored mlpwr results to a plotting data frame
+#'
+#' @param dat List of sampled designs and associated performance values.
+#' @param aggregate Logical; if `TRUE`, reduce each `y` vector to one value.
+#' @param aggregate_fun Summary function used when `aggregate = TRUE`.
+#'
+#' @return A data frame with one row per sampled design.
+#' @keywords internal
+#' @noRd
+mlpwr_results_to_dataframe <- function(dat, aggregate = TRUE, aggregate_fun) {
+  rows <- lapply(dat, function(entry) {
+    x_vals <- entry$x
+    if (is.null(names(x_vals))) {
+      names(x_vals) <- if (length(x_vals) == 1) "n" else paste0("x", seq_along(x_vals))
+    }
+
+    y_vals <- entry$y
+    y_out <- if (aggregate) {
+      aggregate_fun(y_vals)
+    } else {
+      y_vals
+    }
+
+    data.frame(
+      as.list(x_vals),
+      y = y_out,
+      check.names = FALSE
+    )
+  })
+
+  do.call(rbind, rows)
 }

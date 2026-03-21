@@ -68,7 +68,7 @@ test_that("cv.ranger_tune reports missing optional dependencies clearly", {
       formula = y ~ x1 + x2,
       type = "classification"
     ),
-    "Please install required packages:",
+    "The ranger tuning feature requires the following optional packages:",
     fixed = TRUE
   )
 })

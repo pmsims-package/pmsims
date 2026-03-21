@@ -64,8 +64,19 @@ default_metric_generator <- function(metric, data_function) {
   return(metric_function)
 }
 
+#' Predict from supported pmsims model objects
+#'
+#' @param x Predictor data supplied as a data frame or matrix.
+#' @param y Optional outcome data retained for API compatibility.
+#' @param fit Fitted model object returned by one of the supported model
+#'   generators.
+#' @param model Character string identifying the model family.
+#' @param type Prediction scale requested from the fitted model.
+#'
+#' @return Numeric predictions, or a survival-probability matrix when the
+#'   requested model and `type` support it.
 #' @keywords internal
-#' @export
+#' @noRd
 predict_custom <- function(x, y = NULL, fit, model, type = "response") {
   # x: data.frame or matrix of predictors (no outcome column)
   # y: optional (not used here, kept for API compatibility)
@@ -91,9 +102,7 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
   # LASSO (glmnet::cv.glmnet)
   if (model == "lasso") {
     # Expect fit is cv.glmnet (or glmnet object) and x_mat is numeric matrix
-    if (!("glmnet" %in% rownames(utils::installed.packages()))) {
-      warning("glmnet not installed; predict for lasso will fail.")
-    }
+    require_optional_packages("glmnet", "lasso predictions")
     #s_val <- if (!is.null(fit$lambda.1se)) fit$lambda.1se else if (!is.null(fit$lambda.min)) fit$lambda.min else NULL
     #if (is.null(s_val)) s_val <- NULL
 
@@ -107,7 +116,7 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
       lp = "link",
       stop("Type '", type, "' not supported for lasso.")
     )
-    preds <- as.numeric(predict(
+    preds <- as.numeric(stats::predict(
       fit,
       newx = x_mat,
       s = s_val,
@@ -133,7 +142,7 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
     ncores <- parallel::detectCores(logical = FALSE)
     nthreads <- ncores - 2
 
-    pr <- predict(fit, data = x_df, num.threads = nthreads)
+    pr <- stats::predict(fit, data = x_df, num.threads = nthreads)
     preds <- pr$predictions
 
     # Classification (probabilities) => matrix with columns per class
@@ -198,9 +207,7 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
 
   # xgboost
   if (model == "xgboost" || inherits(fit, "xgb.Booster")) {
-    if (!("xgboost" %in% rownames(utils::installed.packages()))) {
-      warning("xgboost not installed; predict for xgboost will fail.")
-    }
+    require_optional_packages("xgboost", "xgboost predictions")
     # xgboost predict expects a matrix or xgb.DMatrix
     dmat <- xgboost::xgb.DMatrix(data = x_mat)
     preds <- stats::predict(fit, dmat)
@@ -231,7 +238,7 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
     stop("xgboost: unsupported 'type' requested.")
   }
 
-  # Cox models or other types that might use survival:::predict.coxph
+  # Cox models or other types that might use survival predictions
   if (model == "coxph") {
     fit_for_prediction <- fit
     formula_env <- new.env(
@@ -242,11 +249,11 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
     attr(fit_for_prediction$terms, ".Environment") <- formula_env
 
     if (type %in% c("lp", "link")) {
-      return(survival:::predict.coxph(fit_for_prediction, x_df, type = "lp"))
+      return(stats::predict(fit_for_prediction, newdata = x_df, type = "lp"))
     } else if (type == "survival") {
-      return(survival:::predict.coxph(
+      return(stats::predict(
         fit_for_prediction,
-        x_df,
+        newdata = x_df,
         type = "survival"
       ))
     } else {
@@ -419,13 +426,13 @@ survival_calib_slope_free <- function(data, fit, model, eval_time = NULL) {
     # If cox-like linear predictor available, try to obtain predicted survival via baseline from a coxph fit
     if (model == "coxph") {
       pred_surv <- try(
-        survival:::predict.coxph(fit, data, type = "survival"),
+        stats::predict(fit, newdata = data, type = "survival"),
         silent = TRUE
       )
       if (inherits(pred_surv, "try-error")) pred_surv <- NULL
     } else if (model %in% c("rf", "ranger")) {
       # ranger survival returns matrix of survival probabilities by time index in predict()
-      pr <- try(predict(fit, data = x), silent = TRUE)
+      pr <- try(stats::predict(fit, data = x), silent = TRUE)
       if (
         !inherits(pr, "try-error") &&
           !is.null(pr$predictions) &&
