@@ -93,6 +93,26 @@ test_that("cv.ranger_tune validates survival formulas when dependencies are inst
   )
 })
 
+test_that("resolve_mlr_measures maps exported mlr measures by id", {
+  skip_if_not_installed("mlr")
+
+  measures <- resolve_mlr_measures(c("auc", "acc"), task_type = "classif")
+
+  expect_length(measures, 2)
+  expect_true(all(vapply(measures, inherits, logical(1), what = "Measure")))
+  expect_identical(vapply(measures, `[[`, character(1), "id"), c("auc", "acc"))
+})
+
+test_that("resolve_mlr_measures rejects unknown ids", {
+  skip_if_not_installed("mlr")
+
+  expect_error(
+    resolve_mlr_measures("definitely_not_a_real_measure", task_type = "classif"),
+    "Unknown mlr measure: definitely_not_a_real_measure",
+    fixed = TRUE
+  )
+})
+
 test_that("print.cv.ranger_tune prints a compact summary", {
   object <- structure(
     list(

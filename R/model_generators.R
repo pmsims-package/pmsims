@@ -252,6 +252,23 @@ default_model_generators <- function(outcome, model) {
 
 #' @keywords internal
 #' @noRd
+resolve_mlr_measures <- function(measure_names, task_type = NA_character_) {
+  available_measures <- mlr::listMeasures(task_type, create = TRUE)
+  available_ids <- vapply(available_measures, function(x) x$id, character(1))
+
+  lapply(measure_names, function(measure_name) {
+    measure_index <- match(measure_name, available_ids)
+
+    if (is.na(measure_index)) {
+      stop("Unknown mlr measure: ", measure_name, call. = FALSE)
+    }
+
+    available_measures[[measure_index]]
+  })
+}
+
+#' @keywords internal
+#' @noRd
 cv.ranger_tune <- function(
   data,
   formula,
@@ -324,14 +341,13 @@ cv.ranger_tune <- function(
   } else {
     # allow measure to be character, mlr measure object, or list
     if (is.character(measure)) {
-      # single name or vector of names
-      measure_obj <- lapply(measure, function(mn) {
-        mm <- mlr::getMeasure(mn)
-        if (is.null(mm)) {
-          stop("Unknown mlr measure: ", mn)
-        }
-        mm
-      })
+      task_type <- switch(
+        type,
+        regression = "regr",
+        classification = "classif",
+        survival = "surv"
+      )
+      measure_obj <- resolve_mlr_measures(measure, task_type = task_type)
     } else if (inherits(measure, "Measure")) {
       measure_obj <- list(measure)
     } else if (
