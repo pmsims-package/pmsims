@@ -23,68 +23,46 @@ calculate_mlpwr <- function(
 ) {
   
   # Determine initial start values
-  start_values <- compute_start_sample_sizes(
-    data_function = data_function,
-    metric_function = metric_function,
-    target_performance = target_performance,
-    c_statistic = c_statistic,
-    mean_or_assurance = mean_or_assurance
-  )
+  start_values <- tryCatch({
+    compute_start_sample_sizes(
+      data_function = data_function,
+      metric_function = metric_function,
+      target_performance = target_performance,
+      c_statistic = c_statistic,
+      mean_or_assurance = mean_or_assurance
+    )
+  }, error = function(e) {
+    stop(paste("Error when computing start values:", e$message), call. = FALSE)
+  })
   
   # Adaptive starting values search
   cat("Estimating first stage... (Adaptive starting value search algorithm)\n")
-    start_values <- calculate_adaptive_bounds(
-    data_function = data_function,
-    model_function = model_function,
-    metric_function = metric_function,
-    value_on_error = NA,
-    start_n =  start_values$start_min_sample_size,
-    test_n = test_n,
-    n_reps_per = n_reps_per,
-    n_reps_total = 500,
-    target_performance = target_performance,
-    threshold = 0.0001,
-    mean_or_assurance = mean_or_assurance,
-    verbose = FALSE
-  )
+  start_values <- tryCatch({
+    calculate_adaptive_bounds(
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      value_on_error = NA,
+      start_n = start_values$start_min_sample_size,
+      test_n = test_n,
+      n_reps_per = n_reps_per,
+      n_reps_total = 500,
+      target_performance = target_performance,
+      threshold = 0.0001,
+      mean_or_assurance = mean_or_assurance,
+      verbose = FALSE
+    )
+  }, error = function(e) {
+    stop(paste("Error during adaptive start value search:", e$message), call. = FALSE)
+  })
   
   start_min_sample_size <- start_values$min_sample_size
   start_max_sample_size <- start_values$max_sample_size
   
-  # Calculate metrics for sample size n
-  mlpwr_simulation_function <- function(n) {
-    tryCatch(
-      {
-        test_data <- data_function(test_n)
-        train_data <- data_function(n)
-        fit <- model_function(train_data)
-        model <- attr(model_function, "model")
-        metric_function(test_data, fit, model)
-      },
-      error = function(e) {
-        return(value_on_error)
-      }
-    )
-  }
+  cat("Starting values determined: min sample size =", start_min_sample_size, 
+      "max sample size =", start_max_sample_size, "\n")
   
-  if (mean_or_assurance == "mean") {
-    aggregate_fun <- function(x) mean(x, na.rm = TRUE)
-  } else if (mean_or_assurance == "assurance") {
-    aggregate_fun <- function(x) stats::quantile(x, probs = .2, na.rm = TRUE)
-  } else {
-    stop("mean_or_assurance must be either 'mean' or 'assurance'")
-  }
-  
-  # Use a bootstrap to estimate the variance of the estimated quantile
-  var_bootstrap <- function(x) {
-    stats::var(replicate(
-      20,
-      aggregate_fun(sample(x, length(x), replace = TRUE))
-    ))
-  }
-  
-  # Calculate bootstrapped quantile variance
-  noise_fun <- function(x) var_bootstrap(x$y)
+ 
   
   # TODO: Explain this better
   # processing final_estimate_se
@@ -193,21 +171,59 @@ calculate_mlpwr <- function(
     add = TRUE
   )
   
-  
-  ds <-
-    mlpwr::find.design(
-      simfun = mlpwr_simulation_function,
-      aggregate_fun = aggregate_fun,
-      noise_fun = noise_fun,
-      boundaries = c(start_min_sample_size, start_max_sample_size),
-      power = target_performance,
-      surrogate = "gpr",
-      setsize = n_reps_per,
-      evaluations = n_reps_total,
-      ci = ci,
-      n.startsets = n_init,
-      silent = FALSE
+  # Functions required for mlpwr
+  # Calculate metrics for sample size n
+  mlpwr_simulation_function <- function(n) {
+    tryCatch(
+      {
+        test_data <- data_function(test_n)
+        train_data <- data_function(n)
+        fit <- model_function(train_data)
+        model <- attr(model_function, "model")
+        metric_function(test_data, fit, model)
+      },
+      error = function(e) {
+        return(value_on_error)
+      }
     )
+  }
+  
+  if (mean_or_assurance == "mean") {
+    aggregate_fun <- function(x) mean(x, na.rm = TRUE)
+  } else if (mean_or_assurance == "assurance") {
+    aggregate_fun <- function(x) stats::quantile(x, probs = .2, na.rm = TRUE)
+  } else {
+    stop("mean_or_assurance must be either 'mean' or 'assurance'")
+  }
+  
+  # Use a bootstrap to estimate the variance of the estimated quantile
+  var_bootstrap <- function(x) {
+    stats::var(replicate(
+      20,
+      aggregate_fun(sample(x, length(x), replace = TRUE))
+    ))
+  }
+  
+  # Calculate bootstrapped quantile variance
+  noise_fun <- function(x) var_bootstrap(x$y)
+  
+  ds <- tryCatch({
+      mlpwr::find.design(
+        simfun = mlpwr_simulation_function,
+        aggregate_fun = aggregate_fun,
+        noise_fun = noise_fun,
+        boundaries = c(start_min_sample_size, start_max_sample_size),
+        power = target_performance,
+        surrogate = "gpr",
+        setsize = n_reps_per,
+        evaluations = n_reps_total,
+        ci = ci,
+        n.startsets = n_init,
+        silent = FALSE
+      )
+    }, error = function(e) {
+    stop(paste("mlpwr::find.design failed with error:", e$message), call. = FALSE)
+  })
   
   # Process results from mlpwr
   perfs <- ds$dat
