@@ -150,7 +150,7 @@ calculate_adaptive_bounds <- function(
     cores = 20,
     verbose = FALSE
 ) {
-  
+  verbose = TRUE
   # ---------------------------------------------------------
   # Budget
   # ---------------------------------------------------------
@@ -322,19 +322,32 @@ compute_start_sample_sizes <- function(
     c_statistic = NULL,
     mean_or_assurance = c("mean", "assurance")
 ) {
+  
+  
   mean_or_assurance <- match.arg(mean_or_assurance)
   
   # 1. Number of predictors (exclude outcome column)
-  npar <- dim(data_function(1))[2] - 1
+  npar <- dim(data_function(10))[2] - 1
   
+  # Set default start value - this is used if the outcome type cannot be determined.
+  default_start_value = 10* npar
+    
   # 2. Inspect data_function formals to infer outcome type
   formals_list <- formals(data_function)
   args_names <- names(formals_list)
   
   metric_used <- attr(metric_function, "metric")
   if (is.null(metric_used)) {
-    stop("metric_function must have a 'metric' attribute.")
+    return(
+      list(
+        npar = npar,
+        metric_used = NULL,
+        start_min_sample_size = default_start_value,
+        start_max_sample_size = NA
+    )
+    )
   }
+  
   
   ## -----------------------
   ## SURVIVAL OUTCOME
