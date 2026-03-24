@@ -3,7 +3,7 @@
 #'
 #' @param data_function A function that returns datasets. Must have a single argument, `n`, which controls the sample size.
 #' @param model_function A function that fits models to the data. Takes the data object returned by `data_function` as its only argument.
-#' @param metric_function A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.
+#' @param metric_function A function that returns a performance metric. Must take test data, a fitted model and a model name string as arguments. These do not need to be named but must be ordered (test_data, fitted_model, model_name) Must return a single value.
 #' @param minimum_acceptable_performance Numeric. The target threshold
 #'   \eqn{M^\\*}; the algorithm searches for the smallest \eqn{n} meeting the
 #'   chosen criterion with respect to this threshold.
@@ -25,18 +25,18 @@
 #' @keywords internal
 
 simulate_custom <- function(
-  data_function = NULL,
-  model_function = NULL,
-  metric_function = NULL,
+  data_function,
+  model_function,
+  metric_function,
   minimum_acceptable_performance,
-  c_statistic,
+  c_statistic = NULL,
   mean_or_assurance = "assurance",
   test_n = 30000,
-  min_sample_size,
-  max_sample_size,
-  n_reps_total = NULL,
-  n_reps_per = 50,
+  min_sample_size = NULL,
+  max_sample_size= NULL,
+  n_reps_total = 1000,
   se_final = NULL,
+  n_reps_per = 50,
   n_init = 4,
   method = "mlpwr",
   verbose = FALSE,
