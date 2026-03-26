@@ -83,7 +83,7 @@ my_metric = function(test_data, fitted_model, model_name) {
   
   predictions <- predict(fitted_model, newx = x_test, s = "lambda.min")
   
-  mae <- -mean(abs(predictions - y_test))
+  mae <- -mean(abs(predictions - y_test)) # set negative as pmsims expects higher performance to be better
   
   return(mae)
 }
