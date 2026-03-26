@@ -7,17 +7,15 @@
 #' @param target_performance Numeric. Minimum acceptable value of the selected
 #'   performance metric \eqn{M^\\*}; the algorithm searches for the smallest
 #'   \eqn{n} meeting the chosen criterion with respect to this threshold.
-#' @param c_statistic Numeric; anticipated large-sample discrimination, if the outcome is binary or survival. 
+#' @param c_statistic This argument is used internally only. Set to Null when running simulate custom.
 #'  This is used to determine the appropriate starting values for the search. This argument is not used for other outcome types. You probably wont need this. ** explain when this is used**
 #' @param mean_or_assurance Character string `"mean"` or `"assurance"` indicating which criterion defines the minimum sample size.
 #' @param test_n Integer size of the test datasets used to evaluate performance (should be large). Default is 30000.
-#' @param min_sample_size Integer lower bound of the sample-size search region. If this is set the adaptive starting values are not run - set to NULL to use adaptive algorithm. **same point below - both or none** ** add messeage to output** 
-#' @param max_sample_size Integer upper bound of the sample-size search region. ****** CHECK IF SPECIFIED THESE MAY OVERIDE THE ADAPTIVE STARTING VALUES. MAY WANT TO DEFAULT TO NULL.**as above**
+#' @param min_sample_size Integer lower bound of the sample-size search region. If this is set the adaptive starting values are not run - set to NULL to use adaptive algorithm.
+#' @param max_sample_size Integer upper bound of the sample-size search region. If this is set the adaptive starting values are not run - set to NULL to use adaptive algorithm. as above**
 #' @param n_reps_total Integer total number of simulation replications allocated to the search. The search will look at n_reps_total/n_reps_per candidate sample sizes. Supply either `n_reps_total` or `se_final`.
 #' @param n_reps_per Integer number of replications evaluated at each candidate sample size.
-#' @param se_final Numeric standard error threshold used for early stopping (supply either `n_reps_total` or `se_final`). **********CURRENTLY UNUSED. REMOVE
-#' @param n_init Integer number of initial sample sizes explored before the main search algorithm begins. **********DOES THIS DO ANYTHING. REMOVE - FIX at 4.
-#' @param method Character string selecting the search engine; currently `"mlpwr"`, `"bisection"`, or `"mlpwr-bs"`. This should not be changed. **********SHOULD SET DEFAULT TO OUR FAVOURITE and only mention that in description.
+#' @param method Character string selecting the search engine; defaults to "mlpwr" which is the best performing option in validation
 #' @param verbose Logical flag controlling printed progress information.
 #' @param ... Additional arguments passed to the chosen engine.
 #'
@@ -35,13 +33,14 @@ simulate_custom <- function(
   min_sample_size = NULL,
   max_sample_size= NULL,
   n_reps_total = 1000,
-  se_final = NULL,
   n_reps_per = 20,
-  n_init = 4,
   method = "mlpwr",
   verbose = FALSE,
   ...
 ) {
+  n_init <- 4 # fixing n_init at 4. This is the number of initial sample sizes calculated after the min max are established and before the main search algorithm begins.
+  se_final <- NULL # Setting unused se_final argument. This is passed to engines and in the future we may add functionality for se_final based stopping.
+  
   if (is.null(data_function)) {
     stop("data_function missing")
   }
@@ -55,13 +54,22 @@ simulate_custom <- function(
   ) {
     stop("Exactly one of 'n_reps_total' or 'se_final' must be specified.")
   }
-
+  
+  # Checking min and max_sample_size inputs.
+  if((!is.null(min_sample_size) && is.null(max_sample_size)) || (is.null(min_sample_size) && !is.null(max_sample_size))) {
+    stop("min_sample_size and max_sample_size must either both be positive integers or both set to NULL")
+  }
+  
   if (
     !is.null(min_sample_size) &&
       !is.null(max_sample_size) &&
       min_sample_size > max_sample_size
   ) {
     stop("min_sample_size must be less than max_sample_size")
+  }
+  
+  if(!is.null(min_sample_size)){
+    cat("Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.")
   }
 
   if ((mean_or_assurance %in% c("mean", "assurance")) == FALSE) {
