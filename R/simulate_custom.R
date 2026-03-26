@@ -4,9 +4,9 @@
 #' @param data_function A function that returns datasets. Must have a single argument, `n`, which controls the sample size.
 #' @param model_function A function that fits models to the data. Takes the data object returned by `data_function` as its only argument.
 #' @param metric_function A function that returns a performance metric. Must take test data, a fitted model and a model name string as arguments. These do not need to be named but must be ordered (test_data, fitted_model, model_name) Must return a single value.
-#' @param minimum_acceptable_performance Numeric. The target threshold. **This should be target performance**
-#'   \eqn{M^\\*}; the algorithm searches for the smallest \eqn{n} meeting the
-#'   chosen criterion with respect to this threshold.
+#' @param target_performance Numeric. Minimum acceptable value of the selected
+#'   performance metric \eqn{M^\\*}; the algorithm searches for the smallest
+#'   \eqn{n} meeting the chosen criterion with respect to this threshold.
 #' @param c_statistic Numeric; anticipated large-sample discrimination, if the outcome is binary or survival. 
 #'  This is used to determine the appropriate starting values for the search. This argument is not used for other outcome types. You probably wont need this. ** explain when this is used**
 #' @param mean_or_assurance Character string `"mean"` or `"assurance"` indicating which criterion defines the minimum sample size.
@@ -28,7 +28,7 @@ simulate_custom <- function(
   data_function,
   model_function,
   metric_function,
-  minimum_acceptable_performance,
+  target_performance,
   c_statistic = NULL,
   mean_or_assurance = "assurance",
   test_n = 30000,
@@ -94,7 +94,7 @@ simulate_custom <- function(
       se_final = se_final,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
-      target_performance = minimum_acceptable_performance,
+      target_performance = target_performance,
       c_statistic = c_statistic,
       mean_or_assurance,
       n_init = n_init,
@@ -133,7 +133,7 @@ simulate_custom <- function(
       se_final = se_final,
       min_sample_size = min_sample_size,
       max_sample_size = max_sample_size,
-      target_performance = minimum_acceptable_performance,
+      target_performance = target_performance,
       c_statistic = c_statistic,
       mean_or_assurance,
       verbose = verbose,
@@ -159,7 +159,7 @@ simulate_custom <- function(
       output$perf_n
     ),
     mlpwr_ds = output$mlpwr_ds,
-    target_performance = minimum_acceptable_performance,
+    target_performance = target_performance,
     summaries = output$summaries,
     data = output$results,
     train_size = rownames(output$results),
