@@ -65,41 +65,8 @@ calculate_mlpwr <- function(
 
 
   # Calculate metrics for sample size n
-  mlpwr_simulation_function <- function(n) {
-    tryCatch(
-      {
-        test_data <- data_function(test_n)
-        train_data <- data_function(n)
-        fit <- model_function(train_data)
-        model <- attr(model_function, "model")
-        metric_function(test_data, fit, model)
-      },
-      error = function(e) {
-        return(value_on_error)
-      }
-    )
-  }
 
-  if (mean_or_assurance == "mean") {
-    aggregate_fun <- function(x) mean(x, na.rm = TRUE)
-  } else if (mean_or_assurance == "assurance") {
-    aggregate_fun <- function(x) stats::quantile(x, probs = .2, na.rm = TRUE)
-  } else {
-    stop("mean_or_assurance must be either 'mean' or 'assurance'")
-  }
 
-  # Use a bootstrap to estimate the variance of the estimated quantile
-  var_bootstrap <- function(x) {
-    stats::var(replicate(
-      20,
-      aggregate_fun(sample(x, length(x), replace = TRUE))
-    ))
-  }
-
-  # Calculate bootstrapped quantile variance
-  noise_fun <- function(x) var_bootstrap(x$y)
-
->>>>>>> dev
   # TODO: Explain this better
   # processing final_estimate_se
   # Auto-stopping or not
