@@ -22,7 +22,6 @@ calculate_mlpwr <- function(
   value_on_error
 ) {
   # Determine initial start values
-<<<<<<< HEAD
   start_values <- tryCatch({
     compute_start_sample_sizes(
       data_function = data_function,
@@ -63,35 +62,7 @@ calculate_mlpwr <- function(
       "max sample size =", start_max_sample_size, "\n")
   
  
-  
-=======
-  start_values <- compute_start_sample_sizes(
-    data_function = data_function,
-    metric_function = metric_function,
-    target_performance = target_performance,
-    c_statistic = c_statistic,
-    mean_or_assurance = mean_or_assurance
-  )
 
-  # Adaptive starting values search
-  cat("Estimating first stage... (Adaptive starting value search algorithm)\n")
-  start_values <- calculate_adaptive_bounds(
-    data_function = data_function,
-    model_function = model_function,
-    metric_function = metric_function,
-    value_on_error = NA,
-    start_n = start_values$start_min_sample_size,
-    test_n = test_n,
-    n_reps_per = n_reps_per,
-    n_reps_total = 500,
-    target_performance = target_performance,
-    threshold = 0.0001,
-    mean_or_assurance = mean_or_assurance,
-    verbose = FALSE
-  )
-
-  start_min_sample_size <- start_values$min_sample_size
-  start_max_sample_size <- start_values$max_sample_size
 
   # Calculate metrics for sample size n
   mlpwr_simulation_function <- function(n) {
