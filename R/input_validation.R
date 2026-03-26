@@ -1,29 +1,44 @@
-validate_metric_constraints <- function(metric,
-                                        minimum_acceptable_performance,
-                                        expected_performance = NULL) {
+validate_metric_constraints <- function(
+  metric,
+  target_performance,
+  maximum_achievable_performance = NULL
+) {
   metric_lower <- tolower(metric)
+  metric_label <- switch(
+    metric_lower,
+    auc = "AUC",
+    r2 = "R2",
+    cindex = "C-index",
+    metric
+  )
 
   if (metric_lower %in% c("calibration_slope", "calib_slope")) {
-    if (minimum_acceptable_performance < 0.8) {
+    if (target_performance < 0.8) {
       stop(
-        "Suggested calibration slope is too low; check and try again.",
+        "Requested target calibration slope is too low; check and try again.",
         call. = FALSE
       )
     }
-    if (minimum_acceptable_performance > 1.2) {
+    if (target_performance > 1.2) {
       stop(
-        "Suggested calibration slope is too high; check and try again.",
+        "Requested target calibration slope is too high; check and try again.",
         call. = FALSE
       )
     }
   }
 
-  if (!is.null(expected_performance) && metric_lower %in% c("auc","r2","cindex")) {
-    if (expected_performance < minimum_acceptable_performance) {
+  if (
+    !is.null(maximum_achievable_performance) &&
+      metric_lower %in% c("auc", "r2", "cindex")
+  ) {
+    if (target_performance >= maximum_achievable_performance) {
       stop(
         paste(
-          "Requested minimum acceptable", metric_lower, "exceeds the expected",
-          "large-sample performance; adjust inputs and try again."
+          "Requested target",
+          metric_label,
+          "must be less than the maximum achievable",
+          metric_label,
+          "because both are specified on the same metric scale."
         ),
         call. = FALSE
       )
@@ -32,15 +47,13 @@ validate_metric_constraints <- function(metric,
 }
 
 
-
-
 validate_outcome_prevalence <- function(outcome_prevalence) {
   if (is.null(outcome_prevalence)) {
     cli::cli_abort("`outcome_prevalence` must be specified.")
   }
 
   if (outcome_prevalence < 0.05) {
-    cli::cli_alert_warning(
+    cli::cli_warn(
       "Outcome prevalence is very low ({.val {outcome_prevalence}}). Recommended > {.val 0.05}; values below this haven’t been tested, and simulations may take a long time."
     )
   }

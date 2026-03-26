@@ -22,7 +22,7 @@ plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
   ds <- x$mlpwr_ds
   design <- NULL
 
-  dat <- ds$dat
+  dat <- if (!is.null(ds$data)) ds$data else ds$dat
   fit <- ds$fit
   aggregate_fun <- ds$aggregate_fun
 
@@ -62,6 +62,12 @@ plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
     ns <- seq(boundariesx[1], boundariesx[2])
     nsx <- ns
   }
+
+  obs_n_col <- setdiff(names(dat_obs), "y")[1]
+  if (is.na(obs_n_col) || is.null(obs_n_col)) {
+    obs_n_col <- names(dat_obs)[1]
+  }
+
   dat_pred <- data.frame(
     n = ns,
     y = sapply(nsx, fit$fitfun),
@@ -73,8 +79,10 @@ plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
   perf_n <- if (!is.null(x$perf_n)) {
     as.numeric(x$perf_n)
   } else {
-    if (!is.na(min_n) && any(df$n == min_n)) {
-      df$mean[df$n == min_n]
+    if (
+      !is.na(min_n) && nrow(dat_obs) > 0 && any(dat_obs[[obs_n_col]] == min_n)
+    ) {
+      dat_obs$y[dat_obs[[obs_n_col]] == min_n][1]
     } else {
       NA_real_
     }
@@ -102,7 +110,7 @@ plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
 
   p <- p +
     ggplot2::geom_line(ggplot2::aes(x = dat_pred$n, y = dat_pred$y)) +
-    ggplot2::geom_point(ggplot2::aes(x = dat_obs$V1, y = dat_obs$y)) +
+    ggplot2::geom_point(ggplot2::aes(x = dat_obs[[obs_n_col]], y = dat_obs$y)) +
     ggplot2::theme_bw() +
     ggplot2::scale_color_brewer(palette = "Set1") +
     ggplot2::theme(legend.title = ggplot2::element_blank()) +
@@ -159,9 +167,9 @@ plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
   }
 
   if (plot) {
-    print(p)
+    invisible(print(p))
   } else {
-    observed_data <- dat_obs
+    observed_data <- dat_obs[, c(obs_n_col, "y"), drop = FALSE]
     predicted_data <- dat_pred[, -3]
     colnames(observed_data) <- colnames(predicted_data) <- c("n", metric_name)
     plot_data <- list(

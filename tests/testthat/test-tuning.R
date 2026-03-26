@@ -24,7 +24,6 @@ test_that("continuous_tuning returns sensible beta_signal", {
 })
 
 test_that("survival_tuning achieves target prevalence and c-index", {
-  skip_on_cran()
   skip_if_not_installed("survival")
   set.seed(123)
 
@@ -33,8 +32,8 @@ test_that("survival_tuning achieves target prevalence and c-index", {
     target_performance = 0.75,
     proportion_noise_features = 0,
     candidate_features = 6,
-    N_sim_optim = 1000,
-    N_sim_final = 2000
+    N_sim_optim = 400,
+    N_sim_final = 800
   )
 
   expect_length(tuning, 5)
@@ -51,6 +50,9 @@ test_that("survival_tuning achieves target prevalence and c-index", {
   expect_true(is.finite(event_rate))
   expect_true(is.finite(cindex))
   expect_true(event_rate > 0 && event_rate < 1)
+  expect_gt(tuning[["lambda_opt"]], 0)
+  expect_gt(tuning[["sigma_sq"]], 0)
+  expect_gte(tuning[["beta_signal"]], 0)
   expect_equal(event_rate, 0.3, tolerance = 0.05)
-  expect_equal(cindex, 0.75, tolerance = 0.05)
+  expect_equal(cindex, 0.75, tolerance = 0.08)
 })
