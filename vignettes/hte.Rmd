@@ -1,0 +1,219 @@
+---
+title: "hte"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{hte}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(pmsims)
+library(predieval)
+library(benchtm)
+```
+
+
+## Motivation
+Heterogeneous treatment effects occur when people with different characteristics get more or less benefit from interventions. Modelling heterogeneous treatment effects can facilitate personalised medicine, allowing the targeting of interventions to those who would benefit most.
+
+Sample size is important to ensure sufficient power to detect hetrogeneous treatment effects and ensure that the models that predict hetrogenous treatment effects are not overfit to the data. 
+
+
+### Defining the data generator
+For this example we will use the **benchtm** R-package. This package was created to allow the simualtion of data from randomised trials when hetrogeneous treatment effects are present. 
+
+I believe the prop = "X2" option when generating the treatment variable trt introduces confounding by X2.
+
+```{r}
+my_data_generator <- function(n) {
+  
+  # 1. Generate X distribution
+  x_data <- tryCatch({
+    benchtm::generate_X_dist(n = n, p = 10, rho = 0.5)
+  }, error = function(e) {
+    stop(sprintf("Error in generate_X_dist at n = %d: %s", n, e$message), call. = FALSE)
+  })
+  x_data <- x_data[, names(x_data) != "X6"] # removing X6 as catagorical variable simulated with varying numbers of levels which causes errors when differences occurs between test and train.
+  
+  # Process X data
+  x_data_numeric <- model.matrix(~., data = x_data)[,-1] |> data.frame()
+  
+  # 2. Generate Treatment
+  trt <- tryCatch({
+    benchtm::generate_trt(n = nrow(x_data_numeric), type = "random", X = x_data_numeric, prop = "X2")
+  }, error = function(e) {
+    stop(sprintf("Error in generate_trt at n = %d: %s", n, e$message), call. = FALSE)
+  })
+  
+  # 3. Generate Outcome (Y)
+  y_data <- tryCatch({
+    benchtm::generate_y(
+      x_data_numeric, 
+      trt = trt,
+      prog = "0.5*((X1Y=='Y')+X3)",
+      pred = "X3>0", # this defines how treatment effect heterogeneity is introduced.
+      b0 = 0, 
+      b1 = 1,
+      type = "continuous", 
+      sigma_error = 3
+    )
+  }, error = function(e) {
+    stop(sprintf("Error in generate_y at n = %d: %s", n, e$message), call. = FALSE)
+  })
+  
+  return(y_data)
+}
+
+example_data <- my_data_generator(n = 10)
+print(example_data)
+```
+
+### Defining the model function
+Next we need to define the model function. Our model will be a linear model with all the covariates included as main terms, as well as their pairwise interactions.
+
+```{r}
+my_model_function = function(data) {
+  x_names <- names(data)[grepl("^X", names(data))]
+  main_terms <- paste(x_names, collapse = " + ") 
+  interaction_terms <- paste("trt*", x_names, sep = "", collapse = " + ") 
+      formula <- glue::glue("Y ~ trt + {main_terms} + {interaction_terms}")
+      my_model = lm(data = data, formula = as.formula(formula))
+      return(my_model)
+}
+      
+example_data <- my_data_generator(n = 100)
+example_fitted_model <- my_model_function(example_data)
+print(example_fitted_model)
+```
+
+
+### The metric function
+
+For the perofrmance metric we carry out a joint test of all the interaction terms being zero (ie. no hetrogenous treatment effects) and return 1 if the test is statistically significant at the 5% level and 0 otehrwise.
+
+
+```{r}
+metric_test_for_hte <- function(test_data, fitted_model, model_name) {
+  
+  model_data <- model.frame(fitted_model)
+  x_names <- names(model_data)[grepl("^X", names(model_data))]
+  
+  # Construct reduced model (no interactions)
+  main_terms <- paste(x_names, collapse = " + ")
+  reduced_formula <- paste0("Y ~ trt + ", main_terms)
+  
+  reduced_model <- lm(
+    data = model_data,
+    formula = as.formula(reduced_formula)
+  )
+  
+  # Likelihood ratio test via ANOVA (nested models)
+  lrt <- anova(reduced_model, fitted_model)
+  
+  p_val <- lrt$`Pr(>F)`[2]
+  ifelse(p_val < 0.05, 1, 0)
+}
+
+```
+
+### Sense check: Large sample performance
+We would expect statistical power to be 1 when the sample size is very large. Model perofmrance would be 1.
+
+```{r}
+
+  set.seed(1234)
+  large_sample_data <- my_data_generator(n = 100000)
+  test_data <- my_data_generator(n = 10) # unused so set to be very small
+  test_model <- my_model_function(large_sample_data)
+  large_sample_performance <- metric_test_for_hte(test_data, test_model, "multivariable regression")
+  print(large_sample_performance)
+```
+
+### Running Simulate Custom
+We now run simulate custom. As we are looking to calculate statistical power we use the mean criterion and set the minimum acceptable performance to be the desired power.
+```{r}
+#set.seed(123)
+result <- simulate_custom(
+  data_function = my_data_generator,
+  model_function = my_model_function,
+  metric_function = metric_test_for_hte,
+  minimum_acceptable_performance = 0.8, # 80% power
+  mean_or_assurance = "mean",
+  test_n = 100, # set to be low as performance metric doesn't use any test data.
+  n_reps_total = 1000,
+)
+
+print(result)
+plot(result)
+```
+
+### What if we are interested in a different performance metric?
+So far we have calculated the minimum sample size for having adequate power to detect whether there are hetrogenous treatment effects using a statistical test. What if we are interested in other aspects of model performance?
+
+I'll define a separate metric function and use this. For this we'll use the predieval package.
+
+```{R}
+metric_calib_slope_for_benifit <- function(test_data, fitted_model, model_name){
+  x_names <- names(test_data)[grepl("^X", names(test_data))]
+  test_data_trt1 <- test_data
+  test_data_trt1$trt <- 1
+  
+  test_data_trt0 <- test_data
+  test_data_trt0$trt <- 0
+  
+   capture_output(perf <- predieval::predieval(
+    repeats = 5,
+    Ngroups = 5, 
+    X = test_data[, x_names, drop = FALSE],
+    treat = test_data$trt,
+    Y = test_data$Y,
+    predicted.treat.1 = predict(fitted_model, newdata = test_data_trt1),
+    predicted.treat.0 = predict(fitted_model, newdata = test_data_trt0),
+    type = "continuous",
+    bootstraps = 1 # set low as not interested in CI
+  ))
+  calib_slope_string <- perf$regression.for.benefit[[1]]
+  calib_slope <- as.numeric(regmatches(calib_slope_string, regexpr("[0-9]+\\.?[0-9]*", calib_slope_string)))
+  return(calib_slope)
+}
+
+```
+### Large sample performance
+Before running pmsims check what is possible in a large sample
+```{r}
+
+  set.seed(1234)
+  large_sample_data <- my_data_generator(n = 50000)
+  test_data <- my_data_generator(n = 5000) # set low as perf metric can be slow
+  test_model <- my_model_function(large_sample_data)
+  large_sample_performance <- metric_calib_slope_for_benifit(test_data, test_model, "multivariable regression")
+  print(large_sample_performance)
+```
+
+### Running Simulate Custom for calibration slope
+Now lets see what the minimum sample size to have a calibration slope for benifit of 0.9.
+```{r}
+#set.seed(123)
+result <- simulate_custom(
+  data_function = my_data_generator,
+  model_function = my_model_function,
+  metric_function = metric_calib_slope_for_benifit,
+  minimum_acceptable_performance = 0.9, 
+  mean_or_assurance = "assurance",
+  test_n = 5000, # set low as perf metric can be slow
+  n_reps_total = 200,
+)
+
+# what happens when sarting values fails to work
+
+print(result)
+plot(result)
+```
