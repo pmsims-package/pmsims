@@ -178,8 +178,7 @@ calculate_mlpwr <- function(
     },
     add = TRUE
   )
-<<<<<<< HEAD
-  
+
   # Functions required for mlpwr
   # Calculate metrics for sample size n
   mlpwr_simulation_function <- function(n) {
@@ -234,7 +233,6 @@ calculate_mlpwr <- function(
     stop(paste("mlpwr::find.design failed with error:", e$message), call. = FALSE)
   })
   
-=======
 
   ds <-
     mlpwr::find.design(
@@ -251,7 +249,6 @@ calculate_mlpwr <- function(
       silent = FALSE
     )
 
->>>>>>> dev
   # Process results from mlpwr
   perfs <- ds$dat
   perfs <- perfs[order(sapply(perfs, "[[", "x"))]
