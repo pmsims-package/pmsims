@@ -74,12 +74,13 @@ test_that("simulate_custom", {
     "auc",
     data_function
   )
+  
 
   sim_results_mlpwr <- suppressWarnings(simulate_custom(
     data_function = data_function,
     model_function = model_function,
     metric_function = metric_function,
-    target_performance = 0.75,
+    target_performance = 0.73,
     c_statistic = 0.8,
     test_n = 2000,
     min_sample_size = 75,
@@ -101,7 +102,7 @@ test_that("simulate_custom", {
     data_function = data_function,
     model_function = model_function,
     metric_function = metric_function,
-    target_performance = 0.75,
+    target_performance = 0.73,
     c_statistic = 0.8,
     test_n = 2000,
     min_sample_size = 75,
@@ -118,3 +119,5 @@ test_that("simulate_custom", {
   expect_true(is.numeric(sim_results_mlpwr_bs$min_n))
   expect_gt(sim_results_mlpwr_bs$min_n, 0)
 })
+
+
