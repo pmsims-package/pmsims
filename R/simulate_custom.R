@@ -38,6 +38,7 @@ simulate_custom <- function(
   verbose = FALSE,
   ...
 ) {
+  
   n_init <- 4 # fixing n_init at 4. This is the number of initial sample sizes calculated after the min max are established and before the main search algorithm begins.
   se_final <- NULL # Setting unused se_final argument. This is passed to engines and in the future we may add functionality for se_final based stopping.
   
@@ -172,7 +173,8 @@ simulate_custom <- function(
     data = output$results,
     train_size = rownames(output$results),
     data_function = data_function,
-    simulation_time = difftime(time_2, time_1, units = "secs")
+    simulation_time = difftime(time_2, time_1, units = "secs"),
+    mean_or_assurance = mean_or_assurance
   )
   attr(results_list, "class") <- "pmsims"
   return(results_list)

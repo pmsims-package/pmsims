@@ -97,6 +97,8 @@ test_that("simulate_custom", {
   expect_true(is.numeric(sim_results_mlpwr$min_n))
   expect_gt(sim_results_mlpwr$min_n, 0)
   expect_true(is.list(sim_results_mlpwr$summaries))
+  expect_equal(sim_results_mlpwr$mean_or_assurance, "assurance")
+  
 
   sim_results_mlpwr_bs <- suppressWarnings(simulate_custom(
     data_function = data_function,
