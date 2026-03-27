@@ -1,0 +1,156 @@
+---
+title: "Simulate Custom"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Simulate Custom}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+## Motivation
+The `simulate_custom()` function allows users to define their own data generation, model fitting, and performance metric  functions. This provides flexibility to calucate sample sizes for any prediction model, data type or performance metric. The `pmsims` built in sample size functions eg. `simulate_binary()` use simulate custrom under the hood.
+
+For this vignette we'll use five packages: 
+- `pmsims`  
+- `mlbench` package, which will provide the PimaIndiansDiabetes2 dataset
+- `synthpop` package, which will allow us to generate a large synthetic dataset based on the PimaIndiansDiabetes2 dataset.
+- `glmnet` for the elastic net modelling fucntion
+- `DescTools`, which provides the Brier Score function used to assess model performance.
+
+We will try to estimate the minumum sample size required for a prediction model to diabetes.
+
+```{r setup}
+library(pmsims)
+library(mlbench)
+library(synthpop)
+library(DescTools)
+library(glmnet)
+```
+
+
+## Using Simulate Custom
+To use `simualte_custom()`, you need to provide three key functions:
+1. **Data Function**: A function that generates synthetic datasets based on specified parameters.
+2. **Model Function**: A function that fits a prediction model to the generated data.
+3. **Metric Function**: A function that calculates the performance metric of interest.
+
+In this example we will define a data function from a pre-existing dataset, use elastic net regression, and assess performance using the Brier Score, a performance metric for binary outcomes similar to mean squared error.
+
+### Defining the data generator
+For this example we will use the `pima` data set from the `mlbench` package. The dataset consists of diabetes test results. For more detail see the [help page](https://search.r-project.org/CRAN/refmans/mlbench/html/PimaIndiansDiabetes.html) We will use the synthpop package to generate a very large synthetic dataset. We will then sample this dataset to give a required dataset of any size.
+
+```{r}
+set.seed(1234)
+data("PimaIndiansDiabetes", package = "mlbench")
+real_data <-  PimaIndiansDiabetes
+real_data$diabetes <- ifelse(real_data$diabetes == "pos", 1, 0)# converting to factor so synthpop treats as binary.
+synthetic_data <- synthpop::syn(real_data, k = 1000000, print.flag = FALSE, minnumlevels = 2)
+
+
+my_data_generator <- function(n, data = synthetic_data$syn) {
+  sample <-  data[sample(1:nrow(data), n, replace = FALSE), ]
+  return(sample)
+}
+
+example_data <- my_data_generator(n = 10)
+print(example_data)
+```
+
+### Defining the model function
+Next we need to define the model function. The model function needs to take only the data returned by the data function as an argument. It needs to return a fitted model object that can be used with our metric function. we will use the `glmnet` package to fit an elastic net regression model, setting the elastic net mixing parameter to be 0.5. For this function the data must be in the form of a matrix. We look to predict diabetes, which is the 9th column, with the remaining columns in the dataset. 
+
+```{r}
+my_model_function <-  function(data) {
+      data <- as.matrix(data)
+      
+      data_matrix <- as.matrix(data)
+      x <- data_matrix[, -9, drop = FALSE] # column 9 of the dataset contains the outcome
+      y <- data_matrix[, 9]
+      my_model <- glmnet::cv.glmnet(
+        x,
+        y,
+        family = "binomial",
+        alpha = 0.5,
+        nfolds = 10
+      )
+      return(my_model)
+}
+      
+example_data <- my_data_generator(n = 100)
+example_fitted_model <- my_model_function(example_data)
+fitted_model <- my_model_function(example_data)
+
+```
+
+
+### Metric Function
+Next we define a metric function. For this example we are going to use Brier score. The metric function needs to take three positional arguments: test data, a fitted model, and a model name. The test data is used to evaluate the performance of the fitted model. The model name is a required argument even if unused. The metric function needs to return a single value representing the performance of the model on the test data. We return the negative of Brier Score as `pmsims` currently looks to optimise performance metrics where higher is better.
+
+```{r}
+
+my_metric = function(test_data, fitted_model, model_name) {
+  test_data_matrix <- as.matrix(test_data)
+  x_test <- test_data_matrix[, -9, drop = FALSE]
+  y_test <- test_data_matrix[, 9]
+  
+  predictions <- predict(fitted_model, newx = x_test, s = "lambda.min", type = "response")
+
+brier_score <- DescTools::BrierScore(y_test, pred = predictions)
+
+
+
+  return(-brier_score)
+}
+
+test_data = my_data_generator(n = 1000)
+my_metric(test_data, example_fitted_model, "elastic net regression")
+```
+
+### What is the large sample performance
+Before running `pmsims` it is important to understand the large sample performance of your model. When calculating the minimum sample size we are looking for the smallest sample size at which the performance of the model meets a minimum acceptable performance. This minimum acceptable performance must be less than the performance that could be achieved with a large sample. The margin to the large sample performance will influence the minimum sample size returned. For this example we will use a large sample of 10000. For some machine learning models, in particular XGBoost, this may not be sufficient and larger samples should be used to evaluate 'large sample performance'.
+
+```{r}
+
+  #set.seed(1234)
+  large_sample_data <- my_data_generator(n = 10000)
+  test_data <- my_data_generator(n = 30000)
+  test_model <- my_model_function(large_sample_data)
+  large_sample_performance <- my_metric(test_data, test_model, "elastic net regression")
+  print(large_sample_performance)
+```
+
+We'll also understand small sample performance - this is what happens when we don't have a lot of data. 
+```{r}
+  set.seed(1234)
+  small_sample_data <- my_data_generator(n = 50)
+  test_data <- my_data_generator(n = 30000)
+  test_model <- my_model_function(small_sample_data)
+  small_sample_performance <- my_metric(test_data, test_model, "elastic net regression")
+  print(small_sample_performance)
+```
+### Running Simulate Custom
+We are now ready to run simulate custom. We decide that a Brier Score of -0.165 is the minimum acceptable performance, allowing some degradation from the large sample performance. This target is approximately half way between the large sample and small sample performance. For Brier Score there is no established criteria for choosing what the target performance should be and differences in sample size for different target performances could be explored. For speed, will set the total number of replications to 500, although 1000 is recomended. This means that we will evaluate 20 different sample sizes in our search. We use default arguments for all other parameters. 
+
+```{r}
+set.seed(123)
+result <- simulate_custom(
+  data_function = my_data_generator,
+  model_function = my_model_function,
+  metric_function = my_metric,
+  target_performance = -0.165,
+  n_reps_total = 1000,
+)
+
+print(result)
+
+```
+
+### Interpretation
+
+The results show a minimum sample size of 'r result$min_n' This is calculated using the assurance criteria which means that we'd expect 80% of models developed on samples of this size to have Brier scores of 0.165 or better.
