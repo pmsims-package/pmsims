@@ -17,11 +17,12 @@ knitr::opts_chunk$set(
 The `simulate_custom()` function allows users to define their own data generation, model fitting, and performance metric  functions. This provides flexibility to calucate sample sizes for any prediction model, data type or performance metric. The `pmsims` built in sample size functions eg. `simulate_binary()` use simulate custrom under the hood.
 
 For this vignette we'll use five packages: 
-- `pmsims`  
-- `mlbench` package, which will provide the PimaIndiansDiabetes2 dataset
-- `synthpop` package, which will allow us to generate a large synthetic dataset based on the PimaIndiansDiabetes2 dataset.
-- `glmnet` for the elastic net modelling fucntion
-- `DescTools`, which provides the Brier Score function used to assess model performance.
+
+1. `pmsims`  
+2. `mlbench` package, which will provide the PimaIndiansDiabetes2 dataset
+3. `synthpop` package, which will allow us to generate a large synthetic dataset based on the PimaIndiansDiabetes2 dataset.
+4. `glmnet` for the elastic net modelling fucntion
+5. `DescTools`, which provides the Brier Score function used to assess model performance.
 
 We will try to estimate the minumum sample size required for a prediction model to diabetes.
 
@@ -36,6 +37,7 @@ library(glmnet)
 
 ## Using Simulate Custom
 To use `simualte_custom()`, you need to provide three key functions:
+
 1. **Data Function**: A function that generates synthetic datasets based on specified parameters.
 2. **Model Function**: A function that fits a prediction model to the generated data.
 3. **Metric Function**: A function that calculates the performance metric of interest.
@@ -43,13 +45,13 @@ To use `simualte_custom()`, you need to provide three key functions:
 In this example we will define a data function from a pre-existing dataset, use elastic net regression, and assess performance using the Brier Score, a performance metric for binary outcomes similar to mean squared error.
 
 ### Defining the data generator
-For this example we will use the `pima` data set from the `mlbench` package. The dataset consists of diabetes test results. For more detail see the [help page](https://search.r-project.org/CRAN/refmans/mlbench/html/PimaIndiansDiabetes.html) We will use the synthpop package to generate a very large synthetic dataset. We will then sample this dataset to give a required dataset of any size.
+For this example we will use the `pima` data set from the `mlbench` package. The dataset consists of diabetes test results. For more detail see the [help page](https://search.r-project.org/CRAN/refmans/mlbench/html/PimaIndiansDiabetes.html). We will use the synthpop package to generate a very large synthetic dataset. We will then sample this dataset to give a required dataset of any size.
 
 ```{r}
 set.seed(1234)
 data("PimaIndiansDiabetes", package = "mlbench")
 real_data <-  PimaIndiansDiabetes
-real_data$diabetes <- ifelse(real_data$diabetes == "pos", 1, 0)# converting to factor so synthpop treats as binary.
+real_data$diabetes <- ifelse(real_data$diabetes == "pos", 1, 0) 
 synthetic_data <- synthpop::syn(real_data, k = 1000000, print.flag = FALSE, minnumlevels = 2)
 
 
@@ -70,7 +72,7 @@ my_model_function <-  function(data) {
       data <- as.matrix(data)
       
       data_matrix <- as.matrix(data)
-      x <- data_matrix[, -9, drop = FALSE] # column 9 of the dataset contains the outcome
+      x <- data_matrix[, -9] # column 9 of the dataset contains the outcome
       y <- data_matrix[, 9]
       my_model <- glmnet::cv.glmnet(
         x,
@@ -140,7 +142,9 @@ print(small_sample_performance)
 mean(small_sample_performance)
 ```
 ### Running Simulate Custom
-We are now ready to run simulate custom. We decide that a Brier Score of -0.165 is the minimum acceptable performance, allowing some degradation from the large sample performance. This target is approximately half way between the large sample and small sample performance. For Brier Score there is no established criteria for choosing what the target performance should be and differences in sample size for different target performances could be explored. For speed, will set the total number of replications to 500, although 1000 is recomended. This means that we will evaluate 20 different sample sizes in our search. We use default arguments for all other parameters. 
+We are now ready to run simulate custom. We decide that a Brier Score of -0.165 is the minimum acceptable performance, allowing some degradation from the large sample performance. This target is approximately half way between the large sample and small sample performance. For Brier Score there is no established criteria for choosing what the target performance should be and differences in sample size for different target performances could be explored. For speed, will set the total number of replications to 500, although 1000 is recommended. We use default arguments for all other parameters.
+
+
 
 ```{r}
 set.seed(123)
@@ -158,4 +162,6 @@ print(result)
 
 ### Interpretation
 
-The results show a minimum sample size of 'r result$min_n' This is calculated using the assurance criteria which means that we'd expect 80% of models developed on samples of this size to have Brier scores of 0.165 or better.
+The results show a minimum sample size of `r result$min_n` This is calculated using the assurance criteria which means that we'd expect 80% of models developed on samples of this size to have Brier scores of 0.165 or better.
+
+Note whilst this is the minimum sample size for Brier Score, different minimum sample sizes may be required for adequate performance for other performance metrics.
