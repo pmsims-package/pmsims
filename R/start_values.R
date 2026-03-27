@@ -45,15 +45,15 @@ get_summaries <- function(performance_matrix) {
 #' @param ci_q Numeric quantile for confidence-interval construction (default 0.975 gives a two-sided 95% interval).
 #' @keywords internal
 adaptive_startvalues <- function(
-    output,
-    aggregate_fun,
-    var_bootstrap,
-    target,
-    ci_q = 0.975
+  output,
+  aggregate_fun,
+  var_bootstrap,
+  target,
+  ci_q = 0.975
 ) {
   bisection_output <- output$track_bisection
   n_iter <- length(bisection_output)
-  
+
   # Matrix: n, est, se, ll, ul
   bisection_summary <- matrix(
     NA,
@@ -61,45 +61,45 @@ adaptive_startvalues <- function(
     ncol = 5,
     dimnames = list(NULL, c("n", "est", "se", "ll", "ul"))
   )
-  
+
   for (i in seq_len(n_iter)) {
     results <- bisection_output[[i]]
     n <- results$x
     performance_data <- results$y
-    
+
     est <- aggregate_fun(performance_data)
     se <- sqrt(var_bootstrap(performance_data))
-    
+
     ll <- est - se * stats::qnorm(ci_q)
     ul <- est + se * stats::qnorm(ci_q)
-    
+
     bisection_summary[i, ] <- c(n, est, se, ll, ul)
   }
-  
+
   ## --- Find min value ---
   ordered_by_ul <- bisection_summary[
     order(bisection_summary[, "ul"], decreasing = TRUE),
   ]
   below_target <- ordered_by_ul[ordered_by_ul[, "ul"] < target, , drop = FALSE]
-  
+
   if (nrow(below_target) == 0) {
     min_value <- min(bisection_summary[, "n"] * 0.8)
   } else {
     min_value <- max(below_target[, "n"])
   }
-  
+
   ## --- Find max value ---
   ordered_by_ll <- bisection_summary[
     order(bisection_summary[, "ll"], decreasing = TRUE),
   ]
   above_target <- ordered_by_ll[ordered_by_ll[, "ll"] > target, , drop = FALSE]
-  
+
   if (nrow(above_target) == 0) {
     max_value <- max(bisection_summary[, "n"] * 1.2)
   } else {
     max_value <- min(above_target[, "n"])
   }
-  
+
   return(list(
     summary = bisection_summary,
     min_value = round(min_value),
@@ -108,59 +108,58 @@ adaptive_startvalues <- function(
 }
 
 
-
 #### New adaptive start values code
 
 #' Adaptive starting value searching (model/metrics) agnostic.
 #'
-#' @param data_function 
-#' @param model_function 
-#' @param metric_function 
-#' @param value_on_error 
-#' @param start_n 
-#' @param test_n 
-#' @param n_reps_per 
-#' @param n_reps_total 
-#' @param target_performance 
-#' @param threshold 
-#' @param mean_or_assurance 
-#' @param c_statistic 
-#' @param parallel 
-#' @param cores 
-#' @param verbose 
+#' @param data_function
+#' @param model_function
+#' @param metric_function
+#' @param value_on_error
+#' @param start_n
+#' @param test_n
+#' @param n_reps_per
+#' @param n_reps_total
+#' @param target_performance
+#' @param threshold
+#' @param mean_or_assurance
+#' @param c_statistic
+#' @param parallel
+#' @param cores
+#' @param verbose
 #'
 #' @returns
 #' @export
 #'
 #' @examples
 calculate_adaptive_bounds <- function(
-    data_function,
-    model_function,
-    metric_function,
-    value_on_error,
-    start_n,
-    test_n,
-    n_reps_per,
-    n_reps_total,
-    target_performance,
-    threshold = 0.01,
-    mean_or_assurance = "mean",
-    c_statistic = NULL,
-    parallel = FALSE,
-    cores = 20,
-    verbose = FALSE
+  data_function,
+  model_function,
+  metric_function,
+  value_on_error,
+  start_n,
+  test_n,
+  n_reps_per,
+  n_reps_total,
+  target_performance,
+  threshold = 0.01,
+  mean_or_assurance = "mean",
+  c_statistic = NULL,
+  parallel = FALSE,
+  cores = 20,
+  verbose = FALSE
 ) {
-  verbose = TRUE
+  verbose = FALSE
   # ---------------------------------------------------------
   # Budget
   # ---------------------------------------------------------
   max_iter <- floor(n_reps_total / n_reps_per)
-  
+
   # ---------------------------------------------------------
   # Fixed test set
   # ---------------------------------------------------------
   test_data <- data_function(test_n)
-  
+
   # ---------------------------------------------------------
   # Single run
   # ---------------------------------------------------------
@@ -174,12 +173,11 @@ calculate_adaptive_bounds <- function(
       error = function(e) value_on_error
     )
   }
-  
+
   # ---------------------------------------------------------
   # Summary at n
   # ---------------------------------------------------------
   summary_at_n <- function(n) {
-    
     if (parallel) {
       cl <- parallel::makeCluster(cores)
       doParallel::registerDoParallel(cl)
@@ -196,7 +194,7 @@ calculate_adaptive_bounds <- function(
         FUN.VALUE = numeric(1)
       )
     }
-    
+
     s <- get_summaries(matrix(vals, nrow = 1))
     
     if (mean_or_assurance == "mean") {
@@ -205,7 +203,7 @@ calculate_adaptive_bounds <- function(
       list(y_summary = s$quant20_performance, y = vals)
     }
   }
-  
+
   # ---------------------------------------------------------
   # Initial evaluation
   # ---------------------------------------------------------
@@ -214,13 +212,13 @@ calculate_adaptive_bounds <- function(
   
   res <- summary_at_n(start_n)
   perf <- res$y_summary
-  
+
   track[[iter]] <- list(n = start_n, performance = perf, raw = res$y)
-  
+
   if (verbose) {
     message(sprintf("Iter %d | n = %d | perf = %.4f", iter, start_n, perf))
   }
-  
+
   # ---------------------------------------------------------
   # Decide direction
   # ---------------------------------------------------------
@@ -237,14 +235,14 @@ calculate_adaptive_bounds <- function(
     lower_n <- NA
     lower_perf <- NA
   }
-  
+
   n_current <- start_n
-  
+
   # ---------------------------------------------------------
   # Adaptive loop
   # ---------------------------------------------------------
   while (iter < max_iter) {
-    
+  
     iter <- iter + 1
     
     if (direction == "up") {
@@ -260,7 +258,7 @@ calculate_adaptive_bounds <- function(
     perf <- res$y_summary
     
     track[[iter]] <- list(n = n_new, performance = perf, raw = res$y)
-    
+  
     if (verbose) {
       message(sprintf("Iter %d | n = %d | perf = %.4f", iter, n_new, perf))
     }
@@ -305,30 +303,30 @@ calculate_adaptive_bounds <- function(
 
 #' Get initial starting values before using adaptive searching
 #'
-#' @param data_function 
-#' @param metric_function 
-#' @param target_performance 
-#' @param c_statistic 
-#' @param mean_or_assurance 
+#' @param data_function
+#' @param metric_function
+#' @param target_performance
+#' @param c_statistic
+#' @param mean_or_assurance
 #'
 #' @returns
 #' @export
 #'
 #' @examples
 compute_start_sample_sizes <- function(
-    data_function,
-    metric_function,
-    target_performance,
-    c_statistic = NULL,
-    mean_or_assurance = c("mean", "assurance")
+  data_function,
+  metric_function,
+  target_performance,
+  c_statistic = NULL,
+  mean_or_assurance = c("mean", "assurance")
 ) {
   
   
   mean_or_assurance <- match.arg(mean_or_assurance)
-  
+
   # 1. Number of predictors (exclude outcome column)
   npar <- dim(data_function(10))[2] - 1
-  
+
   # Set default start value - this is used if the outcome type cannot be determined.
   default_start_value = 10* npar
     
