@@ -125,14 +125,19 @@ Before running `pmsims` it is important to understand the large sample performan
   print(large_sample_performance)
 ```
 
-We'll also understand small sample performance - this is what happens when we don't have a lot of data. 
+We'll also understand small sample performance - this is what happens when we don't have a lot of data. We run this a few times as small sample performance can be highly variable.
 ```{r}
-  set.seed(1234)
+set.seed(1234)
+small_sample_performance <- rep(NA, 10)
+for(i in 1:10) {
   small_sample_data <- my_data_generator(n = 50)
   test_data <- my_data_generator(n = 30000)
   test_model <- my_model_function(small_sample_data)
-  small_sample_performance <- my_metric(test_data, test_model, "elastic net regression")
-  print(small_sample_performance)
+  small_sample_performance[i] <- my_metric(test_data, test_model, "elastic net regression")
+
+  }
+print(small_sample_performance)
+mean(small_sample_performance)
 ```
 ### Running Simulate Custom
 We are now ready to run simulate custom. We decide that a Brier Score of -0.165 is the minimum acceptable performance, allowing some degradation from the large sample performance. This target is approximately half way between the large sample and small sample performance. For Brier Score there is no established criteria for choosing what the target performance should be and differences in sample size for different target performances could be explored. For speed, will set the total number of replications to 500, although 1000 is recomended. This means that we will evaluate 20 different sample sizes in our search. We use default arguments for all other parameters. 
