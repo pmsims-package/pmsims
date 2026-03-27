@@ -23,21 +23,22 @@ calculate_mlpwr(
 )
 }
 \arguments{
-\item{test_n}{Integer size of the test datasets used to evaluate performance (should be large).}
+\item{test_n}{Integer size of the test datasets used to evaluate performance (should be large). Default is 30000.}
 
-\item{n_reps_total}{Integer total number of simulation replications allocated to the search.}
+\item{n_reps_total}{Integer total number of simulation replications allocated to the search. The search will look at n_reps_total/n_reps_per candidate sample sizes. Supply either \code{n_reps_total} or \code{se_final}.}
 
 \item{n_reps_per}{Integer number of replications evaluated at each candidate sample size.}
 
-\item{se_final}{Numeric standard error threshold used for early stopping (supply either \code{n_reps_total} or \code{se_final}).}
+\item{min_sample_size}{Integer lower bound of the sample-size search region. If this is set the adaptive starting values are not run - set to NULL to use adaptive algorithm.}
 
-\item{min_sample_size}{Integer lower bound of the sample-size search region.}
+\item{max_sample_size}{Integer upper bound of the sample-size search region. If this is set the adaptive starting values are not run - set to NULL to use adaptive algorithm. as above**}
 
-\item{max_sample_size}{Integer upper bound of the sample-size search region.}
+\item{target_performance}{Numeric. Minimum acceptable value of the selected
+performance metric \eqn{M^\\*}; the algorithm searches for the smallest
+\eqn{n} meeting the chosen criterion with respect to this threshold.}
 
-\item{target_performance}{Numeric target performance threshold the algorithm must meet or exceed.}
-
-\item{c_statistic}{Numeric; anticipated large-sample discrimination used when tuning the data generator.}
+\item{c_statistic}{This argument is used internally only. Set to Null when running simulate custom.
+This is used to determine the appropriate starting values for the search. This argument is not used for other outcome types. You probably wont need this. ** explain when this is used**}
 
 \item{mean_or_assurance}{Character string \code{"mean"} or \code{"assurance"} indicating which criterion defines the minimum sample size.}
 
@@ -49,7 +50,7 @@ calculate_mlpwr(
 
 \item{model_function}{A function that fits models to the data. Takes the data object returned by \code{data_function} as its only argument.}
 
-\item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.}
+\item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model name string as arguments. These do not need to be named but must be ordered (test_data, fitted_model, model_name) Must return a single value.}
 
 \item{value_on_error}{Numeric fallback value used if model fitting or metric calculation fails.}
 }

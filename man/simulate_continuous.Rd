@@ -7,14 +7,14 @@
 simulate_continuous(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = c("continuous"),
+  predictor_type = "continuous",
   binary_predictor_prevalence = NULL,
   maximum_achievable_rsquared,
-  model = c("lm"),
-  metric = c("calibration_slope", "r2"),
+  model = "lm",
+  metric = "calibration_slope",
   target_performance,
   n_reps_total = 1000,
-  mean_or_assurance = c("assurance", "mean"),
+  mean_or_assurance = "assurance",
   ...
 )
 }
@@ -25,7 +25,7 @@ with the outcome (i.e., true signal features).}
 \item{noise_parameters}{Integer. Number of candidate predictors not
 associated with the outcome (noise features). Default is 0.}
 
-\item{predictor_type}{Character string, currently only \code{"continuous"} supported, which is the default option.
+\item{predictor_type}{Character string, either \code{"continuous"} or \code{"binary"}.
 Specifies the type of simulated candidate predictors.}
 
 \item{binary_predictor_prevalence}{Optional numeric in (0, 1). Prevalence of
@@ -40,7 +40,7 @@ data-generating mechanism and is not the minimum acceptable threshold.}
 
 \item{metric}{Character string naming the performance metric used to assess
 the sample size; defaults to \code{"calibration_slope"}. (Internally mapped to
-the engine's metric identifiers.).}
+the engine's metric identifiers.)}
 
 \item{target_performance}{Numeric. Minimum acceptable value of the selected
 performance metric \eqn{M^\\*}; the algorithm searches for the smallest
@@ -52,7 +52,7 @@ the engine across the search.}
 \item{mean_or_assurance}{Character string, either \code{"mean"} or \code{"assurance"}.
 Controls whether the minimum \eqn{n} is defined by the mean-based criterion
 or the assurance-based criterion (with the assurance level \eqn{\delta}
-controlled by the engine's defaults or additional arguments in \code{...}). Defaults to \code{"assurance"}.}
+controlled by the engine's defaults or additional arguments in \code{...}).}
 
 \item{...}{Additional options passed to \code{\link[=simulate_custom]{simulate_custom()}} (e.g., assurance
 level \eqn{\delta}, per-iteration settings).}

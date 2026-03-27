@@ -3,22 +3,20 @@
 \name{simulate_custom}
 \alias{simulate_custom}
 \title{Simulate Custom
-'simulate_custom' is the interface for pmsims at the most basic level. It performs no processing of arguments and allows all possible options to be customised.}
+'simulate_custom' is the interface for pmsims at the most basic level. It takes a data, model, and metric funciton as inputs and allows full control over other parameters.}
 \usage{
 simulate_custom(
-  data_function = NULL,
-  model_function = NULL,
-  metric_function = NULL,
+  data_function,
+  model_function,
+  metric_function,
   target_performance,
-  c_statistic,
+  c_statistic = NULL,
   mean_or_assurance = "assurance",
   test_n = 30000,
-  min_sample_size,
-  max_sample_size,
-  n_reps_total = NULL,
-  n_reps_per = 50,
-  se_final = NULL,
-  n_init = 4,
+  min_sample_size = NULL,
+  max_sample_size = NULL,
+  n_reps_total = 1000,
+  n_reps_per = 20,
   method = "mlpwr",
   verbose = FALSE,
   ...
@@ -29,39 +27,37 @@ simulate_custom(
 
 \item{model_function}{A function that fits models to the data. Takes the data object returned by \code{data_function} as its only argument.}
 
-\item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.}
+\item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model name string as arguments. These do not need to be named but must be ordered (test_data, fitted_model, model_name) Must return a single value.}
 
-\item{target_performance}{Numeric target performance threshold the algorithm must meet or exceed.}
+\item{target_performance}{Numeric. Minimum acceptable value of the selected
+performance metric \eqn{M^\\*}; the algorithm searches for the smallest
+\eqn{n} meeting the chosen criterion with respect to this threshold.}
 
-\item{c_statistic}{Numeric; anticipated large-sample discrimination used when tuning the data generator.}
+\item{c_statistic}{This argument is used internally only. Set to Null when running simulate custom.
+This is used to determine the appropriate starting values for the search. This argument is not used for other outcome types. You probably wont need this. ** explain when this is used**}
 
 \item{mean_or_assurance}{Character string \code{"mean"} or \code{"assurance"} indicating which criterion defines the minimum sample size.}
 
-\item{test_n}{Integer size of the test datasets used to evaluate performance (should be large).}
+\item{test_n}{Integer size of the test datasets used to evaluate performance (should be large). Default is 30000.}
 
-\item{min_sample_size}{Integer lower bound of the sample-size search region.}
+\item{min_sample_size}{Integer lower bound of the sample-size search region. If this is set the adaptive starting values are not run - set to NULL to use adaptive algorithm.}
 
-\item{max_sample_size}{Integer upper bound of the sample-size search region.}
+\item{max_sample_size}{Integer upper bound of the sample-size search region. If this is set the adaptive starting values are not run - set to NULL to use adaptive algorithm. as above**}
 
-\item{n_reps_total}{Integer total number of simulation replications allocated to the search.}
+\item{n_reps_total}{Integer total number of simulation replications allocated to the search. The search will look at n_reps_total/n_reps_per candidate sample sizes. Supply either \code{n_reps_total} or \code{se_final}.}
 
 \item{n_reps_per}{Integer number of replications evaluated at each candidate sample size.}
 
-\item{se_final}{Numeric standard error threshold used for early stopping (supply either \code{n_reps_total} or \code{se_final}).}
-
-\item{n_init}{Integer number of initial sample sizes explored before the main search algorithm begins.}
-
-\item{method}{Character string selecting the search engine; currently \code{"mlpwr"}, \code{"bisection"}, or \code{"mlpwr-bs"}.}
+\item{method}{Character string selecting the search engine; defaults to "mlpwr" which is the best performing option in validation}
 
 \item{verbose}{Logical flag controlling printed progress information.}
 
-\item{...}{Additional arguments passed to the chosen engine (for example \code{tol} for bisection or \code{penalty_weight} for GA-based methods).}
+\item{...}{Additional arguments passed to the chosen engine.}
 }
 \value{
-An object of class \code{"pmsims"} containing the estimated minimum sample size and simulation diagnostics.
+An object of class \code{"pmsims"} containing the estimated minimum sample size.
 }
 \description{
 Simulate Custom
-'simulate_custom' is the interface for pmsims at the most basic level. It performs no processing of arguments and allows all possible options to be customised.
+'simulate_custom' is the interface for pmsims at the most basic level. It takes a data, model, and metric funciton as inputs and allows full control over other parameters.
 }
-\keyword{internal}

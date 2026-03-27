@@ -19,8 +19,8 @@
 #' @param verbose Logical flag controlling printed progress information.
 #' @param ... Additional arguments passed to the chosen engine.
 #'
-#' @return An object of class `"pmsims"` containing the estimated minimum sample size and simulation diagnostics.
-#' @keywords internal
+#' @return An object of class `"pmsims"` containing the estimated minimum sample size.
+#' @export
 
 simulate_custom <- function(
   data_function,
