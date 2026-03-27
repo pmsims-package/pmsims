@@ -7,10 +7,6 @@
 get_perf(results, p = NULL, mean = FALSE)
 }
 \arguments{
-\item{results}{}
-
-\item{p}{}
-
 \item{mean}{}
 }
 \description{

@@ -1,11 +1,10 @@
 #' Get Performance
 #'
-#' @param results 
-#' @param p 
-#' @param mean 
+#' @param results
+#' @param p
+#' @param mean
 #'
 #' @returns
-#' @export
 #'
 #' @examples
 get_perf <- function(results, p = NULL, mean = FALSE) {
@@ -129,7 +128,6 @@ adaptive_startvalues <- function(
 #' @param verbose
 #'
 #' @returns
-#' @export
 #'
 #' @examples
 calculate_adaptive_bounds <- function(
@@ -149,7 +147,6 @@ calculate_adaptive_bounds <- function(
   cores = 20,
   verbose = FALSE
 ) {
-  verbose = FALSE
   # ---------------------------------------------------------
   # Budget
   # ---------------------------------------------------------
@@ -196,7 +193,7 @@ calculate_adaptive_bounds <- function(
     }
 
     s <- get_summaries(matrix(vals, nrow = 1))
-    
+
     if (mean_or_assurance == "mean") {
       list(y_summary = s$mean_performance, y = vals)
     } else {
@@ -310,7 +307,6 @@ calculate_adaptive_bounds <- function(
 #' @param mean_or_assurance
 #'
 #' @returns
-#' @export
 #'
 #' @examples
 compute_start_sample_sizes <- function(
@@ -523,12 +519,12 @@ compute_start_sample_sizes <- function(
 #' @return Integer recommended starting value from which to calculate the minimum sample size.
 #' @keywords internal
 get_min_sample_size <- function(
-    npar,
-    prevalence = NULL,
-    c_stat = NULL,
-    calib_slope = NULL,
-    epv_value = NULL,
-    outcome_type = c("binary", "survival", "continuous")
+  npar,
+  prevalence = NULL,
+  c_stat = NULL,
+  calib_slope = NULL,
+  epv_value = NULL,
+  outcome_type = c("binary", "survival", "continuous")
 ) {
   outcome_type <- match.arg(outcome_type)
   

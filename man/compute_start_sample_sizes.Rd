@@ -13,14 +13,6 @@ compute_start_sample_sizes(
 )
 }
 \arguments{
-\item{data_function}{}
-
-\item{metric_function}{}
-
-\item{target_performance}{}
-
-\item{c_statistic}{}
-
 \item{mean_or_assurance}{}
 }
 \description{

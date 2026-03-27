@@ -65,7 +65,6 @@ default_metric_generator <- function(metric, data_function) {
 }
 
 #' @keywords internal
-#' @export
 predict_custom <- function(x, y = NULL, fit, model, type = "response") {
   # x: data.frame or matrix of predictors (no outcome column)
   # y: optional (not used here, kept for API compatibility)
