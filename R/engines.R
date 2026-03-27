@@ -530,7 +530,6 @@ calculate_bisection <- function(
 #'
 #' @return List containing the combined bisection and mlpwr results (`results`, `summaries`, `min_n`, `perf_n`, and `mlpwr_ds`).
 #' @keywords internal
-#' @export
 calculate_mlpwr_bs <- function(
   test_n,
   n_reps_total,

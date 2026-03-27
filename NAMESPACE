@@ -3,7 +3,6 @@
 S3method(plot,pmsims)
 S3method(print,pmsims)
 S3method(summary,pmsims)
-export(calculate_mlpwr_bs)
 export(simulate_binary)
 export(simulate_continuous)
 export(simulate_custom)
