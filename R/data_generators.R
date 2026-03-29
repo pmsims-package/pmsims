@@ -2,63 +2,121 @@
 # Data-generating functions for simulation studies
 #
 # Supports continuous, binary, and survival outcomes across four complexity
-# levels.  All generators share two internal workhorses:
-#   - generate_predictors()        : builds the (possibly correlated) X matrix
-#   - generate_linear_predictor()  : constructs lp from X
+# levels. All generators share two internal workhorses:
+#   - generate_predictors()       : builds the (possibly correlated) X matrix
+#   - generate_linear_predictor() : constructs lp from X
 #
-# Arguments
-# ---------
-#  complexity         (integer 1-4)   - structural complexity level
-#  predictor_dist     (named list)    - per-predictor distribution spec;
-#                                       supported at ALL complexity levels.
-#                                       Each element is a list with:
-#                                         dist  : distribution family (string)
-#                                         ...   : family-specific parameters
-#  cor_matrix         (matrix | NULL) - inter-predictor correlation (Gaussian
-#                                       copula via Cholesky)
-#  predictor_roles    (named char)    - "noise", "linear", or "nonlinear"
-#                                       (complexities 2-4)
-#  predictor_strength (named char)    - "strong" / "moderate" / "weak"
-#                                       (complexities 2-4)
+# =============================================================================
+# INTERFACE SUMMARY
+# =============================================================================
 #
-# Default distributions by complexity
-# ------------------------------------
-#  C1 continuous : normal(mean=0, sd=1)   | overridable via predictor_dist
-#  C1 binary     : binary(prop=predictor_prop) per column;
-#                  individual columns may be overridden via predictor_dist
-#                  using dist="binary" with a 'prop' parameter
-#  C2, C3        : normal(mean=0, sd=1)   | overridable via predictor_dist
-#  C4 (Friedman) : uniform(min=0, max=1)  | overridable via predictor_dist
+# Core parameters (all apply uniformly across every complexity setting):
 #
-# Supported distribution families (all complexities)
-# ---------------------------------------------------
-#  "normal"      : mean, sd          (defaults: 0, 1)
-#  "uniform"     : min, max          (defaults: 0, 1)
-#  "binary"      : prop              (default: 0.5)
-#  "exponential" : rate              (default: 1)
-#  "lognormal"   : meanlog, sdlog    (defaults: 0, 1)
-#  "t"           : df                (default: 5)
-#  "laplace"     : location, scale   (defaults: 0, 1)
+#   n_signal          : number of signal predictors
+#   n_noise           : number of noise predictors
+#   beta_signal       : base effect size for signal predictors
+#   correlation       : common pairwise correlation (default = 0.3; 0 = none)
+#   binary_prevalence : Bernoulli probability for ALL predictors (default = 0,
+#                       i.e. all predictors are continuous)
+#   distribution      : single global distribution family for ALL predictors
+#                       (default = "normal"; see supported families below).
+#                       When binary_prevalence > 0, ALL predictors are binary
+#                       and this argument is ignored.
+#                       For complexity 4 the Friedman canonical default is
+#                       "uniform", applied automatically when distribution is
+#                       left at "normal".
+#
+# Complexity (two dimensions):
+#
+#   complexity        : integer 1-4, controls the functional form of lp
+#                         1 = Linear
+#                         2 = Quadratic
+#                         3 = Quadratic + Interaction
+#                         4 = Friedman (1991)
+#
+#   predictor_strength: global linear-nonlinear weight applied to ALL signal
+#                       predictors. One of:
+#                         "strong"   -> w = 1.0
+#                         "moderate" -> w = 0.5
+#                         "weak"     -> w = 0.3
+#                       Default per complexity:
+#                         C1 -> "strong"   (w = 1.0)
+#                         C2 -> "moderate" (w = 0.5)
+#                         C3 -> "moderate" (w = 0.5)
+#                         C4 -> "strong"   (w = 1.0)
+#                       The user may override the default by supplying this
+#                       argument explicitly.
+#
+# Supported distribution families (continuous predictors):
+#   "normal"      : mean = 0, sd = 1
+#   "uniform"     : min = 0, max = 1
+#   "exponential" : rate = 1
+#   "lognormal"   : meanlog = 0, sdlog = 1
+#   "t"           : df = 5
+#   "laplace"     : location = 0, scale = 1
+#
+# Outcome-specific arguments:
+#   continuous : intercept (default 0)
+#   binary     : mu_lp (log-odds intercept, default 0), baseline_prob (doc only)
+#   survival   : baseline_hazard, censoring_rate, intercept (default 0)
+# =============================================================================
+
+# =============================================================================
+# Complexity-level defaults
+# =============================================================================
+
+# Default predictor_strength per complexity level
+COMPLEXITY_STRENGTH_DEFAULTS <- c(
+  "1" = "strong",    # C1 Linear              : w = 1.0
+  "2" = "moderate",  # C2 Quadratic           : w = 0.5
+  "3" = "moderate",  # C3 Quad + Interaction  : w = 0.5
+  "4" = "strong"     # C4 Friedman            : w = 1.0
+)
+
+# Default distribution per complexity level (applies when distribution = "normal"
+# and binary_prevalence = 0)
+COMPLEXITY_DIST_DEFAULTS <- c(
+  "1" = "normal",
+  "2" = "normal",
+  "3" = "normal",
+  "4" = "uniform"   # Friedman canonical
+)
+
+# Strength-weight lookup
+STRENGTH_WEIGHTS <- c(
+  strong   = 1.0,
+  moderate = 0.5,
+  weak     = 0.3
+)
+
+# =============================================================================
+# Entry point
 # =============================================================================
 
 #' Create default data generating functions
 #'
-#' @param opts A list of options. Must include \code{type} ("binary",
-#'   "continuous", or "survival") and a sub-list \code{args} whose names
-#'   match the formals of the corresponding generator function.
-#' @return A function with default arguments pre-set.
+#' @param opts A list with two elements:
+#'   \describe{
+#'     \item{\code{type}}{Outcome type: \code{"continuous"}, \code{"binary"},
+#'       or \code{"survival"}.}
+#'     \item{\code{args}}{Named list of arguments to pre-set on the
+#'       corresponding generator function.}
+#'   }
+#' @return A partially-applied generator function whose formals have been set
+#'   to the values in \code{opts$args}.
 #' @keywords internal
 default_data_generators <- function(opts) {
   type <- opts$type
-  if (type == "binary") {
-    f <- generate_binary_data
-  } else if (type == "continuous") {
-    f <- generate_continuous_data
-  } else if (type == "survival") {
-    f <- generate_survival_data
-  } else {
-    stop('"opts$type must be one of "continuous", "binary", or "survival""')
-  }
+  f <- switch(
+    type,
+    continuous = generate_continuous_data,
+    binary     = generate_binary_data,
+    survival   = generate_survival_data,
+    stop(sprintf(
+      'opts$type must be "continuous", "binary", or "survival". Got: "%s".',
+      type
+    ))
+  )
   return(update_arguments(f, opts))
 }
 
@@ -69,60 +127,56 @@ default_data_generators <- function(opts) {
 #' Simulate continuous outcome data
 #'
 #' @param n                  Sample size.
-#' @param beta_signal        Effect size for strong-tier signal predictors.
-#' @param n_signal_parameters Number of signal predictors (columns x1 to x_S).
-#' @param noise_parameters   Number of pure-noise predictors.
-#' @param predictor_type     Default predictor type when \code{predictor_dist}
-#'   is not specified: \code{"continuous"} (normal) or \code{"binary"}
-#'   (Bernoulli). Applies to all complexities as the fallback.
-#' @param predictor_prop     Bernoulli probability used when
-#'   \code{predictor_type = "binary"} and no per-column override is given.
-#' @param complexity         Integer 1-4 (see Details).
-#' @param predictor_dist     Named list of per-predictor distribution
-#'   specifications. Supported at \strong{all complexity levels}.
-#'   Each element is a list with \code{dist} (distribution family) and
-#'   optional family-specific parameters. Predictors not listed fall back to
-#'   the complexity-level default (see Details). Example:
-#'   \preformatted{
-#'   list(
-#'     x1 = list(dist = "normal",  mean = 2, sd = 0.5),
-#'     x2 = list(dist = "binary",  prop = 0.3),
-#'     x3 = list(dist = "uniform", min = 0, max = 1)
-#'   )}
-#' @param cor_matrix         Optional p x p positive semi-definite correlation
-#'   matrix (p = n_signal_parameters + noise_parameters). Correlations are
-#'   induced via a Gaussian copula (rank-based Cholesky), which preserves
-#'   every predictor's marginal distribution exactly. \code{NULL} = independent.
-#' @param predictor_roles    Named character vector mapping predictor names to
-#'   \code{"noise"}, \code{"linear"}, or \code{"nonlinear"}
-#'   (complexities 2-4 only). Defaults: signal columns -> \code{"linear"};
-#'   noise columns -> \code{"noise"}.
-#' @param predictor_strength Named character vector mapping predictor names to
-#'   \code{"strong"} (1.0 x beta_signal), \code{"moderate"}
-#'   (0.5 x beta_signal), or \code{"weak"} (0.4 x beta_signal).
-#'   Unlisted predictors default to \code{"strong"}.
+#' @param n_signal           Number of signal predictors. These occupy the
+#'   first \code{n_signal} columns (\code{x1} ... \code{x_S}).
+#' @param n_noise            Number of noise predictors (zero coefficient).
+#' @param beta_signal        Base effect size. Effective beta per predictor =
+#'   \code{beta_signal * w}, where \code{w} is the strength weight.
+#' @param complexity         Integer 1-4 specifying the functional form of the
+#'   linear predictor and (by default) the predictor strength weight:
+#'   \enumerate{
+#'     \item \strong{Linear} — \eqn{lp = \alpha + w\beta\sum_j x_j}.
+#'       Default strength: \code{"strong"} (w = 1).
+#'     \item \strong{Quadratic} — linear + quadratic terms on all signal
+#'       predictors. Default strength: \code{"moderate"} (w = 0.5).
+#'     \item \strong{Quadratic + Interaction} — C2 terms + pairwise products
+#'       across all signal predictors. Default strength: \code{"moderate"}
+#'       (w = 0.5).
+#'     \item \strong{Friedman} — canonical Friedman (1991) benchmark scaled by
+#'       \code{w * beta_signal}, extended beyond 5 signal predictors.
+#'       Default strength: \code{"strong"} (w = 1).
+#'   }
+#' @param predictor_strength Global linear-nonlinear strength weight applied
+#'   uniformly to all signal predictors. One of \code{"strong"} (w = 1.0),
+#'   \code{"moderate"} (w = 0.5), or \code{"weak"} (w = 0.3).
+#'   When \code{NULL} (default), the complexity-level default is used:
+#'   C1 = strong, C2 = moderate, C3 = moderate, C4 = strong.
+#' @param correlation        Scalar in [-1, 1]. Common pairwise correlation
+#'   applied to all predictors via a Gaussian copula (equicorrelation,
+#'   rank-based Cholesky). Default = 0.3. Set to 0 for independence. The
+#'   copula step preserves each predictor's marginal distribution exactly.
+#' @param binary_prevalence  Scalar in [0, 1]. When > 0, \emph{all} predictors
+#'   are drawn as Bernoulli(\code{binary_prevalence}) and \code{distribution}
+#'   is ignored. When = 0 (default) all predictors are continuous.
+#' @param distribution       Single character string naming the distribution
+#'   family used for \emph{all} continuous predictors. Default = \code{"normal"}.
+#'   For complexity 4, if this is left at \code{"normal"} the framework
+#'   automatically uses \code{"uniform"} (Friedman canonical); set explicitly
+#'   to \code{"uniform"} to make that choice transparent. Ignored when
+#'   \code{binary_prevalence > 0}. Supported families and their default
+#'   parameters:
+#'   \itemize{
+#'     \item \code{"normal"}      — mean = 0, sd = 1
+#'     \item \code{"uniform"}     — min = 0, max = 1
+#'     \item \code{"exponential"} — rate = 1
+#'     \item \code{"lognormal"}   — meanlog = 0, sdlog = 1
+#'     \item \code{"t"}           — df = 5
+#'     \item \code{"laplace"}     — location = 0, scale = 1
+#'   }
+#' @param intercept          Scalar intercept added to the linear predictor.
+#'   Default = 0.
 #'
-#' @details
-#' \strong{Complexity levels and linear predictor structure:}
-#' \itemize{
-#'   \item \strong{1 - Linear}: lp = alpha + sum beta_j * x_j.
-#'     Roles and strength tiers not applied.
-#'   \item \strong{2 - Quadratic}: linear + quadratic terms for nonlinear-role
-#'     predictors.
-#'   \item \strong{3 - Quadratic + Interactions}: C2 terms + pairwise products
-#'     across all active predictors.
-#'   \item \strong{4 - Friedman (1991) Nonlinear}: canonical Friedman #1
-#'     benchmark, scaled by per-predictor betas, extended for >5 active
-#'     predictors.
-#' }
-#' \strong{Default predictor distributions by complexity:}
-#' \itemize{
-#'   \item C1 continuous: Normal(0, 1)
-#'   \item C1 binary    : Bernoulli(predictor_prop)
-#'   \item C2, C3       : Normal(0, 1)
-#'   \item C4           : Uniform(0, 1)  [Friedman canonical]
-#' }
-#' Per-column overrides via \code{predictor_dist} apply at \strong{all} levels.
+#' @return A data frame with columns \code{y}, \code{x1}, \code{x2}, ...
 #'
 #' @references
 #' Friedman, J. H. (1991). Multivariate adaptive regression splines.
@@ -132,28 +186,26 @@ default_data_generators <- function(opts) {
 #' Breiman, L. (1996). Bagging predictors.
 #'   \emph{Machine Learning}, 24(2), 123-140.
 #'
-#' @return A data frame with columns \code{y}, \code{x1}, \code{x2}, ...
 #' @keywords internal
 generate_continuous_data <- function(
     n,
+    n_signal,
+    n_noise,
     beta_signal,
-    n_signal_parameters,
-    noise_parameters,
-    predictor_type     = "continuous",
-    predictor_prop     = NULL,
     complexity         = 1,
-    predictor_dist     = NULL,
-    cor_matrix         = NULL,
-    predictor_roles    = NULL,
-    predictor_strength = NULL
+    predictor_strength = NULL,
+    correlation        = 0.3,
+    binary_prevalence  = 0,
+    distribution       = "normal",
+    intercept          = 0
 ) {
-  X  <- generate_predictors(n, n_signal_parameters, noise_parameters,
-                            predictor_type, predictor_prop,
-                            complexity, predictor_dist, cor_matrix)
-  lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters,
-                                  intercept = 0, beta_signal,
-                                  complexity, predictor_roles,
-                                  predictor_strength)
+  predictor_strength <- resolve_strength(predictor_strength, complexity)
+  X  <- generate_predictors(n, n_signal, n_noise,
+                            complexity, correlation,
+                            binary_prevalence, distribution)
+  lp <- generate_linear_predictor(X, n_signal, n_noise,
+                                  intercept, beta_signal,
+                                  complexity, predictor_strength)
   y  <- stats::rnorm(n, lp, 1)
   return(as.data.frame(cbind(y, X)))
 }
@@ -161,34 +213,32 @@ generate_continuous_data <- function(
 #' Simulate binary outcome data
 #'
 #' @inheritParams generate_continuous_data
-#' @param mu_lp         Intercept on the log-odds scale.
-#' @param baseline_prob Nominal baseline probability (for documentation;
+#' @param mu_lp         Intercept on the log-odds scale. Default = 0.
+#' @param baseline_prob Nominal baseline event probability (documentation only;
 #'   the realised probability is determined by \code{mu_lp}).
 #'
-#' @return A data frame with columns \code{y}, \code{x1}, \code{x2}, ...
+#' @return A data frame with columns \code{y} (0/1), \code{x1}, \code{x2}, ...
 #' @keywords internal
 generate_binary_data <- function(
     n,
-    mu_lp,
+    n_signal,
+    n_noise,
     beta_signal,
-    n_signal_parameters,
-    noise_parameters,
-    predictor_type     = "continuous",
-    predictor_prop     = NULL,
-    baseline_prob,
     complexity         = 1,
-    predictor_dist     = NULL,
-    cor_matrix         = NULL,
-    predictor_roles    = NULL,
-    predictor_strength = NULL
+    predictor_strength = NULL,
+    correlation        = 0.3,
+    binary_prevalence  = 0,
+    distribution       = "normal",
+    mu_lp              = 0,
+    baseline_prob      = 0.5
 ) {
-  X  <- generate_predictors(n, n_signal_parameters, noise_parameters,
-                            predictor_type, predictor_prop,
-                            complexity, predictor_dist, cor_matrix)
-  lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters,
+  predictor_strength <- resolve_strength(predictor_strength, complexity)
+  X  <- generate_predictors(n, n_signal, n_noise,
+                            complexity, correlation,
+                            binary_prevalence, distribution)
+  lp <- generate_linear_predictor(X, n_signal, n_noise,
                                   intercept = mu_lp, beta_signal,
-                                  complexity, predictor_roles,
-                                  predictor_strength)
+                                  complexity, predictor_strength)
   y  <- stats::rbinom(n, 1, stats::plogis(lp))
   return(as.data.frame(cbind(y, X)))
 }
@@ -196,34 +246,33 @@ generate_binary_data <- function(
 #' Simulate survival outcome data
 #'
 #' @inheritParams generate_continuous_data
-#' @param baseline_hazard Baseline hazard rate (exponential model).
-#' @param censoring_rate  Administrative censoring proportion (0-1).
+#' @param baseline_hazard Baseline hazard rate (exponential survival model).
+#' @param censoring_rate  Administrative censoring proportion in (0, 1).
 #'
-#' @return A data frame with columns \code{time}, \code{event},
-#'   \code{x1}, \code{x2}, ...
+#' @return A data frame with columns \code{time}, \code{event} (0 = censored,
+#'   1 = event), \code{x1}, \code{x2}, ...
 #' @keywords internal
 generate_survival_data <- function(
     n,
+    n_signal,
+    n_noise,
     beta_signal,
-    n_signal_parameters,
-    noise_parameters,
-    predictor_type     = "continuous",
-    predictor_prop     = NULL,
     baseline_hazard,
     censoring_rate,
     complexity         = 1,
-    predictor_dist     = NULL,
-    cor_matrix         = NULL,
-    predictor_roles    = NULL,
-    predictor_strength = NULL
+    predictor_strength = NULL,
+    correlation        = 0.3,
+    binary_prevalence  = 0,
+    distribution       = "normal",
+    intercept          = 0
 ) {
-  X  <- generate_predictors(n, n_signal_parameters, noise_parameters,
-                            predictor_type, predictor_prop,
-                            complexity, predictor_dist, cor_matrix)
-  lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters,
-                                  intercept = 0, beta_signal,
-                                  complexity, predictor_roles,
-                                  predictor_strength)
+  predictor_strength <- resolve_strength(predictor_strength, complexity)
+  X  <- generate_predictors(n, n_signal, n_noise,
+                            complexity, correlation,
+                            binary_prevalence, distribution)
+  lp <- generate_linear_predictor(X, n_signal, n_noise,
+                                  intercept, beta_signal,
+                                  complexity, predictor_strength)
   
   event_time    <- stats::rexp(n, rate = baseline_hazard * exp(lp))
   T_observe     <- stats::quantile(event_time, 1 - censoring_rate)
@@ -238,6 +287,10 @@ generate_survival_data <- function(
 # Internal helpers
 # =============================================================================
 
+# -----------------------------------------------------------------------------
+# update_arguments
+# Bakes opts$args values into the formals of fn.
+# -----------------------------------------------------------------------------
 update_arguments <- function(fn, opts) {
   for (key in names(opts$args)) {
     if (key %in% names(formals(fn))) {
@@ -249,208 +302,132 @@ update_arguments <- function(fn, opts) {
 }
 
 # -----------------------------------------------------------------------------
-# draw_one_predictor
+# resolve_strength
 #
-# Draws n observations from the distribution specified in `spec`.
-# `spec` is a list with at minimum a `dist` element (character string).
-# `fallback_dist` is used when spec is NULL (i.e., no user override).
-#
-# Supported families:
-#   "normal"      : mean (0), sd (1)
-#   "uniform"     : min (0), max (1)
-#   "binary"      : prop (0.5)
-#   "exponential" : rate (1)
-#   "lognormal"   : meanlog (0), sdlog (1)
-#   "t"           : df (5)
-#   "laplace"     : location (0), scale (1)
+# Returns the predictor_strength keyword to use, applying the complexity-level
+# default when the user has not supplied an explicit value (NULL).
+# Also validates the keyword against STRENGTH_WEIGHTS.
 # -----------------------------------------------------------------------------
-draw_one_predictor <- function(n, spec, fallback_dist, cname) {
-  
-  # Resolve which distribution to use
-  if (is.null(spec)) {
-    dist <- fallback_dist
-    spec <- list()          # empty: all parameters will use defaults
-  } else {
-    if (is.null(spec$dist))
-      stop(sprintf("predictor_dist[['%s']] must contain a 'dist' element.", cname))
-    dist <- spec$dist
+resolve_strength <- function(predictor_strength, complexity) {
+  if (is.null(predictor_strength)) {
+    predictor_strength <- COMPLEXITY_STRENGTH_DEFAULTS[[as.character(complexity)]]
   }
   
-  switch(
-    dist,
+  if (!predictor_strength %in% names(STRENGTH_WEIGHTS))
+    stop(sprintf(
+      'predictor_strength must be one of: "%s". Got: "%s".',
+      paste(names(STRENGTH_WEIGHTS), collapse = '", "'),
+      predictor_strength
+    ))
+  
+  return(predictor_strength)
+}
+
+# -----------------------------------------------------------------------------
+# draw_predictors
+#
+# Draws an n x p matrix of i.i.d. observations from the chosen distribution
+# family using its canonical default parameters. All p predictors share the
+# same family (the distribution argument is global).
+#
+# Supported families and their canonical defaults:
+#   normal      : mean = 0, sd = 1
+#   uniform     : min = 0, max = 1
+#   exponential : rate = 1
+#   lognormal   : meanlog = 0, sdlog = 1
+#   t           : df = 5
+#   laplace     : location = 0, scale = 1  (via quantile transform)
+#   binary      : prop = binary_prevalence  (passed in as argument)
+# -----------------------------------------------------------------------------
+draw_predictors <- function(n, p, family, binary_prevalence = 0) {
+  
+  vals <- switch(
+    family,
     
-    normal = {
-      mu  <- if (!is.null(spec$mean)) spec$mean else 0
-      sig <- if (!is.null(spec$sd))   spec$sd   else 1
-      if (sig <= 0)
-        stop(sprintf("sd must be positive for predictor '%s'.", cname))
-      stats::rnorm(n, mean = mu, sd = sig)
-    },
+    normal = stats::rnorm(n * p),
     
-    uniform = {
-      lo <- if (!is.null(spec$min)) spec$min else 0
-      hi <- if (!is.null(spec$max)) spec$max else 1
-      if (lo >= hi)
-        stop(sprintf("min must be < max for predictor '%s'.", cname))
-      stats::runif(n, min = lo, max = hi)
-    },
+    uniform = stats::runif(n * p),
     
-    binary = {
-      pr <- if (!is.null(spec$prop)) spec$prop else 0.5
-      if (pr < 0 || pr > 1)
-        stop(sprintf("prop must be in [0, 1] for predictor '%s'.", cname))
-      stats::rbinom(n, 1, pr)
-    },
+    exponential = stats::rexp(n * p),
     
-    exponential = {
-      rt <- if (!is.null(spec$rate)) spec$rate else 1
-      if (rt <= 0)
-        stop(sprintf("rate must be positive for predictor '%s'.", cname))
-      stats::rexp(n, rate = rt)
-    },
+    lognormal = stats::rlnorm(n * p),
     
-    lognormal = {
-      ml  <- if (!is.null(spec$meanlog)) spec$meanlog else 0
-      sdl <- if (!is.null(spec$sdlog))   spec$sdlog   else 1
-      if (sdl <= 0)
-        stop(sprintf("sdlog must be positive for predictor '%s'.", cname))
-      stats::rlnorm(n, meanlog = ml, sdlog = sdl)
-    },
-    
-    t = {
-      df <- if (!is.null(spec$df)) spec$df else 5
-      if (df <= 0)
-        stop(sprintf("df must be positive for predictor '%s'.", cname))
-      stats::rt(n, df = df)
-    },
+    t = stats::rt(n * p, df = 5),
     
     laplace = {
-      loc <- if (!is.null(spec$location)) spec$location else 0
-      scl <- if (!is.null(spec$scale))    spec$scale    else 1
-      if (scl <= 0)
-        stop(sprintf("scale must be positive for predictor '%s'.", cname))
-      # Quantile-transform method for Laplace distribution
-      u <- stats::runif(n, -0.5, 0.5)
-      loc - scl * sign(u) * log(1 - 2 * abs(u))
+      u <- stats::runif(n * p, -0.5, 0.5)
+      -sign(u) * log(1 - 2 * abs(u))   # standard Laplace (loc=0, scale=1)
     },
     
+    binary = stats::rbinom(n * p, 1, binary_prevalence),
+    
     stop(sprintf(
-      paste0("Unknown distribution '%s' for predictor '%s'. ",
-             "Supported: normal, uniform, binary, exponential, ",
-             "lognormal, t, laplace."),
-      dist, cname
+      paste0('Unknown distribution "%s". ',
+             'Supported: "normal", "uniform", "exponential", ',
+             '"lognormal", "t", "laplace".'),
+      family
     ))
   )
+  
+  matrix(vals, nrow = n, ncol = p)
 }
 
 # -----------------------------------------------------------------------------
-# resolve_betas
-# Returns numeric vector of per-predictor betas (length = n_signal_parameters)
+# resolve_family
+#
+# Determines the actual distribution family to draw from. Resolution:
+#   1. binary_prevalence > 0  -> "binary" (overrides distribution)
+#   2. complexity == 4 AND distribution == "normal"  -> "uniform" (C4 canonical)
+#   3. Otherwise -> distribution as supplied
 # -----------------------------------------------------------------------------
-resolve_betas <- function(predictor_names, n_signal, predictor_strength,
-                          beta_signal) {
-  signal_names <- predictor_names[seq_len(n_signal)]
-  multipliers  <- rep(1, n_signal)
-  names(multipliers) <- signal_names
-  
-  if (!is.null(predictor_strength)) {
-    for (nm in names(predictor_strength)) {
-      if (nm %in% signal_names) {
-        tier <- predictor_strength[[nm]]
-        multipliers[nm] <- switch(
-          tier,
-          strong   = 1.0,
-          moderate = 0.5,
-          weak     = 0.4,
-          stop(sprintf(
-            "Unknown strength tier '%s' for predictor '%s'. Must be: strong, moderate, weak.",
-            tier, nm
-          ))
-        )
-      }
-    }
-  }
-  return(beta_signal * multipliers)
-}
-
-# -----------------------------------------------------------------------------
-# resolve_roles
-# Returns named character vector of roles for ALL predictors
-# -----------------------------------------------------------------------------
-resolve_roles <- function(predictor_names, n_signal, noise_parameters,
-                          predictor_roles) {
-  p     <- length(predictor_names)
-  roles <- character(p)
-  names(roles) <- predictor_names
-  
-  roles[seq_len(n_signal)]     <- "linear"
-  roles[seq(n_signal + 1, p)] <- "noise"
-  
-  if (!is.null(predictor_roles)) {
-    for (nm in names(predictor_roles)) {
-      if (nm %in% predictor_names) {
-        role <- predictor_roles[[nm]]
-        if (!role %in% c("noise", "linear", "nonlinear"))
-          stop(sprintf(
-            "Invalid role '%s' for predictor '%s'. Must be: noise, linear, nonlinear.",
-            role, nm
-          ))
-        roles[nm] <- role
-      }
-    }
-  }
-  return(roles)
+resolve_family <- function(complexity, distribution, binary_prevalence) {
+  if (binary_prevalence > 0) return("binary")
+  if (complexity == 4 && distribution == "normal") return("uniform")
+  return(distribution)
 }
 
 # -----------------------------------------------------------------------------
 # apply_correlation
 #
-# Induces a target correlation structure via a Gaussian copula:
-#   1. Map each column to U(0,1) via its empirical CDF.
-#   2. Transform to standard normals.
-#   3. Apply the Cholesky factor of cor_matrix.
-#   4. Rank-assign original marginal values according to the new order.
-#
-# This approach preserves every predictor's marginal distribution (including
-# binary) while achieving the desired pairwise correlations.
+# Induces a common pairwise correlation rho across all p columns via a
+# Gaussian copula (equicorrelation matrix, rank-based Cholesky). The marginal
+# distribution of every column is preserved exactly.
 # -----------------------------------------------------------------------------
-apply_correlation <- function(X, cor_matrix) {
+apply_correlation <- function(X, rho) {
   n <- nrow(X)
   p <- ncol(X)
   
-  if (!isTRUE(all.equal(dim(cor_matrix), c(p, p))))
-    stop("cor_matrix must be a ", p, " x ", p, " matrix ",
-         "(one row/column per predictor).")
+  if (rho == 0) return(X)
   
-  diag_vals <- diag(cor_matrix)
-  if (any(abs(diag_vals - 1) > 1e-8))
-    stop("All diagonal elements of cor_matrix must equal 1.")
+  min_rho <- if (p > 1) -1 / (p - 1) else -1
+  if (rho < min_rho)
+    warning(sprintf(
+      paste0("correlation = %.3f may produce a non-PSD equicorrelation matrix ",
+             "for p = %d predictors (minimum valid rho = %.4f)."),
+      rho, p, min_rho
+    ))
   
-  if (any(abs(cor_matrix) > 1 + 1e-8))
-    stop("All elements of cor_matrix must be in [-1, 1].")
+  cor_mat <- matrix(rho, p, p); diag(cor_mat) <- 1
   
-  eigs <- eigen(cor_matrix, symmetric = TRUE, only.values = TRUE)$values
+  eigs <- eigen(cor_mat, symmetric = TRUE, only.values = TRUE)$values
   if (any(eigs < -1e-8))
-    stop("cor_matrix is not positive semi-definite.")
+    stop(sprintf(
+      "Equicorrelation matrix with rho = %.3f is not PSD for p = %d.",
+      rho, p
+    ))
   
-  L <- tryCatch(
-    chol(cor_matrix),
-    error = function(e)
-      stop("Cholesky decomposition of cor_matrix failed: ", conditionMessage(e))
-  )
-  
-  # Map columns to U(0,1) via empirical CDF, then to standard normals
+  L      <- chol(cor_mat)
   U      <- apply(X, 2, function(col) rank(col, ties.method = "average") / (n + 1))
-  Z_ind  <- qnorm(U)
-  Z_corr <- Z_ind %*% t(L)
+  Z_corr <- qnorm(U) %*% t(L)
   
-  # Re-assign marginal values according to the new rank order
   X_corr <- X
   for (j in seq_len(p)) {
     orig_sorted   <- sort(X[, j])
     new_ranks_int <- pmax(1L, pmin(n, round(rank(Z_corr[, j], ties.method = "average"))))
     X_corr[, j]  <- orig_sorted[new_ranks_int]
   }
+  
+  colnames(X_corr) <- colnames(X)
   return(X_corr)
 }
 
@@ -458,90 +435,56 @@ apply_correlation <- function(X, cor_matrix) {
 # generate_predictors
 # =============================================================================
 
-#' Generate predictor matrix (with optional per-predictor distributions and
-#' optional correlation structure)
+#' Generate the n x p predictor matrix
 #'
-#' @param n                   Sample size.
-#' @param n_signal_parameters Signal predictor count.
-#' @param noise_parameters    Noise predictor count.
-#' @param type                Fallback type when no per-column spec is given:
-#'   \code{"continuous"} or \code{"binary"}.
-#' @param predictor_prop      Bernoulli probability for the binary fallback.
-#' @param complexity          Integer 1-4. Determines the \emph{default}
-#'   distribution when a column has no entry in \code{predictor_dist}:
-#'   \itemize{
-#'     \item C1 continuous: Normal(0,1)
-#'     \item C1 binary    : Bernoulli(predictor_prop)
-#'     \item C2, C3       : Normal(0,1)
-#'     \item C4           : Uniform(0,1)
-#'   }
-#' @param predictor_dist      Named list; each element is a list specifying
-#'   the distribution for one predictor column. Applies at \strong{all}
-#'   complexity levels. Missing columns use the complexity default.
-#' @param cor_matrix          p x p correlation matrix or \code{NULL}.
+#' Draws all predictors from a single global distribution family, then
+#' optionally applies an equicorrelation structure via a Gaussian copula.
+#'
+#' @param n                Sample size.
+#' @param n_signal         Number of signal predictors.
+#' @param n_noise          Number of noise predictors.
+#' @param complexity       Integer 1-4 (used to resolve the C4 distribution
+#'   default).
+#' @param correlation      Scalar common pairwise correlation; 0 = independent.
+#' @param binary_prevalence Scalar Bernoulli prevalence; 0 = all continuous.
+#' @param distribution     Global continuous distribution family.
 #'
 #' @return Named n x p numeric matrix (column names: x1, x2, ...).
 #' @keywords internal
 generate_predictors <- function(n,
-                                n_signal_parameters,
-                                noise_parameters,
-                                type           = "continuous",
-                                predictor_prop = NULL,
-                                complexity     = 1,
-                                predictor_dist = NULL,
-                                cor_matrix     = NULL) {
+                                n_signal,
+                                n_noise,
+                                complexity        = 1,
+                                correlation       = 0.3,
+                                binary_prevalence = 0,
+                                distribution      = "normal") {
   
-  parameters <- n_signal_parameters + noise_parameters
-  col_names  <- paste0("x", seq_len(parameters))
+  p         <- n_signal + n_noise
+  col_names <- paste0("x", seq_len(p))
   
-  # ---------------------------------------------------------------------------
-  # Determine the complexity-level fallback distribution
-  # ---------------------------------------------------------------------------
-  # For C1 binary the fallback is handled specially inside the loop.
-  fallback <- switch(
-    as.character(complexity),
-    "1" = if (type == "binary") "binary" else "normal",
-    "2" = "normal",
-    "3" = "normal",
-    "4" = "uniform",
-    stop("complexity must be 1, 2, 3, or 4")
-  )
+  # ---- validate inputs -------------------------------------------------------
+  if (!is.numeric(n_signal) || n_signal < 1)
+    stop("n_signal must be a positive integer.")
+  if (!is.numeric(n_noise)  || n_noise  < 0)
+    stop("n_noise must be a non-negative integer.")
+  if (binary_prevalence < 0 || binary_prevalence > 1)
+    stop("binary_prevalence must be in [0, 1].")
+  if (!is.numeric(correlation) || length(correlation) != 1 ||
+      correlation < -1 || correlation > 1)
+    stop("correlation must be a single numeric value in [-1, 1].")
   
-  # Validate binary fallback parameters upfront
-  if (fallback == "binary") {
-    if (is.null(predictor_prop))
-      stop("predictor_prop must be provided when predictor_type is 'binary'.")
-    if (predictor_prop < 0 || predictor_prop > 1)
-      stop("predictor_prop must be in [0, 1].")
-  }
+  # ---- determine distribution family -----------------------------------------
+  family <- resolve_family(complexity, distribution, binary_prevalence)
   
-  # ---------------------------------------------------------------------------
-  # Draw each column independently using draw_one_predictor()
-  # ---------------------------------------------------------------------------
-  X <- matrix(NA_real_, nrow = n, ncol = parameters)
+  # ---- draw all predictors from the global family ----------------------------
+  X             <- draw_predictors(n, p, family, binary_prevalence)
+  colnames(X)   <- col_names
   
-  for (j in seq_len(parameters)) {
-    cname     <- col_names[j]
-    user_spec <- predictor_dist[[cname]]   # NULL if user did not specify
-    
-    # If no user spec AND binary fallback, inject the prop into a synthetic spec
-    if (is.null(user_spec) && fallback == "binary") {
-      user_spec <- list(dist = "binary", prop = predictor_prop)
-    }
-    
-    X[, j] <- draw_one_predictor(n, user_spec, fallback, cname)
-  }
+  # ---- apply equicorrelation if requested ------------------------------------
+  if (correlation != 0)
+    X <- apply_correlation(X, correlation)
   
   colnames(X) <- col_names
-  
-  # ---------------------------------------------------------------------------
-  # Apply correlation structure if requested (all complexities)
-  # ---------------------------------------------------------------------------
-  if (!is.null(cor_matrix)) {
-    X <- apply_correlation(X, cor_matrix)
-    colnames(X) <- col_names
-  }
-  
   return(X)
 }
 
@@ -549,53 +492,39 @@ generate_predictors <- function(n,
 # generate_linear_predictor
 # =============================================================================
 
-#' Construct the linear predictor from the predictor matrix
+#' Construct the linear predictor
 #'
-#' @param X                   n x p predictor matrix (colnames: x1, x2, ...).
-#' @param n_signal_parameters Signal predictor count.
-#' @param noise_parameters    Noise predictor count.
-#' @param intercept           Scalar added to every observation's lp.
-#' @param beta_signal         Base effect size (strong tier = 1.0 x beta_signal).
-#' @param complexity          Integer 1-4.
-#' @param predictor_roles     Named character vector; see \code{generate_continuous_data}.
-#' @param predictor_strength  Named character vector; see \code{generate_continuous_data}.
+#' @param X                  n x p predictor matrix (colnames: x1, x2, ...).
+#' @param n_signal           Signal predictor count.
+#' @param n_noise            Noise predictor count.
+#' @param intercept          Scalar intercept.
+#' @param beta_signal        Base effect size.
+#' @param complexity         Integer 1-4.
+#' @param predictor_strength Resolved strength keyword ("strong", "moderate",
+#'   or "weak"); must not be NULL at this point.
 #'
 #' @details
-#' \strong{Role definitions (complexities 2-4):}
-#' \itemize{
-#'   \item \code{"noise"}     — zero contribution at all complexity levels.
-#'   \item \code{"linear"}    — linear term only (plus interactions in C3/C4).
-#'   \item \code{"nonlinear"} — linear term AND complexity-specific nonlinear
-#'     terms (quadratic in C2/C3; Friedman form in C4); also participates in
-#'     interactions.
-#' }
+#' All signal predictors participate in every term implied by their complexity
+#' level. The effective beta is \code{beta_signal * w} where \code{w} is the
+#' strength weight. Noise predictors always contribute zero.
 #'
 #' \strong{Complexity 1 — Linear:}
-#' \deqn{lp = \alpha + \sum_{j=1}^{S} \beta \, x_j}
-#' (roles and strength tiers not used)
+#' \deqn{lp = \alpha + w\beta \sum_{j=1}^{S} x_j}
 #'
 #' \strong{Complexity 2 — Quadratic:}
-#' \deqn{lp = \alpha
-#'   + \sum_{j:\,\text{linear}} \beta_j x_j
-#'   + \sum_{j:\,\text{nonlinear}} \beta_j (x_j + x_j^2)}
+#' \deqn{lp = \alpha + w\beta \sum_{j=1}^{S} (x_j + x_j^2)}
 #'
-#' \strong{Complexity 3 — Quadratic + Interactions:}
+#' \strong{Complexity 3 — Quadratic + Pairwise Interactions:}
 #' \deqn{lp = \alpha
-#'   + \sum_{j:\,\text{linear}} \beta_j x_j
-#'   + \sum_{j:\,\text{nonlinear}} \beta_j (x_j + x_j^2)
-#'   + \sum_{\substack{j < k \\ \text{both active}}}
-#'       \sqrt{\beta_j \beta_k} \, x_j x_k}
+#'   + w\beta \sum_{j=1}^{S} (x_j + x_j^2)
+#'   + w\beta \sum_{j < k}^{S} x_j x_k}
 #'
-#' \strong{Complexity 4 — Friedman (1991) Nonlinear:}
-#' The first five active predictors follow the canonical Friedman #1 function,
-#' scaled by per-predictor betas:
+#' \strong{Complexity 4 — Friedman (1991):}
+#' Uses the canonical Friedman #1 function, scaled by \code{w * beta_signal}:
 #' \deqn{lp = \alpha
-#'   + \beta_1 \cdot 10\sin(\pi x_1 x_2)
-#'   + \beta_3 \cdot 20(x_3 - 0.5)^2
-#'   + \beta_4 \cdot 10 x_4
-#'   + \beta_5 \cdot  5 x_5}
-#' Each additional active predictor k (k >= 6) contributes:
-#' \deqn{\beta_k \bigl[\sin(\pi x_k x_{k-1}) + (x_k - 0.5)^2\bigr]}
+#'   + w\beta \bigl[10\sin(\pi x_1 x_2) + 20(x_3-0.5)^2 + 10x_4 + 5x_5\bigr]}
+#' For each signal predictor k \eqn{\ge} 6:
+#' \deqn{+ w\beta_k \bigl[\sin(\pi x_k x_{k-1}) + (x_k-0.5)^2\bigr]}
 #'
 #' @references
 #' Friedman, J. H. (1991). Multivariate adaptive regression splines.
@@ -607,109 +536,75 @@ generate_predictors <- function(n,
 #' @return Numeric vector of length n.
 #' @keywords internal
 generate_linear_predictor <- function(X,
-                                      n_signal_parameters,
-                                      noise_parameters,
+                                      n_signal,
+                                      n_noise,
                                       intercept,
                                       beta_signal,
-                                      complexity         = 1,
-                                      predictor_roles    = NULL,
-                                      predictor_strength = NULL) {
+                                      complexity,
+                                      predictor_strength) {
   
-  n      <- nrow(X)
-  p      <- ncol(X)
-  pnames <- colnames(X)
-  lp     <- rep(intercept, n)
+  n  <- nrow(X)
+  lp <- rep(intercept, n)
   
-  if (n_signal_parameters == 0) return(lp)
+  if (n_signal == 0) return(lp)
   
-  # ---------------------------------------------------------------------------
-  # Complexity 1 — purely linear, no roles or strength
-  # ---------------------------------------------------------------------------
+  # Effective beta: one value applies uniformly to all signal predictors
+  w          <- STRENGTH_WEIGHTS[[predictor_strength]]
+  eff_beta   <- beta_signal * w
+  Xs         <- X[, seq_len(n_signal), drop = FALSE]   # signal columns only
+  
+  # ---- Complexity 1: linear --------------------------------------------------
   if (complexity == 1) {
-    Xs <- X[, seq_len(n_signal_parameters), drop = FALSE]
-    lp <- lp + as.vector(Xs %*% rep(beta_signal, n_signal_parameters))
-    return(lp)
-  }
-  
-  # ---------------------------------------------------------------------------
-  # Complexities 2-4 — resolve roles and per-predictor betas
-  # ---------------------------------------------------------------------------
-  roles <- resolve_roles(pnames, n_signal_parameters, noise_parameters,
-                         predictor_roles)
-  betas <- resolve_betas(pnames, n_signal_parameters, predictor_strength,
-                         beta_signal)
-  
-  full_betas <- rep(0, p)
-  full_betas[seq_len(n_signal_parameters)] <- betas
-  
-  linear_idx    <- which(roles == "linear")
-  nonlinear_idx <- which(roles == "nonlinear")
-  active_idx    <- sort(c(linear_idx, nonlinear_idx))
-  
-  # ---------------------------------------------------------------------------
-  # Complexity 2 — linear + quadratic (nonlinear role only)
-  # ---------------------------------------------------------------------------
-  if (complexity == 2) {
-    for (j in active_idx)
-      lp <- lp + full_betas[j] * X[, j]
-    for (j in nonlinear_idx)
-      lp <- lp + full_betas[j] * X[, j]^2
+    lp <- lp + eff_beta * rowSums(Xs)
     
-    # ---------------------------------------------------------------------------
-    # Complexity 3 — linear + quadratic + pairwise interactions
-    # ---------------------------------------------------------------------------
+    # ---- Complexity 2: linear + quadratic (all signal predictors) -------------
+  } else if (complexity == 2) {
+    lp <- lp + eff_beta * rowSums(Xs)         # linear
+    lp <- lp + eff_beta * rowSums(Xs^2)       # quadratic
+    
+    # ---- Complexity 3: linear + quadratic + pairwise interactions -------------
   } else if (complexity == 3) {
-    for (j in active_idx)
-      lp <- lp + full_betas[j] * X[, j]
-    for (j in nonlinear_idx)
-      lp <- lp + full_betas[j] * X[, j]^2
+    lp <- lp + eff_beta * rowSums(Xs)
+    lp <- lp + eff_beta * rowSums(Xs^2)
     
-    if (length(active_idx) >= 2) {
-      pairs <- utils::combn(active_idx, 2)
+    if (n_signal >= 2) {
+      pairs <- utils::combn(n_signal, 2)       # 2 x C(S,2) index matrix
       for (k in seq_len(ncol(pairs))) {
-        j1    <- pairs[1, k]
-        j2    <- pairs[2, k]
-        w_int <- sqrt(full_betas[j1] * full_betas[j2])
-        lp    <- lp + w_int * X[, j1] * X[, j2]
+        j1 <- pairs[1, k]; j2 <- pairs[2, k]
+        lp <- lp + eff_beta * Xs[, j1] * Xs[, j2]
       }
     }
     
-    # ---------------------------------------------------------------------------
-    # Complexity 4 — Friedman (1991) benchmark, extended for > 5 active predictors
-    # ---------------------------------------------------------------------------
+    # ---- Complexity 4: Friedman (1991) benchmark ------------------------------
   } else if (complexity == 4) {
-    n_active <- length(active_idx)
+    if (n_signal < 5)
+      warning(sprintf(
+        paste0("Complexity 4 (Friedman) requires >= 5 signal predictors; ",
+               "only %d supplied. Some Friedman terms will be omitted."),
+        n_signal
+      ))
     
-    if (n_active < 5)
-      warning("Complexity 4 (Friedman) uses the first 5 active predictors. ",
-              "Only ", n_active, " active predictor(s) found; some Friedman ",
-              "terms will be omitted.")
-    
-    xcol <- function(k) if (k <= n_active) X[, active_idx[k]] else rep(0, n)
-    bk   <- function(k) if (k <= n_active) full_betas[active_idx[k]] else 0
+    xcol <- function(k) if (k <= n_signal) Xs[, k] else rep(0, n)
     
     x1 <- xcol(1); x2 <- xcol(2); x3 <- xcol(3)
     x4 <- xcol(4); x5 <- xcol(5)
     
-    # Canonical Friedman #1 terms
-    # Friedman (1991, Eq. 4.3); also Breiman (1996, p. 126):
-    #   y = 10 sin(pi x1 x2) + 20(x3 - 0.5)^2 + 10 x4 + 5 x5 + eps
-    if (n_active >= 2) lp <- lp + bk(1) * 10 * sin(pi * x1 * x2)
-    if (n_active >= 3) lp <- lp + bk(3) * 20 * (x3 - 0.5)^2
-    if (n_active >= 4) lp <- lp + bk(4) * 10 * x4
-    if (n_active >= 5) lp <- lp + bk(5) *  5 * x5
+    # Canonical Friedman #1 terms (Friedman 1991, Eq. 4.3; Breiman 1996 p. 126)
+    if (n_signal >= 2) lp <- lp + eff_beta * 10 * sin(pi * x1 * x2)
+    if (n_signal >= 3) lp <- lp + eff_beta * 20 * (x3 - 0.5)^2
+    if (n_signal >= 4) lp <- lp + eff_beta * 10 * x4
+    if (n_signal >= 5) lp <- lp + eff_beta *  5 * x5
     
-    # Extended terms for active predictors 6, 7, ...
-    if (n_active >= 6) {
-      for (idx in 6:n_active) {
-        xj   <- X[, active_idx[idx]]
-        xj_1 <- X[, active_idx[idx - 1]]
-        lp   <- lp + bk(idx) * (sin(pi * xj * xj_1) + (xj - 0.5)^2)
+    # Extended terms for signal predictors 6, 7, ...
+    if (n_signal >= 6) {
+      for (k in 6:n_signal) {
+        lp <- lp + eff_beta * (sin(pi * xcol(k) * xcol(k - 1)) +
+                                 (xcol(k) - 0.5)^2)
       }
     }
     
   } else {
-    stop("complexity must be 1, 2, 3, or 4")
+    stop("complexity must be 1, 2, 3, or 4.")
   }
   
   return(lp)
