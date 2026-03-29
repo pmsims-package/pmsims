@@ -15,13 +15,21 @@
 #   n_signal          : number of signal predictors
 #   n_noise           : number of noise predictors
 #   beta_signal       : base effect size for signal predictors
+#   predictor_type    : "continuous" (default) or "binary".
+#                       When "binary", ALL predictors are Bernoulli and
+#                       binary_prevalence must be supplied; distribution is
+#                       ignored.
+#                       When "continuous", distribution governs the family.
+#   binary_prevalence : Bernoulli probability for ALL predictors.
+#                       Required (and used) when predictor_type = "binary".
+#                       Ignored when predictor_type = "continuous".
+#                       Default = 0 (no binary predictors).
 #   correlation       : common pairwise correlation (default = 0.3; 0 = none)
-#   binary_prevalence : Bernoulli probability for ALL predictors (default = 0,
-#                       i.e. all predictors are continuous)
-#   distribution      : single global distribution family for ALL predictors
-#                       (default = "normal"; see supported families below).
-#                       When binary_prevalence > 0, ALL predictors are binary
-#                       and this argument is ignored.
+#   distribution      : single global distribution family for ALL continuous
+#                       predictors (default = "normal"; ignored when
+#                       predictor_type = "binary"). Supported families:
+#                         "normal", "uniform", "exponential",
+#                         "lognormal", "t", "laplace".
 #                       For complexity 4 the Friedman canonical default is
 #                       "uniform", applied automatically when distribution is
 #                       left at "normal".
@@ -151,20 +159,24 @@ default_data_generators <- function(opts) {
 #'   \code{"moderate"} (w = 0.5), or \code{"weak"} (w = 0.3).
 #'   When \code{NULL} (default), the complexity-level default is used:
 #'   C1 = strong, C2 = moderate, C3 = moderate, C4 = strong.
+#' @param predictor_type     Type of predictors: \code{"continuous"} (default)
+#'   or \code{"binary"}. When \code{"binary"}, all predictors are drawn as
+#'   Bernoulli(\code{binary_prevalence}); \code{binary_prevalence} must be in
+#'   (0, 1] and \code{distribution} is ignored. When \code{"continuous"},
+#'   \code{distribution} governs the family for all predictors.
+#' @param binary_prevalence  Scalar in (0, 1]. Bernoulli probability applied to
+#'   all predictors when \code{predictor_type = "binary"}. Required (and used)
+#'   only when \code{predictor_type = "binary"}; ignored otherwise. Default = 0.
 #' @param correlation        Scalar in [-1, 1]. Common pairwise correlation
 #'   applied to all predictors via a Gaussian copula (equicorrelation,
 #'   rank-based Cholesky). Default = 0.3. Set to 0 for independence. The
 #'   copula step preserves each predictor's marginal distribution exactly.
-#' @param binary_prevalence  Scalar in [0, 1]. When > 0, \emph{all} predictors
-#'   are drawn as Bernoulli(\code{binary_prevalence}) and \code{distribution}
-#'   is ignored. When = 0 (default) all predictors are continuous.
 #' @param distribution       Single character string naming the distribution
-#'   family used for \emph{all} continuous predictors. Default = \code{"normal"}.
-#'   For complexity 4, if this is left at \code{"normal"} the framework
-#'   automatically uses \code{"uniform"} (Friedman canonical); set explicitly
-#'   to \code{"uniform"} to make that choice transparent. Ignored when
-#'   \code{binary_prevalence > 0}. Supported families and their default
-#'   parameters:
+#'   family for \emph{all} continuous predictors
+#'   (\code{predictor_type = "continuous"} only). Default = \code{"normal"}.
+#'   For complexity 4, if left at \code{"normal"} the framework automatically
+#'   uses \code{"uniform"} (Friedman canonical). Ignored when
+#'   \code{predictor_type = "binary"}. Supported families:
 #'   \itemize{
 #'     \item \code{"normal"}      — mean = 0, sd = 1
 #'     \item \code{"uniform"}     — min = 0, max = 1
@@ -194,15 +206,16 @@ generate_continuous_data <- function(
     beta_signal,
     complexity         = 1,
     predictor_strength = NULL,
-    correlation        = 0.3,
+    predictor_type     = "continuous",
     binary_prevalence  = 0,
+    correlation        = 0.3,
     distribution       = "normal",
     intercept          = 0
 ) {
   predictor_strength <- resolve_strength(predictor_strength, complexity)
   X  <- generate_predictors(n, n_signal, n_noise,
-                            complexity, correlation,
-                            binary_prevalence, distribution)
+                            complexity, predictor_type,
+                            binary_prevalence, correlation, distribution)
   lp <- generate_linear_predictor(X, n_signal, n_noise,
                                   intercept, beta_signal,
                                   complexity, predictor_strength)
@@ -226,16 +239,17 @@ generate_binary_data <- function(
     beta_signal,
     complexity         = 1,
     predictor_strength = NULL,
-    correlation        = 0.3,
+    predictor_type     = "continuous",
     binary_prevalence  = 0,
+    correlation        = 0.3,
     distribution       = "normal",
     mu_lp              = 0,
     baseline_prob      = 0.5
 ) {
   predictor_strength <- resolve_strength(predictor_strength, complexity)
   X  <- generate_predictors(n, n_signal, n_noise,
-                            complexity, correlation,
-                            binary_prevalence, distribution)
+                            complexity, predictor_type,
+                            binary_prevalence, correlation, distribution)
   lp <- generate_linear_predictor(X, n_signal, n_noise,
                                   intercept = mu_lp, beta_signal,
                                   complexity, predictor_strength)
@@ -261,15 +275,16 @@ generate_survival_data <- function(
     censoring_rate,
     complexity         = 1,
     predictor_strength = NULL,
-    correlation        = 0.3,
+    predictor_type     = "continuous",
     binary_prevalence  = 0,
+    correlation        = 0.3,
     distribution       = "normal",
     intercept          = 0
 ) {
   predictor_strength <- resolve_strength(predictor_strength, complexity)
   X  <- generate_predictors(n, n_signal, n_noise,
-                            complexity, correlation,
-                            binary_prevalence, distribution)
+                            complexity, predictor_type,
+                            binary_prevalence, correlation, distribution)
   lp <- generate_linear_predictor(X, n_signal, n_noise,
                                   intercept, beta_signal,
                                   complexity, predictor_strength)
@@ -375,13 +390,15 @@ draw_predictors <- function(n, p, family, binary_prevalence = 0) {
 # -----------------------------------------------------------------------------
 # resolve_family
 #
-# Determines the actual distribution family to draw from. Resolution:
-#   1. binary_prevalence > 0  -> "binary" (overrides distribution)
-#   2. complexity == 4 AND distribution == "normal"  -> "uniform" (C4 canonical)
-#   3. Otherwise -> distribution as supplied
+# Determines the actual distribution family to draw from. Resolution order:
+#   1. predictor_type == "binary"  -> "binary"  (primary switch; overrides all)
+#   2. complexity == 4 AND distribution == "normal"
+#                                  -> "uniform" (C4 Friedman canonical default)
+#   3. Otherwise                   -> distribution as supplied
 # -----------------------------------------------------------------------------
-resolve_family <- function(complexity, distribution, binary_prevalence) {
-  if (binary_prevalence > 0) return("binary")
+resolve_family <- function(complexity, predictor_type, distribution,
+                           binary_prevalence) {
+  if (predictor_type == "binary") return("binary")
   if (complexity == 4 && distribution == "normal") return("uniform")
   return(distribution)
 }
@@ -445,9 +462,12 @@ apply_correlation <- function(X, rho) {
 #' @param n_noise          Number of noise predictors.
 #' @param complexity       Integer 1-4 (used to resolve the C4 distribution
 #'   default).
+#' @param predictor_type   \code{"continuous"} (default) or \code{"binary"}.
+#' @param binary_prevalence Bernoulli probability; used when
+#'   \code{predictor_type = "binary"}.
 #' @param correlation      Scalar common pairwise correlation; 0 = independent.
-#' @param binary_prevalence Scalar Bernoulli prevalence; 0 = all continuous.
-#' @param distribution     Global continuous distribution family.
+#' @param distribution     Global continuous distribution family; used when
+#'   \code{predictor_type = "continuous"}.
 #'
 #' @return Named n x p numeric matrix (column names: x1, x2, ...).
 #' @keywords internal
@@ -455,8 +475,9 @@ generate_predictors <- function(n,
                                 n_signal,
                                 n_noise,
                                 complexity        = 1,
-                                correlation       = 0.3,
+                                predictor_type    = "continuous",
                                 binary_prevalence = 0,
+                                correlation       = 0.3,
                                 distribution      = "normal") {
   
   p         <- n_signal + n_noise
@@ -467,18 +488,23 @@ generate_predictors <- function(n,
     stop("n_signal must be a positive integer.")
   if (!is.numeric(n_noise)  || n_noise  < 0)
     stop("n_noise must be a non-negative integer.")
-  if (binary_prevalence < 0 || binary_prevalence > 1)
-    stop("binary_prevalence must be in [0, 1].")
+  if (!predictor_type %in% c("continuous", "binary"))
+    stop('predictor_type must be "continuous" or "binary".')
   if (!is.numeric(correlation) || length(correlation) != 1 ||
       correlation < -1 || correlation > 1)
     stop("correlation must be a single numeric value in [-1, 1].")
+  if (predictor_type == "binary") {
+    if (binary_prevalence <= 0 || binary_prevalence > 1)
+      stop("binary_prevalence must be in (0, 1] when predictor_type = \"binary\".")
+  }
   
   # ---- determine distribution family -----------------------------------------
-  family <- resolve_family(complexity, distribution, binary_prevalence)
+  family <- resolve_family(complexity, predictor_type, distribution,
+                           binary_prevalence)
   
   # ---- draw all predictors from the global family ----------------------------
-  X             <- draw_predictors(n, p, family, binary_prevalence)
-  colnames(X)   <- col_names
+  X           <- draw_predictors(n, p, family, binary_prevalence)
+  colnames(X) <- col_names
   
   # ---- apply equicorrelation if requested ------------------------------------
   if (correlation != 0)
