@@ -87,8 +87,6 @@ test_that("simulate_custom", {
     max_sample_size = 200,
     n_reps_total = 40,
     n_reps_per = 10,
-    se_final = NULL,
-    n_init = 4,
     method = "mlpwr",
     verbose = FALSE
   ))
@@ -111,8 +109,6 @@ test_that("simulate_custom", {
     max_sample_size = 200,
     n_reps_total = 40,
     n_reps_per = 10,
-    se_final = NULL,
-    n_init = 4,
     method = "mlpwr-bs",
     verbose = FALSE
   ))
@@ -120,6 +116,43 @@ test_that("simulate_custom", {
   expect_s3_class(sim_results_mlpwr_bs, "pmsims")
   expect_true(is.numeric(sim_results_mlpwr_bs$min_n))
   expect_gt(sim_results_mlpwr_bs$min_n, 0)
+})
+
+test_that("simulate_custom returns bisection history when verbose is TRUE", {
+  set.seed(1234)
+  data_opts <- list(
+    type = "binary",
+    args = list(
+      n_signal_parameters = 5,
+      noise_parameters = 0,
+      predictor_type = "continuous",
+      baseline_prob = 0.2,
+      mu_lp = stats::qlogis(0.2),
+      beta_signal = 0.5
+    )
+  )
+  data_function <- default_data_generators(data_opts)
+  outcome_type <- attr(data_function, "outcome")
+  model_function <- default_model_generators(outcome_type, model = "glm")
+  metric_function <- default_metric_generator("auc", data_function)
+
+  sim_results_bisection <- suppressWarnings(simulate_custom(
+    data_function = data_function,
+    model_function = model_function,
+    metric_function = metric_function,
+    target_performance = 0.73,
+    c_statistic = 0.8,
+    test_n = 2000,
+    min_sample_size = 75,
+    max_sample_size = 200,
+    n_reps_total = 40,
+    n_reps_per = 10,
+    method = "bisection",
+    verbose = TRUE
+  ))
+
+  expect_true(is.list(sim_results_bisection$history))
+  expect_true(length(sim_results_bisection$history) > 0)
 })
 
 test_that("simulate_custom can suppress the mlpwr progress bar", {

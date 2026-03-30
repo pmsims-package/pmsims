@@ -1,24 +1,52 @@
-#' Simulate Custom
-#' 'simulate_custom' is the interface for pmsims at the most basic level. It takes data, model, and metric functions as inputs and allows full control over other simulation parameters.
+#' Minimum sample size for custom simulation workflows
 #'
-#' @param data_function A function that returns datasets. Must have a single argument, `n`, which controls the sample size.
-#' @param model_function A function that fits models to the data. Takes the data object returned by `data_function` as its only argument.
-#' @param metric_function A function that returns a performance metric. Must take test data, a fitted model and a model name string as arguments. These do not need to be named but must be ordered (test_data, fitted_model, model_name). Must return a single value. Optionally, users may set `attr(metric_function, "value_on_error")` to a single numeric fallback value to be used if model fitting or metric evaluation fails.
-#' @param target_performance Numeric. Minimum acceptable value of the selected
-#'   performance metric \eqn{M^\\*}; the algorithm searches for the smallest
-#'   \eqn{n} meeting the chosen criterion with respect to this threshold.
-#' @param c_statistic This argument is used internally only. Set to Null when running simulate custom.
-#'  This is used to determine the appropriate starting values for the search. This argument is not used for other outcome types. You probably wont need this. ** explain when this is used**
-#' @param mean_or_assurance Character string `"mean"` or `"assurance"` indicating which criterion defines the minimum sample size.
-#' @param test_n Integer size of the test datasets used to evaluate performance (should be large). Default is 30000.
-#' @param min_sample_size Integer lower bound of the sample-size search region. If this is set the adaptive starting values are not run - set to NULL to use adaptive algorithm.
-#' @param max_sample_size Integer upper bound of the sample-size search region. If this is set the adaptive starting values are not run - set to NULL to use adaptive algorithm. as above**
-#' @param n_reps_total Integer total number of simulation replications allocated to the search. The search will look at n_reps_total/n_reps_per candidate sample sizes. Supply either `n_reps_total` or `se_final`.
-#' @param n_reps_per Integer number of replications evaluated at each candidate sample size.
-#' @param method Character string selecting the search engine; defaults to "mlpwr" which is the best performing option in validation
-#' @param progress Logical flag controlling whether the `mlpwr` progress bar is shown.
-#' @param verbose Logical flag controlling printed progress information.
-#' @param ... Additional arguments passed to the chosen engine.
+#' Compute the minimum sample size required to achieve a target level of
+#' predictive performance using user-defined simulation components.
+#' `simulate_custom()` is the low-level interface in `pmsims`: users supply a
+#' data-generating function, a model-fitting function, and a metric function,
+#' and the chosen search engine estimates the smallest \eqn{n} meeting the
+#' selected performance criterion.
+#'
+#' @param data_function Function taking a single argument, `n`, giving the
+#'   training sample size, and returning a dataset that can be passed to
+#'   `model_function`.
+#' @param model_function Function that fits a model to the dataset returned by
+#'   `data_function`. It must take the generated dataset as its only argument
+#'   and return a fitted model object.
+#' @param metric_function Function that evaluates predictive performance on test
+#'   data. It must take three positional arguments in the order
+#'   `(test_data, fitted_model, model_name)` and return a single numeric value.
+#'   Optionally, users may set `attr(metric_function, "value_on_error")` to a
+#'   single numeric fallback value to be returned if model fitting or metric
+#'   evaluation fails during a simulation run.
+#' @param target_performance Numeric target value for the chosen performance
+#'   metric. The search aims to find the smallest sample size \eqn{n} for which
+#'   the selected criterion is met relative to this threshold.
+#' @param c_statistic Optional numeric value used only by the internal
+#'   start-value heuristics for some outcome and metric combinations. In most
+#'   custom workflows this should be left as `NULL`.
+#' @param mean_or_assurance Character string specifying the criterion used to
+#'   define the minimum sample size. Must be either `"mean"` or `"assurance"`.
+#' @param test_n Integer size of the test dataset used to evaluate model
+#'   performance. This should usually be large enough that test-set variability
+#'   is negligible relative to the training-sample search.
+#' @param min_sample_size Optional integer lower bound for the sample-size
+#'   search. If supplied, `max_sample_size` must also be supplied.
+#' @param max_sample_size Optional integer upper bound for the sample-size
+#'   search. If supplied, `min_sample_size` must also be supplied.
+#' @param n_reps_total Integer total number of simulation replications allocated
+#'   to the search. The search evaluates approximately
+#'   `n_reps_total / n_reps_per` candidate sample sizes.
+#' @param n_reps_per Integer number of simulation replications performed at each
+#'   candidate sample size.
+#' @param method Character string specifying the search engine. Defaults to
+#'   `"mlpwr"`.
+#' @param progress Logical flag controlling whether the `mlpwr` progress bar is
+#'   shown for `mlpwr`-based methods.
+#' @param verbose Logical flag controlling engine-specific diagnostic output
+#'   when supported. For the bisection engine, setting `verbose = TRUE` stores
+#'   the iteration history on the returned object.
+#' @param ... Additional arguments passed to the selected search engine.
 #'
 #' @return An object of class `"pmsims"` containing the estimated minimum sample size.
 #' @export
@@ -40,20 +68,14 @@ simulate_custom <- function(
   ...
 ) {
   n_init <- 4 # fixing n_init at 4. This is the number of initial sample sizes calculated after the min max are established and before the main search algorithm begins.
-  se_final <- NULL # Setting unused se_final argument. This is passed to engines and in the future we may add functionality for se_final based stopping.
+  se_final <- NULL # Reserved for internal engine use.
 
   if (is.null(data_function)) {
     stop("data_function missing")
   }
 
-  if (
-    sum(c(
-      is.null(n_reps_total),
-      is.null(se_final)
-    )) !=
-      1
-  ) {
-    stop("Exactly one of 'n_reps_total' or 'se_final' must be specified.")
+  if (is.null(n_reps_total)) {
+    stop("'n_reps_total' must be specified.")
   }
 
   # Checking min and max_sample_size inputs.
@@ -76,7 +98,7 @@ simulate_custom <- function(
 
   if (!is.null(min_sample_size)) {
     cat(
-      "Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used."
+      "Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.\n"
     )
   }
 
@@ -124,7 +146,7 @@ simulate_custom <- function(
       tol = 1e-3,
       parallel = FALSE,
       cores = 20,
-      verbose = FALSE,
+      verbose = verbose,
       budget = TRUE,
       ...
     )
@@ -171,6 +193,9 @@ simulate_custom <- function(
     simulation_time = difftime(time_2, time_1, units = "secs"),
     mean_or_assurance = mean_or_assurance
   )
+  if (!is.null(output$history)) {
+    results_list$history <- output$history
+  }
   attr(results_list, "class") <- "pmsims"
   return(results_list)
 }
