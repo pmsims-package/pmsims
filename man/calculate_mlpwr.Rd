@@ -15,6 +15,7 @@ calculate_mlpwr(
   c_statistic,
   mean_or_assurance,
   n_init,
+  progress,
   verbose,
   data_function,
   model_function,
@@ -43,6 +44,8 @@ This is used to determine the appropriate starting values for the search. This a
 \item{mean_or_assurance}{Character string \code{"mean"} or \code{"assurance"} indicating which criterion defines the minimum sample size.}
 
 \item{n_init}{Integer number of initial sample sizes simulated before the Gaussian-process search begins.}
+
+\item{progress}{Logical flag controlling whether the \code{mlpwr} progress bar is shown.}
 
 \item{verbose}{Logical flag passed to \code{mlpwr}; when \code{TRUE} verbose output is printed.}
 

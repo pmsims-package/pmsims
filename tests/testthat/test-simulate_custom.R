@@ -122,4 +122,92 @@ test_that("simulate_custom", {
   expect_gt(sim_results_mlpwr_bs$min_n, 0)
 })
 
+test_that("simulate_custom can suppress the mlpwr progress bar", {
+  set.seed(1234)
+  data_opts <- list(
+    type = "binary",
+    args = list(
+      n_signal_parameters = 5,
+      noise_parameters = 0,
+      predictor_type = "continuous",
+      baseline_prob = 0.2,
+      mu_lp = stats::qlogis(0.2),
+      beta_signal = 0.5
+    )
+  )
+  data_function <- default_data_generators(data_opts)
+  outcome_type <- attr(data_function, "outcome")
+  model_function <- default_model_generators(outcome_type, model = "glm")
+  metric_function <- default_metric_generator("auc", data_function)
 
+  capture_path <- tempfile(fileext = ".txt")
+  old_sink <- sink.number(type = "output")
+  capture <- file(capture_path, open = "wt")
+  sink(capture, type = "output")
+  on.exit(
+    {
+      if (sink.number(type = "output") > old_sink) {
+        sink(type = "output")
+      }
+      if (inherits(try(close(capture), silent = TRUE), "try-error")) {
+        invisible(NULL)
+      }
+      if (file.exists(capture_path)) {
+        unlink(capture_path)
+      }
+    },
+    add = TRUE
+  )
+
+  suppressWarnings(
+    simulate_custom(
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      target_performance = 0.73,
+      c_statistic = 0.8,
+      test_n = 2000,
+      min_sample_size = 75,
+      max_sample_size = 200,
+      n_reps_total = 40,
+      n_reps_per = 10,
+      method = "mlpwr",
+      progress = FALSE,
+      verbose = FALSE
+    )
+  )
+
+  if (sink.number(type = "output") > old_sink) {
+    sink(type = "output")
+  }
+  close(capture)
+  output <- readLines(capture_path, warn = FALSE)
+
+  expect_true(any(grepl("Estimating first stage", output)))
+  expect_true(any(grepl("Estimating second stage", output)))
+  expect_false(any(grepl("sims \\(", output)))
+})
+
+test_that("resolve_value_on_error preserves current defaults and supports custom overrides", {
+  builtin_metric <- function(test_data, fitted_model, model_name) 0.8
+  attr(builtin_metric, "metric") <- "auc"
+
+  custom_metric <- function(test_data, fitted_model, model_name) 0.8
+  attr(custom_metric, "metric") <- "my_custom_metric"
+  attr(custom_metric, "value_on_error") <- -Inf
+
+  unknown_metric <- function(test_data, fitted_model, model_name) 0.8
+  attr(unknown_metric, "metric") <- "my_other_metric"
+
+  invalid_metric <- function(test_data, fitted_model, model_name) 0.8
+  attr(invalid_metric, "value_on_error") <- c(0.1, 0.2)
+
+  expect_identical(resolve_value_on_error(builtin_metric), 0.5)
+  expect_identical(resolve_value_on_error(custom_metric), -Inf)
+  expect_identical(resolve_value_on_error(unknown_metric), 0.5)
+  expect_error(
+    resolve_value_on_error(invalid_metric),
+    'attr(metric_function, "value_on_error") must be a single non-missing numeric value.',
+    fixed = TRUE
+  )
+})

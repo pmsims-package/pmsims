@@ -18,6 +18,7 @@ simulate_custom(
   n_reps_total = 1000,
   n_reps_per = 20,
   method = "mlpwr",
+  progress = TRUE,
   verbose = FALSE,
   ...
 )
@@ -27,7 +28,7 @@ simulate_custom(
 
 \item{model_function}{A function that fits models to the data. Takes the data object returned by \code{data_function} as its only argument.}
 
-\item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model name string as arguments. These do not need to be named but must be ordered (test_data, fitted_model, model_name) Must return a single value.}
+\item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model name string as arguments. These do not need to be named but must be ordered (test_data, fitted_model, model_name). Must return a single value. Optionally, users may set \code{attr(metric_function, "value_on_error")} to a single numeric fallback value to be used if model fitting or metric evaluation fails.}
 
 \item{target_performance}{Numeric. Minimum acceptable value of the selected
 performance metric \eqn{M^\\*}; the algorithm searches for the smallest
@@ -49,6 +50,8 @@ This is used to determine the appropriate starting values for the search. This a
 \item{n_reps_per}{Integer number of replications evaluated at each candidate sample size.}
 
 \item{method}{Character string selecting the search engine; defaults to "mlpwr" which is the best performing option in validation}
+
+\item{progress}{Logical flag controlling whether the \code{mlpwr} progress bar is shown.}
 
 \item{verbose}{Logical flag controlling printed progress information.}
 

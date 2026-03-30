@@ -14,6 +14,7 @@ calculate_mlpwr_bs(
   target_performance,
   c_statistic,
   mean_or_assurance,
+  progress,
   verbose,
   data_function,
   model_function,
@@ -40,6 +41,8 @@ performance metric \eqn{M^\\*}; the algorithm searches for the smallest
 This is used to determine the appropriate starting values for the search. This argument is not used for other outcome types. You probably wont need this. ** explain when this is used**}
 
 \item{mean_or_assurance}{Character string \code{"mean"} or \code{"assurance"} indicating which criterion defines the minimum sample size.}
+
+\item{progress}{Logical flag controlling whether the \code{mlpwr} progress bar is shown.}
 
 \item{verbose}{Logical flag passed to \code{mlpwr}; when \code{TRUE} verbose output is printed.}
 

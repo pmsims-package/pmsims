@@ -1,6 +1,7 @@
 #' mlpwr engine
 #' @inheritParams simulate_custom
-#' @param n_init Integer number of initial sample sizes simulated before the Gaussian-process search begins.
+#' @param n_init Integer number of initial sample sizes simulated before the Gaussian process search begins.
+#' @param progress Logical flag controlling whether the `mlpwr` progress bar is shown.
 #' @param verbose Logical flag passed to `mlpwr`; when `TRUE` verbose output is printed.
 #' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
 #' @keywords internal
@@ -15,6 +16,7 @@ calculate_mlpwr <- function(
   c_statistic,
   mean_or_assurance,
   n_init,
+  progress,
   verbose,
   data_function,
   model_function,
@@ -22,39 +24,51 @@ calculate_mlpwr <- function(
   value_on_error
 ) {
   # Determine initial start values
-  start_values <- tryCatch({
-    compute_start_sample_sizes(
-      data_function = data_function,
-      metric_function = metric_function,
-      target_performance = target_performance,
-      c_statistic = c_statistic,
-      mean_or_assurance = mean_or_assurance
-    )
-  }, error = function(e) {
-    stop(paste("Error when computing start values:", e$message), call. = FALSE)
-  })
-  
+  start_values <- tryCatch(
+    {
+      compute_start_sample_sizes(
+        data_function = data_function,
+        metric_function = metric_function,
+        target_performance = target_performance,
+        c_statistic = c_statistic,
+        mean_or_assurance = mean_or_assurance
+      )
+    },
+    error = function(e) {
+      stop(
+        paste("Error when computing start values:", e$message),
+        call. = FALSE
+      )
+    }
+  )
+
   # Adaptive starting values search
   cat("Estimating first stage... (Adaptive starting value search algorithm)\n")
-  start_values <- tryCatch({
-    calculate_adaptive_bounds(
-      data_function = data_function,
-      model_function = model_function,
-      metric_function = metric_function,
-      value_on_error = NA,
-      start_n = start_values$start_min_sample_size,
-      test_n = test_n,
-      n_reps_per = n_reps_per,
-      n_reps_total = 500,
-      target_performance = target_performance,
-      threshold = 0.0001,
-      mean_or_assurance = mean_or_assurance,
-      verbose = FALSE
-    )
-  }, error = function(e) {
-    stop(paste("Error during adaptive start value search:", e$message), call. = FALSE)
-  })
-  
+  start_values <- tryCatch(
+    {
+      calculate_adaptive_bounds(
+        data_function = data_function,
+        model_function = model_function,
+        metric_function = metric_function,
+        value_on_error = NA,
+        start_n = start_values$start_min_sample_size,
+        test_n = test_n,
+        n_reps_per = n_reps_per,
+        n_reps_total = 500,
+        target_performance = target_performance,
+        threshold = 0.0001,
+        mean_or_assurance = mean_or_assurance,
+        verbose = FALSE
+      )
+    },
+    error = function(e) {
+      stop(
+        paste("Error during adaptive start value search:", e$message),
+        call. = FALSE
+      )
+    }
+  )
+
   start_min_sample_size <- start_values$min_sample_size
   start_max_sample_size <- start_values$max_sample_size
 
@@ -94,7 +108,7 @@ calculate_mlpwr <- function(
   use_cli <- FALSE
 
   # Try using cli
-  if (requireNamespace("cli", quietly = TRUE)) {
+  if (isTRUE(progress) && requireNamespace("cli", quietly = TRUE)) {
     use_cli <- TRUE
 
     pb_id <- cli::cli_progress_bar(
@@ -150,7 +164,7 @@ calculate_mlpwr <- function(
         }
       )
     }
-  } else {
+  } else if (isTRUE(progress)) {
     # Fallback to txtProgressBar
     pb_txt <- utils::txtProgressBar(
       min = 0,
@@ -164,14 +178,18 @@ calculate_mlpwr <- function(
   }
 
   # Patch mlpwr::print_progress()
-  ns <- asNamespace("mlpwr")
-  orig_print_progress <- get("print_progress", envir = ns)
-  assignInNamespace("print_progress", patched_print_progress, ns)
+  if (isTRUE(progress)) {
+    ns <- asNamespace("mlpwr")
+    orig_print_progress <- get("print_progress", envir = ns)
+    assignInNamespace("print_progress", patched_print_progress, ns)
+  }
 
   # Ensure cleanup
   on.exit(
     {
-      assignInNamespace("print_progress", orig_print_progress, "mlpwr")
+      if (!is.null(orig_print_progress)) {
+        assignInNamespace("print_progress", orig_print_progress, "mlpwr")
+      }
       if (!is.null(pb_txt)) {
         close(pb_txt)
       }
@@ -229,12 +247,16 @@ calculate_mlpwr <- function(
         evaluations = n_reps_total,
         ci = ci,
         n.startsets = n_init,
-        silent = FALSE
+        silent = !isTRUE(progress)
       )
-    }, error = function(e) {
-    stop(paste("mlpwr::find.design failed with error:", e$message), call. = FALSE)
-  })
-  
+    },
+    error = function(e) {
+      stop(
+        paste("mlpwr::find.design failed with error:", e$message),
+        call. = FALSE
+      )
+    }
+  )
 
   ds <-
     mlpwr::find.design(
@@ -248,7 +270,7 @@ calculate_mlpwr <- function(
       evaluations = n_reps_total,
       ci = ci,
       n.startsets = n_init,
-      silent = FALSE
+      silent = !isTRUE(progress)
     )
 
   # Process results from mlpwr
@@ -520,6 +542,7 @@ calculate_bisection <- function(
 #' mlpwr-bs Hybrid engine using bisection to determine initial range and mlpwr for search
 #' @inheritParams simulate_custom
 #' @param n_init Integer number of initial sample sizes simulated before the Gaussian-process search begins.
+#' @param progress Logical flag controlling whether the `mlpwr` progress bar is shown.
 #' @param verbose Logical flag passed to `mlpwr`; when `TRUE` verbose output is printed.
 #' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
 #'
@@ -535,6 +558,7 @@ calculate_mlpwr_bs <- function(
   target_performance,
   c_statistic,
   mean_or_assurance,
+  progress,
   verbose,
   data_function,
   model_function,
@@ -682,7 +706,7 @@ calculate_mlpwr_bs <- function(
       evaluations = n_reps_total,
       ci = ci,
       n.startsets = 4,
-      silent = FALSE
+      silent = !isTRUE(progress)
     )
 
   # Process results from mlpwr
