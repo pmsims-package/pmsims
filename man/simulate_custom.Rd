@@ -33,7 +33,7 @@ and return a fitted model object.}
 
 \item{metric_function}{Function that evaluates predictive performance on test
 data. It must take three positional arguments in the order
-\code{(test_data, fitted_model, model_name)} and return a single numeric value.
+\verb{(test_data, fitted_model, model_name)} and return a single numeric value.
 Optionally, users may set \code{attr(metric_function, "value_on_error")} to a
 single numeric fallback value to be returned if model fitting or metric
 evaluation fails during a simulation run.}

@@ -25,32 +25,50 @@ calculate_bisection(
 )
 }
 \arguments{
-\item{data_function}{A function that returns datasets. Must have a single argument, \code{n}, which controls the sample size.}
+\item{data_function}{Function taking a single argument, \code{n}, giving the
+training sample size, and returning a dataset that can be passed to
+\code{model_function}.}
 
-\item{model_function}{A function that fits models to the data. Takes the data object returned by \code{data_function} as its only argument.}
+\item{model_function}{Function that fits a model to the dataset returned by
+\code{data_function}. It must take the generated dataset as its only argument
+and return a fitted model object.}
 
-\item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model name string as arguments. These do not need to be named but must be ordered (test_data, fitted_model, model_name) Must return a single value.}
+\item{metric_function}{Function that evaluates predictive performance on test
+data. It must take three positional arguments in the order
+\verb{(test_data, fitted_model, model_name)} and return a single numeric value.
+Optionally, users may set \code{attr(metric_function, "value_on_error")} to a
+single numeric fallback value to be returned if model fitting or metric
+evaluation fails during a simulation run.}
 
 \item{value_on_error}{Numeric fallback returned when a simulation run fails.}
 
-\item{min_sample_size}{Integer lower bound of the sample-size search region. If this is set the adaptive starting values are not run - set to NULL to use adaptive algorithm.}
+\item{min_sample_size}{Optional integer lower bound for the sample-size
+search. If supplied, \code{max_sample_size} must also be supplied.}
 
-\item{max_sample_size}{Integer upper bound of the sample-size search region. If this is set the adaptive starting values are not run - set to NULL to use adaptive algorithm. as above**}
+\item{max_sample_size}{Optional integer upper bound for the sample-size
+search. If supplied, \code{min_sample_size} must also be supplied.}
 
-\item{test_n}{Integer size of the test datasets used to evaluate performance (should be large). Default is 30000.}
+\item{test_n}{Integer size of the test dataset used to evaluate model
+performance. This should usually be large enough that test-set variability
+is negligible relative to the training-sample search.}
 
-\item{n_reps_total}{Integer total number of simulation replications allocated to the search. The search will look at n_reps_total/n_reps_per candidate sample sizes. Supply either \code{n_reps_total} or \code{se_final}.}
+\item{n_reps_total}{Integer total number of simulation replications allocated
+to the search. The search evaluates approximately
+\code{n_reps_total / n_reps_per} candidate sample sizes.}
 
-\item{n_reps_per}{Integer number of replications evaluated at each candidate sample size.}
+\item{n_reps_per}{Integer number of simulation replications performed at each
+candidate sample size.}
 
-\item{target_performance}{Numeric. Minimum acceptable value of the selected
-performance metric \eqn{M^\\*}; the algorithm searches for the smallest
-\eqn{n} meeting the chosen criterion with respect to this threshold.}
+\item{target_performance}{Numeric target value for the chosen performance
+metric. The search aims to find the smallest sample size \eqn{n} for which
+the selected criterion is met relative to this threshold.}
 
-\item{c_statistic}{This argument is used internally only. Set to Null when running simulate custom.
-This is used to determine the appropriate starting values for the search. This argument is not used for other outcome types. You probably wont need this. ** explain when this is used**}
+\item{c_statistic}{Optional numeric value used only by the internal
+start-value heuristics for some outcome and metric combinations. In most
+custom workflows this should be left as \code{NULL}.}
 
-\item{mean_or_assurance}{Character string \code{"mean"} or \code{"assurance"} indicating which criterion defines the minimum sample size.}
+\item{mean_or_assurance}{Character string specifying the criterion used to
+define the minimum sample size. Must be either \code{"mean"} or \code{"assurance"}.}
 
 \item{tol}{Numeric tolerance controlling when the bisection loop stops.}
 
