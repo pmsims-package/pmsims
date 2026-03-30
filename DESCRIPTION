@@ -57,10 +57,15 @@ Suggests:
     rmarkdown,
     GA,
     doParallel,
-    foreach
+    foreach,
+    knitr,
+    mlbench,
+    synthpop,
+    DescTools
 Encoding: UTF-8
 LazyData: false
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 BuildVignettes: false
 Config/testthat/edition: 3
+VignetteBuilder: knitr

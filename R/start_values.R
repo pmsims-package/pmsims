@@ -5,7 +5,6 @@
 #' @param mean
 #'
 #' @returns
-#' @export
 #'
 #' @examples
 get_perf <- function(results, p = NULL, mean = FALSE) {
@@ -129,7 +128,6 @@ adaptive_startvalues <- function(
 #' @param verbose
 #'
 #' @returns
-#' @export
 #'
 #' @examples
 calculate_adaptive_bounds <- function(
@@ -311,7 +309,6 @@ calculate_adaptive_bounds <- function(
 #' @param mean_or_assurance
 #'
 #' @returns
-#' @export
 #'
 #' @examples
 compute_start_sample_sizes <- function(
@@ -324,7 +321,10 @@ compute_start_sample_sizes <- function(
   mean_or_assurance <- match.arg(mean_or_assurance)
 
   # 1. Number of predictors (exclude outcome column)
-  npar <- dim(data_function(1))[2] - 1
+  npar <- dim(data_function(10))[2] - 1
+
+  # Set default start value - this is used if the outcome type cannot be determined.
+  default_start_value = 10 * npar
 
   # 2. Inspect data_function formals to infer outcome type
   formals_list <- formals(data_function)
@@ -332,7 +332,14 @@ compute_start_sample_sizes <- function(
 
   metric_used <- attr(metric_function, "metric")
   if (is.null(metric_used)) {
-    stop("metric_function must have a 'metric' attribute.")
+    return(
+      list(
+        npar = npar,
+        metric_used = NULL,
+        start_min_sample_size = default_start_value,
+        start_max_sample_size = NA
+      )
+    )
   }
 
   ## -----------------------
