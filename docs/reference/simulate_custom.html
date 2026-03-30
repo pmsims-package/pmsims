@@ -67,20 +67,19 @@ selected performance criterion.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">simulate_custom</span><span class="op">(</span></span>
-<span>  data_function <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  model_function <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  metric_function <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">data_function</span>,</span>
+<span>  <span class="va">model_function</span>,</span>
+<span>  <span class="va">metric_function</span>,</span>
 <span>  <span class="va">target_performance</span>,</span>
-<span>  <span class="va">c_statistic</span>,</span>
+<span>  c_statistic <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span>,</span>
 <span>  test_n <span class="op">=</span> <span class="fl">30000</span>,</span>
 <span>  min_sample_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  max_sample_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  n_reps_total <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  n_reps_per <span class="op">=</span> <span class="fl">50</span>,</span>
-<span>  se_final <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  n_init <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  n_reps_per <span class="op">=</span> <span class="fl">20</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"mlpwr"</span>,</span>
+<span>  progress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -91,87 +90,93 @@ selected performance criterion.</p>
 
 
 <dl><dt id="arg-data-function">data_function<a class="anchor" aria-label="anchor" href="#arg-data-function"></a></dt>
-<dd><p>Function taking a single integer argument <code>n</code> and
-returning a dataset of size <code>n</code>.</p></dd>
+<dd><p>Function taking a single argument, <code>n</code>, giving the
+training sample size, and returning a dataset that can be passed to
+<code>model_function</code>.</p></dd>
 
 
 <dt id="arg-model-function">model_function<a class="anchor" aria-label="anchor" href="#arg-model-function"></a></dt>
 <dd><p>Function that fits a model to the dataset returned by
-<code>data_function</code>.</p></dd>
+<code>data_function</code>. It must take the generated dataset as its only argument
+and return a fitted model object.</p></dd>
 
 
 <dt id="arg-metric-function">metric_function<a class="anchor" aria-label="anchor" href="#arg-metric-function"></a></dt>
-<dd><p>Function that takes test data, a fitted model object,
-and a model identifier, and returns a single numeric performance value.</p></dd>
+<dd><p>Function that evaluates predictive performance on test
+data. It must take three positional arguments in the order
+<code>(test_data, fitted_model, model_name)</code> and return a single numeric value.
+Optionally, users may set <code>attr(metric_function, "value_on_error")</code> to a
+single numeric fallback value to be returned if model fitting or metric
+evaluation fails during a simulation run.</p></dd>
 
 
 <dt id="arg-target-performance">target_performance<a class="anchor" aria-label="anchor" href="#arg-target-performance"></a></dt>
-<dd><p>Numeric threshold the algorithm must meet or
-exceed.</p></dd>
+<dd><p>Numeric target value for the chosen performance
+metric. The search aims to find the smallest sample size \(n\) for which
+the selected criterion is met relative to this threshold.</p></dd>
 
 
 <dt id="arg-c-statistic">c_statistic<a class="anchor" aria-label="anchor" href="#arg-c-statistic"></a></dt>
-<dd><p>Optional numeric anticipated large-sample discrimination
-measure used by the internal search heuristics when needed.</p></dd>
+<dd><p>Optional numeric value used only by the internal
+start-value heuristics for some outcome and metric combinations. In most
+custom workflows this should be left as <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-mean-or-assurance">mean_or_assurance<a class="anchor" aria-label="anchor" href="#arg-mean-or-assurance"></a></dt>
-<dd><p>Character string, either <code>"mean"</code> or <code>"assurance"</code>,
-specifying how performance is summarised when defining the minimum sample
-size.</p></dd>
+<dd><p>Character string specifying the criterion used to
+define the minimum sample size. Must be either <code>"mean"</code> or <code>"assurance"</code>.</p></dd>
 
 
 <dt id="arg-test-n">test_n<a class="anchor" aria-label="anchor" href="#arg-test-n"></a></dt>
-<dd><p>Integer size of the fixed test dataset used to evaluate
-predictive performance. This should generally be large.</p></dd>
+<dd><p>Integer size of the test dataset used to evaluate model
+performance. This should usually be large enough that test-set variability
+is negligible relative to the training-sample search.</p></dd>
 
 
-<dt id="arg-min-sample-size-max-sample-size">min_sample_size, max_sample_size<a class="anchor" aria-label="anchor" href="#arg-min-sample-size-max-sample-size"></a></dt>
-<dd><p>Optional integer lower and upper
-bounds for the sample-size search. If omitted, engine-specific heuristics
-are used to choose starting bounds.</p></dd>
+<dt id="arg-min-sample-size">min_sample_size<a class="anchor" aria-label="anchor" href="#arg-min-sample-size"></a></dt>
+<dd><p>Optional integer lower bound for the sample-size
+search. If supplied, <code>max_sample_size</code> must also be supplied.</p></dd>
+
+
+<dt id="arg-max-sample-size">max_sample_size<a class="anchor" aria-label="anchor" href="#arg-max-sample-size"></a></dt>
+<dd><p>Optional integer upper bound for the sample-size
+search. If supplied, <code>min_sample_size</code> must also be supplied.</p></dd>
 
 
 <dt id="arg-n-reps-total">n_reps_total<a class="anchor" aria-label="anchor" href="#arg-n-reps-total"></a></dt>
-<dd><p>Integer total number of simulation replications
-allocated to the search. Supply exactly one of <code>n_reps_total</code> or
-<code>se_final</code>.</p></dd>
+<dd><p>Integer total number of simulation replications allocated
+to the search. The search evaluates approximately
+<code>n_reps_total / n_reps_per</code> candidate sample sizes.</p></dd>
 
 
 <dt id="arg-n-reps-per">n_reps_per<a class="anchor" aria-label="anchor" href="#arg-n-reps-per"></a></dt>
-<dd><p>Integer number of replications evaluated at each candidate
-sample size.</p></dd>
-
-
-<dt id="arg-se-final">se_final<a class="anchor" aria-label="anchor" href="#arg-se-final"></a></dt>
-<dd><p>Optional numeric standard error target for early stopping.
-Supply exactly one of <code>n_reps_total</code> or <code>se_final</code>.</p></dd>
-
-
-<dt id="arg-n-init">n_init<a class="anchor" aria-label="anchor" href="#arg-n-init"></a></dt>
-<dd><p>Integer number of initial sample sizes explored before the
-Gaussian-process stage when relevant.</p></dd>
+<dd><p>Integer number of simulation replications performed at each
+candidate sample size.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>Character string selecting the search engine; currently
-<code>"mlpwr"</code>, <code>"bisection"</code>, or <code>"mlpwr-bs"</code>.</p></dd>
+<dd><p>Character string specifying the search engine. Defaults to
+<code>"mlpwr"</code>.</p></dd>
+
+
+<dt id="arg-progress">progress<a class="anchor" aria-label="anchor" href="#arg-progress"></a></dt>
+<dd><p>Logical flag controlling whether the <code>mlpwr</code> progress bar is
+shown for <code>mlpwr</code>-based methods.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
-<dd><p>Logical; if <code>TRUE</code>, print progress information from the
-selected search engine.</p></dd>
+<dd><p>Logical flag controlling engine-specific diagnostic output
+when supported. For the bisection engine, setting <code>verbose = TRUE</code> stores
+the iteration history on the returned object.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional arguments passed to the selected engine (for example
-<code>tol</code> for bisection).</p></dd>
+<dd><p>Additional arguments passed to the selected search engine.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>"pmsims"</code> containing the estimated minimum sample
-size and simulation diagnostics.</p>
+    <p>An object of class <code>"pmsims"</code> containing the estimated minimum sample size.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

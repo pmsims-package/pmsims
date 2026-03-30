@@ -80,60 +80,72 @@ summaries of the chosen performance metric.</p>
 
 
 <dl><dt id="arg-data-function">data_function<a class="anchor" aria-label="anchor" href="#arg-data-function"></a></dt>
-<dd><p>Function taking a single integer argument <code>n</code> and
-returning a dataset of size <code>n</code>.</p></dd>
+<dd><p>Function taking a single argument, <code>n</code>, giving the
+training sample size, and returning a dataset that can be passed to
+<code>model_function</code>.</p></dd>
 
 
 <dt id="arg-model-function">model_function<a class="anchor" aria-label="anchor" href="#arg-model-function"></a></dt>
 <dd><p>Function that fits a model to the dataset returned by
-<code>data_function</code>.</p></dd>
+<code>data_function</code>. It must take the generated dataset as its only argument
+and return a fitted model object.</p></dd>
 
 
 <dt id="arg-metric-function">metric_function<a class="anchor" aria-label="anchor" href="#arg-metric-function"></a></dt>
-<dd><p>Function that takes test data, a fitted model object,
-and a model identifier, and returns a single numeric performance value.</p></dd>
+<dd><p>Function that evaluates predictive performance on test
+data. It must take three positional arguments in the order
+<code>(test_data, fitted_model, model_name)</code> and return a single numeric value.
+Optionally, users may set <code>attr(metric_function, "value_on_error")</code> to a
+single numeric fallback value to be returned if model fitting or metric
+evaluation fails during a simulation run.</p></dd>
 
 
 <dt id="arg-value-on-error">value_on_error<a class="anchor" aria-label="anchor" href="#arg-value-on-error"></a></dt>
 <dd><p>Numeric fallback returned when a simulation run fails.</p></dd>
 
 
-<dt id="arg-min-sample-size-max-sample-size">min_sample_size, max_sample_size<a class="anchor" aria-label="anchor" href="#arg-min-sample-size-max-sample-size"></a></dt>
-<dd><p>Optional integer lower and upper
-bounds for the sample-size search. If omitted, engine-specific heuristics
-are used to choose starting bounds.</p></dd>
+<dt id="arg-min-sample-size">min_sample_size<a class="anchor" aria-label="anchor" href="#arg-min-sample-size"></a></dt>
+<dd><p>Optional integer lower bound for the sample-size
+search. If supplied, <code>max_sample_size</code> must also be supplied.</p></dd>
+
+
+<dt id="arg-max-sample-size">max_sample_size<a class="anchor" aria-label="anchor" href="#arg-max-sample-size"></a></dt>
+<dd><p>Optional integer upper bound for the sample-size
+search. If supplied, <code>min_sample_size</code> must also be supplied.</p></dd>
 
 
 <dt id="arg-test-n">test_n<a class="anchor" aria-label="anchor" href="#arg-test-n"></a></dt>
-<dd><p>Integer size of the fixed test dataset used to evaluate
-predictive performance. This should generally be large.</p></dd>
+<dd><p>Integer size of the test dataset used to evaluate model
+performance. This should usually be large enough that test-set variability
+is negligible relative to the training-sample search.</p></dd>
 
 
 <dt id="arg-n-reps-total">n_reps_total<a class="anchor" aria-label="anchor" href="#arg-n-reps-total"></a></dt>
-<dd><p>Integer total number of simulation replications
-allocated to the search. Supply exactly one of <code>n_reps_total</code> or
-<code>se_final</code>.</p></dd>
+<dd><p>Integer total number of simulation replications allocated
+to the search. The search evaluates approximately
+<code>n_reps_total / n_reps_per</code> candidate sample sizes.</p></dd>
 
 
 <dt id="arg-n-reps-per">n_reps_per<a class="anchor" aria-label="anchor" href="#arg-n-reps-per"></a></dt>
-<dd><p>Integer number of replications evaluated at each candidate
-sample size.</p></dd>
+<dd><p>Integer number of simulation replications performed at each
+candidate sample size.</p></dd>
 
 
 <dt id="arg-target-performance">target_performance<a class="anchor" aria-label="anchor" href="#arg-target-performance"></a></dt>
-<dd><p>Numeric threshold the algorithm must meet or
-exceed.</p></dd>
+<dd><p>Numeric target value for the chosen performance
+metric. The search aims to find the smallest sample size \(n\) for which
+the selected criterion is met relative to this threshold.</p></dd>
 
 
 <dt id="arg-c-statistic">c_statistic<a class="anchor" aria-label="anchor" href="#arg-c-statistic"></a></dt>
-<dd><p>Optional numeric anticipated large-sample discrimination
-measure used by the internal search heuristics when needed.</p></dd>
+<dd><p>Optional numeric value used only by the internal
+start-value heuristics for some outcome and metric combinations. In most
+custom workflows this should be left as <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-mean-or-assurance">mean_or_assurance<a class="anchor" aria-label="anchor" href="#arg-mean-or-assurance"></a></dt>
-<dd><p>Character string, either <code>"mean"</code> or <code>"assurance"</code>,
-specifying how performance is summarised when defining the minimum sample
-size.</p></dd>
+<dd><p>Character string specifying the criterion used to
+define the minimum sample size. Must be either <code>"mean"</code> or <code>"assurance"</code>.</p></dd>
 
 
 <dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>

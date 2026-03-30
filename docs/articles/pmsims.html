@@ -368,12 +368,12 @@ performance threshold used to determine the required sample size.</li>
 <span><span class="co">#&gt;   <span style="color: #00BBBB;">                               Model</span> : glm</span></span>
 <span><span class="co">#&gt;   <span style="color: #00BBBB;">                     Simulation reps</span> : 1,000</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────── Results ───────────────────────────────────</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">           Final minimum sample size</span> : <span style="font-weight: bold;">1,173</span></span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">          Estimated performance at N</span> : 0.849 (Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.850)</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">         Estimated other metric at N</span> : &lt;NA&gt; ()</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">           Final minimum sample size</span> : <span style="font-weight: bold;">793</span></span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">          Estimated performance at N</span> : 0.847 (Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.850)</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">         Estimated other metric at N</span> : 0.787 (Auc <span style="color: #555555;">('auc')</span>)</span></span>
 <span><span class="co">#&gt;   <span style="color: #0000BB;">                               Model</span> : glm</span></span>
 <span><span class="co">#&gt;   <span style="color: #0000BB;">                                Mode</span> : Assurance</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">                        Running time</span> : 1 minute</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">                        Running time</span> : 1 minute 22 seconds</span></span>
 <span><span class="co">#&gt;     <span style="color: #555555; font-style: italic;">Assurance mode ensures the target metric is met with high probability across repeated datasets.</span></span></span></code></pre>
 <p>Plot the estimated learning curve and identified sample size:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -410,12 +410,12 @@ performance threshold used to determine the required sample size.</li>
 <span><span class="co">#&gt;   <span style="color: #00BBBB;">                               Model</span> : lm</span></span>
 <span><span class="co">#&gt;   <span style="color: #00BBBB;">                     Simulation reps</span> : 1,000</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────── Results ───────────────────────────────────</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">           Final minimum sample size</span> : <span style="font-weight: bold;">271</span></span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">           Final minimum sample size</span> : <span style="font-weight: bold;">263</span></span></span>
 <span><span class="co">#&gt;   <span style="color: #0000BB;">          Estimated performance at N</span> : 0.899 (Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.900)</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">         Estimated other metric at N</span> : &lt;NA&gt; ()</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">         Estimated other metric at N</span> : 0.449 (R2 <span style="color: #555555;">('r2')</span>)</span></span>
 <span><span class="co">#&gt;   <span style="color: #0000BB;">                               Model</span> : lm</span></span>
 <span><span class="co">#&gt;   <span style="color: #0000BB;">                                Mode</span> : Assurance</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">                        Running time</span> : 14 seconds</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB;">                        Running time</span> : 35 seconds</span></span>
 <span><span class="co">#&gt;     <span style="color: #555555; font-style: italic;">Assurance mode ensures the target metric is met with high probability across repeated datasets.</span></span></span></code></pre>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">continuous_example</span><span class="op">)</span></span></code></pre></div>
@@ -435,7 +435,7 @@ performance threshold used to determine the required sample size.</li>
 <span><span class="co">#&gt; LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; locale:</span></span>
-<span><span class="co">#&gt; [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8</span></span>
+<span><span class="co">#&gt; [1] en_GB.UTF-8/en_GB.UTF-8/en_GB.UTF-8/C/en_GB.UTF-8/en_GB.UTF-8</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; time zone: Europe/London</span></span>
 <span><span class="co">#&gt; tzcode source: internal</span></span>
