@@ -57,15 +57,16 @@ calculate_mlpwr <- function(
   
   start_min_sample_size <- start_values$min_sample_size
   start_max_sample_size <- start_values$max_sample_size
-  
-  cat("Starting values determined: min sample size =", start_min_sample_size, 
-      "max sample size =", start_max_sample_size, "\n")
-  
- 
 
+  cat(
+    "Starting values determined: min sample size =",
+    start_min_sample_size,
+    "max sample size =",
+    start_max_sample_size,
+    "\n"
+  )
 
   # Calculate metrics for sample size n
-
 
   # TODO: Explain this better
   # processing final_estimate_se
@@ -195,7 +196,7 @@ calculate_mlpwr <- function(
       }
     )
   }
-  
+
   if (mean_or_assurance == "mean") {
     aggregate_fun <- function(x) mean(x, na.rm = TRUE)
   } else if (mean_or_assurance == "assurance") {
@@ -203,7 +204,7 @@ calculate_mlpwr <- function(
   } else {
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
   }
-  
+
   # Use a bootstrap to estimate the variance of the estimated quantile
   var_bootstrap <- function(x) {
     stats::var(replicate(
@@ -211,11 +212,12 @@ calculate_mlpwr <- function(
       aggregate_fun(sample(x, length(x), replace = TRUE))
     ))
   }
-  
+
   # Calculate bootstrapped quantile variance
   noise_fun <- function(x) var_bootstrap(x$y)
-  
-  ds <- tryCatch({
+
+  ds <- tryCatch(
+    {
       mlpwr::find.design(
         simfun = mlpwr_simulation_function,
         aggregate_fun = aggregate_fun,
@@ -276,7 +278,6 @@ calculate_mlpwr <- function(
   ))
 }
 
-
 #' The Bisection Engine
 #'
 #' Runs a bisection search over sample size using repeated simulations and
@@ -323,11 +324,6 @@ calculate_bisection <- function(
     mean_or_assurance = mean_or_assurance
   )
 
-  #start_min_sample_size <- start_values$start_min_sample_size
-  #start_max_sample_size <- start_values$start_max_sample_size
-
-  #npar <- dim(data_function(1))[2] - 1
-
   start_values <- calculate_adaptive_bounds(
     data_function = data_function,
     model_function = model_function,
@@ -351,8 +347,7 @@ calculate_bisection <- function(
   # Generate fixed test set once
   test_data <- data_function(test_n)
 
-  # set up cluster once if parallel requested
-
+  # Set up cluster once if parallel requested
   cl <- NULL
   registered_parallel <- FALSE
   if (isTRUE(parallel)) {
@@ -557,11 +552,6 @@ calculate_mlpwr_bs <- function(
     c_statistic = c_statistic,
     mean_or_assurance = mean_or_assurance
   )
-
-  #start_min_sample_size <- start_values$start_min_sample_size
-  #start_max_sample_size <- start_values$start_max_sample_size
-
-  #npar <- dim(data_function(1))[2] - 1
 
   start_values <- calculate_adaptive_bounds(
     data_function = data_function,

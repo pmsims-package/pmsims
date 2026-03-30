@@ -178,11 +178,12 @@ calculate_adaptive_bounds <- function(
     if (parallel) {
       cl <- parallel::makeCluster(cores)
       doParallel::registerDoParallel(cl)
-      
-      vals <- foreach::foreach(i = 1:n_reps_per, .combine = c) %dopar% {
-        single_run(n)
-      }
-      
+
+      vals <- foreach::foreach(i = 1:n_reps_per, .combine = c) %dopar%
+        {
+          single_run(n)
+        }
+
       parallel::stopCluster(cl)
     } else {
       vals <- vapply(
@@ -206,7 +207,7 @@ calculate_adaptive_bounds <- function(
   # ---------------------------------------------------------
   iter <- 1
   track <- list()
-  
+
   res <- summary_at_n(start_n)
   perf <- res$y_summary
 
@@ -239,27 +240,28 @@ calculate_adaptive_bounds <- function(
   # Adaptive loop
   # ---------------------------------------------------------
   while (iter < max_iter) {
-  
     iter <- iter + 1
-    
+
     if (direction == "up") {
       n_new <- n_current * 2
     } else {
       n_new <- max(1, floor(n_current / 2))
     }
-    
+
     # Stop if no movement
-    if (n_new == n_current) break
-    
+    if (n_new == n_current) {
+      break
+    }
+
     res <- summary_at_n(n_new)
     perf <- res$y_summary
-    
+
     track[[iter]] <- list(n = n_new, performance = perf, raw = res$y)
-  
+
     if (verbose) {
       message(sprintf("Iter %d | n = %d | perf = %.4f", iter, n_new, perf))
     }
-    
+
     if (direction == "up") {
       if (perf >= target_performance - threshold) {
         upper_n <- n_new
