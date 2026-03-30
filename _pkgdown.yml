@@ -18,11 +18,16 @@ extra_files:
 
 navbar:
   structure:
-    left: [get-started, reference, news]
+    left: [get-started, reference, articles, news]
   components:
     get-started:
       text: Get started
       href: articles/pmsims.html
+    articles:
+      text: Articles
+      menu:
+        - text: Custom simulation workflows
+          href: articles/simulate_custom.html
     reference:
       text: Reference
       href: reference/index.html
