@@ -57,8 +57,12 @@ simulate_continuous(
 
 - model:
 
-  Character string specifying the modelling algorithm (e.g., `"glm"`).
-  Passed to the internal model generator.
+  Character string specifying the modelling algorithm. Supported values
+  are `"lm"` (linear regression), `"lasso"` **\[experimental\]**
+  (regularised linear regression), `"rf"` **\[experimental\]** (random
+  forest), and `"xgboost"` **\[experimental\]** (gradient-boosted
+  trees). The machine-learning options are experimental because they
+  have not yet undergone the package's main validation study.
 
 - metric:
 
@@ -69,7 +73,7 @@ simulate_continuous(
 - target_performance:
 
   Numeric. Minimum acceptable value of the selected performance metric
-  \\M^\\\*\\; the algorithm searches for the smallest \\n\\ meeting the
+  \\M^\*\\; the algorithm searches for the smallest \\n\\ meeting the
   chosen criterion with respect to this threshold.
 
 - n_reps_total:

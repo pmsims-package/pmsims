@@ -16,7 +16,7 @@ calculate_mlpwr_bs(
   target_performance,
   c_statistic,
   mean_or_assurance,
-  progress,
+  progress = TRUE,
   verbose,
   data_function,
   model_function,

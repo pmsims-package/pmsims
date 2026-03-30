@@ -119,3 +119,52 @@ simulate_custom(
 
 An object of class `"pmsims"` containing the estimated minimum sample
 size.
+
+## See also
+
+[`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md),
+[`simulate_continuous()`](https://pmsims-package.github.io/pmsims/reference/simulate_continuous.md),
+[`simulate_survival()`](https://pmsims-package.github.io/pmsims/reference/simulate_survival.md)
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+data_fun <- function(n) {
+  x1 <- rnorm(n)
+  x2 <- rnorm(n)
+  y <- rbinom(n, 1, plogis(0.5 * x1 - 0.25 * x2))
+  data.frame(y = y, x1 = x1, x2 = x2)
+}
+
+model_fun <- function(dat) {
+  stats::glm(y ~ ., data = dat, family = stats::binomial())
+}
+
+metric_fun <- function(test_data, fit, model) {
+  preds <- stats::predict(fit, newdata = test_data, type = "response")
+  as.numeric(pROC::auc(test_data$y, preds, quiet = TRUE))
+}
+attr(metric_fun, "metric") <- "auc"
+
+maximum_achievable_data <- data_fun(10000)
+test_data <- data_fun(5000)
+maximum_achievable_fit <- model_fun(maximum_achievable_data)
+maximum_achievable_performance <- metric_fun(
+  test_data,
+  maximum_achievable_fit,
+  "glm"
+)
+
+est <- simulate_custom(
+  data_function = data_fun,
+  model_function = model_fun,
+  metric_function = metric_fun,
+  target_performance = maximum_achievable_performance - 0.05,
+  test_n = 5000,
+  n_reps_total = 1000,
+  progress = FALSE
+)
+est
+} # }
+```

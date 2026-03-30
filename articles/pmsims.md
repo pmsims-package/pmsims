@@ -37,6 +37,14 @@ outcomes, respectively:
 All three functions share the same basic structure. The table below
 lists the key inputs.
 
+Select wrapper
+
+Binary
+
+Continuous
+
+Survival
+
 [TABLE]
 
 > Notes:
@@ -94,12 +102,12 @@ binary_example
     #>                                  Model : glm
     #>                        Simulation reps : 1,000
     #> ──────────────────────────────────── Results ───────────────────────────────────
-    #>              Final minimum sample size : 1,173
-    #>             Estimated performance at N : 0.849 (Calibration slope ('calib_slope') = 0.850)
-    #>            Estimated other metric at N : <NA> ()
+    #>              Final minimum sample size : 793
+    #>             Estimated performance at N : 0.847 (Calibration slope ('calib_slope') = 0.850)
+    #>            Estimated other metric at N : 0.787 (Auc ('auc'))
     #>                                  Model : glm
     #>                                   Mode : Assurance
-    #>                           Running time : 1 minute
+    #>                           Running time : 1 minute 22 seconds
     #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 Plot the estimated learning curve and identified sample size:
@@ -142,12 +150,12 @@ continuous_example
     #>                                  Model : lm
     #>                        Simulation reps : 1,000
     #> ──────────────────────────────────── Results ───────────────────────────────────
-    #>              Final minimum sample size : 271
+    #>              Final minimum sample size : 263
     #>             Estimated performance at N : 0.899 (Calibration slope ('calib_slope') = 0.900)
-    #>            Estimated other metric at N : <NA> ()
+    #>            Estimated other metric at N : 0.449 (R2 ('r2'))
     #>                                  Model : lm
     #>                                   Mode : Assurance
-    #>                           Running time : 14 seconds
+    #>                           Running time : 35 seconds
     #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 ``` r

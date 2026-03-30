@@ -1,13 +1,14 @@
-# pmsims: Simulation-based Sample Size Tools for Prediction Models
+# pmsims: Simulation-Based Sample Size Tools for Prediction Models
 
-pmsims is a flexible, simulation-based toolkit for exploring how much
-data are needed to develop reliable prediction models. It works by
-repeatedly generating data, fitting models, and evaluating performance
-to show how sample size affects stability, accuracy, and overfitting.
-The package supports continuous, binary, and time-to-event outcomes and
-can be used with a range of regression-based modelling approaches. It is
-designed to help researchers plan studies, assess feasibility, and build
-more robust and generalisable models.
+This package provides a flexible, simulation-based toolkit for exploring
+how much data are needed to develop reliable prediction models. It works
+by repeatedly generating data, fitting models, and evaluating
+performance to show how sample size affects stability, accuracy, and
+overfitting. The package supports continuous, binary, and time-to-event
+outcomes and can be used with a range of regression-based modelling
+approaches, with experimental support for selected machine-learning
+methods. It is designed to help researchers plan studies, assess
+feasibility, and build more robust and generalisable models.
 
 ## See also
 
@@ -28,7 +29,7 @@ Authors:
 
 - Gordon Forbes ([ORCID](https://orcid.org/0000-0001-8662-3636))
 
-- Ridwan Olaniran
+- Ridwan Olaniran ([ORCID](https://orcid.org/0000-0001-7342-8639))
 
 - Diana Shamsutdinova ([ORCID](https://orcid.org/0000-0003-2434-3641))
 

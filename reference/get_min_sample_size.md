@@ -24,7 +24,7 @@ get_min_sample_size(
 
 - prevalence:
 
-  Numeric in 0, 1; optional event rate or case fraction used for EPV
+  Numeric in `[0, 1]`; optional event rate or case fraction used for EPV
   calculations.
 
 - c_stat:

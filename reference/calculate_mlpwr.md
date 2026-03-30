@@ -16,7 +16,7 @@ calculate_mlpwr(
   c_statistic,
   mean_or_assurance,
   n_init,
-  progress,
+  progress = TRUE,
   verbose,
   data_function,
   model_function,
