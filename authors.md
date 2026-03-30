@@ -7,7 +7,7 @@
 
 - **Gordon Forbes**. Author. [](https://orcid.org/0000-0001-8662-3636)
 
-- **Ridwan Olaniran**. Author. [](https://orcid.org/0000-0001-7342-8639)
+- **Ridwan Olaniran**. Author.
 
 - **Diana Shamsutdinova**. Author.
   [](https://orcid.org/0000-0003-2434-3641)
@@ -21,7 +21,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/pmsims-package/pmsims/blob/prepare-version/inst/CITATION)
+[`DESCRIPTION`](https://github.com/pmsims-package/pmsims/blob/export-simulate-custom/DESCRIPTION)
 
 Carr E, Forbes G, Olaniran R, Shamsutdinova D, Stahl D, Markham S,
 Zimmer F (2026). *pmsims: Simulation-based Sample Size Tools for
@@ -34,22 +34,4 @@ Prediction Models*. R package version 0.5.0,
       year = {2026},
       note = {R package version 0.5.0},
       url = {https://pmsims-package.github.io/pmsims/},
-    }
-
-Shamsutdinova D, Zimmer F, Olaniran O, Markham S, Stahl D, Forbes G,
-Carr E (2026). “Sample Size Calculations for Developing Clinical
-Prediction Models: Overview and pmsims R package.” *arXiv*,
-**arXiv:2602.23507**.
-[doi:10.48550/arXiv.2602.23507](https://doi.org/10.48550/arXiv.2602.23507),
-Preprint, <https://arxiv.org/abs/2602.23507>.
-
-    @Article{,
-      title = {Sample Size Calculations for Developing Clinical Prediction Models: Overview and pmsims R package},
-      author = {Diana Shamsutdinova and Felix Zimmer and Oyebayo Ridwan Olaniran and Sarah Markham and Daniel Stahl and Gordon Forbes and Ewan Carr},
-      year = {2026},
-      journal = {arXiv},
-      volume = {arXiv:2602.23507},
-      doi = {10.48550/arXiv.2602.23507},
-      url = {https://arxiv.org/abs/2602.23507},
-      note = {Preprint},
     }

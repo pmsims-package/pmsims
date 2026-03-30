@@ -11,20 +11,19 @@ meeting the selected performance criterion.
 
 ``` r
 simulate_custom(
-  data_function = NULL,
-  model_function = NULL,
-  metric_function = NULL,
+  data_function,
+  model_function,
+  metric_function,
   target_performance,
-  c_statistic,
+  c_statistic = NULL,
   mean_or_assurance = "assurance",
   test_n = 30000,
   min_sample_size = NULL,
   max_sample_size = NULL,
-  n_reps_total = NULL,
-  n_reps_per = 50,
-  se_final = NULL,
-  n_init = 4,
+  n_reps_total = 1000,
+  n_reps_per = 20,
   method = "mlpwr",
+  progress = TRUE,
   verbose = FALSE,
   ...
 )
@@ -34,121 +33,89 @@ simulate_custom(
 
 - data_function:
 
-  Function taking a single integer argument `n` and returning a dataset
-  of size `n`.
+  Function taking a single argument, `n`, giving the training sample
+  size, and returning a dataset that can be passed to `model_function`.
 
 - model_function:
 
   Function that fits a model to the dataset returned by `data_function`.
+  It must take the generated dataset as its only argument and return a
+  fitted model object.
 
 - metric_function:
 
-  Function that takes test data, a fitted model object, and a model
-  identifier, and returns a single numeric performance value.
+  Function that evaluates predictive performance on test data. It must
+  take three positional arguments in the order
+  `(test_data, fitted_model, model_name)` and return a single numeric
+  value. Optionally, users may set
+  `attr(metric_function, "value_on_error")` to a single numeric fallback
+  value to be returned if model fitting or metric evaluation fails
+  during a simulation run.
 
 - target_performance:
 
-  Numeric threshold the algorithm must meet or exceed.
+  Numeric target value for the chosen performance metric. The search
+  aims to find the smallest sample size \\n\\ for which the selected
+  criterion is met relative to this threshold.
 
 - c_statistic:
 
-  Optional numeric anticipated large-sample discrimination measure used
-  by the internal search heuristics when needed.
+  Optional numeric value used only by the internal start-value
+  heuristics for some outcome and metric combinations. In most custom
+  workflows this should be left as `NULL`.
 
 - mean_or_assurance:
 
-  Character string, either `"mean"` or `"assurance"`, specifying how
-  performance is summarised when defining the minimum sample size.
+  Character string specifying the criterion used to define the minimum
+  sample size. Must be either `"mean"` or `"assurance"`.
 
 - test_n:
 
-  Integer size of the fixed test dataset used to evaluate predictive
-  performance. This should generally be large.
+  Integer size of the test dataset used to evaluate model performance.
+  This should usually be large enough that test-set variability is
+  negligible relative to the training-sample search.
 
-- min_sample_size, max_sample_size:
+- min_sample_size:
 
-  Optional integer lower and upper bounds for the sample-size search. If
-  omitted, engine-specific heuristics are used to choose starting
-  bounds.
+  Optional integer lower bound for the sample-size search. If supplied,
+  `max_sample_size` must also be supplied.
+
+- max_sample_size:
+
+  Optional integer upper bound for the sample-size search. If supplied,
+  `min_sample_size` must also be supplied.
 
 - n_reps_total:
 
   Integer total number of simulation replications allocated to the
-  search. Supply exactly one of `n_reps_total` or `se_final`.
+  search. The search evaluates approximately `n_reps_total / n_reps_per`
+  candidate sample sizes.
 
 - n_reps_per:
 
-  Integer number of replications evaluated at each candidate sample
-  size.
-
-- se_final:
-
-  Optional numeric standard error target for early stopping. Supply
-  exactly one of `n_reps_total` or `se_final`.
-
-- n_init:
-
-  Integer number of initial sample sizes explored before the
-  Gaussian-process stage when relevant.
+  Integer number of simulation replications performed at each candidate
+  sample size.
 
 - method:
 
-  Character string selecting the search engine; currently `"mlpwr"`,
-  `"bisection"`, or `"mlpwr-bs"`.
+  Character string specifying the search engine. Defaults to `"mlpwr"`.
+
+- progress:
+
+  Logical flag controlling whether the `mlpwr` progress bar is shown for
+  `mlpwr`-based methods.
 
 - verbose:
 
-  Logical; if `TRUE`, print progress information from the selected
-  search engine.
+  Logical flag controlling engine-specific diagnostic output when
+  supported. For the bisection engine, setting `verbose = TRUE` stores
+  the iteration history on the returned object.
 
 - ...:
 
-  Additional arguments passed to the selected engine (for example `tol`
-  for bisection).
+  Additional arguments passed to the selected search engine.
 
 ## Value
 
 An object of class `"pmsims"` containing the estimated minimum sample
-size and simulation diagnostics.
-
-## See also
-
-[`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md),
-[`simulate_continuous()`](https://pmsims-package.github.io/pmsims/reference/simulate_continuous.md),
-[`simulate_survival()`](https://pmsims-package.github.io/pmsims/reference/simulate_survival.md)
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-data_fun <- function(n) {
-  x1 <- rnorm(n)
-  x2 <- rnorm(n)
-  y <- rbinom(n, 1, plogis(0.5 * x1 - 0.25 * x2))
-  data.frame(y = y, x1 = x1, x2 = x2)
-}
-
-model_fun <- function(dat) {
-  stats::glm(y ~ ., data = dat, family = stats::binomial())
-}
-
-metric_fun <- function(test_data, fit, model) {
-  preds <- stats::predict(fit, newdata = test_data, type = "response")
-  as.numeric(pROC::auc(test_data$y, preds, quiet = TRUE))
-}
-attr(metric_fun, "metric") <- "auc"
-
-est <- simulate_custom(
-  data_function = data_fun,
-  model_function = model_fun,
-  metric_function = metric_fun,
-  target_performance = 0.75,
-  c_statistic = 0.80,
-  mean_or_assurance = "assurance",
-  n_reps_total = 40,
-  n_reps_per = 10,
-  method = "mlpwr"
-)
-est
-} # }
-```
+size.

@@ -68,13 +68,7 @@ simulate_survival(
 
 - model:
 
-  Character string specifying the modelling algorithm. Supported values
-  are `"coxph"` (Cox proportional hazards), `"lasso"`
-  **\[experimental\]** (regularised Cox regression), `"rf"`
-  **\[experimental\]** (random survival forest), and `"xgboost"`
-  **\[experimental\]** (gradient boosting with a Cox objective). The
-  machine-learning options are experimental because they have not yet
-  undergone the package's main validation study.
+  Character string; currently `"coxph"` (Cox proportional hazards).
 
 - metric:
 
@@ -85,7 +79,7 @@ simulate_survival(
 - target_performance:
 
   Numeric. Minimum acceptable value of the selected performance metric
-  \\M^\*\\; the algorithm searches for the smallest \\n\\ meeting the
+  \\M^\\\*\\; the algorithm searches for the smallest \\n\\ meeting the
   chosen criterion with respect to this threshold.
 
 - n_reps_total:

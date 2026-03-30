@@ -11,11 +11,6 @@ generated, how models are fitted, and how predictive performance is
 measured. It currently supports regression-based prediction models with
 continuous, binary, and time-to-event outcomes.
 
-`pmsims` also includes experimental machine-learning model options via
-regularised regression, random forest, and XGBoost. These options have
-not yet undergone the package’s main validation study and should be
-treated as experimental in `0.5.0`.
-
 Developed at [King’s College London](https://www.kcl.ac.uk/) (Department
 of Biostatistics & Health Informatics) with input from researchers,
 clinicians, and patient partners. See the [pmsims project
@@ -65,27 +60,6 @@ roles:
 
 ------------------------------------------------------------------------
 
-## Citing pmsims
-
-If you use `pmsims`, please cite both the package and the accompanying
-methods paper.
-
-At present, the methods citation is the arXiv preprint:
-
-- Shamsutdinova D, Zimmer F, Olaniran OR, Markham S, Stahl D, Forbes G,
-  Carr E (2026). *Sample Size Calculations for Developing Clinical
-  Prediction Models: Overview and pmsims R package*. arXiv.
-  <https://arxiv.org/abs/2602.23507>
-
-Once a peer-reviewed article is available, this should be updated to the
-published version. In R, you can retrieve the package citation with:
-
-``` r
-citation("pmsims")
-```
-
-------------------------------------------------------------------------
-
 ## Get in touch
 
 We welcome questions, suggestions, and collaboration enquiries.
@@ -111,16 +85,25 @@ of the NIHR or the Department of Health and Social Care.*
 
 # Package index
 
-## Main functions
+## All functions
 
+- [`calculate_adaptive_bounds()`](https://pmsims-package.github.io/pmsims/reference/calculate_adaptive_bounds.md)
+  : Adaptive starting value searching (model/metrics) agnostic.
+- [`check_pmsims_args()`](https://pmsims-package.github.io/pmsims/reference/check_pmsims_args.md)
+  : check_pmsims_args - a custom version of the base R match.arg
+  function with improved error message
+- [`compute_start_sample_sizes()`](https://pmsims-package.github.io/pmsims/reference/compute_start_sample_sizes.md)
+  : Get initial starting values before using adaptive searching
+- [`get_perf()`](https://pmsims-package.github.io/pmsims/reference/get_perf.md)
+  : Get Performance
 - [`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md)
   : Minimum sample size for binary-outcome prediction models
 - [`simulate_continuous()`](https://pmsims-package.github.io/pmsims/reference/simulate_continuous.md)
   : Minimum sample size for continuous‐outcome prediction models
-- [`simulate_survival()`](https://pmsims-package.github.io/pmsims/reference/simulate_survival.md)
-  : Minimum sample size for survival‐outcome prediction models
 - [`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md)
   : Minimum sample size for custom simulation workflows
+- [`simulate_survival()`](https://pmsims-package.github.io/pmsims/reference/simulate_survival.md)
+  : Minimum sample size for survival‐outcome prediction models
 
 # Articles
 
@@ -128,5 +111,5 @@ of the NIHR or the Department of Health and Social Care.*
 
 - [Getting started with
   pmsims](https://pmsims-package.github.io/pmsims/articles/pmsims.md):
-- [Version
-  0.5.0](https://pmsims-package.github.io/pmsims/articles/release-0-5-0.md):
+- [Defining custom simulation workflows with
+  \`simulate_custom()\`](https://pmsims-package.github.io/pmsims/articles/simulate_custom.md):

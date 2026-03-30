@@ -11,11 +11,6 @@ generated, how models are fitted, and how predictive performance is
 measured. It currently supports regression-based prediction models with
 continuous, binary, and time-to-event outcomes.
 
-`pmsims` also includes experimental machine-learning model options via
-regularised regression, random forest, and XGBoost. These options have
-not yet undergone the package’s main validation study and should be
-treated as experimental in `0.5.0`.
-
 Developed at [King’s College London](https://www.kcl.ac.uk/) (Department
 of Biostatistics & Health Informatics) with input from researchers,
 clinicians, and patient partners. See the [pmsims project
@@ -62,27 +57,6 @@ roles:
   generator.
 - `target_performance` is the minimum acceptable metric value used to
   determine the required sample size.
-
-------------------------------------------------------------------------
-
-## Citing pmsims
-
-If you use `pmsims`, please cite both the package and the accompanying
-methods paper.
-
-At present, the methods citation is the arXiv preprint:
-
-- Shamsutdinova D, Zimmer F, Olaniran OR, Markham S, Stahl D, Forbes G,
-  Carr E (2026). *Sample Size Calculations for Developing Clinical
-  Prediction Models: Overview and pmsims R package*. arXiv.
-  <https://arxiv.org/abs/2602.23507>
-
-Once a peer-reviewed article is available, this should be updated to the
-published version. In R, you can retrieve the package citation with:
-
-``` r
-citation("pmsims")
-```
 
 ------------------------------------------------------------------------
 

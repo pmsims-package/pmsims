@@ -11,10 +11,14 @@ default_models
 
 ## Format
 
-A named list of default model generator functions grouped by outcome
-type.
+An object of class `list` of length 3.
+
+## Arguments
+
+- outcome:
+
+  type of outcome, possible options are: "binary".
 
 ## Value
 
-`default_models` is a list containing built-in model generators for
-binary, continuous, and survival outcomes.
+Model function.
