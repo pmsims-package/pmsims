@@ -12,5 +12,7 @@
 ^docker$
 ^air\.toml$
 ^release-notes$
+^data-raw$
 ^vignettes/\.cache$
 ^vignettes/\.cache/.*
+^vignettes/images/workflow\.afdesign$

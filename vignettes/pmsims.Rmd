@@ -17,9 +17,9 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE
 )
-use_cache <- TRUE
-vignette_cache_dir <- normalizePath(
-  file.path("..", "inst", "extdata", "vignette-cache"),
+vignette_cache_dir <- system.file(
+  "extdata", "vignette-cache",
+  package = "pmsims",
   mustWork = TRUE
 )
 ```
@@ -315,26 +315,7 @@ binary_example
 
 ```{r Run binary}
 #| echo: false
-if (use_cache) {
-  binary_example <- readRDS(file.path(vignette_cache_dir, "binary.rds"))
-} else {
-  set.seed(123)
-  binary_example <- simulate_binary(
-    signal_parameters = 20,
-    noise_parameters  = 0,
-    predictor_type = "continuous",
-    binary_predictor_prevalence = NULL,
-    outcome_prevalence = 0.30,
-    maximum_achievable_cstatistic = 0.80,
-    model = "glm",
-    metric = "calibration_slope",
-    target_performance = 0.85,
-    n_reps_total = 1000,
-    mean_or_assurance = "assurance"
-  )
-  saveRDS(binary_example, file = file.path(vignette_cache_dir, "binary.rds"))
-}
-
+binary_example <- readRDS(file.path(vignette_cache_dir, "binary.rds"))
 print(binary_example)
 ```
 
@@ -367,24 +348,7 @@ continuous_example
 
 ```{r}
 #| echo: false
-if (use_cache) {
-  continuous_example <- readRDS(file.path(vignette_cache_dir, "continuous.rds"))
-} else {
-  set.seed(123)
-  continuous_example <- simulate_continuous(
-    signal_parameters = 15,
-    noise_parameters = 0,
-    predictor_type = "continuous",
-    maximum_achievable_rsquared = 0.50,
-    model = "lm",
-    metric = "calibration_slope",
-    target_performance = 0.90,
-    n_reps_total = 1000,
-    mean_or_assurance = "assurance"
-  )
-  saveRDS(continuous_example, file = file.path(vignette_cache_dir, "continuous.rds"))
-}
-
+continuous_example <- readRDS(file.path(vignette_cache_dir, "continuous.rds"))
 print(continuous_example)
 ```
 
