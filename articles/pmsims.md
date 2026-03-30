@@ -94,12 +94,12 @@ binary_example
     #>                                  Model : glm
     #>                        Simulation reps : 1,000
     #> ──────────────────────────────────── Results ───────────────────────────────────
-    #>              Final minimum sample size : 1,173
-    #>             Estimated performance at N : 0.849 (Calibration slope ('calib_slope') = 0.850)
-    #>            Estimated other metric at N : <NA> ()
+    #>              Final minimum sample size : 793
+    #>             Estimated performance at N : 0.847 (Calibration slope ('calib_slope') = 0.850)
+    #>            Estimated other metric at N : 0.787 (Auc ('auc'))
     #>                                  Model : glm
     #>                                   Mode : Assurance
-    #>                           Running time : 1 minute
+    #>                           Running time : 1 minute 22 seconds
     #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 Plot the estimated learning curve and identified sample size:
@@ -142,12 +142,12 @@ continuous_example
     #>                                  Model : lm
     #>                        Simulation reps : 1,000
     #> ──────────────────────────────────── Results ───────────────────────────────────
-    #>              Final minimum sample size : 271
+    #>              Final minimum sample size : 263
     #>             Estimated performance at N : 0.899 (Calibration slope ('calib_slope') = 0.900)
-    #>            Estimated other metric at N : <NA> ()
+    #>            Estimated other metric at N : 0.449 (R2 ('r2'))
     #>                                  Model : lm
     #>                                   Mode : Assurance
-    #>                           Running time : 14 seconds
+    #>                           Running time : 35 seconds
     #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 ``` r
@@ -163,7 +163,7 @@ outcome](pmsims_files/figure-html/unnamed-chunk-6-1.png)
 sessionInfo()
 #> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.3 LTS
+#> Running under: Ubuntu 24.04.4 LTS
 #> 
 #> Matrix products: default
 #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -191,9 +191,9 @@ sessionInfo()
 #> [13] lattice_0.22-9     ggplot2_4.0.2      R6_2.6.1           labeling_0.4.3    
 #> [17] knitr_1.51         htmlwidgets_1.6.4  desc_1.4.3         bslib_0.10.0      
 #> [21] RColorBrewer_1.1-3 rlang_1.1.7        cachem_1.1.0       xfun_0.57         
-#> [25] fs_2.0.0           DiceKriging_1.6.1  sass_0.4.10        S7_0.2.1          
+#> [25] fs_2.0.1           DiceKriging_1.6.1  sass_0.4.10        S7_0.2.1          
 #> [29] cli_3.6.5          pkgdown_2.2.0      withr_3.0.2        digest_0.6.39     
 #> [33] grid_4.5.3         lifecycle_1.0.5    mlpwr_1.1.1        vctrs_0.7.2       
-#> [37] evaluate_1.0.5     glue_1.8.0         farver_2.1.2       ragg_1.5.1        
-#> [41] survival_3.8-6     rmarkdown_2.30     tools_4.5.3        htmltools_0.5.9
+#> [37] evaluate_1.0.5     glue_1.8.0         farver_2.1.2       ragg_1.5.2        
+#> [41] survival_3.8-6     rmarkdown_2.31     tools_4.5.3        htmltools_0.5.9
 ```
