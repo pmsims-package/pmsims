@@ -7,42 +7,48 @@
 #' and the chosen search engine estimates the smallest \eqn{n} meeting the
 #' selected performance criterion.
 #'
-#' @param data_function Function taking a single integer argument `n` and
-#'   returning a dataset of size `n`.
+#' @param data_function Function taking a single argument, `n`, giving the
+#'   training sample size, and returning a dataset that can be passed to
+#'   `model_function`.
 #' @param model_function Function that fits a model to the dataset returned by
-#'   `data_function`.
-#' @param metric_function Function that takes test data, a fitted model object,
-#'   and a model identifier, and returns a single numeric performance value.
-#' @param target_performance Numeric threshold the algorithm must meet or
-#'   exceed.
-#' @param c_statistic Optional numeric anticipated large-sample discrimination
-#'   measure used by the internal search heuristics when needed.
-#' @param mean_or_assurance Character string, either `"mean"` or `"assurance"`,
-#'   specifying how performance is summarised when defining the minimum sample
-#'   size.
-#' @param test_n Integer size of the fixed test dataset used to evaluate
-#'   predictive performance. This should generally be large.
-#' @param min_sample_size,max_sample_size Optional integer lower and upper
-#'   bounds for the sample-size search. If omitted, engine-specific heuristics
-#'   are used to choose starting bounds.
-#' @param n_reps_total Integer total number of simulation replications
-#'   allocated to the search. Supply exactly one of `n_reps_total` or
-#'   `se_final`.
-#' @param n_reps_per Integer number of replications evaluated at each candidate
-#'   sample size.
-#' @param se_final Optional numeric standard error target for early stopping.
-#'   Supply exactly one of `n_reps_total` or `se_final`.
-#' @param n_init Integer number of initial sample sizes explored before the
-#'   Gaussian-process stage when relevant.
-#' @param method Character string selecting the search engine; currently
-#'   `"mlpwr"`, `"bisection"`, or `"mlpwr-bs"`.
-#' @param verbose Logical; if `TRUE`, print progress information from the
-#'   selected search engine.
-#' @param ... Additional arguments passed to the selected engine (for example
-#'   `tol` for bisection).
+#'   `data_function`. It must take the generated dataset as its only argument
+#'   and return a fitted model object.
+#' @param metric_function Function that evaluates predictive performance on test
+#'   data. It must take three positional arguments in the order
+#'   `(test_data, fitted_model, model_name)` and return a single numeric value.
+#'   Optionally, users may set `attr(metric_function, "value_on_error")` to a
+#'   single numeric fallback value to be returned if model fitting or metric
+#'   evaluation fails during a simulation run.
+#' @param target_performance Numeric target value for the chosen performance
+#'   metric. The search aims to find the smallest sample size \eqn{n} for which
+#'   the selected criterion is met relative to this threshold.
+#' @param c_statistic Optional numeric value used only by the internal
+#'   start-value heuristics for some outcome and metric combinations. In most
+#'   custom workflows this should be left as `NULL`.
+#' @param mean_or_assurance Character string specifying the criterion used to
+#'   define the minimum sample size. Must be either `"mean"` or `"assurance"`.
+#' @param test_n Integer size of the test dataset used to evaluate model
+#'   performance. This should usually be large enough that test-set variability
+#'   is negligible relative to the training-sample search.
+#' @param min_sample_size Optional integer lower bound for the sample-size
+#'   search. If supplied, `max_sample_size` must also be supplied.
+#' @param max_sample_size Optional integer upper bound for the sample-size
+#'   search. If supplied, `min_sample_size` must also be supplied.
+#' @param n_reps_total Integer total number of simulation replications allocated
+#'   to the search. The search evaluates approximately
+#'   `n_reps_total / n_reps_per` candidate sample sizes.
+#' @param n_reps_per Integer number of simulation replications performed at each
+#'   candidate sample size.
+#' @param method Character string specifying the search engine. Defaults to
+#'   `"mlpwr"`.
+#' @param progress Logical flag controlling whether the `mlpwr` progress bar is
+#'   shown for `mlpwr`-based methods.
+#' @param verbose Logical flag controlling engine-specific diagnostic output
+#'   when supported. For the bisection engine, setting `verbose = TRUE` stores
+#'   the iteration history on the returned object.
+#' @param ... Additional arguments passed to the selected search engine.
 #'
-#' @return An object of class `"pmsims"` containing the estimated minimum sample
-#'   size and simulation diagnostics.
+#' @return An object of class `"pmsims"` containing the estimated minimum sample size.
 #'
 #' @seealso [simulate_binary()], [simulate_continuous()], [simulate_survival()]
 #'
@@ -79,37 +85,42 @@
 #' est
 #' }
 #' @export
-
 simulate_custom <- function(
-  data_function = NULL,
-  model_function = NULL,
-  metric_function = NULL,
+  data_function,
+  model_function,
+  metric_function,
   target_performance,
-  c_statistic,
+  c_statistic = NULL,
   mean_or_assurance = "assurance",
   test_n = 30000,
   min_sample_size = NULL,
   max_sample_size = NULL,
-  n_reps_total = NULL,
-  n_reps_per = 50,
-  se_final = NULL,
-  n_init = 4,
+  n_reps_total = 1000,
+  n_reps_per = 20,
   method = "mlpwr",
+  progress = TRUE,
   verbose = FALSE,
   ...
 ) {
+  n_init <- 4 # fixing n_init at 4. This is the number of initial sample sizes calculated after the min max are established and before the main search algorithm begins.
+  se_final <- NULL # Reserved for internal engine use.
+
   if (is.null(data_function)) {
     stop("data_function missing")
   }
 
+  if (is.null(n_reps_total)) {
+    stop("'n_reps_total' must be specified.")
+  }
+
+  # Checking min and max_sample_size inputs.
   if (
-    sum(c(
-      is.null(n_reps_total),
-      is.null(se_final)
-    )) !=
-      1
+    (!is.null(min_sample_size) && is.null(max_sample_size)) ||
+      (is.null(min_sample_size) && !is.null(max_sample_size))
   ) {
-    stop("Exactly one of 'n_reps_total' or 'se_final' must be specified.")
+    stop(
+      "min_sample_size and max_sample_size must either both be positive integers or both set to NULL"
+    )
   }
 
   if (
@@ -120,26 +131,18 @@ simulate_custom <- function(
     stop("min_sample_size must be less than max_sample_size")
   }
 
+  if (!is.null(min_sample_size)) {
+    cat(
+      "Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.\n"
+    )
+  }
+
   if ((mean_or_assurance %in% c("mean", "assurance")) == FALSE) {
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
   }
 
   # Define a default metric value if calculations fail; 0.5 for default
-  metric_name <- attr(metric_function, "metric")
-  error_values <- list(
-    auc = 0.5,
-    cindex = 0.5,
-    r2 = 0,
-    brier_score_scaled = 0,
-    brier_score = 1,
-    IBS = 1,
-    calib_slope = 0
-  )
-  value_on_error <- ifelse(
-    metric_name %in% names(error_values),
-    error_values[[metric_name]],
-    0.5
-  )
+  value_on_error <- resolve_value_on_error(metric_function)
   time_1 <- Sys.time()
 
   if (method == "mlpwr") {
@@ -154,6 +157,7 @@ simulate_custom <- function(
       c_statistic = c_statistic,
       mean_or_assurance,
       n_init = n_init,
+      progress = progress,
       verbose = verbose,
       data_function = data_function,
       model_function = model_function,
@@ -177,7 +181,7 @@ simulate_custom <- function(
       tol = 1e-3,
       parallel = FALSE,
       cores = 20,
-      verbose = FALSE,
+      verbose = verbose,
       budget = TRUE,
       ...
     )
@@ -192,6 +196,7 @@ simulate_custom <- function(
       target_performance = target_performance,
       c_statistic = c_statistic,
       mean_or_assurance,
+      progress = progress,
       verbose = verbose,
       data_function = data_function,
       model_function = model_function,
@@ -220,10 +225,52 @@ simulate_custom <- function(
     data = output$results,
     train_size = rownames(output$results),
     data_function = data_function,
-    simulation_time = difftime(time_2, time_1, units = "secs")
+    simulation_time = difftime(time_2, time_1, units = "secs"),
+    mean_or_assurance = mean_or_assurance
   )
+  if (!is.null(output$history)) {
+    results_list$history <- output$history
+  }
   attr(results_list, "class") <- "pmsims"
   return(results_list)
+}
+
+resolve_value_on_error <- function(metric_function) {
+  metric_name <- attr(metric_function, "metric", exact = TRUE)
+  custom_value_on_error <- attr(metric_function, "value_on_error", exact = TRUE)
+  error_values <- c(
+    auc = 0.5,
+    cindex = 0.5,
+    r2 = 0,
+    brier_score_scaled = 0,
+    brier_score = 1,
+    IBS = 1,
+    calib_slope = 0
+  )
+
+  if (!is.null(custom_value_on_error)) {
+    if (
+      !is.numeric(custom_value_on_error) ||
+        length(custom_value_on_error) != 1 ||
+        is.na(custom_value_on_error)
+    ) {
+      stop(
+        "attr(metric_function, \"value_on_error\") must be a single non-missing numeric value."
+      )
+    }
+
+    return(as.numeric(custom_value_on_error))
+  }
+
+  if (
+    length(metric_name) == 1 &&
+      !is.na(metric_name) &&
+      metric_name %in% names(error_values)
+  ) {
+    return(unname(error_values[[metric_name]]))
+  }
+
+  0.5
 }
 
 #' Parse and validate input specifications

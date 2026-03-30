@@ -5,76 +5,81 @@
 \title{Minimum sample size for custom simulation workflows}
 \usage{
 simulate_custom(
-  data_function = NULL,
-  model_function = NULL,
-  metric_function = NULL,
+  data_function,
+  model_function,
+  metric_function,
   target_performance,
-  c_statistic,
+  c_statistic = NULL,
   mean_or_assurance = "assurance",
   test_n = 30000,
   min_sample_size = NULL,
   max_sample_size = NULL,
-  n_reps_total = NULL,
-  n_reps_per = 50,
-  se_final = NULL,
-  n_init = 4,
+  n_reps_total = 1000,
+  n_reps_per = 20,
   method = "mlpwr",
+  progress = TRUE,
   verbose = FALSE,
   ...
 )
 }
 \arguments{
-\item{data_function}{Function taking a single integer argument \code{n} and
-returning a dataset of size \code{n}.}
+\item{data_function}{Function taking a single argument, \code{n}, giving the
+training sample size, and returning a dataset that can be passed to
+\code{model_function}.}
 
 \item{model_function}{Function that fits a model to the dataset returned by
-\code{data_function}.}
+\code{data_function}. It must take the generated dataset as its only argument
+and return a fitted model object.}
 
-\item{metric_function}{Function that takes test data, a fitted model object,
-and a model identifier, and returns a single numeric performance value.}
+\item{metric_function}{Function that evaluates predictive performance on test
+data. It must take three positional arguments in the order
+\verb{(test_data, fitted_model, model_name)} and return a single numeric value.
+Optionally, users may set \code{attr(metric_function, "value_on_error")} to a
+single numeric fallback value to be returned if model fitting or metric
+evaluation fails during a simulation run.}
 
-\item{target_performance}{Numeric threshold the algorithm must meet or
-exceed.}
+\item{target_performance}{Numeric target value for the chosen performance
+metric. The search aims to find the smallest sample size \eqn{n} for which
+the selected criterion is met relative to this threshold.}
 
-\item{c_statistic}{Optional numeric anticipated large-sample discrimination
-measure used by the internal search heuristics when needed.}
+\item{c_statistic}{Optional numeric value used only by the internal
+start-value heuristics for some outcome and metric combinations. In most
+custom workflows this should be left as \code{NULL}.}
 
-\item{mean_or_assurance}{Character string, either \code{"mean"} or \code{"assurance"},
-specifying how performance is summarised when defining the minimum sample
-size.}
+\item{mean_or_assurance}{Character string specifying the criterion used to
+define the minimum sample size. Must be either \code{"mean"} or \code{"assurance"}.}
 
-\item{test_n}{Integer size of the fixed test dataset used to evaluate
-predictive performance. This should generally be large.}
+\item{test_n}{Integer size of the test dataset used to evaluate model
+performance. This should usually be large enough that test-set variability
+is negligible relative to the training-sample search.}
 
-\item{min_sample_size, max_sample_size}{Optional integer lower and upper
-bounds for the sample-size search. If omitted, engine-specific heuristics
-are used to choose starting bounds.}
+\item{min_sample_size}{Optional integer lower bound for the sample-size
+search. If supplied, \code{max_sample_size} must also be supplied.}
 
-\item{n_reps_total}{Integer total number of simulation replications
-allocated to the search. Supply exactly one of \code{n_reps_total} or
-\code{se_final}.}
+\item{max_sample_size}{Optional integer upper bound for the sample-size
+search. If supplied, \code{min_sample_size} must also be supplied.}
 
-\item{n_reps_per}{Integer number of replications evaluated at each candidate
-sample size.}
+\item{n_reps_total}{Integer total number of simulation replications allocated
+to the search. The search evaluates approximately
+\code{n_reps_total / n_reps_per} candidate sample sizes.}
 
-\item{se_final}{Optional numeric standard error target for early stopping.
-Supply exactly one of \code{n_reps_total} or \code{se_final}.}
+\item{n_reps_per}{Integer number of simulation replications performed at each
+candidate sample size.}
 
-\item{n_init}{Integer number of initial sample sizes explored before the
-Gaussian-process stage when relevant.}
+\item{method}{Character string specifying the search engine. Defaults to
+\code{"mlpwr"}.}
 
-\item{method}{Character string selecting the search engine; currently
-\code{"mlpwr"}, \code{"bisection"}, or \code{"mlpwr-bs"}.}
+\item{progress}{Logical flag controlling whether the \code{mlpwr} progress bar is
+shown for \code{mlpwr}-based methods.}
 
-\item{verbose}{Logical; if \code{TRUE}, print progress information from the
-selected search engine.}
+\item{verbose}{Logical flag controlling engine-specific diagnostic output
+when supported. For the bisection engine, setting \code{verbose = TRUE} stores
+the iteration history on the returned object.}
 
-\item{...}{Additional arguments passed to the selected engine (for example
-\code{tol} for bisection).}
+\item{...}{Additional arguments passed to the selected search engine.}
 }
 \value{
-An object of class \code{"pmsims"} containing the estimated minimum sample
-size and simulation diagnostics.
+An object of class \code{"pmsims"} containing the estimated minimum sample size.
 }
 \description{
 Compute the minimum sample size required to achieve a target level of

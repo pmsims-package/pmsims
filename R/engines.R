@@ -1,6 +1,7 @@
 #' mlpwr engine
 #' @inheritParams simulate_custom
-#' @param n_init Integer number of initial sample sizes simulated before the Gaussian-process search begins.
+#' @param n_init Integer number of initial sample sizes simulated before the Gaussian process search begins.
+#' @param progress Logical flag controlling whether the `mlpwr` progress bar is shown.
 #' @param verbose Logical flag passed to `mlpwr`; when `TRUE` verbose output is printed.
 #' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
 #' @keywords internal
@@ -15,6 +16,7 @@ calculate_mlpwr <- function(
   c_statistic,
   mean_or_assurance,
   n_init,
+  progress = TRUE,
   verbose,
   data_function,
   model_function,
@@ -22,68 +24,63 @@ calculate_mlpwr <- function(
   value_on_error
 ) {
   # Determine initial start values
-  start_values <- compute_start_sample_sizes(
-    data_function = data_function,
-    metric_function = metric_function,
-    target_performance = target_performance,
-    c_statistic = c_statistic,
-    mean_or_assurance = mean_or_assurance
+  start_values <- tryCatch(
+    {
+      compute_start_sample_sizes(
+        data_function = data_function,
+        metric_function = metric_function,
+        target_performance = target_performance,
+        c_statistic = c_statistic,
+        mean_or_assurance = mean_or_assurance
+      )
+    },
+    error = function(e) {
+      stop(
+        paste("Error when computing start values:", e$message),
+        call. = FALSE
+      )
+    }
   )
 
   # Adaptive starting values search
   cat("Estimating first stage... (Adaptive starting value search algorithm)\n")
-  start_values <- calculate_adaptive_bounds(
-    data_function = data_function,
-    model_function = model_function,
-    metric_function = metric_function,
-    value_on_error = NA,
-    start_n = start_values$start_min_sample_size,
-    test_n = test_n,
-    n_reps_per = n_reps_per,
-    n_reps_total = 500,
-    target_performance = target_performance,
-    threshold = 0.0001,
-    mean_or_assurance = mean_or_assurance,
-    verbose = FALSE
+  start_values <- tryCatch(
+    {
+      calculate_adaptive_bounds(
+        data_function = data_function,
+        model_function = model_function,
+        metric_function = metric_function,
+        value_on_error = NA,
+        start_n = start_values$start_min_sample_size,
+        test_n = test_n,
+        n_reps_per = n_reps_per,
+        n_reps_total = 500,
+        target_performance = target_performance,
+        threshold = 0.0001,
+        mean_or_assurance = mean_or_assurance,
+        verbose = FALSE
+      )
+    },
+    error = function(e) {
+      stop(
+        paste("Error during adaptive start value search:", e$message),
+        call. = FALSE
+      )
+    }
   )
 
   start_min_sample_size <- start_values$min_sample_size
   start_max_sample_size <- start_values$max_sample_size
 
+  cat(
+    "Starting values determined: min sample size =",
+    start_min_sample_size,
+    "max sample size =",
+    start_max_sample_size,
+    "\n"
+  )
+
   # Calculate metrics for sample size n
-  mlpwr_simulation_function <- function(n) {
-    tryCatch(
-      {
-        test_data <- data_function(test_n)
-        train_data <- data_function(n)
-        fit <- model_function(train_data)
-        model <- attr(model_function, "model")
-        metric_function(test_data, fit, model)
-      },
-      error = function(e) {
-        return(value_on_error)
-      }
-    )
-  }
-
-  if (mean_or_assurance == "mean") {
-    aggregate_fun <- function(x) mean(x, na.rm = TRUE)
-  } else if (mean_or_assurance == "assurance") {
-    aggregate_fun <- function(x) stats::quantile(x, probs = .2, na.rm = TRUE)
-  } else {
-    stop("mean_or_assurance must be either 'mean' or 'assurance'")
-  }
-
-  # Use a bootstrap to estimate the variance of the estimated quantile
-  var_bootstrap <- function(x) {
-    stats::var(replicate(
-      20,
-      aggregate_fun(sample(x, length(x), replace = TRUE))
-    ))
-  }
-
-  # Calculate bootstrapped quantile variance
-  noise_fun <- function(x) var_bootstrap(x$y)
 
   # TODO: Explain this better
   # processing final_estimate_se
@@ -111,7 +108,7 @@ calculate_mlpwr <- function(
   use_cli <- FALSE
 
   # Try using cli
-  if (requireNamespace("cli", quietly = TRUE)) {
+  if (isTRUE(progress) && requireNamespace("cli", quietly = TRUE)) {
     use_cli <- TRUE
 
     pb_id <- cli::cli_progress_bar(
@@ -164,7 +161,7 @@ calculate_mlpwr <- function(
         }
       )
     }
-  } else {
+  } else if (isTRUE(progress)) {
     # Fallback to txtProgressBar
     pb_txt <- utils::txtProgressBar(
       min = 0,
@@ -178,20 +175,84 @@ calculate_mlpwr <- function(
   }
 
   # Patch mlpwr::print_progress()
-  ns <- asNamespace("mlpwr")
-  orig_print_progress <- get("print_progress", envir = ns)
-  utils::assignInNamespace("print_progress", patched_print_progress, ns)
+  if (isTRUE(progress)) {
+    ns <- asNamespace("mlpwr")
+    orig_print_progress <- get("print_progress", envir = ns)
+    assignInNamespace("print_progress", patched_print_progress, ns)
+  }
 
   # Ensure cleanup
   on.exit(
     {
-      utils::assignInNamespace("print_progress", orig_print_progress, "mlpwr")
+      if (!is.null(orig_print_progress)) {
+        assignInNamespace("print_progress", orig_print_progress, "mlpwr")
+      }
       if (!is.null(pb_txt)) {
         close(pb_txt)
       }
       if (!is.null(pb_id) && use_cli) cli::cli_progress_done(id = pb_id)
     },
     add = TRUE
+  )
+
+  # Functions required for mlpwr
+  # Calculate metrics for sample size n
+  mlpwr_simulation_function <- function(n) {
+    tryCatch(
+      {
+        test_data <- data_function(test_n)
+        train_data <- data_function(n)
+        fit <- model_function(train_data)
+        model <- attr(model_function, "model")
+        metric_function(test_data, fit, model)
+      },
+      error = function(e) {
+        return(value_on_error)
+      }
+    )
+  }
+
+  if (mean_or_assurance == "mean") {
+    aggregate_fun <- function(x) mean(x, na.rm = TRUE)
+  } else if (mean_or_assurance == "assurance") {
+    aggregate_fun <- function(x) stats::quantile(x, probs = .2, na.rm = TRUE)
+  } else {
+    stop("mean_or_assurance must be either 'mean' or 'assurance'")
+  }
+
+  # Use a bootstrap to estimate the variance of the estimated quantile
+  var_bootstrap <- function(x) {
+    stats::var(replicate(
+      20,
+      aggregate_fun(sample(x, length(x), replace = TRUE))
+    ))
+  }
+
+  # Calculate bootstrapped quantile variance
+  noise_fun <- function(x) var_bootstrap(x$y)
+
+  ds <- tryCatch(
+    {
+      mlpwr::find.design(
+        simfun = mlpwr_simulation_function,
+        aggregate_fun = aggregate_fun,
+        noise_fun = noise_fun,
+        boundaries = c(start_min_sample_size, start_max_sample_size),
+        power = target_performance,
+        surrogate = "gpr",
+        setsize = n_reps_per,
+        evaluations = n_reps_total,
+        ci = ci,
+        n.startsets = n_init,
+        silent = !isTRUE(progress)
+      )
+    },
+    error = function(e) {
+      stop(
+        paste("mlpwr::find.design failed with error:", e$message),
+        call. = FALSE
+      )
+    }
   )
 
   ds <-
@@ -206,7 +267,7 @@ calculate_mlpwr <- function(
       evaluations = n_reps_total,
       ci = ci,
       n.startsets = n_init,
-      silent = FALSE
+      silent = !isTRUE(progress)
     )
 
   # Process results from mlpwr
@@ -235,7 +296,6 @@ calculate_mlpwr <- function(
     )
   ))
 }
-
 
 #' The Bisection Engine
 #'
@@ -283,11 +343,6 @@ calculate_bisection <- function(
     mean_or_assurance = mean_or_assurance
   )
 
-  #start_min_sample_size <- start_values$start_min_sample_size
-  #start_max_sample_size <- start_values$start_max_sample_size
-
-  #npar <- dim(data_function(1))[2] - 1
-
   start_values <- calculate_adaptive_bounds(
     data_function = data_function,
     model_function = model_function,
@@ -311,8 +366,7 @@ calculate_bisection <- function(
   # Generate fixed test set once
   test_data <- data_function(test_n)
 
-  # set up cluster once if parallel requested
-
+  # Set up cluster once if parallel requested
   cl <- NULL
   registered_parallel <- FALSE
   if (isTRUE(parallel)) {
@@ -483,12 +537,13 @@ calculate_bisection <- function(
 
 #' mlpwr-bs Hybrid engine using bisection to determine initial range and mlpwr for search
 #' @inheritParams simulate_custom
+#' @param n_init Integer number of initial sample sizes simulated before the Gaussian-process search begins.
+#' @param progress Logical flag controlling whether the `mlpwr` progress bar is shown.
 #' @param verbose Logical flag passed to `mlpwr`; when `TRUE` verbose output is printed.
 #' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
 #'
 #' @return List containing the combined bisection and mlpwr results (`results`, `summaries`, `min_n`, `perf_n`, and `mlpwr_ds`).
 #' @keywords internal
-#' @noRd
 calculate_mlpwr_bs <- function(
   test_n,
   n_reps_total,
@@ -499,6 +554,7 @@ calculate_mlpwr_bs <- function(
   target_performance,
   c_statistic,
   mean_or_assurance,
+  progress = TRUE,
   verbose,
   data_function,
   model_function,
@@ -516,11 +572,6 @@ calculate_mlpwr_bs <- function(
     c_statistic = c_statistic,
     mean_or_assurance = mean_or_assurance
   )
-
-  #start_min_sample_size <- start_values$start_min_sample_size
-  #start_max_sample_size <- start_values$start_max_sample_size
-
-  #npar <- dim(data_function(1))[2] - 1
 
   start_values <- calculate_adaptive_bounds(
     data_function = data_function,
@@ -541,7 +592,6 @@ calculate_mlpwr_bs <- function(
   prev_max_sample_size <- start_values$max_sample_size
 
   # Override adaptive min and max when provided at stage 1
-
   if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
     prev_min_sample_size <- min_sample_size
     prev_max_sample_size <- max_sample_size
@@ -652,7 +702,7 @@ calculate_mlpwr_bs <- function(
       evaluations = n_reps_total,
       ci = ci,
       n.startsets = 4,
-      silent = FALSE
+      silent = !isTRUE(progress)
     )
 
   # Process results from mlpwr

@@ -62,8 +62,11 @@ Suggests:
     foreach,
     glmnet,
     mlr,
+    mlbench,
+    DescTools,
     randomForest,
     ranger,
+    synthpop,
     tuneRanger,
     xgboost
 Encoding: UTF-8
@@ -71,4 +74,5 @@ LazyData: false
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+BuildVignettes: false
 Config/testthat/edition: 3
