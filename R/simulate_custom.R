@@ -71,16 +71,23 @@
 #' }
 #' attr(metric_fun, "metric") <- "auc"
 #'
+#' maximum_achievable_data <- data_fun(10000)
+#' test_data <- data_fun(5000)
+#' maximum_achievable_fit <- model_fun(maximum_achievable_data)
+#' maximum_achievable_performance <- metric_fun(
+#'   test_data,
+#'   maximum_achievable_fit,
+#'   "glm"
+#' )
+#'
 #' est <- simulate_custom(
 #'   data_function = data_fun,
 #'   model_function = model_fun,
 #'   metric_function = metric_fun,
-#'   target_performance = 0.75,
-#'   c_statistic = 0.80,
-#'   mean_or_assurance = "assurance",
-#'   n_reps_total = 40,
-#'   n_reps_per = 10,
-#'   method = "mlpwr"
+#'   target_performance = maximum_achievable_performance - 0.05,
+#'   test_n = 5000,
+#'   n_reps_total = 1000,
+#'   progress = FALSE
 #' )
 #' est
 #' }
