@@ -20,8 +20,18 @@ knitr::opts_chunk$set(
 vignette_cache_dir <- system.file(
   "extdata", "vignette-cache",
   package = "pmsims",
-  mustWork = TRUE
+  mustWork = FALSE
 )
+if (vignette_cache_dir == "") {
+  source_candidates <- c(
+    file.path("..", "inst", "extdata", "vignette-cache"),
+    file.path("inst", "extdata", "vignette-cache")
+  )
+  vignette_cache_dir <- source_candidates[dir.exists(source_candidates)][1]
+}
+if (is.na(vignette_cache_dir) || vignette_cache_dir == "") {
+  stop("Could not locate vignette cache directory.")
+}
 ```
 
 ## What pmsims does

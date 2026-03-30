@@ -1,8 +1,8 @@
 ---
-title: "Defining custom simulation workflows with `simulate_custom()`"
+title: "Defining custom simulation workflows"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Defining custom simulation workflows with `simulate_custom()`}
+  %\VignetteIndexEntry{Defining custom simulation workflows with simulate_custom()}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -36,7 +36,7 @@ library(DescTools)
 library(glmnet)
 ```
 
-## Using `simulate_custom()`
+## Defining your custom components
 
 The function requires three key functions:
 
@@ -209,7 +209,7 @@ print(small_sample_performance)
 mean(small_sample_performance)
 ```
 
-### Running `simulate_custom()`
+## Running `simulate_custom()`
 
 We are now ready to run `simulate_custom()`. We decide that a Brier score of
 -0.165 is the minimum acceptable performance, allowing some degradation from
