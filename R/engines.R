@@ -178,14 +178,14 @@ calculate_mlpwr <- function(
   if (isTRUE(progress)) {
     ns <- asNamespace("mlpwr")
     orig_print_progress <- get("print_progress", envir = ns)
-    assignInNamespace("print_progress", patched_print_progress, ns)
+    utils::assignInNamespace("print_progress", patched_print_progress, ns)
   }
 
   # Ensure cleanup
   on.exit(
     {
       if (!is.null(orig_print_progress)) {
-        assignInNamespace("print_progress", orig_print_progress, "mlpwr")
+        utils::assignInNamespace("print_progress", orig_print_progress, "mlpwr")
       }
       if (!is.null(pb_txt)) {
         close(pb_txt)
@@ -537,7 +537,6 @@ calculate_bisection <- function(
 
 #' mlpwr-bs Hybrid engine using bisection to determine initial range and mlpwr for search
 #' @inheritParams simulate_custom
-#' @param n_init Integer number of initial sample sizes simulated before the Gaussian-process search begins.
 #' @param progress Logical flag controlling whether the `mlpwr` progress bar is shown.
 #' @param verbose Logical flag passed to `mlpwr`; when `TRUE` verbose output is printed.
 #' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
