@@ -1,5 +1,5 @@
 citHeader(
-  "To cite pmsims, please cite both the package and the accompanying methods paper."
+  "To cite pmsims, please cite the package and either or both accompanying preprints."
 )
 
 bibentry(
@@ -39,6 +39,26 @@ bibentry(
   note = "Preprint"
 )
 
+bibentry(
+  bibtype = "Article",
+  title = "Adaptive Gaussian Process Search for Simulation-Based Sample Size Estimation in Clinical Prediction Models: Validation of the pmsims R Package",
+  author = c(
+    person("Oyebayo Ridwan", "Olaniran"),
+    person("Diana", "Shamsutdinova"),
+    person("Sarah", "Markham"),
+    person("Felix", "Zimmer"),
+    person("Daniel", "Stahl"),
+    person("Gordon", "Forbes"),
+    person("Ewan", "Carr")
+  ),
+  year = "2026",
+  journal = "arXiv",
+  volume = "arXiv:2603.23688",
+  doi = "10.48550/arXiv.2603.23688",
+  url = "https://arxiv.org/abs/2603.23688",
+  note = "Preprint"
+)
+
 citFooter(
-  "For now, please cite the arXiv preprint for the methods paper. Once a peer-reviewed article is available, this citation should be updated to the published version."
+  "For now, please cite either or both arXiv preprints. Once peer-reviewed articles are available, these citations should be updated to the published versions."
 )
