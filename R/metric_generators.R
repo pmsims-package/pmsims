@@ -106,7 +106,7 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
     #s_val <- if (!is.null(fit$lambda.1se)) fit$lambda.1se else if (!is.null(fit$lambda.min)) fit$lambda.min else NULL
     #if (is.null(s_val)) s_val <- NULL
 
-    s_val = "lambda.min"
+    s_val <- "lambda.min"
 
     # Choose glmnet type mapping
     glmnet_type <- switch(

@@ -46,7 +46,6 @@ validate_metric_constraints <- function(
   }
 }
 
-
 validate_outcome_prevalence <- function(outcome_prevalence) {
   if (is.null(outcome_prevalence)) {
     cli::cli_abort("`outcome_prevalence` must be specified.")

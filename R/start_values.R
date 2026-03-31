@@ -112,7 +112,6 @@ adaptive_startvalues <- function(
   ))
 }
 
-
 #### New adaptive start values code
 
 #' Adaptive starting value searching (model/metrics) agnostic.
@@ -321,7 +320,6 @@ calculate_adaptive_bounds <- function(
   )
 }
 
-
 #' Get initial starting values before using adaptive searching
 #'
 #' @param data_function Function that generates data for a requested sample
@@ -352,7 +350,7 @@ compute_start_sample_sizes <- function(
   npar <- dim(data_function(10))[2] - 1
 
   # Set default start value - this is used if the outcome type cannot be determined.
-  default_start_value = 10 * npar
+  default_start_value <- 10 * npar
 
   # 2. Inspect data_function formals to infer outcome type
   formals_list <- formals(data_function)

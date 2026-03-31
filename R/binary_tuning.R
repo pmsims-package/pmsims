@@ -34,7 +34,7 @@ binary_tuning <- function(
 
     num <- stats::integrate(Vectorize(f1), -Inf, Inf)$value
 
-    f2 = function(x) {
+    f2 <- function(x) {
       stats::integrate(
         function(y) {
           stats::dnorm(x, mean = mean, sd = sqrt(variance)) *

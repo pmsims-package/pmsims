@@ -129,7 +129,7 @@ simulate_binary <- function(
   model_function <- default_model_generators(outcome_type, model)
 
   # Redefine metrics to internal syntax lang
-  metric = ifelse(metric == "calibration_slope", "calib_slope", metric)
+  metric <- ifelse(metric == "calibration_slope", "calib_slope", metric)
 
   simulate_custom_args <- utils::modifyList(
     list(

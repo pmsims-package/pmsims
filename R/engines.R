@@ -662,7 +662,7 @@ calculate_mlpwr_bs <- function(
   }
 
   # Perform search using mlpwr
-  get_start_bounds = adaptive_startvalues(
+  get_start_bounds <- adaptive_startvalues(
     output = prev,
     aggregate_fun = aggregate_fun,
     var_bootstrap = var_bootstrap,

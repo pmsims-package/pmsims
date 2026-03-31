@@ -227,7 +227,6 @@ default_models <- list(
   )
 )
 
-
 #' @keywords internal
 #' @noRd
 default_model_generators <- function(outcome, model) {
