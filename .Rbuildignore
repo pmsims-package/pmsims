@@ -15,4 +15,11 @@
 ^data-raw$
 ^vignettes/\.cache$
 ^vignettes/\.cache/.*
+^vignettes/\.DS_Store$
+^vignettes/man$
+^vignettes/man/.*
+^vignettes/pmsims\.html$
+^vignettes/release-0-5-0\.Rmd$
+^vignettes/release-0-5-0\.html$
+^vignettes/articles/simulate_custom\.html$
 ^vignettes/images/workflow\.afdesign$
