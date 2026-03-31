@@ -1,4 +1,4 @@
-# Defining custom simulation workflows with \`simulate_custom()\`
+# Defining custom simulation workflows
 
 ## Motivation
 
@@ -34,7 +34,7 @@ library(DescTools)
 library(glmnet)
 ```
 
-## Using `simulate_custom()`
+## Defining your custom components
 
 The function requires three key functions:
 
@@ -242,7 +242,7 @@ mean(small_sample_performance)
 
     ## [1] -0.1870017
 
-### Running `simulate_custom()`
+## Running `simulate_custom()`
 
 We are now ready to run
 [`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md).
@@ -287,7 +287,7 @@ print(result)
     ##             Estimated performance at N : -0.165 ( = -0.165)
     ##            Estimated other metric at N : <NA> ()
     ##                                   Mode : Assurance
-    ##                           Running time : 3 minutes 15 seconds
+    ##                           Running time : 3 minutes 21 seconds
     ##     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 ### Interpretation

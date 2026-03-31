@@ -105,11 +105,6 @@ calculate_mlpwr_bs(
   Numeric fallback value used if model fitting or metric calculation
   fails.
 
-- n_init:
-
-  Integer number of initial sample sizes simulated before the
-  Gaussian-process search begins.
-
 ## Value
 
 List containing the combined bisection and mlpwr results (`results`,
