@@ -175,6 +175,61 @@ test_that("wrapper dots are forwarded to simulate_custom", {
   expect_identical(survival_args$min_sample_size, 70)
 })
 
+test_that("wrappers store binary predictor prevalence on output", {
+  local_mocked_bindings(
+    binary_tuning = function(...) c(mu_lp = 0, sigma_sq = 1, beta_signal = 0.3),
+    continuous_tuning = function(...) 0.25,
+    survival_tuning = function(...) {
+      c(lambda_opt = 0.1, sigma_sq = 0.2, beta_signal = 0.3)
+    },
+    simulate_custom = mock_simulate_custom,
+    .package = "pmsims"
+  )
+
+  binary_result <- simulate_binary(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "binary",
+    binary_predictor_prevalence = 0.3,
+    outcome_prevalence = 0.2,
+    maximum_achievable_cstatistic = 0.75,
+    metric = "calibration_slope",
+    target_performance = 0.9,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance"
+  )
+
+  continuous_result <- simulate_continuous(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "binary",
+    binary_predictor_prevalence = 0.4,
+    maximum_achievable_rsquared = 0.5,
+    metric = "calibration_slope",
+    target_performance = 0.9,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance"
+  )
+
+  survival_result <- simulate_survival(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "binary",
+    binary_predictor_prevalence = 0.25,
+    maximum_achievable_cindex = 0.75,
+    baseline_hazard = 0.01,
+    censoring_rate = 0.3,
+    metric = "calibration_slope",
+    target_performance = 0.9,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance"
+  )
+
+  expect_identical(binary_result$binary_predictor_prevalence, 0.3)
+  expect_identical(continuous_result$binary_predictor_prevalence, 0.4)
+  expect_identical(survival_result$binary_predictor_prevalence, 0.25)
+})
+
 test_that("wrapper calibration slope bounds are enforced", {
   expect_error(
     simulate_binary(
