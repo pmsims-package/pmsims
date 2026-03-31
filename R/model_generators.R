@@ -253,6 +253,21 @@ default_model_generators <- function(outcome, model) {
 #' @keywords internal
 #' @noRd
 resolve_mlr_measures <- function(measure_names, task_type = NA_character_) {
+  require_optional_packages("mlr", "mlr measure lookup")
+
+  mlr_attached <- "package:mlr" %in% search()
+  if (!mlr_attached) {
+    base::attachNamespace(asNamespace("mlr"))
+    on.exit(
+      {
+        if ("package:mlr" %in% search()) {
+          detach("package:mlr", unload = FALSE, character.only = TRUE)
+        }
+      },
+      add = TRUE
+    )
+  }
+
   available_measures <- mlr::listMeasures(task_type, create = TRUE)
   available_ids <- vapply(available_measures, function(x) x$id, character(1))
 
