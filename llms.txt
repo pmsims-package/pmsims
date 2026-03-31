@@ -67,18 +67,24 @@ roles:
 
 ## Citing pmsims
 
-If you use `pmsims`, please cite both the package and the accompanying
-methods paper.
+If you use `pmsims`, please cite the package and either or both
+accompanying preprints.
 
-At present, the methods citation is the arXiv preprint:
+Current preprints:
 
 - Shamsutdinova D, Zimmer F, Olaniran OR, Markham S, Stahl D, Forbes G,
   Carr E (2026). *Sample Size Calculations for Developing Clinical
   Prediction Models: Overview and pmsims R package*. arXiv.
   <https://arxiv.org/abs/2602.23507>
 
-Once a peer-reviewed article is available, this should be updated to the
-published version. In R, you can retrieve the package citation with:
+- Olaniran OR, Shamsutdinova D, Markham S, Zimmer F, Stahl D, Forbes G,
+  Carr E (2026). *Adaptive Gaussian Process Search for Simulation-Based
+  Sample Size Estimation in Clinical Prediction Models: Validation of
+  the pmsims R Package*. arXiv. <https://arxiv.org/abs/2603.23688>
+
+Once peer-reviewed articles are available, these citations should be
+updated to the published versions. In R, you can retrieve the package
+citation with:
 
 ``` r
 citation("pmsims")

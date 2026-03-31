@@ -53,3 +53,21 @@ Preprint, <https://arxiv.org/abs/2602.23507>.
       url = {https://arxiv.org/abs/2602.23507},
       note = {Preprint},
     }
+
+Olaniran O, Shamsutdinova D, Markham S, Zimmer F, Stahl D, Forbes G,
+Carr E (2026). “Adaptive Gaussian Process Search for Simulation-Based
+Sample Size Estimation in Clinical Prediction Models: Validation of the
+pmsims R Package.” *arXiv*, **arXiv:2603.23688**.
+[doi:10.48550/arXiv.2603.23688](https://doi.org/10.48550/arXiv.2603.23688),
+Preprint, <https://arxiv.org/abs/2603.23688>.
+
+    @Article{,
+      title = {Adaptive Gaussian Process Search for Simulation-Based Sample Size Estimation in Clinical Prediction Models: Validation of the pmsims R Package},
+      author = {Oyebayo Ridwan Olaniran and Diana Shamsutdinova and Sarah Markham and Felix Zimmer and Daniel Stahl and Gordon Forbes and Ewan Carr},
+      year = {2026},
+      journal = {arXiv},
+      volume = {arXiv:2603.23688},
+      doi = {10.48550/arXiv.2603.23688},
+      url = {https://arxiv.org/abs/2603.23688},
+      note = {Preprint},
+    }
