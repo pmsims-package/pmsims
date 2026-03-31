@@ -96,6 +96,85 @@ test_that("simulate_survival returns a pmsims object", {
   expect_equal(result$target_performance, 0.9)
 })
 
+test_that("wrapper dots are forwarded to simulate_custom", {
+  binary_args <- NULL
+  continuous_args <- NULL
+  survival_args <- NULL
+
+  local_mocked_bindings(
+    binary_tuning = function(...) c(mu_lp = 0, sigma_sq = 1, beta_signal = 0.3),
+    continuous_tuning = function(...) 0.25,
+    survival_tuning = function(...) {
+      c(lambda_opt = 0.1, sigma_sq = 0.2, beta_signal = 0.3)
+    },
+    simulate_custom = function(...) {
+      args <- list(...)
+
+      outcome <- attr(args$data_function, "outcome")
+      if (identical(outcome, "binary")) {
+        binary_args <<- args
+      } else if (identical(outcome, "continuous")) {
+        continuous_args <<- args
+      } else if (identical(outcome, "survival")) {
+        survival_args <<- args
+      }
+
+      mock_simulate_custom(...)
+    },
+    .package = "pmsims"
+  )
+
+  simulate_binary(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    outcome_prevalence = 0.2,
+    maximum_achievable_cstatistic = 0.75,
+    metric = "calibration_slope",
+    target_performance = 0.9,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance",
+    progress = FALSE,
+    min_sample_size = 50
+  )
+
+  simulate_continuous(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    maximum_achievable_rsquared = 0.5,
+    metric = "calibration_slope",
+    target_performance = 0.9,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance",
+    progress = FALSE,
+    min_sample_size = 60
+  )
+
+  simulate_survival(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    maximum_achievable_cindex = 0.75,
+    baseline_hazard = 0.01,
+    censoring_rate = 0.3,
+    metric = "calibration_slope",
+    target_performance = 0.9,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance",
+    progress = FALSE,
+    min_sample_size = 70
+  )
+
+  expect_false(binary_args$progress)
+  expect_false(continuous_args$progress)
+  expect_false(survival_args$progress)
+
+  expect_identical(binary_args$min_sample_size, 50)
+  expect_identical(continuous_args$min_sample_size, 60)
+  expect_identical(survival_args$min_sample_size, 70)
+})
+
 test_that("wrapper calibration slope bounds are enforced", {
   expect_error(
     simulate_binary(

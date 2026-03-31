@@ -131,21 +131,24 @@ simulate_binary <- function(
   # Redefine metrics to internal syntax lang
   metric = ifelse(metric == "calibration_slope", "calib_slope", metric)
 
-  suppressWarnings(
-    output <- simulate_custom(
+  simulate_custom_args <- utils::modifyList(
+    list(
       metric_function = default_metric_generator(metric, data_function),
       target_performance = target_performance,
       c_statistic = maximum_achievable_cstatistic,
       data_function = data_function,
       model_function = model_function,
-      min_sample_size = NULL,
-      max_sample_size = NULL,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
       method = "mlpwr",
       mean_or_assurance = mean_or_assurance,
       test_n = 30000
-    )
+    ),
+    list(...)
+  )
+
+  suppressWarnings(
+    output <- do.call(simulate_custom, simulate_custom_args)
   )
 
   metric_2 <- if (metric == "calib_slope") "auc" else "calib_slope"
@@ -265,21 +268,24 @@ simulate_continuous <- function(
 
   metric <- ifelse(metric == "calibration_slope", "calib_slope", metric)
 
-  suppressWarnings(
-    output <- simulate_custom(
+  simulate_custom_args <- utils::modifyList(
+    list(
       metric_function = default_metric_generator(metric, data_function),
       target_performance = target_performance,
       c_statistic = maximum_achievable_rsquared,
       data_function = data_function,
       model_function = model_function,
-      min_sample_size = NULL,
-      max_sample_size = NULL,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
       method = "mlpwr",
       mean_or_assurance = mean_or_assurance,
       test_n = 30000
-    )
+    ),
+    list(...)
+  )
+
+  suppressWarnings(
+    output <- do.call(simulate_custom, simulate_custom_args)
   )
 
   metric_2 <- if (metric == "calib_slope") "r2" else "calib_slope"
@@ -408,21 +414,24 @@ simulate_survival <- function(
 
   metric <- ifelse(metric == "calibration_slope", "calib_slope", metric)
 
-  suppressWarnings(
-    output <- simulate_custom(
+  simulate_custom_args <- utils::modifyList(
+    list(
       metric_function = default_metric_generator(metric, data_function),
       target_performance = target_performance,
       c_statistic = maximum_achievable_cindex,
       data_function = data_function,
       model_function = model_function,
-      min_sample_size = NULL,
-      max_sample_size = NULL,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
       method = "mlpwr",
       mean_or_assurance = mean_or_assurance,
       test_n = 30000
-    )
+    ),
+    list(...)
+  )
+
+  suppressWarnings(
+    output <- do.call(simulate_custom, simulate_custom_args)
   )
 
   metric_2 <- if (metric == "calib_slope") "cindex" else "calib_slope"
