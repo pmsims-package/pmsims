@@ -24,11 +24,11 @@ details.
 
 ## Installation
 
-Install the development version from GitHub:
+Install version `0.5.0` from GitHub:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("pmsims-package/pmsims")
+remotes::install_github("pmsims-package/pmsims", ref = "v0.5.0")
 ```
 
 ## Minimal example

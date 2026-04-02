@@ -24,11 +24,11 @@ details.
 
 ## Installation
 
-Install the development version from GitHub:
+Install version `0.5.0` from GitHub:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("pmsims-package/pmsims")
+remotes::install_github("pmsims-package/pmsims", ref = "v0.5.0")
 ```
 
 ## Minimal example
@@ -134,7 +134,7 @@ of the NIHR or the Department of Health and Social Care.*
 
 - [Getting started with
   pmsims](https://pmsims-package.github.io/pmsims/articles/pmsims.md):
-- [Version
-  0.5.0](https://pmsims-package.github.io/pmsims/articles/release-0-5-0.md):
+- [pmsims 0.5.0: Initial
+  release](https://pmsims-package.github.io/pmsims/articles/release-0-5-0.md):
 - [Defining custom simulation
   workflows](https://pmsims-package.github.io/pmsims/articles/simulate_custom.md):

@@ -1,16 +1,17 @@
-# Version 0.5.0
+# pmsims 0.5.0: Initial release
 
 `pmsims` 0.5.0 is the initial public release of the package. It provides
-a simulation-based approach to minimum sample size estimation for
-prediction modelling, with a particular focus on settings where simple
-rules of thumb are not sufficient. The methods and package are described
-in the accompanying preprint, “Sample Size Calculations for Developing
-Clinical Prediction Models: Overview and pmsims R package”
-([Shamsutdinova et al., 2026](https://arxiv.org/abs/2602.23507)).
+a simulation-based framework for minimum sample size estimation in
+prediction model development, with support for continuous, binary, and
+time-to-event outcomes. The package and its validation work are
+described in two accompanying preprints: the overview paper by
+[Shamsutdinova et al. (2026)](https://arxiv.org/abs/2602.23507) and the
+validation paper by [Olaniran et
+al. (2026)](https://arxiv.org/abs/2603.23688).
 
 ## Why pmsims?
 
-When planning a prediction model study, the key question is often not
+When developing a new prediction model, the key question is often not
 just how many observations are available, but whether that sample size
 is large enough to produce a model with acceptable predictive
 performance. `pmsims` addresses that problem by repeatedly simulating
@@ -18,8 +19,8 @@ data, fitting models, and evaluating performance across a range of
 training sample sizes.
 
 Rather than relying only on closed-form approximations, the package
-estimates a learning curve and identifies the smallest training size
-that achieves the chosen performance target.
+estimates a learning curve and identifies the smallest sample size that
+achieves the chosen performance target.
 
 ## Core workflows
 
@@ -34,14 +35,14 @@ The package provides three main wrapper functions:
 
 These wrappers are designed to make the most common use cases
 straightforward. Users specify the outcome setting, the expected signal
-strength, the modelling approach, and the target level of performance,
-and `pmsims` estimates the minimum sample size needed under repeated
-sampling.
+strength, the modelling approach, and the target level of predictive
+performance, and `pmsims` estimates the minimum sample size needed under
+repeated sampling.
 
-The wrappers support both mean-based and assurance-based criteria. In
-practice, the assurance formulation is often the more useful design
-target, because it focuses on achieving acceptable performance with high
-probability rather than only on average.
+The wrappers support both mean-based and assurance-based criteria. The
+recommended design objective is the assurance criterion: the smallest
+sample size such that a high proportion of repeated studies (for
+example, 80%) meet the target performance, rather than only on average.
 
 ``` r
 library(pmsims)
@@ -82,21 +83,19 @@ non-standard evaluation metric.
 The wrapper workflows also include experimental machine-learning options
 via regularised regression, random forest, and XGBoost.
 
-These options are available in `0.5.0`, but they should be treated as
-experimental. In this context, experimental means that these methods
-have not yet undergone the package’s main validation study, unlike the
-core regression workflows.
+These methods have not yet undergone the package’s main validation study
+and should be treated as experimental in `0.5.0`.
 
 ## Getting started
 
 The package website includes a getting-started vignette that introduces
 the main wrapper functions and explains the key simulation inputs.
 
-Install `pmsims` from GitHub with:
+Install version `0.5.0` of `pmsims` from GitHub with:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("pmsims-package/pmsims")
+remotes::install_github("pmsims-package/pmsims", ref = "v0.5.0")
 ```
 
 Version `0.5.0` is available from GitHub and is not yet a CRAN release.

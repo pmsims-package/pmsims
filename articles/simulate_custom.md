@@ -281,18 +281,18 @@ print(result)
     ##                     └────────────────────────────────────────┘
     ## ──────────────────────────────────── Inputs ────────────────────────────────────
     ##   Target for chosen performance metric :  = -0.165
-    ##                        Simulation reps : <NA>
+    ##                        Simulation reps : 1,000
     ## ──────────────────────────────────── Results ───────────────────────────────────
-    ##              Final minimum sample size : 210
+    ##              Final minimum sample size : 213
     ##             Estimated performance at N : -0.165 ( = -0.165)
     ##            Estimated other metric at N : <NA> ()
     ##                                   Mode : Assurance
-    ##                           Running time : 3 minutes 11 seconds
+    ##                           Running time : 3 minutes 20 seconds
     ##     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 ### Interpretation
 
-The results show a minimum sample size of 210. This is calculated using
+The results show a minimum sample size of 213. This is calculated using
 the assurance criterion, which means that we would expect 80% of models
 developed on samples of this size to have a negative Brier score of
 -0.165 or better.
