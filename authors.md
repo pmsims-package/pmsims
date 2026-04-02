@@ -21,7 +21,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/pmsims-package/pmsims/blob/main/inst/CITATION)
+[`inst/CITATION`](https://github.com/pmsims-package/pmsims/blob/test/codecov/inst/CITATION)
 
 Carr E, Forbes G, Olaniran R, Shamsutdinova D, Stahl D, Markham S,
 Zimmer F (2026). *pmsims: Simulation-based Sample Size Tools for
