@@ -7,7 +7,9 @@ on:
 
 name: test-coverage.yaml
 
-permissions: read-all
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   test-coverage:
@@ -38,14 +40,25 @@ jobs:
           covr::to_cobertura(cov)
         shell: Rscript {0}
 
-      - uses: codecov/codecov-action@v5
+      - name: Upload coverage to Codecov (token)
+        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@v5
         with:
-          # Fail if error if not on PR, or if on PR and token is given
-          fail_ci_if_error: ${{ github.event_name != 'pull_request' || secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
           files: ./cobertura.xml
           plugins: noop
           disable_search: true
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload coverage to Codecov (OIDC fallback)
+        if: ${{ secrets.CODECOV_TOKEN == '' }}
+        uses: codecov/codecov-action@v5
+        with:
+          fail_ci_if_error: ${{ github.event_name != 'pull_request' }}
+          files: ./cobertura.xml
+          plugins: noop
+          disable_search: true
+          use_oidc: true
 
       - name: Show testthat output
         if: always()
