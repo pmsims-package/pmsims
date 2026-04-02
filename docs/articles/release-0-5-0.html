@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Version 0.5.0 • pmsims</title>
+<title>pmsims 0.5.0: Initial release • pmsims</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
@@ -21,7 +21,7 @@
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Version 0.5.0">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="pmsims 0.5.0: Initial release">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -75,7 +75,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Version 0.5.0</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>pmsims 0.5.0: Initial release</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/HEAD/vignettes/release-0-5-0.Rmd" class="external-link"><code>vignettes/release-0-5-0.Rmd</code></a></small>
@@ -85,25 +85,24 @@
     
     
 <p><code>pmsims</code> 0.5.0 is the initial public release of the
-package. It provides a simulation-based approach to minimum sample size
-estimation for prediction modelling, with a particular focus on settings
-where simple rules of thumb are not sufficient. The methods and package
-are described in the accompanying preprint, “Sample Size Calculations
-for Developing Clinical Prediction Models: Overview and pmsims R
-package” (<a href="https://arxiv.org/abs/2602.23507" class="external-link">Shamsutdinova et
-al., 2026</a>).</p>
+package. It provides a simulation-based framework for minimum sample
+size estimation in prediction model development, with support for
+continuous, binary, and time-to-event outcomes. The package and its
+validation work are described in two accompanying preprints: the
+overview paper by <a href="https://arxiv.org/abs/2602.23507" class="external-link">Shamsutdinova et al. (2026)</a>
+and the validation paper by <a href="https://arxiv.org/abs/2603.23688" class="external-link">Olaniran et al. (2026)</a>.</p>
 <div class="section level2">
 <h2 id="why-pmsims">Why pmsims?<a class="anchor" aria-label="anchor" href="#why-pmsims"></a>
 </h2>
-<p>When planning a prediction model study, the key question is often not
+<p>When developing a new prediction model, the key question is often not
 just how many observations are available, but whether that sample size
 is large enough to produce a model with acceptable predictive
 performance. <code>pmsims</code> addresses that problem by repeatedly
 simulating data, fitting models, and evaluating performance across a
 range of training sample sizes.</p>
 <p>Rather than relying only on closed-form approximations, the package
-estimates a learning curve and identifies the smallest training size
-that achieves the chosen performance target.</p>
+estimates a learning curve and identifies the smallest sample size that
+achieves the chosen performance target.</p>
 </div>
 <div class="section level2">
 <h2 id="core-workflows">Core workflows<a class="anchor" aria-label="anchor" href="#core-workflows"></a>
@@ -119,13 +118,14 @@ that achieves the chosen performance target.</p>
 </ul>
 <p>These wrappers are designed to make the most common use cases
 straightforward. Users specify the outcome setting, the expected signal
-strength, the modelling approach, and the target level of performance,
-and <code>pmsims</code> estimates the minimum sample size needed under
-repeated sampling.</p>
-<p>The wrappers support both mean-based and assurance-based criteria. In
-practice, the assurance formulation is often the more useful design
-target, because it focuses on achieving acceptable performance with high
-probability rather than only on average.</p>
+strength, the modelling approach, and the target level of predictive
+performance, and <code>pmsims</code> estimates the minimum sample size
+needed under repeated sampling.</p>
+<p>The wrappers support both mean-based and assurance-based criteria.
+The recommended design objective is the assurance criterion: the
+smallest sample size such that a high proportion of repeated studies
+(for example, 80%) meet the target performance, rather than only on
+average.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pmsims-package.github.io/pmsims/">pmsims</a></span><span class="op">)</span></span>
 <span></span>
@@ -162,10 +162,8 @@ bespoke simulation design or a non-standard evaluation metric.</p>
 </h2>
 <p>The wrapper workflows also include experimental machine-learning
 options via regularised regression, random forest, and XGBoost.</p>
-<p>These options are available in <code>0.5.0</code>, but they should be
-treated as experimental. In this context, experimental means that these
-methods have not yet undergone the package’s main validation study,
-unlike the core regression workflows.</p>
+<p>These methods have not yet undergone the package’s main validation
+study and should be treated as experimental in <code>0.5.0</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
@@ -173,10 +171,11 @@ unlike the core regression workflows.</p>
 <p>The package website includes a getting-started vignette that
 introduces the main wrapper functions and explains the key simulation
 inputs.</p>
-<p>Install <code>pmsims</code> from GitHub with:</p>
+<p>Install version <code>0.5.0</code> of <code>pmsims</code> from GitHub
+with:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"pmsims-package/pmsims"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"pmsims-package/pmsims"</span>, ref <span class="op">=</span> <span class="st">"v0.5.0"</span><span class="op">)</span></span></code></pre></div>
 <p>Version <code>0.5.0</code> is available from GitHub and is not yet a
 CRAN release.</p>
 </div>

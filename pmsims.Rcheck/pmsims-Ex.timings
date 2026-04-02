@@ -1,0 +1,6 @@
+name	user	system	elapsed
+objective_function	0	0	0	
+simulate_binary	0	0	0	
+simulate_continuous	0.000	0.001	0.000	
+simulate_custom	0	0	0	
+simulate_survival	0	0	0	
