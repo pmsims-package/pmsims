@@ -5,6 +5,11 @@
 
 <!-- badges: start -->
 
+[![GitHub
+release](https://img.shields.io/github/v/release/pmsims-package/pmsims?display_name=release)](https://github.com/pmsims-package/pmsims/releases)
+[![R-CMD-check](https://github.com/pmsims-package/pmsims/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pmsims-package/pmsims/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/pmsims-package/pmsims/graph/badge.svg)](https://app.codecov.io/gh/pmsims-package/pmsims)
 <!-- badges: end -->
 
 **pmsims** is an R package for estimating how much data are needed to
@@ -18,6 +23,11 @@ generated, how models are fitted, and how predictive performance is
 measured. It currently supports regression-based prediction models with
 continuous, binary, and time-to-event outcomes.
 
+`pmsims` also includes experimental machine-learning model options via
+regularised regression, random forest, and XGBoost. These options have
+not yet undergone the package’s main validation study and should be
+treated as experimental in `0.5.0`.
+
 Developed at [King’s College London](https://www.kcl.ac.uk/) (Department
 of Biostatistics & Health Informatics) with input from researchers,
 clinicians, and patient partners. See the [pmsims project
@@ -26,11 +36,11 @@ details.
 
 ## Installation
 
-Install the development version from GitHub:
+Install version `0.5.0` from GitHub:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("pmsims-package/pmsims")
+remotes::install_github("pmsims-package/pmsims", ref = "v0.5.0")
 ```
 
 ## Minimal example
@@ -45,15 +55,51 @@ binary_example <- simulate_binary(
   predictor_type = "continuous",
   binary_predictor_prevalence = NULL,
   outcome_prevalence = 0.20,
-  large_sample_cstatistic = 0.80,
+  maximum_achievable_cstatistic = 0.80,
   model = "glm",
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.90,
+  target_performance = 0.90,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )
 
 binary_example
+```
+
+`maximum_achievable_cstatistic` and `target_performance` have different
+roles:
+
+- `maximum_achievable_cstatistic` represents the best plausible
+  C-statistic with effectively unlimited data and calibrates the data
+  generator.
+- `target_performance` is the minimum acceptable metric value used to
+  determine the required sample size.
+
+------------------------------------------------------------------------
+
+## Citing pmsims
+
+If you use `pmsims`, please cite the package and either or both
+accompanying preprints.
+
+Current preprints:
+
+- Shamsutdinova D, Zimmer F, Olaniran OR, Markham S, Stahl D, Forbes G,
+  Carr E (2026). *Sample Size Calculations for Developing Clinical
+  Prediction Models: Overview and pmsims R package*. arXiv.
+  <https://arxiv.org/abs/2602.23507>
+
+- Olaniran OR, Shamsutdinova D, Markham S, Zimmer F, Stahl D, Forbes G,
+  Carr E (2026). *Adaptive Gaussian Process Search for Simulation-Based
+  Sample Size Estimation in Clinical Prediction Models: Validation of the
+  pmsims R Package*. arXiv. <https://arxiv.org/abs/2603.23688>
+
+Once peer-reviewed articles are available, these citations should be
+updated to the published versions. In R, you can retrieve the package
+citation with:
+
+``` r
+citation("pmsims")
 ```
 
 ------------------------------------------------------------------------

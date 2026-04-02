@@ -1,0 +1,8 @@
+simulate_binary         Minimum sample size for binary-outcome
+                        prediction models
+simulate_continuous     Minimum sample size for continuous‐outcome
+                        prediction models
+simulate_custom         Minimum sample size for custom simulation
+                        workflows
+simulate_survival       Minimum sample size for survival‐outcome
+                        prediction models
