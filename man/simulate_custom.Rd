@@ -91,40 +91,44 @@ selected performance criterion.
 }
 \examples{
 \dontrun{
+set.seed(1234)
+
 data_fun <- function(n) {
   x1 <- rnorm(n)
   x2 <- rnorm(n)
-  y <- rbinom(n, 1, plogis(0.5 * x1 - 0.25 * x2))
-  data.frame(y = y, x1 = x1, x2 = x2)
+  x3 <- rnorm(n)
+  x4 <- rnorm(n)
+  x5 <- rnorm(n)
+  y <- 0.35 * x1 - 0.3 * x2 + 0.2 * x3 + 0.1 * x4 - 0.1 * x5 +
+    rnorm(n, sd = 1)
+  data.frame(y = y, x1 = x1, x2 = x2, x3 = x3, x4 = x4, x5 = x5)
 }
 
 model_fun <- function(dat) {
-  stats::glm(y ~ ., data = dat, family = stats::binomial())
+  stats::lm(y ~ ., data = dat)
 }
 
 metric_fun <- function(test_data, fit, model) {
-  preds <- stats::predict(fit, newdata = test_data, type = "response")
-  as.numeric(pROC::auc(test_data$y, preds, quiet = TRUE))
+  preds <- stats::predict(fit, newdata = test_data)
+  1 - sum((test_data$y - preds)^2) /
+    sum((test_data$y - mean(test_data$y))^2)
 }
-attr(metric_fun, "metric") <- "auc"
+attr(metric_fun, "metric") <- "r2"
 
-maximum_achievable_data <- data_fun(10000)
-test_data <- data_fun(5000)
+maximum_achievable_data <- data_fun(100000)
+test_data <- data_fun(50000)
 maximum_achievable_fit <- model_fun(maximum_achievable_data)
 maximum_achievable_performance <- metric_fun(
   test_data,
   maximum_achievable_fit,
-  "glm"
+  "lm"
 )
 
 est <- simulate_custom(
   data_function = data_fun,
   model_function = model_fun,
   metric_function = metric_fun,
-  target_performance = maximum_achievable_performance - 0.05,
-  test_n = 5000,
-  n_reps_total = 1000,
-  progress = FALSE
+  target_performance = maximum_achievable_performance - 0.02
 )
 est
 }

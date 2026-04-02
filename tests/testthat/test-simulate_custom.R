@@ -96,6 +96,13 @@ test_that("simulate_custom", {
   expect_gt(sim_results_mlpwr$min_n, 0)
   expect_true(is.list(sim_results_mlpwr$summaries))
   expect_equal(sim_results_mlpwr$mean_or_assurance, "assurance")
+  expect_identical(sim_results_mlpwr$n_reps_total, 40)
+  expect_identical(sim_results_mlpwr$n_reps_per, 10)
+  expect_identical(sim_results_mlpwr$test_n, 2000)
+  expect_identical(sim_results_mlpwr$method, "mlpwr")
+  expect_identical(sim_results_mlpwr$min_sample_size, 75)
+  expect_identical(sim_results_mlpwr$max_sample_size, 200)
+  expect_identical(sim_results_mlpwr$c_statistic, 0.8)
   
 
   sim_results_mlpwr_bs <- suppressWarnings(simulate_custom(
