@@ -1,12 +1,14 @@
-if (!requireNamespace("pmsims", quietly = TRUE)) {
-  stop("Install pmsims first, e.g. with devtools::load_all() or pak::pkg_install('.').")
+if (!requireNamespace("pkgload", quietly = TRUE)) {
+  stop("Install pkgload first, e.g. with install.packages('pkgload').")
 }
 
-cache_dir <- file.path("inst", "extdata", "vignette-cache")
+pkgload::load_all(".", export_all = FALSE, helpers = FALSE, quiet = TRUE)
+
+cache_dir <- file.path("vignettes", "cache")
 dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
 
 set.seed(123)
-binary_example <- pmsims::simulate_binary(
+binary_example <- simulate_binary(
   signal_parameters = 20,
   noise_parameters = 0,
   predictor_type = "continuous",
@@ -22,7 +24,7 @@ binary_example <- pmsims::simulate_binary(
 saveRDS(binary_example, file = file.path(cache_dir, "binary.rds"))
 
 set.seed(123)
-continuous_example <- pmsims::simulate_continuous(
+continuous_example <- simulate_continuous(
   signal_parameters = 15,
   noise_parameters = 0,
   predictor_type = "continuous",
