@@ -255,21 +255,6 @@ calculate_mlpwr <- function(
     }
   )
 
-  ds <-
-    mlpwr::find.design(
-      simfun = mlpwr_simulation_function,
-      aggregate_fun = aggregate_fun,
-      noise_fun = noise_fun,
-      boundaries = c(start_min_sample_size, start_max_sample_size),
-      power = target_performance,
-      surrogate = "gpr",
-      setsize = n_reps_per,
-      evaluations = n_reps_total,
-      ci = ci,
-      n.startsets = n_init,
-      silent = !isTRUE(progress)
-    )
-
   # Process results from mlpwr
   perfs <- ds$dat
   perfs <- perfs[order(sapply(perfs, "[[", "x"))]
