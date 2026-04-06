@@ -3,6 +3,41 @@
 #' @param outcome type of outcome, possible options are: "binary".
 #' @return Model function.
 #' @keywords internal
+
+# ---------------------------------------------------------------------------
+# Internal helper: select nrounds for XGBoost via cross-validation.
+#
+# Uses xgb.cv with early stopping to find the optimal number of boosting
+# rounds for the given data and objective.  This is the XGBoost analogue of
+# cv.glmnet's lambda selection: complexity adapts to sample size, which is
+# critical for calibration stability at small n.
+#
+# @param dtrain   xgb.DMatrix (training data)
+# @param params   list of xgb parameters (must include objective/eval_metric)
+# @param nrounds_max  upper bound on rounds to search (default 500)
+# @param nfold    number of CV folds (default 5)
+# @param early_stopping_rounds  stop if no improvement for this many rounds
+# @return integer best nrounds (at least 1)
+# @keywords internal
+.xgb_cv_nrounds <- function(dtrain, params,
+                            nrounds_max          = 500L,
+                            nfold                = 5L,
+                            early_stopping_rounds = 20L) {
+  cv <- xgboost::xgb.cv(
+    params               = params,
+    data                 = dtrain,
+    nrounds              = nrounds_max,
+    nfold                = nfold,
+    early_stopping_rounds = early_stopping_rounds,
+    verbose              = 0,
+    showsd               = FALSE
+  )
+  best <- cv$best_iteration
+  if (is.null(best) || is.na(best) || best < 1L) best <- nrounds_max
+  as.integer(best)
+}
+# ---------------------------------------------------------------------------
+
 default_models <- list(
   binary = list(
     glm = function(d) {
@@ -16,6 +51,19 @@ default_models <- list(
       glmnet::cv.glmnet(
         x,
         y,
+        alpha  = 1,        # L1 penalty (LASSO)
+        family = "binomial"
+      )
+    },
+    ridge = function(d) {
+      # Ridge logistic regression via glmnet (alpha = 0); lambda selected by CV
+      d <- as.matrix(d)
+      x <- d[, -1, drop = FALSE]
+      y <- d[, 1]
+      glmnet::cv.glmnet(
+        x,
+        y,
+        alpha  = 0,        # L2 penalty (ridge)
         family = "binomial"
       )
     },
@@ -26,7 +74,7 @@ default_models <- list(
       
       x <- d[, -1, drop = FALSE]
       y <- as.factor(d[, 1])
-
+      
       #### new
       
       ff <- NULL
@@ -49,15 +97,26 @@ default_models <- list(
       )
       
     },
-    xgboost = function(d, nrounds = 100, params = list(objective = "binary:logistic", eval_metric = "logloss")) {
-      # expects first column y (0/1), remaining columns predictors
-      x <- as.matrix(d[, -1, drop = FALSE])
-      y <- as.numeric(d[, 1])
+    xgboost = function(d,
+                       params = list(objective  = "binary:logistic",
+                                     eval_metric = "logloss",
+                                     eta         = 0.05,
+                                     max_depth   = 4L,
+                                     subsample   = 0.8,
+                                     min_child_weight = 5L)) {
+      # expects first column y (0/1), remaining columns predictors.
+      # nrounds is selected automatically via xgb.cv (early stopping) so that
+      # model complexity adapts to sample size — the analogue of cv.glmnet's
+      # lambda selection.  Fixed nrounds = 100 caused severe over-fitting at
+      # small n, collapsing the calibration slope well below 1.
+      x      <- as.matrix(d[, -1, drop = FALSE])
+      y      <- as.numeric(d[, 1])
       dtrain <- xgboost::xgb.DMatrix(data = x, label = y)
+      best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
-        params = params,
-        data = dtrain,
-        nrounds = nrounds,
+        params  = params,
+        data    = dtrain,
+        nrounds = best_nrounds,
         verbose = 0
       )
     }
@@ -75,6 +134,19 @@ default_models <- list(
       glmnet::cv.glmnet(
         x,
         y,
+        alpha  = 1,        # L1 penalty (LASSO)
+        family = "gaussian"
+      )
+    },
+    ridge = function(d) {
+      # Ridge regression via glmnet (alpha = 0); lambda selected by CV
+      dmat <- as.matrix(d)
+      x <- dmat[, -1, drop = FALSE]
+      y <- dmat[, 1]
+      glmnet::cv.glmnet(
+        x,
+        y,
+        alpha  = 0,        # L2 penalty (ridge)
         family = "gaussian"
       )
     },
@@ -122,15 +194,27 @@ default_models <- list(
         num.threads = nthreads 
       )
     },
-    xgboost = function(d, nrounds = 100, params = list(objective = "reg:squarederror", eval_metric = "rmse")) {
-      # expects first column y (numeric), remaining columns predictors
-      x <- as.matrix(d[, -1, drop = FALSE])
-      y <- as.numeric(d[, 1])
+    xgboost = function(d,
+                       params = list(objective   = "reg:squarederror",
+                                     eval_metric  = "rmse",
+                                     eta          = 0.05,
+                                     max_depth    = 4L,
+                                     subsample    = 0.8,
+                                     min_child_weight = 5L)) {
+      # expects first column y (numeric), remaining columns predictors.
+      # nrounds is selected via xgb.cv early stopping (see .xgb_cv_nrounds).
+      # This is essential for continuous calibration slope stability: fixed
+      # nrounds = 100 led to over-dispersed predictions at small n (slope << 1)
+      # because XGBoost memorises training-scale variation without regularisation
+      # on the number of rounds.
+      x      <- as.matrix(d[, -1, drop = FALSE])
+      y      <- as.numeric(d[, 1])
       dtrain <- xgboost::xgb.DMatrix(data = x, label = y)
+      best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
-        params = params,
-        data = dtrain,
-        nrounds = nrounds,
+        params  = params,
+        data    = dtrain,
+        nrounds = best_nrounds,
         verbose = 0
       )
     }
@@ -148,7 +232,14 @@ default_models <- list(
       stopifnot(all(c("time", "event") %in% colnames(d)))
       x <- as.matrix(d[, setdiff(colnames(d), c("time", "event")), drop = FALSE])
       y <- survival::Surv(d$time, d$event)
-      glmnet::cv.glmnet(x, y, family = "cox")
+      glmnet::cv.glmnet(x, y, alpha = 1, family = "cox")  # L1 (LASSO)
+    },
+    ridge = function(d) {
+      # Ridge Cox regression via glmnet (alpha = 0); lambda selected by CV
+      stopifnot(all(c("time", "event") %in% colnames(d)))
+      x <- as.matrix(d[, setdiff(colnames(d), c("time", "event")), drop = FALSE])
+      y <- survival::Surv(d$time, d$event)
+      glmnet::cv.glmnet(x, y, alpha = 0, family = "cox")  # L2 (ridge)
     },
     rf = function(d) {
       # ranger survival forest: formula interface with Surv()
@@ -159,21 +250,28 @@ default_models <- list(
       formula <- stats::as.formula("survival::Surv(time, event) ~ .")
       ranger::ranger(formula, data = d,  num.trees = 300, num.threads = nthreads)
     },
-    xgboost = function(d, nrounds = 100, params = list(objective = "survival:cox", eval_metric = "cox-nloglik")) {
-      # XGBoost Cox objective: uses times as label but does not directly take a censoring vector.
-      # We pass the observed times as the label and include event as a weight (1=event, 0=censored)
-      # NOTE: This is a pragmatic/commonly-used approach — consult xgboost docs and consider
-      # alternative survival-specific methods if you need strict handling of censoring.
+    xgboost = function(d,
+                       params = list(objective   = "survival:cox",
+                                     eval_metric  = "cox-nloglik",
+                                     eta          = 0.05,
+                                     max_depth    = 4L,
+                                     subsample    = 0.8,
+                                     min_child_weight = 5L)) {
+      # XGBoost Cox objective: observed times as label, event indicator as
+      # sample weight (1 = event, 0 = censored) — a standard pragmatic approach.
+      # nrounds is selected via xgb.cv early stopping (see .xgb_cv_nrounds),
+      # which prevents over-fitting the training hazard at small sample sizes
+      # and stabilises the calibration slope toward 1 at moderate n.
       stopifnot(all(c("time", "event") %in% colnames(d)))
-      x <- as.matrix(d[, setdiff(colnames(d), c("time", "event")), drop = FALSE])
+      x          <- as.matrix(d[, setdiff(colnames(d), c("time", "event")), drop = FALSE])
       label_time <- as.numeric(d$time)
-      event <- as.numeric(d$event)
-      # Use event indicator as weight (censored rows get weight 0)
-      dtrain <- xgboost::xgb.DMatrix(data = x, label = label_time, weight = event)
+      event      <- as.numeric(d$event)
+      dtrain     <- xgboost::xgb.DMatrix(data = x, label = label_time, weight = event)
+      best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
-        params = params,
-        data = dtrain,
-        nrounds = nrounds,
+        params  = params,
+        data    = dtrain,
+        nrounds = best_nrounds,
         verbose = 0
       )
     }

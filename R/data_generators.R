@@ -12,8 +12,8 @@
 #
 # Core parameters (all apply uniformly across every complexity setting):
 #
-#   n_signal          : number of signal predictors
-#   n_noise           : number of noise predictors
+#   n_signal_parameters          : number of signal predictors
+#   noise_parameters           : number of noise predictors
 #   beta_signal       : base effect size for signal predictors
 #   predictor_type    : "continuous" (default) or "binary".
 #                       When "binary", ALL predictors are Bernoulli and
@@ -42,8 +42,7 @@
 #                         3 = Quadratic + Interaction
 #                         4 = Friedman (1991)
 #
-#   predictor_strength: global linear-nonlinear weight applied to ALL signal
-#                       predictors. One of:
+#   predictor_strength: global linear-nonlinear weight (w). One of:
 #                         "strong"   -> w = 1.0
 #                         "moderate" -> w = 0.5
 #                         "weak"     -> w = 0.3
@@ -54,6 +53,16 @@
 #                         C4 -> "strong"   (w = 1.0)
 #                       The user may override the default by supplying this
 #                       argument explicitly.
+#
+#                       Weight application differs by term type (C2 and C3):
+#                         Linear terms    : beta_signal * w          (full weight)
+#                         Quadratic terms : beta_signal * w / S      (w spread over S signal predictors)
+#                         Interaction terms (C3 only):
+#                                           beta_signal * w / C(S,2) (w spread over all C(S,2) pairs)
+#                       This keeps the total nonlinear contribution bounded
+#                       relative to the linear contribution regardless of S,
+#                       making the simulation realistic when S is large.
+#                       C1 and C4 are unaffected; they always use beta_signal * w.
 #
 # Supported distribution families (continuous predictors):
 #   "normal"      : mean = 0, sd = 1
@@ -135,9 +144,9 @@ default_data_generators <- function(opts) {
 #' Simulate continuous outcome data
 #'
 #' @param n                  Sample size.
-#' @param n_signal           Number of signal predictors. These occupy the
-#'   first \code{n_signal} columns (\code{x1} ... \code{x_S}).
-#' @param n_noise            Number of noise predictors (zero coefficient).
+#' @param n_signal_parameters           Number of signal predictors. These occupy the
+#'   first \code{n_signal_parameters} columns (\code{x1} ... \code{x_S}).
+#' @param noise_parameters            Number of noise predictors (zero coefficient).
 #' @param beta_signal        Base effect size. Effective beta per predictor =
 #'   \code{beta_signal * w}, where \code{w} is the strength weight.
 #' @param complexity         Integer 1-4 specifying the functional form of the
@@ -201,8 +210,8 @@ default_data_generators <- function(opts) {
 #' @keywords internal
 generate_continuous_data <- function(
     n,
-    n_signal,
-    n_noise,
+    n_signal_parameters,
+    noise_parameters,
     beta_signal,
     complexity         = 1,
     predictor_strength = NULL,
@@ -213,10 +222,10 @@ generate_continuous_data <- function(
     intercept          = 0
 ) {
   predictor_strength <- resolve_strength(predictor_strength, complexity)
-  X  <- generate_predictors(n, n_signal, n_noise,
+  X  <- generate_predictors(n, n_signal_parameters, noise_parameters,
                             complexity, predictor_type,
                             binary_prevalence, correlation, distribution)
-  lp <- generate_linear_predictor(X, n_signal, n_noise,
+  lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters,
                                   intercept, beta_signal,
                                   complexity, predictor_strength)
   y  <- stats::rnorm(n, lp, 1)
@@ -234,8 +243,8 @@ generate_continuous_data <- function(
 #' @keywords internal
 generate_binary_data <- function(
     n,
-    n_signal,
-    n_noise,
+    n_signal_parameters,
+    noise_parameters,
     beta_signal,
     complexity         = 1,
     predictor_strength = NULL,
@@ -247,10 +256,10 @@ generate_binary_data <- function(
     baseline_prob      = 0.5
 ) {
   predictor_strength <- resolve_strength(predictor_strength, complexity)
-  X  <- generate_predictors(n, n_signal, n_noise,
+  X  <- generate_predictors(n, n_signal_parameters, noise_parameters,
                             complexity, predictor_type,
                             binary_prevalence, correlation, distribution)
-  lp <- generate_linear_predictor(X, n_signal, n_noise,
+  lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters,
                                   intercept = mu_lp, beta_signal,
                                   complexity, predictor_strength)
   y  <- stats::rbinom(n, 1, stats::plogis(lp))
@@ -268,8 +277,8 @@ generate_binary_data <- function(
 #' @keywords internal
 generate_survival_data <- function(
     n,
-    n_signal,
-    n_noise,
+    n_signal_parameters,
+    noise_parameters,
     beta_signal,
     baseline_hazard,
     censoring_rate,
@@ -282,10 +291,10 @@ generate_survival_data <- function(
     intercept          = 0
 ) {
   predictor_strength <- resolve_strength(predictor_strength, complexity)
-  X  <- generate_predictors(n, n_signal, n_noise,
+  X  <- generate_predictors(n, n_signal_parameters, noise_parameters,
                             complexity, predictor_type,
                             binary_prevalence, correlation, distribution)
-  lp <- generate_linear_predictor(X, n_signal, n_noise,
+  lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters,
                                   intercept, beta_signal,
                                   complexity, predictor_strength)
   
@@ -458,8 +467,8 @@ apply_correlation <- function(X, rho) {
 #' optionally applies an equicorrelation structure via a Gaussian copula.
 #'
 #' @param n                Sample size.
-#' @param n_signal         Number of signal predictors.
-#' @param n_noise          Number of noise predictors.
+#' @param n_signal_parameters         Number of signal predictors.
+#' @param noise_parameters          Number of noise predictors.
 #' @param complexity       Integer 1-4 (used to resolve the C4 distribution
 #'   default).
 #' @param predictor_type   \code{"continuous"} (default) or \code{"binary"}.
@@ -472,22 +481,22 @@ apply_correlation <- function(X, rho) {
 #' @return Named n x p numeric matrix (column names: x1, x2, ...).
 #' @keywords internal
 generate_predictors <- function(n,
-                                n_signal,
-                                n_noise,
+                                n_signal_parameters,
+                                noise_parameters,
                                 complexity        = 1,
                                 predictor_type    = "continuous",
                                 binary_prevalence = 0,
                                 correlation       = 0.3,
                                 distribution      = "normal") {
   
-  p         <- n_signal + n_noise
+  p         <- n_signal_parameters + noise_parameters
   col_names <- paste0("x", seq_len(p))
   
   # ---- validate inputs -------------------------------------------------------
-  if (!is.numeric(n_signal) || n_signal < 1)
-    stop("n_signal must be a positive integer.")
-  if (!is.numeric(n_noise)  || n_noise  < 0)
-    stop("n_noise must be a non-negative integer.")
+  if (!is.numeric(n_signal_parameters) || n_signal_parameters < 1)
+    stop("n_signal_parameters must be a positive integer.")
+  if (!is.numeric(noise_parameters)  || noise_parameters  < 0)
+    stop("noise_parameters must be a non-negative integer.")
   if (!predictor_type %in% c("continuous", "binary"))
     stop('predictor_type must be "continuous" or "binary".')
   if (!is.numeric(correlation) || length(correlation) != 1 ||
@@ -521,8 +530,8 @@ generate_predictors <- function(n,
 #' Construct the linear predictor
 #'
 #' @param X                  n x p predictor matrix (colnames: x1, x2, ...).
-#' @param n_signal           Signal predictor count.
-#' @param n_noise            Noise predictor count.
+#' @param n_signal_parameters           Signal predictor count.
+#' @param noise_parameters            Noise predictor count.
 #' @param intercept          Scalar intercept.
 #' @param beta_signal        Base effect size.
 #' @param complexity         Integer 1-4.
@@ -530,27 +539,36 @@ generate_predictors <- function(n,
 #'   or "weak"); must not be NULL at this point.
 #'
 #' @details
-#' All signal predictors participate in every term implied by their complexity
-#' level. The effective beta is \code{beta_signal * w} where \code{w} is the
-#' strength weight. Noise predictors always contribute zero.
+#' Noise predictors always contribute zero to the linear predictor.
+#' The effective beta depends on the term type and complexity level:
 #'
-#' \strong{Complexity 1 — Linear:}
+#' \strong{Complexity 1 — Linear} (unchanged):
 #' \deqn{lp = \alpha + w\beta \sum_{j=1}^{S} x_j}
+#' Full weight \eqn{w} applies to every linear term.
 #'
-#' \strong{Complexity 2 — Quadratic:}
-#' \deqn{lp = \alpha + w\beta \sum_{j=1}^{S} (x_j + x_j^2)}
-#'
-#' \strong{Complexity 3 — Quadratic + Pairwise Interactions:}
+#' \strong{Complexity 2 — Quadratic}:
 #' \deqn{lp = \alpha
-#'   + w\beta \sum_{j=1}^{S} (x_j + x_j^2)
-#'   + w\beta \sum_{j < k}^{S} x_j x_k}
+#'   + w\beta \sum_{j=1}^{S} x_j
+#'   + \frac{w\beta}{S} \sum_{j=1}^{S} x_j^2}
+#' Linear terms retain the full weight \eqn{w}. The quadratic weight
+#' \eqn{w/S} distributes \eqn{w} evenly across the \eqn{S} quadratic terms so
+#' the total quadratic contribution equals \eqn{w\beta \cdot \overline{x^2}},
+#' matching the scale of the linear contribution for large \eqn{S}.
 #'
-#' \strong{Complexity 4 — Friedman (1991):}
-#' Uses the canonical Friedman #1 function, scaled by \code{w * beta_signal}:
+#' \strong{Complexity 3 — Quadratic + Pairwise Interactions}:
+#' \deqn{lp = \alpha
+#'   + w\beta \sum_{j=1}^{S} x_j
+#'   + \frac{w\beta}{S} \sum_{j=1}^{S} x_j^2
+#'   + \frac{w\beta}{C(S,2)} \sum_{j < k}^{S} x_j x_k}
+#' where \eqn{C(S,2) = S(S-1)/2}. The interaction weight \eqn{w/C(S,2)}
+#' distributes \eqn{w} evenly across all pairwise products, preventing
+#' the interaction contribution from inflating with \eqn{S}.
+#'
+#' \strong{Complexity 4 — Friedman (1991)} (unchanged):
 #' \deqn{lp = \alpha
 #'   + w\beta \bigl[10\sin(\pi x_1 x_2) + 20(x_3-0.5)^2 + 10x_4 + 5x_5\bigr]}
 #' For each signal predictor k \eqn{\ge} 6:
-#' \deqn{+ w\beta_k \bigl[\sin(\pi x_k x_{k-1}) + (x_k-0.5)^2\bigr]}
+#' \deqn{+ w\beta \bigl[\sin(\pi x_k x_{k-1}) + (x_k-0.5)^2\bigr]}
 #'
 #' @references
 #' Friedman, J. H. (1991). Multivariate adaptive regression splines.
@@ -562,8 +580,8 @@ generate_predictors <- function(n,
 #' @return Numeric vector of length n.
 #' @keywords internal
 generate_linear_predictor <- function(X,
-                                      n_signal,
-                                      n_noise,
+                                      n_signal_parameters,
+                                      noise_parameters,
                                       intercept,
                                       beta_signal,
                                       complexity,
@@ -572,58 +590,76 @@ generate_linear_predictor <- function(X,
   n  <- nrow(X)
   lp <- rep(intercept, n)
   
-  if (n_signal == 0) return(lp)
+  if (n_signal_parameters == 0) return(lp)
   
   # Effective beta: one value applies uniformly to all signal predictors
   w          <- STRENGTH_WEIGHTS[[predictor_strength]]
   eff_beta   <- beta_signal * w
-  Xs         <- X[, seq_len(n_signal), drop = FALSE]   # signal columns only
+  Xs         <- X[, seq_len(n_signal_parameters), drop = FALSE]   # signal columns only
   
   # ---- Complexity 1: linear --------------------------------------------------
   if (complexity == 1) {
     lp <- lp + eff_beta * rowSums(Xs)
     
-    # ---- Complexity 2: linear + quadratic (all signal predictors) -------------
+    # ---- Complexity 2: linear + quadratic -------------------------------------
+    # Linear terms : full weight  -> beta_signal * w
+    # Quadratic    : weight / S   -> beta_signal * w / S  (distributed over S terms)
   } else if (complexity == 2) {
-    lp <- lp + eff_beta * rowSums(Xs)         # linear
-    lp <- lp + eff_beta * rowSums(Xs^2)       # quadratic
+    S              <- n_signal_parameters
+    quad_beta      <- beta_signal * w / S          # per-term quadratic weight
+    
+    lp <- lp + beta_signal   * rowSums(Xs)            # linear  (full weight)
+    lp <- lp + quad_beta  * rowSums(Xs^2)          # quadratic (distributed)
     
     # ---- Complexity 3: linear + quadratic + pairwise interactions -------------
+    # Linear terms    : full weight     -> beta_signal * w
+    # Quadratic terms : weight / S      -> beta_signal * w / S
+    # Interaction terms: weight / C(S,2) -> beta_signal * w / (S*(S-1)/2)
   } else if (complexity == 3) {
-    lp <- lp + eff_beta * rowSums(Xs)
-    lp <- lp + eff_beta * rowSums(Xs^2)
+    S              <- n_signal_parameters
+    n_pairs        <- max(1L, S * (S - 1L) / 2L)  # C(S,2); guard against S=1
+    #quad_beta      <- beta_signal * w / S
+    #int_beta       <- beta_signal * w / n_pairs
     
-    if (n_signal >= 2) {
-      pairs <- utils::combn(n_signal, 2)       # 2 x C(S,2) index matrix
+    nonlinear_beta <- beta_signal * w /(S + n_pairs)
+    
+    quad_beta      <- nonlinear_beta
+    int_beta       <- nonlinear_beta
+    
+    lp <- lp + beta_signal * rowSums(Xs)             # linear  (full weight)
+    lp <- lp + quad_beta * rowSums(Xs^2)           # quadratic (distributed)
+    
+    if (S >= 2) {
+      pairs <- utils::combn(S, 2)                  # 2 x C(S,2) index matrix
       for (k in seq_len(ncol(pairs))) {
         j1 <- pairs[1, k]; j2 <- pairs[2, k]
-        lp <- lp + eff_beta * Xs[, j1] * Xs[, j2]
+        lp <- lp + int_beta * Xs[, j1] * Xs[, j2] # interaction (distributed)
       }
     }
     
     # ---- Complexity 4: Friedman (1991) benchmark ------------------------------
   } else if (complexity == 4) {
-    if (n_signal < 5)
+    if (n_signal_parameters < 5)
       warning(sprintf(
         paste0("Complexity 4 (Friedman) requires >= 5 signal predictors; ",
                "only %d supplied. Some Friedman terms will be omitted."),
-        n_signal
+        n_signal_parameters
       ))
     
-    xcol <- function(k) if (k <= n_signal) Xs[, k] else rep(0, n)
+    xcol <- function(k) if (k <= n_signal_parameters) Xs[, k] else rep(0, n)
     
     x1 <- xcol(1); x2 <- xcol(2); x3 <- xcol(3)
     x4 <- xcol(4); x5 <- xcol(5)
     
     # Canonical Friedman #1 terms (Friedman 1991, Eq. 4.3; Breiman 1996 p. 126)
-    if (n_signal >= 2) lp <- lp + eff_beta * 10 * sin(pi * x1 * x2)
-    if (n_signal >= 3) lp <- lp + eff_beta * 20 * (x3 - 0.5)^2
-    if (n_signal >= 4) lp <- lp + eff_beta * 10 * x4
-    if (n_signal >= 5) lp <- lp + eff_beta *  5 * x5
+    if (n_signal_parameters >= 2) lp <- lp + eff_beta * 10 * sin(pi * x1 * x2)
+    if (n_signal_parameters >= 3) lp <- lp + eff_beta * 20 * (x3 - 0.5)^2
+    if (n_signal_parameters >= 4) lp <- lp + eff_beta * 10 * x4
+    if (n_signal_parameters >= 5) lp <- lp + eff_beta *  5 * x5
     
     # Extended terms for signal predictors 6, 7, ...
-    if (n_signal >= 6) {
-      for (k in 6:n_signal) {
+    if (n_signal_parameters >= 6) {
+      for (k in 6:n_signal_parameters) {
         lp <- lp + eff_beta * (sin(pi * xcol(k) * xcol(k - 1)) +
                                  (xcol(k) - 0.5)^2)
       }

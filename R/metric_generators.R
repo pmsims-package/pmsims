@@ -88,26 +88,21 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
     return(stats::predict(fit, newdata = x_df, type = type))
   }
   
-  # LASSO (glmnet::cv.glmnet)
-  if (model == "lasso") {
-    # Expect fit is cv.glmnet (or glmnet object) and x_mat is numeric matrix
+  # LASSO / Ridge (glmnet::cv.glmnet)
+  # Both models share the same glmnet predict interface; only alpha differs at fit time.
+  if (model %in% c("lasso", "ridge")) {
     if (!("glmnet" %in% rownames(utils::installed.packages()))) {
-      warning("glmnet not installed; predict for lasso will fail.")
+      warning("glmnet not installed; predict for ", model, " will fail.")
     }
-    #s_val <- if (!is.null(fit$lambda.1se)) fit$lambda.1se else if (!is.null(fit$lambda.min)) fit$lambda.min else NULL
-    #if (is.null(s_val)) s_val <- NULL
-    
-    s_val = "lambda.min"
-    
-    # Choose glmnet type mapping
+    s_val <- "lambda.min"
     glmnet_type <- switch(type,
                           response = "response",
-                          link = "link",
-                          lp = "link",
-                          stop("Type '", type, "' not supported for lasso."))
+                          link     = "link",
+                          lp       = "link",
+                          stop("Type '", type, "' not supported for ", model, "."))
     preds <- as.numeric(predict(fit, newx = x_mat, s = s_val, type = glmnet_type))
-    # for binary response, glmnet::predict(..., type="response") returns probabilities
-    # for cox (survival) family, glmnet::predict(..., type="link") returns linear predictor
+    # For binary family: type="response" returns probabilities; type="link" returns log-odds.
+    # For Cox family: type="link" returns the linear predictor (log-hazard ratio).
     return(preds)
   }
   
@@ -158,25 +153,13 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
         
         return(surv_matrix)
       }
-      # For linear predictor / risk score, convert survival to linear predictor using
-      # logit = (S(t) / 1- S(t)) or
-      # lp = log(H(t)) where H(t) = sum(h(t))
+      # For linear predictor / risk score: use log of the integrated cumulative
+      # hazard across all event times, i.e. lp = log(H_inf).  This is a
+      # monotone transformation of the cumulative hazard and serves as a
+      # well-defined rank-preserving risk score for discrimination metrics and
+      # Cox-recalibration (survival_calib_slope).
       if (type == "lp") {
-        
-        #times <- pr$unique.death.times
-        #surv_matrix <- pr$survival
-        
-        # obtain the survival at an ith observation unique time
-        #surv_vec <- sapply(1:nrow(x_df), function(i) {
-        #   t_i <- x_df$time[i]
-        #   idx <- which.min(abs(times - t_i))
-        #  surv_matrix[i, idx]
-        # })
-        
-        # get lp from survival vector + adjust S(t) = 1 by subtracting 1e-8
-        # surv_vec_to_lp <- qlogis(surv_vec - 1e-8)
-        # chf n x times matrix: summing over times gives cumulative hazard
-        return(log(rowSums(pr$chf)))
+        return(log(rowSums(pr$chf) + .Machine$double.eps))
       }
     }
     
@@ -240,31 +223,70 @@ binary_auc_metric <- function(data, fit, model) {
 binary_calib_slope <- function(data, fit, model) {
   y <- data[, "y"]
   x <- data[, names(data) != "y", drop = FALSE]
-  y_link <- predict_custom(x, y, fit, model, type = "link")
-  slope <- try(
-    stats::glm(y ~ y_link, family = stats::binomial()),
-    silent = TRUE
-  )
-  if (inherits(slope, "try-error")) {
-    calib_slope <- NaN
+  
+  # Parametric models (glm, lasso, ridge) expose a well-defined log-odds linear
+  # predictor, so the standard calibration-slope regression (Austin & Steyerberg
+  # 2014) is appropriate directly on the link scale.
+  #
+  # Non-parametric / tree-based models (rf, xgboost) do not have a native
+  # log-odds scale.  The standard recalibration approach (Platt scaling) fits a
+  # logistic regression of the observed outcome on the logit-transformed
+  # predicted probability.  This is mathematically equivalent for well-calibrated
+  # parametric models but avoids treating an rf/xgboost output as a structural
+  # log-odds.
+  if (model %in% c("rf", "ranger", "xgboost")) {
+    p_hat <- predict_custom(x, y, fit, model, type = "response")
+    p_hat <- pmin(pmax(as.numeric(p_hat), .Machine$double.eps),
+                  1 - .Machine$double.eps)
+    logit_p <- stats::qlogis(p_hat)
+    recal <- try(
+      stats::glm(y ~ logit_p, family = stats::binomial()),
+      silent = TRUE
+    )
   } else {
-    calib_slope <- as.numeric(stats::coef(slope)[2])
+    y_link <- predict_custom(x, y, fit, model, type = "link")
+    recal <- try(
+      stats::glm(y ~ y_link, family = stats::binomial()),
+      silent = TRUE
+    )
   }
-  return(calib_slope)
+  
+  if (inherits(recal, "try-error")) {
+    return(NaN)
+  } else {
+    return(as.numeric(stats::coef(recal)[2]))
+  }
 }
 
 binary_calib_itl <- function(data, fit, model) {
   y <- data[, "y"]
   x <- data[, names(data) != "y", drop = FALSE]
-  y_link <- predict_custom(x, y, fit, model, type = "link")
-  slope_itl <- try(
-    stats::glm(y ~ 1, offset = y_link, data = data, family = stats::binomial()),
-    silent = TRUE
-  )
-  if (inherits(slope_itl, "try-error")) {
+  
+  # For non-parametric / tree-based models apply Platt-scaling recalibration:
+  # fix the slope at 1 by using the logit of the predicted probability as an
+  # offset, then estimate only the intercept.  The intercept quantifies
+  # calibration-in-the-large (mean predicted vs. observed event rate).
+  if (model %in% c("rf", "ranger", "xgboost")) {
+    p_hat <- predict_custom(x, y, fit, model, type = "response")
+    p_hat <- pmin(pmax(as.numeric(p_hat), .Machine$double.eps),
+                  1 - .Machine$double.eps)
+    logit_p <- stats::qlogis(p_hat)
+    recal_itl <- try(
+      stats::glm(y ~ 1, offset = logit_p, family = stats::binomial()),
+      silent = TRUE
+    )
+  } else {
+    y_link <- predict_custom(x, y, fit, model, type = "link")
+    recal_itl <- try(
+      stats::glm(y ~ 1, offset = y_link, data = data, family = stats::binomial()),
+      silent = TRUE
+    )
+  }
+  
+  if (inherits(recal_itl, "try-error")) {
     return(NaN)
   } else {
-    return(abs(as.numeric(stats::coef(slope_itl)[1])))
+    return(abs(as.numeric(stats::coef(recal_itl)[1])))
   }
 }
 
@@ -296,6 +318,30 @@ continuous_r2 <- function(data, fit, model) {
   return(r2)
 }
 
+# Calibration slope for continuous outcomes: OLS regression of observed y on
+# predicted y_hat.  A slope of 1 indicates perfect mean calibration.
+#
+# NOTE — expected behaviour by model class:
+#
+#   lm / lasso / ridge:
+#     Slope clusters near 1 at moderate n.  Regularised models may show
+#     slopes slightly above 1 at very small n (shrinkage compresses y_hat).
+#
+#   Random Forest (rf):
+#     Slopes are systematically > 1, even at large n.  This is correct and
+#     expected: RF predictions are averages of terminal-node means, which
+#     compresses the prediction range relative to y.  OLS compensates by
+#     estimating a slope > 1.  This is a structural property of averaging
+#     estimators (the "regression-to-the-mean" of bagged trees), not a bug
+#     in the metric.  The slope worsens at small n (more shrinkage) and
+#     attenuates as n grows.  Post-hoc recalibration would change what is
+#     being measured; the metric is reporting truthfully.
+#
+#   XGBoost:
+#     Without round-count regularisation, XGBoost over-fits the training
+#     scale at small n, producing over-dispersed predictions and slopes << 1.
+#     The model generator now uses xgb.cv early stopping to select nrounds,
+#     which substantially stabilises the slope across sample sizes.
 continuous_calib_slope <- function(data, fit, model) {
   y <- data[, "y"]
   x <- data[, names(data) != "y", drop = FALSE]
@@ -325,7 +371,7 @@ continuous_calib_itl <- function(data, fit, model) {
 survival_cindex <- function(data, fit, model) {
   y_surv <- survival::Surv(data$time, data$event)
   
-    x <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
+  x <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
   
   # request linear predictor / risk score
   y_hat <- try(predict_custom(x, NULL, fit, model, type = "lp"), silent = TRUE)
@@ -339,23 +385,38 @@ survival_cindex <- function(data, fit, model) {
   return(cf$concordance)
 }
 
-# Cox-like calibration slope (uses linear predictor)
+# Cox-recalibration slope
+# For all supported models we fit a univariate Cox regression of the observed
+# survival outcome on the model-derived risk score (linear predictor or log-CHF
+# for rf).  A slope of 1 indicates perfect Cox calibration.
+#
+# For rf (ranger):  the LP is log(sum CHF), a monotone risk score — Cox
+#   regression on it is a standard external calibration approach.
+# For xgboost Cox:  the model already outputs a log-hazard ratio (LP); the
+#   recalibration slope detects any systematic shrinkage or over-fitting.
+# For lasso / ridge Cox:  same as xgboost above.
+# For coxph:        classical calibration slope as in van Houwelingen (2000).
 survival_calib_slope <- function(data, fit, model) {
   y_surv <- survival::Surv(data$time, data$event)
-  
-  x <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
+  x     <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
   
   y_hat <- try(predict_custom(x, NULL, fit, model, type = "lp"), silent = TRUE)
-  if (inherits(y_hat, "try-error")) {
+  if (inherits(y_hat, "try-error") || all(is.na(y_hat))) {
     return(NaN)
   }
-  cf <- try(stats::coef(survival::coxph(y_surv ~ as.numeric(y_hat))), silent = TRUE)
-  if (inherits(cf, "try-error") || is.null(cf)) {
-    slope <- NaN
-  } else {
-    slope <- as.numeric(cf)
+  y_hat <- as.numeric(y_hat)
+  
+  # Guard against degenerate predictions (zero variance => unidentifiable slope)
+  if (stats::var(y_hat, na.rm = TRUE) < .Machine$double.eps) {
+    warning("survival_calib_slope: predicted risk score has zero variance; returning NaN.")
+    return(NaN)
   }
-  return(slope)
+  
+  cf <- try(stats::coef(survival::coxph(y_surv ~ y_hat)), silent = TRUE)
+  if (inherits(cf, "try-error") || is.null(cf)) {
+    return(NaN)
+  }
+  return(as.numeric(cf))
 }
 
 # Model-free IPCW calibration slope
