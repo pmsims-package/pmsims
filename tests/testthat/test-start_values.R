@@ -117,6 +117,38 @@ test_that("calculate_adaptive_bounds uses the fallback value on repeated errors"
   expect_equal(output$track[[1]]$performance, 0.1)
 })
 
+test_that("calculate_adaptive_bounds errors clearly on non-finite summaries", {
+  data_function <- function(n) {
+    data.frame(y = seq_len(n))
+  }
+  model_function <- function(data) {
+    list(n = nrow(data))
+  }
+  attr(model_function, "model") <- "glm"
+  metric_function <- function(data, fit, model) {
+    NA_real_
+  }
+
+  expect_error(
+    calculate_adaptive_bounds(
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      value_on_error = NA_real_,
+      start_n = 10,
+      test_n = 10,
+      n_reps_per = 2,
+      n_reps_total = 4,
+      target_performance = 0.5,
+      threshold = 0,
+      mean_or_assurance = "mean",
+      verbose = FALSE
+    ),
+    "Adaptive start value search produced a non-finite performance summary at n = 10",
+    fixed = TRUE
+  )
+})
+
 test_that("compute_start_sample_sizes covers binary continuous and survival branches", {
   auc_metric <- make_metric_stub("auc")
   slope_metric <- make_metric_stub("calib_slope")

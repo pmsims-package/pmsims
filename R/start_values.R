@@ -161,6 +161,21 @@ calculate_adaptive_bounds <- function(
   cores = 20,
   verbose = FALSE
 ) {
+  check_summary_value <- function(perf, n) {
+    if (!is.numeric(perf) || length(perf) != 1 || !is.finite(perf)) {
+      stop(
+        paste0(
+          "Adaptive start value search produced a non-finite performance summary at n = ",
+          n,
+          ". Check whether the model/metric combination is returning only missing values."
+        ),
+        call. = FALSE
+      )
+    }
+
+    perf
+  }
+
   # ---------------------------------------------------------
   # Budget
   # ---------------------------------------------------------
@@ -217,9 +232,9 @@ calculate_adaptive_bounds <- function(
     s <- get_summaries(matrix(vals, nrow = 1))
 
     if (mean_or_assurance == "mean") {
-      list(y_summary = s$mean_performance, y = vals)
+      list(y_summary = check_summary_value(s$mean_performance, n), y = vals)
     } else {
-      list(y_summary = s$quant20_performance, y = vals)
+      list(y_summary = check_summary_value(s$quant20_performance, n), y = vals)
     }
   }
 
