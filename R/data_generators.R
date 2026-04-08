@@ -599,7 +599,7 @@ generate_linear_predictor <- function(X,
   
   # ---- Complexity 1: linear --------------------------------------------------
   if (complexity == 1) {
-    lp <- lp + eff_beta * rowSums(Xs)
+    lp <- lp + eff_beta * as.numeric(rowSums(Xs))
     
     # ---- Complexity 2: linear + quadratic -------------------------------------
     # Linear terms : full weight  -> beta_signal * w
@@ -608,8 +608,8 @@ generate_linear_predictor <- function(X,
     S              <- n_signal_parameters
     quad_beta      <- beta_signal * w / S          # per-term quadratic weight
     
-    lp <- lp + beta_signal   * rowSums(Xs)            # linear  (full weight)
-    lp <- lp + quad_beta  * rowSums(Xs^2)          # quadratic (distributed)
+    lp <- lp + beta_signal   * as.numeric(rowSums(Xs))            # linear  (full weight)
+    lp <- lp + quad_beta  * as.numeric(rowSums(Xs^2))          # quadratic (distributed)
     
     # ---- Complexity 3: linear + quadratic + pairwise interactions -------------
     # Linear terms    : full weight     -> beta_signal * w
@@ -626,8 +626,8 @@ generate_linear_predictor <- function(X,
     quad_beta      <- nonlinear_beta
     int_beta       <- nonlinear_beta
     
-    lp <- lp + beta_signal * rowSums(Xs)             # linear  (full weight)
-    lp <- lp + quad_beta * rowSums(Xs^2)           # quadratic (distributed)
+    lp <- lp + beta_signal * as.numeric(rowSums(Xs))             # linear  (full weight)
+    lp <- lp + quad_beta * as.numeric(rowSums(Xs^2))           # quadratic (distributed)
     
     if (S >= 2) {
       pairs <- utils::combn(S, 2)                  # 2 x C(S,2) index matrix
