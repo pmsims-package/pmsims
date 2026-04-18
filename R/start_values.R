@@ -336,6 +336,11 @@ compute_start_sample_sizes <- function(
     stop("metric_function must have a 'metric' attribute.")
   }
   
+  if(metric_used == "csse"){
+    metric_used <- "calib_slope"
+    target_performance <- 1 - sqrt(abs(target_performance))
+  }
+  
   ## -----------------------
   ## SURVIVAL OUTCOME
   ## -----------------------

@@ -176,30 +176,31 @@ default_models <- list(
       
       # cvranger$model$learner.model
       
-      ff <- NULL
-      invisible(
-        capture.output(
-          ff <- randomForest::tuneRF(x, y, trace = FALSE, plot = FALSE)
-        )
-      )
+      #ff <- NULL
+      #invisible(
+      #  capture.output(
+      #    ff <- randomForest::tuneRF(x, y, trace = FALSE, plot = FALSE)
+      #  )
+      #)
       
-      bestmtry <- data.frame(ff)
-      mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
+      #bestmtry <- data.frame(ff)
+      #mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
       
       ranger::ranger(
         x = x,
         y = y,
-        mtry = mtry_best,
-        num.trees = 300,
+        mtry = max(1, floor(ncol(x) / 3)),
+        num.trees = 300L,
+        replace = FALSE,
         num.threads = nthreads 
       )
     },
     xgboost = function(d,
                        params = list(objective   = "reg:squarederror",
                                      eval_metric  = "rmse",
-                                     eta          = 0.05,
-                                     max_depth    = 4L,
-                                     subsample    = 0.8,
+                                     eta          = 0.3,
+                                     max_depth    = 2L,
+                                     subsample    = 0.7,
                                      min_child_weight = 5L)) {
       # expects first column y (numeric), remaining columns predictors.
       # nrounds is selected via xgb.cv early stopping (see .xgb_cv_nrounds).
