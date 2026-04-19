@@ -155,15 +155,15 @@ simulate_custom <- function(
       "Not possible. Increase sample or lower performance",
       output$perf_n
     ),
-    mlpwr_ds = output$mlpwr_ds,
+    #mlpwr_ds = output$mlpwr_ds,
     target_performance = target_performance,
     summaries = output$summaries,
     data = output$results,
-    train_size = rownames(output$results),
+    #train_size = rownames(output$results),
     data_function = data_function,
     simulation_time = difftime(time_2, time_1, units = "secs")
   )
-  attr(results_list, "class") <- "pmsims"
+  #attr(results_list, "class") <- "pmsims"
   return(results_list)
 }
 
