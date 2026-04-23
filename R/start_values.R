@@ -325,7 +325,7 @@ compute_start_sample_sizes <- function(
   mean_or_assurance <- match.arg(mean_or_assurance)
   
   # 1. Number of predictors (exclude outcome column)
-  npar <- dim(data_function(1))[2] - 1
+  npar <- dim(data_function(10))[2] - 1
   
   # 2. Inspect data_function formals to infer outcome type
   formals_list <- formals(data_function)
