@@ -599,7 +599,7 @@ generate_linear_predictor <- function(X,
   w_nonlinear <- switch(as.character(complexity),
                         "1" = 0.00,
                         "2" = 0.20^2,     # 20% of signal variance is nonlinear
-                        "3" = 0.30^2,     # 30% of signal variance is nonlinear
+                        "3" = 0.25^2,     # 25% of signal variance is nonlinear
                         "4" = 1.00,     # Friedman is fully nonlinear
                         0.00)
   
