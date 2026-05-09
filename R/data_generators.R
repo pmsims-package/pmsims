@@ -598,8 +598,8 @@ generate_linear_predictor <- function(X,
   # Nonlinear variance fraction w (you can change these defaults)
   w_nonlinear <- switch(as.character(complexity),
                         "1" = 0.00,
-                        "2" = 0.20^2,     # 20% of signal variance is nonlinear
-                        "3" = 0.25^2,     # 25% of signal variance is nonlinear
+                        "2" = 0.20,     # 20% of signal variance is nonlinear
+                        "3" = 0.25,     # 25% of signal variance is nonlinear
                         "4" = 1.00,     # Friedman is fully nonlinear
                         0.00)
   
@@ -608,13 +608,13 @@ generate_linear_predictor <- function(X,
   Xs <- X[, seq_len(n_signal_parameters), drop = FALSE]
   
   # ===================================================================
-  # Complexity 1: Pure linear
+  # Complexity 1: Pure linear (unchanged)
   # ===================================================================
   if (complexity == 1) {
     lp <- lp + eff_beta * rowSums(Xs)
     
     # ===================================================================
-    # Complexity 2: Linear + Quadratic  
+    # Complexity 2: Linear + Quadratic  (Corrected variance split)
     # ===================================================================
   } else if (complexity == 2) {
     S <- n_signal_parameters
@@ -637,7 +637,7 @@ generate_linear_predictor <- function(X,
     lp <- lp + linear_contrib + quad_scaled
     
     # ===================================================================
-    # Complexity 3: Linear + Quadratic + Pairwise Interactions
+    # Complexity 3: Linear + Quadratic + Pairwise Interactions (Corrected)
     # ===================================================================
   } else if (complexity == 3) {
     S <- n_signal_parameters
@@ -679,7 +679,7 @@ generate_linear_predictor <- function(X,
     lp <- lp + linear_contrib + quad_scaled + inter_scaled
     
     # ===================================================================
-    # Complexity 4: Friedman
+    # Complexity 4: Friedman (left as-is)
     # ===================================================================
   } else if (complexity == 4) {
     # ... your original Friedman code unchanged ...

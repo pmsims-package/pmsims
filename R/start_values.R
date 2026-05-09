@@ -109,30 +109,6 @@ adaptive_startvalues <- function(
 
 
 
-#### New adaptive start values code
-
-#' Adaptive starting value searching (model/metrics) agnostic.
-#'
-#' @param data_function 
-#' @param model_function 
-#' @param metric_function 
-#' @param value_on_error 
-#' @param start_n 
-#' @param test_n 
-#' @param n_reps_per 
-#' @param n_reps_total 
-#' @param target_performance 
-#' @param threshold 
-#' @param mean_or_assurance 
-#' @param c_statistic 
-#' @param parallel 
-#' @param cores 
-#' @param verbose 
-#'
-#' @returns
-#' @export
-#'
-#' @examples
 calculate_adaptive_bounds <- function(
     data_function,
     model_function,
@@ -143,27 +119,19 @@ calculate_adaptive_bounds <- function(
     n_reps_per,
     n_reps_total,
     target_performance,
-    threshold = 0.01,
-    mean_or_assurance = "mean",
-    c_statistic = NULL,
-    parallel = FALSE,
-    cores = 20,
-    verbose = FALSE
+    threshold          = 0.01,
+    mean_or_assurance  = "mean",
+    plateau_k          = 3,        # <-- NEW: look-back window
+    plateau_tol        = 0.005,    # <-- NEW: min meaningful gain per step
+    c_statistic        = NULL,
+    parallel           = FALSE,
+    cores              = 20,
+    verbose            = FALSE
 ) {
   
-  # ---------------------------------------------------------
-  # Budget
-  # ---------------------------------------------------------
-  max_iter <- floor(n_reps_total / n_reps_per)
-  
-  # ---------------------------------------------------------
-  # Fixed test set
-  # ---------------------------------------------------------
+  max_iter  <- floor(n_reps_total / n_reps_per)
   test_data <- data_function(test_n)
   
-  # ---------------------------------------------------------
-  # Single run
-  # ---------------------------------------------------------
   single_run <- function(n) {
     tryCatch(
       {
@@ -175,133 +143,141 @@ calculate_adaptive_bounds <- function(
     )
   }
   
-  # ---------------------------------------------------------
-  # Summary at n
-  # ---------------------------------------------------------
   summary_at_n <- function(n) {
-    
     if (parallel) {
       cl <- parallel::makeCluster(cores)
       doParallel::registerDoParallel(cl)
-      
-      vals <- foreach::foreach(i = 1:n_reps_per, .combine = c) %dopar% {
+      on.exit(parallel::stopCluster(cl), add = TRUE)
+      vals <- foreach::foreach(i = seq_len(n_reps_per), .combine = c) %dopar% {
         single_run(n)
       }
-      
-      parallel::stopCluster(cl)
     } else {
-      vals <- vapply(
-        seq_len(n_reps_per),
-        function(i) single_run(n),
-        FUN.VALUE = numeric(1)
-      )
+      vals <- vapply(seq_len(n_reps_per), function(i) single_run(n), FUN.VALUE = numeric(1))
     }
     
-    s <- get_summaries(matrix(vals, nrow = 1))
-    
-    if (mean_or_assurance == "mean") {
-      list(y_summary = s$mean_performance, y = vals)
+    perf_summary <- if (mean_or_assurance == "mean") {
+      mean(vals, na.rm = TRUE)
     } else {
-      list(y_summary = s$quant20_performance, y = vals)
+      as.numeric(quantile(vals, probs = 0.20, na.rm = TRUE))
     }
+    
+    list(y_summary = perf_summary, y = vals)
   }
   
-  # ---------------------------------------------------------
-  # Initial evaluation
-  # ---------------------------------------------------------
-  iter <- 1
-  track <- list()
+  # -----------------------------------------------------------------------
+  # Plateau detection
+  # Look at the last plateau_k performance values in track.
+  # If every successive gain is < plateau_tol, we have flatlined.
+  # -----------------------------------------------------------------------
+  has_plateaued <- function(track, k, tol) {
+    if (length(track) < k + 1) return(FALSE)
+    recent <- tail(track, k + 1)
+    perfs  <- sapply(recent, `[[`, "performance")
+    gains  <- diff(perfs)           # k differences
+    all(abs(gains) < tol)
+  }
   
-  res <- summary_at_n(start_n)
+  vcat <- function(...) if (verbose) message(sprintf(...))
+  
+  # -----------------------------------------------------------------------
+  # Initialise
+  # -----------------------------------------------------------------------
+  iter        <- 1L
+  track       <- list()
+  stop_reason <- "budget_exhausted"
+  
+  res  <- summary_at_n(start_n)
   perf <- res$y_summary
-  
   track[[iter]] <- list(n = start_n, performance = perf, raw = res$y)
   
-  if (verbose) {
-    message(sprintf("Iter %d | n = %d | perf = %.4f", iter, start_n, perf))
-  }
+  vcat("Iter %d | n = %d | perf = %.4f", iter, start_n, perf)
   
-  # ---------------------------------------------------------
-  # Decide direction
-  # ---------------------------------------------------------
   if (perf < target_performance) {
-    direction <- "up"
-    lower_n <- start_n
-    lower_perf <- perf
-    upper_n <- NA
-    upper_perf <- NA
+    direction  <- "up"
+    lower_n    <- start_n;  lower_perf  <- perf
+    upper_n    <- NA_real_; upper_perf  <- NA_real_
   } else {
-    direction <- "down"
-    upper_n <- start_n
-    upper_perf <- perf
-    lower_n <- NA
-    lower_perf <- NA
+    direction  <- "down"
+    upper_n    <- start_n;  upper_perf  <- perf
+    lower_n    <- NA_real_; lower_perf  <- NA_real_
   }
   
   n_current <- start_n
   
-  # ---------------------------------------------------------
-  # Adaptive loop
-  # ---------------------------------------------------------
+  # -----------------------------------------------------------------------
+  # Main loop
+  # -----------------------------------------------------------------------
   while (iter < max_iter) {
     
-    iter <- iter + 1
+    iter <- iter + 1L
     
-    if (direction == "up") {
-      n_new <- n_current * 2
-    } else {
-      n_new <- max(1, floor(n_current / 2))
+    n_new <- if (direction == "up") n_current * 2L else max(1L, n_current %/% 2L)
+    
+    if (n_new == n_current) {
+      stop_reason <- "no_movement"
+      vcat("No movement in n. Stopping.")
+      break
     }
     
-    # Stop if no movement
-    if (n_new == n_current) break
-    
-    res <- summary_at_n(n_new)
+    res  <- summary_at_n(n_new)
     perf <- res$y_summary
-    
     track[[iter]] <- list(n = n_new, performance = perf, raw = res$y)
     
-    if (verbose) {
-      message(sprintf("Iter %d | n = %d | perf = %.4f", iter, n_new, perf))
-    }
+    vcat("Iter %d | n = %d | perf = %.4f", iter, n_new, perf)
     
+    # -- Update brackets -----------------------------------------------------
     if (direction == "up") {
       if (perf >= target_performance - threshold) {
-        upper_n <- n_new
-        upper_perf <- perf
+        upper_n    <- n_new; upper_perf <- perf
+        stop_reason <- "target_reached"
+        vcat("Target reached. Upper bracket = %d", upper_n)
         break
       } else {
-        lower_n <- n_new
-        lower_perf <- perf
+        lower_n <- n_new; lower_perf <- perf
       }
     } else {
       if (perf <= target_performance + threshold) {
-        lower_n <- n_new
-        lower_perf <- perf
+        lower_n    <- n_new; lower_perf <- perf
+        stop_reason <- "target_reached"
+        vcat("Target reached. Lower bracket = %d", lower_n)
         break
       } else {
-        upper_n <- n_new
-        upper_perf <- perf
+        upper_n <- n_new; upper_perf <- perf
       }
+    }
+    
+    # -- Plateau check -------------------------------------------------------
+    if (has_plateaued(track, k = plateau_k, tol = plateau_tol)) {
+      vcat(paste(
+        "Performance plateaued over last %d iterations",
+        "(all gains < %.4f). Target unreachable. Stopping."
+      ), plateau_k, plateau_tol)
+      stop_reason <- "plateau"
+      
+      # Treat like target_reached: last iteration = upper, penultimate = lower
+      last     <- track[[iter]]
+      previous <- track[[iter - 1L]]
+      
+      upper_n    <- last$n;           upper_perf <- last$performance
+      lower_n    <- previous$n;       lower_perf <- previous$performance
+      
+      break
     }
     
     n_current <- n_new
   }
   
-  # ---------------------------------------------------------
-  # Return bounds
-  # ---------------------------------------------------------
   list(
-    min_sample_size = lower_n,
+    min_sample_size      = as.numeric(lower_n),
     min_sample_size_perf = lower_perf,
-    max_sample_size = upper_n,
+    max_sample_size      = as.numeric(upper_n),
     max_sample_size_perf = upper_perf,
-    iterations = iter,
-    max_iter = max_iter,
-    track = track
+    stop_reason          = stop_reason,
+    iterations           = iter,
+    max_iter             = max_iter,
+    track                = track
   )
 }
-
 
 #' Get initial starting values before using adaptive searching
 #'
