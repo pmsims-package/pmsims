@@ -6,3 +6,4 @@ pmsims.Rproj
 .DS_store
 vignettes/.quarto/project-cache
 ..Rcheck
+.positai

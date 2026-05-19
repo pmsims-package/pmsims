@@ -5,3 +5,5 @@
 ^LICENSE\.md$
 ^vignettes/articles$
 ^README\.Rmd$
+^\.positai$
+^\.claude$
