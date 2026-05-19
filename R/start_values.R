@@ -107,8 +107,33 @@ adaptive_startvalues <- function(
   ))
 }
 
-
-
+#' Calculate adaptive start bounds
+#'
+#' @param data_function 
+#' @param model_function 
+#' @param metric_function 
+#' @param value_on_error 
+#' @param start_n 
+#' @param test_n 
+#' @param n_reps_per 
+#' @param n_reps_total 
+#' @param target_performance 
+#' @param threshold 
+#' @param mean_or_assurance 
+#' @param plateau_k 
+#' @param plateau_tol 
+#' @param large_perf_check 
+#' @param large_n 
+#' @param large_n_tol 
+#' @param c_statistic 
+#' @param parallel 
+#' @param cores 
+#' @param verbose 
+#'
+#' @returns
+#' @export
+#'
+#' @examples
 calculate_adaptive_bounds <- function(
     data_function,
     model_function,
@@ -351,6 +376,7 @@ calculate_adaptive_bounds <- function(
     track                = track
   )
 }
+
 
 #' Get initial starting values before using adaptive searching
 #'
