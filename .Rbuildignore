@@ -5,6 +5,8 @@
 ^LICENSE\.md$
 ^vignettes/articles$
 ^README\.Rmd$
+^\.positai$
+^\.claude$
 ^README\.html$
 ^_pkgdown\.yml$
 ^pkgdown$

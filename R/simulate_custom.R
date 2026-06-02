@@ -230,11 +230,11 @@ simulate_custom <- function(
       "Not possible. Increase sample or lower performance",
       output$perf_n
     ),
-    mlpwr_ds = output$mlpwr_ds,
+    #mlpwr_ds = output$mlpwr_ds,
     target_performance = target_performance,
     summaries = output$summaries,
     data = output$results,
-    train_size = rownames(output$results),
+    #train_size = rownames(output$results),
     data_function = data_function,
     model_function = model_function,
     metric_function = metric_function,

@@ -50,6 +50,8 @@ default_metric_generator <- function(metric, data_function) {
       metric_function <- continuous_calib_slope
     } else if (metric == "calib_itl") {
       metric_function <- continuous_calib_itl
+    } else if (metric == "csse") {
+      metric_function <- continuous_csse
     } else {
       stop(paste(
         "Default metric",
@@ -98,9 +100,9 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
   if (model %in% c("lm", "glm")) {
     return(stats::predict(fit, newdata = x_df, type = type))
   }
-
-  # LASSO (glmnet::cv.glmnet)
-  if (model == "lasso") {
+  
+  # LASSO / RIDGE (glmnet::cv.glmnet)
+  if (model %in% c("lasso", "ridge")) {
     # Expect fit is cv.glmnet (or glmnet object) and x_mat is numeric matrix
     require_optional_packages("glmnet", "lasso predictions")
     #s_val <- if (!is.null(fit$lambda.1se)) fit$lambda.1se else if (!is.null(fit$lambda.min)) fit$lambda.min else NULL
@@ -345,6 +347,43 @@ continuous_calib_slope <- function(data, fit, model) {
   }
 }
 
+continuous_csse <- function(data, fit, model) {
+  y <- data[, "y"]
+  x <- data[, names(data) != "y", drop = FALSE]
+  y_hat <- predict_custom(x, y, fit, model, type = "response")
+  slope <- try(stats::lm(y ~ y_hat), silent = TRUE)
+  calib_slope <-  as.numeric(stats::coef(slope)[2])
+  return(-(1-calib_slope)^2)
+}
+
+
+#continuous_calib_slope <- function(data, fit, model) {
+#  y <- data[, "y"]
+#  x <- data[, names(data) != "y", drop = FALSE]
+#  y_hat <- predict_custom(x, y, fit, model, type = "response")
+#  slope <- try(stats::lm(y ~ y_hat), silent = TRUE)
+#  if (inherits(slope, "try-error")) {
+#    return(NaN)
+#  } else {
+#    return( -(1 - as.numeric(stats::coef(slope)[2]))^2)
+#  }
+#}
+
+#continuous_calib_slope <- function(data, fit, model) {
+#  y <- data[, "y"]
+#  x <- data[, names(data) != "y", drop = FALSE]
+#  y_hat <- predict_custom(x, y, fit, model, type = "response")
+#  n <- length(y)
+#  mse <- sum((y_hat - y) ^ 2) / n
+#  mst <- stats::var(y) * (n + 1) / n
+#  r2 <- 1 - (mse / mst)
+#  slope <- try(stats::lm(y ~ y_hat), silent = TRUE)
+#  calib_slope <-as.numeric(stats::coef(slope)[2])
+#  r2_eff <- r2 / calib_slope
+#  
+#  return(r2_eff)
+#}
+
 continuous_calib_itl <- function(data, fit, model) {
   y <- data[, "y"]
   x <- data[, names(data) != "y", drop = FALSE]
@@ -361,9 +400,9 @@ continuous_calib_itl <- function(data, fit, model) {
 
 survival_cindex <- function(data, fit, model) {
   y_surv <- survival::Surv(data$time, data$event)
-
+  
   x <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
-
+  
   # request linear predictor / risk score
   y_hat <- try(predict_custom(x, NULL, fit, model, type = "lp"), silent = TRUE)
   if (inherits(y_hat, "try-error")) {
