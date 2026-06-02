@@ -1,0 +1,197 @@
+* using log directory ‘/Users/ewan/Sync/Work/Projects/Active/pmsims/pmsims/pmsims.Rcheck’
+* using R version 4.5.2 (2025-10-31)
+* using platform: aarch64-apple-darwin20
+* R was compiled by
+    Apple clang version 16.0.0 (clang-1600.0.26.6)
+    GNU Fortran (GCC) 14.2.0
+* running under: macOS Tahoe 26.4
+* using session charset: UTF-8
+* using options ‘--no-manual --as-cran’
+* checking for file ‘pmsims/DESCRIPTION’ ... OK
+* this is package ‘pmsims’ version ‘0.5.0’
+* package encoding: UTF-8
+* checking CRAN incoming feasibility ... NOTE
+Maintainer: ‘Ewan Carr <pmsims@kcl.ac.uk>’
+
+Found the following (possibly) invalid URLs:
+  URL: https://app.codecov.io/gh/pmsims-package/pmsims
+    From: README.md
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: app.codecov.io
+  URL: https://arxiv.org/abs/2602.23507
+    From: inst/CITATION
+          README.md
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: arxiv.org
+  URL: https://arxiv.org/abs/2603.23688
+    From: inst/CITATION
+          README.md
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: arxiv.org
+  URL: https://github.com/pmsims-package/pmsims
+    From: DESCRIPTION
+          man/pmsims-package.Rd
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: github.com
+  URL: https://github.com/pmsims-package/pmsims/actions/workflows/R-CMD-check.yaml
+    From: README.md
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: github.com
+  URL: https://github.com/pmsims-package/pmsims/issues
+    From: DESCRIPTION
+          man/pmsims-package.Rd
+          README.md
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: github.com
+  URL: https://github.com/pmsims-package/pmsims/releases
+    From: README.md
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: github.com
+  URL: https://lifecycle.r-lib.org/articles/stages.html#experimental
+    From: man/simulate_binary.Rd
+          man/simulate_continuous.Rd
+          man/simulate_survival.Rd
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: lifecycle.r-lib.org
+  URL: https://orcid.org/0000-0001-7342-8639
+    From: man/pmsims-package.Rd
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: orcid.org
+  URL: https://orcid.org/0000-0001-7987-6619
+    From: man/pmsims-package.Rd
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: orcid.org
+  URL: https://orcid.org/0000-0001-8662-3636
+    From: man/pmsims-package.Rd
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: orcid.org
+  URL: https://orcid.org/0000-0002-1146-4922
+    From: man/pmsims-package.Rd
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: orcid.org
+  URL: https://orcid.org/0000-0002-8127-0007
+    From: man/pmsims-package.Rd
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: orcid.org
+  URL: https://orcid.org/0000-0002-8755-5935
+    From: man/pmsims-package.Rd
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: orcid.org
+  URL: https://orcid.org/0000-0003-2434-3641
+    From: man/pmsims-package.Rd
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: orcid.org
+  URL: https://pmsims-package.github.io/pmsims-website/
+    From: README.md
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: pmsims-package.github.io
+  URL: https://pmsims-package.github.io/pmsims/
+    From: DESCRIPTION
+          man/pmsims-package.Rd
+          inst/CITATION
+          README.md
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: pmsims-package.github.io
+  URL: https://www.fundingawards.nihr.ac.uk/award/NIHR206858
+    From: README.md
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: www.fundingawards.nihr.ac.uk
+  URL: https://www.kcl.ac.uk/
+    From: README.md
+    Status: Error
+    Message: libcurl error code 6:
+      	Could not resolve host: www.kcl.ac.uk
+
+Found the following (possibly) invalid ORCID iDs:
+  iD: 0000-0002-1146-4922	(from: DESCRIPTION)
+  iD: 0000-0001-8662-3636	(from: DESCRIPTION)
+  iD: 0000-0001-7342-8639	(from: DESCRIPTION)
+  iD: 0000-0003-2434-3641	(from: DESCRIPTION)
+  iD: 0000-0001-7987-6619	(from: DESCRIPTION)
+  iD: 0000-0002-8755-5935	(from: DESCRIPTION)
+  iD: 0000-0002-8127-0007	(from: DESCRIPTION)
+
+The Description field should not start with the package name,
+  'This package' or similar.
+
+Size of tarball: 10597017 bytes
+* checking package namespace information ... OK
+* checking package dependencies ... INFO
+Packages suggested but not available for checking:
+  'mlr', 'tuneRanger', 'xgboost'
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... OK
+* checking for portable file names ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking whether package ‘pmsims’ can be installed ... OK
+* checking installed package size ... INFO
+  installed size is 10.2Mb
+  sub-directories of 1Mb or more:
+    extdata   9.4Mb
+* checking package directory ... OK
+* checking for future file timestamps ... NOTE
+unable to verify current time
+* checking ‘build’ directory ... OK
+* checking DESCRIPTION meta-information ... OK
+* checking top-level files ... NOTE
+Non-standard file/directory found at top level:
+  ‘TODO.md’
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking code files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking loading without being on the library search path ... OK
+* checking use of S3 registration ... OK
+* checking dependencies in R code ... OK
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... OK
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd line widths ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... OK
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... OK
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking installed files from ‘inst/doc’ ... OK
+* checking files in ‘vignettes’ ... OK
+* checking examples ... OK
+* checking for unstated dependencies in ‘tests’ ... OK
+* checking tests ... OK
+  Running ‘testthat.R’
+* checking for unstated dependencies in vignettes ... OK
+* checking package vignettes ... OK
+* checking re-building of vignette outputs ... OK
+* checking for non-standard things in the check directory ... OK
+* checking for detritus in the temp directory ... OK
+* DONE
+Status: 3 NOTEs

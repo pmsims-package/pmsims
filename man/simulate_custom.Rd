@@ -2,66 +2,137 @@
 % Please edit documentation in R/simulate_custom.R
 \name{simulate_custom}
 \alias{simulate_custom}
-\title{Simulate Custom
-'simulate_custom' is the interface for pmsims at the most basic level. It performs no processing of arguments and allows all possible options to be customised.}
+\title{Minimum sample size for custom simulation workflows}
 \usage{
 simulate_custom(
-  data_function = NULL,
-  model_function = NULL,
-  metric_function = NULL,
+  data_function,
+  model_function,
+  metric_function,
   target_performance,
-  c_statistic,
+  c_statistic = NULL,
   mean_or_assurance = "assurance",
   test_n = 30000,
-  min_sample_size,
-  max_sample_size,
-  n_reps_total = NULL,
-  n_reps_per = 50,
-  se_final = NULL,
-  n_init = 4,
+  min_sample_size = NULL,
+  max_sample_size = NULL,
+  n_reps_total = 1000,
+  n_reps_per = 20,
   method = "mlpwr",
+  progress = TRUE,
   verbose = FALSE,
   ...
 )
 }
 \arguments{
-\item{data_function}{A function that returns datasets. Must have a single argument, \code{n}, which controls the sample size.}
+\item{data_function}{Function taking a single argument, \code{n}, giving the
+training sample size, and returning a dataset that can be passed to
+\code{model_function}.}
 
-\item{model_function}{A function that fits models to the data. Takes the data object returned by \code{data_function} as its only argument.}
+\item{model_function}{Function that fits a model to the dataset returned by
+\code{data_function}. It must take the generated dataset as its only argument
+and return a fitted model object.}
 
-\item{metric_function}{A function that returns a performance metric. Must take test data, a fitted model and a model function as arguments. Must return a single value.}
+\item{metric_function}{Function that evaluates predictive performance on test
+data. It must take three positional arguments in the order
+\verb{(test_data, fitted_model, model_name)} and return a single numeric value.
+Optionally, users may set \code{attr(metric_function, "value_on_error")} to a
+single numeric fallback value to be returned if model fitting or metric
+evaluation fails during a simulation run.}
 
-\item{target_performance}{Numeric target performance threshold the algorithm must meet or exceed.}
+\item{target_performance}{Numeric target value for the chosen performance
+metric. The search aims to find the smallest sample size \eqn{n} for which
+the selected criterion is met relative to this threshold.}
 
-\item{c_statistic}{Numeric; anticipated large-sample discrimination used when tuning the data generator.}
+\item{c_statistic}{Optional numeric value used only by the internal
+start-value heuristics for some outcome and metric combinations. In most
+custom workflows this should be left as \code{NULL}.}
 
-\item{mean_or_assurance}{Character string \code{"mean"} or \code{"assurance"} indicating which criterion defines the minimum sample size.}
+\item{mean_or_assurance}{Character string specifying the criterion used to
+define the minimum sample size. Must be either \code{"mean"} or \code{"assurance"}.}
 
-\item{test_n}{Integer size of the test datasets used to evaluate performance (should be large).}
+\item{test_n}{Integer size of the test dataset used to evaluate model
+performance. This should usually be large enough that test-set variability
+is negligible relative to the training-sample search.}
 
-\item{min_sample_size}{Integer lower bound of the sample-size search region.}
+\item{min_sample_size}{Optional integer lower bound for the sample-size
+search. If supplied, \code{max_sample_size} must also be supplied.}
 
-\item{max_sample_size}{Integer upper bound of the sample-size search region.}
+\item{max_sample_size}{Optional integer upper bound for the sample-size
+search. If supplied, \code{min_sample_size} must also be supplied.}
 
-\item{n_reps_total}{Integer total number of simulation replications allocated to the search.}
+\item{n_reps_total}{Integer total number of simulation replications allocated
+to the search. The search evaluates approximately
+\code{n_reps_total / n_reps_per} candidate sample sizes.}
 
-\item{n_reps_per}{Integer number of replications evaluated at each candidate sample size.}
+\item{n_reps_per}{Integer number of simulation replications performed at each
+candidate sample size.}
 
-\item{se_final}{Numeric standard error threshold used for early stopping (supply either \code{n_reps_total} or \code{se_final}).}
+\item{method}{Character string specifying the search engine. Defaults to
+\code{"mlpwr"}.}
 
-\item{n_init}{Integer number of initial sample sizes explored before the main search algorithm begins.}
+\item{progress}{Logical flag controlling whether the \code{mlpwr} progress bar is
+shown for \code{mlpwr}-based methods.}
 
-\item{method}{Character string selecting the search engine; currently \code{"mlpwr"}, \code{"bisection"}, or \code{"mlpwr-bs"}.}
+\item{verbose}{Logical flag controlling engine-specific diagnostic output
+when supported. For the bisection engine, setting \code{verbose = TRUE} stores
+the iteration history on the returned object.}
 
-\item{verbose}{Logical flag controlling printed progress information.}
-
-\item{...}{Additional arguments passed to the chosen engine (for example \code{tol} for bisection or \code{penalty_weight} for GA-based methods).}
+\item{...}{Additional arguments passed to the selected search engine.}
 }
 \value{
-An object of class \code{"pmsims"} containing the estimated minimum sample size and simulation diagnostics.
+An object of class \code{"pmsims"} containing the estimated minimum sample size.
 }
 \description{
-Simulate Custom
-'simulate_custom' is the interface for pmsims at the most basic level. It performs no processing of arguments and allows all possible options to be customised.
+Compute the minimum sample size required to achieve a target level of
+predictive performance using user-defined simulation components.
+\code{simulate_custom()} is the low-level interface in \code{pmsims}: users supply a
+data-generating function, a model-fitting function, and a metric function,
+and the chosen search engine estimates the smallest \eqn{n} meeting the
+selected performance criterion.
 }
-\keyword{internal}
+\examples{
+\dontrun{
+set.seed(1234)
+
+data_fun <- function(n) {
+  x1 <- rnorm(n)
+  x2 <- rnorm(n)
+  x3 <- rnorm(n)
+  x4 <- rnorm(n)
+  x5 <- rnorm(n)
+  y <- 0.35 * x1 - 0.3 * x2 + 0.2 * x3 + 0.1 * x4 - 0.1 * x5 +
+    rnorm(n, sd = 1)
+  data.frame(y = y, x1 = x1, x2 = x2, x3 = x3, x4 = x4, x5 = x5)
+}
+
+model_fun <- function(dat) {
+  stats::lm(y ~ ., data = dat)
+}
+
+metric_fun <- function(test_data, fit, model) {
+  preds <- stats::predict(fit, newdata = test_data)
+  1 - sum((test_data$y - preds)^2) /
+    sum((test_data$y - mean(test_data$y))^2)
+}
+attr(metric_fun, "metric") <- "r2"
+
+maximum_achievable_data <- data_fun(100000)
+test_data <- data_fun(50000)
+maximum_achievable_fit <- model_fun(maximum_achievable_data)
+maximum_achievable_performance <- metric_fun(
+  test_data,
+  maximum_achievable_fit,
+  "lm"
+)
+
+est <- simulate_custom(
+  data_function = data_fun,
+  model_function = model_fun,
+  metric_function = metric_fun,
+  target_performance = maximum_achievable_performance - 0.02
+)
+est
+}
+}
+\seealso{
+\code{\link[=simulate_binary]{simulate_binary()}}, \code{\link[=simulate_continuous]{simulate_continuous()}}, \code{\link[=simulate_survival]{simulate_survival()}}
+}
