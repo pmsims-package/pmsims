@@ -11,6 +11,8 @@ default_metric_generator <- function(metric, data_function) {
       metric_function <- binary_brier_score
     } else if (metric == "brier_score_scaled") {
       metric_function <- binary_brier_score_scaled
+    } else if (metric == "csse") {
+      metric_function <- binary_csse
     } else {
       stop(paste(
         "Default metric",
@@ -253,6 +255,22 @@ binary_calib_slope <- function(data, fit, model) {
     calib_slope <- as.numeric(stats::coef(slope)[2])
   }
   return(calib_slope)
+}
+
+binary_csse <- function(data, fit, model) {
+  y <- data[, "y"]
+  x <- data[, names(data) != "y", drop = FALSE]
+  y_link <- predict_custom(x, y, fit, model, type = "link")
+  slope <- try(
+    stats::glm(y ~ y_link, family = stats::binomial()),
+    silent = TRUE
+  )
+  if (inherits(slope, "try-error")) {
+    calib_slope <- NaN
+  } else {
+    calib_slope <- as.numeric(stats::coef(slope)[2])
+  }
+  return(-(1-calib_slope)^2)
 }
 
 binary_calib_itl <- function(data, fit, model) {
