@@ -7,3 +7,4 @@ pmsims.Rproj
 vignettes/.quarto/project-cache
 ..Rcheck
 .positai
+inst/doc

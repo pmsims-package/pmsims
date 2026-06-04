@@ -1,5 +1,10 @@
 ---
 title: "Getting started with pmsims"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with pmsims}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r}
@@ -12,7 +17,10 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE
 )
-use_cache <- TRUE
+vignette_cache_dir <- file.path(dirname(knitr::current_input(dir = TRUE)), "cache")
+if (!dir.exists(vignette_cache_dir)) {
+  stop("Could not locate vignette cache directory: ", vignette_cache_dir)
+}
 ```
 
 ## What pmsims does
@@ -55,6 +63,43 @@ lists the key inputs.
 ```{=html}
 <style>
 /* Compact, readable argument table */
+.arg-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px 0;
+  flex-wrap: wrap;
+}
+.arg-filter__label {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.arg-filter__tabs {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.arg-filter__tab {
+  appearance: none;
+  border: 1px solid #d8d8e0;
+  background: #fff;
+  color: #444;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.92rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.arg-filter__tab:hover {
+  border-color: #bfc6d4;
+  background: #f7f9fc;
+}
+.arg-filter__tab.is-active {
+  background: #1f4b99;
+  border-color: #1f4b99;
+  color: #fff;
+}
 .arg-table {
   width: 100%;
   border-collapse: collapse;
@@ -95,6 +140,21 @@ lists the key inputs.
 }
 </style>
 
+<div class="arg-filter">
+  <div class="arg-filter__label">Select wrapper</div>
+  <div class="arg-filter__tabs" role="tablist" aria-label="Select outcome type">
+    <button class="arg-filter__tab is-active" type="button" data-outcome="binary" role="tab" aria-selected="true">
+      Binary
+    </button>
+    <button class="arg-filter__tab" type="button" data-outcome="continuous" role="tab" aria-selected="false">
+      Continuous
+    </button>
+    <button class="arg-filter__tab" type="button" data-outcome="survival" role="tab" aria-selected="false">
+      Survival
+    </button>
+  </div>
+</div>
+
 <table class="arg-table">
   <thead>
     <tr>
@@ -104,7 +164,7 @@ lists the key inputs.
   </thead>
   <tbody>
 
-    <tr>
+    <tr class="arg-row" data-applies="all">
       <td><strong><code>signal_parameters</code></strong></td>
       <td>
         <em>(int)</em> Number of <strong>true signal</strong> predictors associated with the outcome.
@@ -116,7 +176,7 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="all">
       <td><code>noise_parameters</code></td>
       <td>
         <em>(int)</em> Number of <strong>noise</strong> predictors unrelated to the outcome.
@@ -127,7 +187,7 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="all">
       <td><code>predictor_type</code></td>
       <td>
         <em>(chr)</em> Type of simulated predictors (<code>"continuous"</code> or <code>"binary"</code>).
@@ -138,7 +198,7 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="all">
       <td><code>binary_predictor_prevalence</code></td>
       <td>
         <em>(num 0–1)</em> Prevalence for binary predictors (used only if <code>predictor_type = "binary"</code>).
@@ -149,7 +209,7 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="binary">
       <td><strong><code>outcome_prevalence</code></strong></td>
       <td>
         <em>(num 0–1)</em> Target prevalence of the binary outcome.
@@ -161,10 +221,11 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
-      <td><strong><code>large_sample_cstatistic</code></strong></td>
+    <tr class="arg-row" data-applies="binary">
+      <td><strong><code>maximum_achievable_cstatistic</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Expected <strong>C-statistic</strong> for a very large training sample.
+        <em>(num 0–1)</em> Maximum achievable <strong>C-statistic</strong> with effectively unlimited data.
+        This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: binary only</span>
           <span class="badge badge--default">Default: —</span>
@@ -173,10 +234,11 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
-      <td><strong><code>large_sample_rsquared</code></strong></td>
+    <tr class="arg-row" data-applies="continuous">
+      <td><strong><code>maximum_achievable_rsquared</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Expected R<sup>2</sup> for a very large training sample.
+        <em>(num 0–1)</em> Maximum achievable R<sup>2</sup> with effectively unlimited data.
+        This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: continuous only</span>
           <span class="badge badge--default">Default: —</span>
@@ -185,10 +247,11 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
-      <td><strong><code>large_sample_cindex</code></strong></td>
+    <tr class="arg-row" data-applies="survival">
+      <td><strong><code>maximum_achievable_cindex</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Expected <strong>concordance index</strong> for a very large training sample.
+        <em>(num 0–1)</em> Maximum achievable <strong>concordance index</strong> with effectively unlimited data.
+        This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: survival only</span>
           <span class="badge badge--default">Default: —</span>
@@ -197,7 +260,31 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="survival">
+      <td><code>baseline_hazard</code></td>
+      <td>
+        <em>(num &gt; 0)</em> Baseline hazard used by the survival data-generating mechanism.
+        Larger values imply shorter event times, all else equal.
+        <div class="meta">
+          <span class="badge badge--scope">Applies: survival only</span>
+          <span class="badge badge--default">Default: <code>1</code></span>
+        </div>
+      </td>
+    </tr>
+
+    <tr class="arg-row" data-applies="survival">
+      <td><strong><code>censoring_rate</code></strong></td>
+      <td>
+        <em>(num 0–1)</em> Proportion of individuals expected to be censored in the simulated survival datasets.
+        <div class="meta">
+          <span class="badge badge--scope">Applies: survival only</span>
+          <span class="badge badge--default">Default: —</span>
+          <span class="badge badge--req">Required</span>
+        </div>
+      </td>
+    </tr>
+
+    <tr class="arg-row" data-applies="all">
       <td><code>model</code></td>
       <td>
         <em>(chr)</em> Model used for fitting (e.g. logistic, linear, or Cox).
@@ -208,7 +295,7 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="all">
       <td><code>metric</code></td>
       <td>
         <em>(chr)</em> <strong>Performance metric</strong> used to estimate the minimum required sample size (e.g. calibration slope, R<sup>2</sup>, C-statistic).
@@ -219,10 +306,11 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
-      <td><strong><code>minimum_acceptable_performance</code></strong></td>
+    <tr class="arg-row" data-applies="all">
+      <td><strong><code>target_performance</code></strong></td>
       <td>
-        <em>(num)</em> <strong>Minimum acceptable performance</strong> in the units of the chosen metric (e.g. calibration slope ≥ 0.9).
+        <em>(num)</em> <strong>Minimum acceptable performance</strong> in the units of the chosen metric (e.g. calibration slope ≥ 0.9),
+        used as the threshold for selecting the required sample size.
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: —</span>
@@ -231,7 +319,7 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="all">
       <td><strong><code>n_reps_total</code></strong></td>
       <td>
         <em>(int)</em> Total number of simulation replications.
@@ -243,7 +331,7 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="all">
       <td><code>mean_or_assurance</code></td>
       <td>
         <em>(chr)</em> Criterion for summarising results; <code>"assurance"</code> recommended.
@@ -256,13 +344,54 @@ lists the key inputs.
 
   </tbody>
 </table>
+
+<script>
+(function() {
+  function applyOutcomeFilter(value) {
+    document.querySelectorAll(".arg-row").forEach(function(row) {
+      var applies = row.getAttribute("data-applies");
+      row.hidden = !(applies === "all" || applies === value);
+    });
+  }
+
+  function setActiveTab(activeTab) {
+    document.querySelectorAll(".arg-filter__tab").forEach(function(tab) {
+      var isActive = tab === activeTab;
+      tab.classList.toggle("is-active", isActive);
+      tab.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+  }
+
+  function initOutcomeFilter() {
+    var tabs = document.querySelectorAll(".arg-filter__tab");
+    if (!tabs.length) return;
+
+    tabs.forEach(function(tab) {
+      tab.addEventListener("click", function() {
+        setActiveTab(tab);
+        applyOutcomeFilter(tab.getAttribute("data-outcome"));
+      });
+    });
+
+    setActiveTab(tabs[0]);
+    applyOutcomeFilter(tabs[0].getAttribute("data-outcome"));
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initOutcomeFilter);
+  } else {
+    initOutcomeFilter();
+  }
+})();
+</script>
 ```
 
 > Notes:
 >
-> - The engine automatically tunes the data generator so the
->   chosen model reaches the specified **large‑sample performance**
->   (C‑statistic or $R^2$) on very large samples.
+> - `maximum_achievable_*` represents the best plausible performance with
+>   effectively unlimited data and calibrates the data generator.
+> - `target_performance` is the minimum acceptable performance threshold used
+>   to determine the required sample size.
 > - For reproducibility, set a random seed (`set.seed()`).
 
 ## Installation
@@ -288,10 +417,10 @@ binary_example <- simulate_binary(
   predictor_type = "continuous",
   binary_predictor_prevalence = NULL,
   outcome_prevalence = 0.30,
-  large_sample_cstatistic = 0.80,
+  maximum_achievable_cstatistic = 0.80,
   model = "glm",
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.85,
+  target_performance = 0.85,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )
@@ -301,26 +430,7 @@ binary_example
 
 ```{r Run binary}
 #| echo: false
-if (use_cache) {
-  binary_example <- readRDS(".cache/binary.rds")
-} else {
-  set.seed(123)
-  binary_example <- simulate_binary(
-    signal_parameters = 20,
-    noise_parameters  = 0,
-    predictor_type = "continuous",
-    binary_predictor_prevalence = NULL,
-    outcome_prevalence = 0.30,
-    large_sample_cstatistic = 0.80,
-    model = "glm",
-    metric = "calibration_slope",
-    minimum_acceptable_performance = 0.85,
-    n_reps_total = 1000,
-    mean_or_assurance = "assurance"
-  )
-  saveRDS(binary_example, file = ".cache/binary.rds")
-}
-
+binary_example <- readRDS(file.path(vignette_cache_dir, "binary.rds"))
 print(binary_example)
 ```
 
@@ -340,10 +450,10 @@ continuous_example <- simulate_continuous(
   signal_parameters = 15,
   noise_parameters = 0,
   predictor_type = "continuous",
-  large_sample_rsquared = 0.50,
+  maximum_achievable_rsquared = 0.50,
   model = "lm",
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.90,
+  target_performance = 0.90,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )
@@ -353,24 +463,7 @@ continuous_example
 
 ```{r}
 #| echo: false
-if (use_cache) {
-  continuous_example <- readRDS(".cache/continuous.rds")
-} else {
-  set.seed(123)
-  continuous_example <- simulate_continuous(
-    signal_parameters = 15,
-    noise_parameters = 0,
-    predictor_type = "continuous",
-    large_sample_rsquared = 0.50,
-    model = "lm",
-    metric = "calibration_slope",
-    minimum_acceptable_performance = 0.90,
-    n_reps_total = 1000,
-    mean_or_assurance = "assurance"
-  )
-  saveRDS(continuous_example, file = ".cache/continuous.rds")
-}
-
+continuous_example <- readRDS(file.path(vignette_cache_dir, "continuous.rds"))
 print(continuous_example)
 ```
 
