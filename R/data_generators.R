@@ -12,57 +12,52 @@
 #
 # Core parameters (all apply uniformly across every complexity setting):
 #
-#   n_signal_parameters          : number of signal predictors
-#   noise_parameters           : number of noise predictors
-#   beta_signal       : base effect size for signal predictors
-#   predictor_type    : "continuous" (default) or "binary".
-#                       When "binary", ALL predictors are Bernoulli and
-#                       binary_prevalence must be supplied; distribution is
-#                       ignored.
-#                       When "continuous", distribution governs the family.
-#   binary_prevalence : Bernoulli probability for ALL predictors.
-#                       Required (and used) when predictor_type = "binary".
-#                       Ignored when predictor_type = "continuous".
-#                       Default = 0 (no binary predictors).
-#   correlation       : common pairwise correlation (default = 0.3; 0 = none)
-#   distribution      : single global distribution family for ALL continuous
-#                       predictors (default = "normal"; ignored when
-#                       predictor_type = "binary"). Supported families:
-#                         "normal", "uniform", "exponential",
-#                         "lognormal", "t", "laplace".
-#                       For complexity 4 the Friedman canonical default is
-#                       "uniform", applied automatically when distribution is
-#                       left at "normal".
+#   n_signal_parameters : number of signal predictors
+#   noise_parameters    : number of noise predictors
+#   beta_signal         : base effect size for signal predictors (overall scale)
+#   predictor_type      : "continuous" (default) or "binary".
+#                         When "binary", ALL predictors are Bernoulli and
+#                         binary_prevalence must be supplied; distribution is
+#                         ignored. When "continuous", distribution governs the
+#                         family.
+#   binary_prevalence   : Bernoulli probability for ALL predictors.
+#                         Required (and used) when predictor_type = "binary".
+#                         Ignored when predictor_type = "continuous".
+#                         Default = 0 (no binary predictors).
+#   correlation         : common pairwise correlation (default = 0.3; 0 = none)
+#   distribution        : single global distribution family for ALL continuous
+#                         predictors (default = "normal"; ignored when
+#                         predictor_type = "binary"). Supported families:
+#                           "normal", "uniform", "exponential",
+#                           "lognormal", "t", "laplace".
+#                         For complexity 4 the Friedman canonical default is
+#                         "uniform", applied automatically when distribution is
+#                         left at "normal".
 #
-# Complexity (two dimensions):
+# Complexity and nonlinear strength:
 #
-#   complexity        : integer 1-4, controls the functional form of lp
-#                         1 = Linear
-#                         2 = Quadratic
-#                         3 = Quadratic + Interaction
-#                         4 = Friedman (1991)
+#   complexity          : integer 1-4, controls the functional form of lp
+#                           1 = Linear
+#                           2 = Quadratic
+#                           3 = Quadratic + Interaction
+#                           4 = Friedman (1991)
 #
-#   predictor_strength: global linear-nonlinear weight (w). One of:
-#                         "strong"   -> w = 1.0
-#                         "moderate" -> w = 0.5
-#                         "weak"     -> w = 0.3
-#                       Default per complexity:
-#                         C1 -> "strong"   (w = 1.0)
-#                         C2 -> "moderate" (w = 0.5)
-#                         C3 -> "moderate" (w = 0.5)
-#                         C4 -> "strong"   (w = 1.0)
-#                       The user may override the default by supplying this
-#                       argument explicitly.
-#
-#                       Weight application differs by term type (C2 and C3):
-#                         Linear terms    : beta_signal * w          (full weight)
-#                         Quadratic terms : beta_signal * w / S      (w spread over S signal predictors)
-#                         Interaction terms (C3 only):
-#                                           beta_signal * w / C(S,2) (w spread over all C(S,2) pairs)
-#                       This keeps the total nonlinear contribution bounded
-#                       relative to the linear contribution regardless of S,
-#                       making the simulation realistic when S is large.
-#                       C1 and C4 are unaffected; they always use beta_signal * w.
+#   nonlinear_strength  : for C2/C3 only, the FRACTION of signal variance carried
+#                         by the nonlinear (linearly-inaccessible) component, in
+#                         [0, 1). Defaults per complexity:
+#                           C1 -> 0.0   (pure linear)
+#                           C2 -> 0.2   (20% nonlinear)
+#                           C3 -> 0.3   (30% nonlinear)
+#                           C4 -> 0.0   (canonical Friedman; argument ignored)
+#                         Supplied as a variance fraction f and converted
+#                         internally to the nonlinear-to-linear SD ratio
+#                           kappa = sqrt(f / (1 - f))
+#                         so the realised nonlinear variance fraction equals f
+#                         exactly (the linear and nonlinear pieces are
+#                         orthogonal by construction). Larger f hides more of the
+#                         signal from a linear-in-X model, making C2/C3 harder for
+#                         AUC / C-index and requiring more sample size. C1 and C4
+#                         ignore this argument.
 #
 # Supported distribution families (continuous predictors):
 #   "normal"      : mean = 0, sd = 1
@@ -82,14 +77,6 @@
 # Complexity-level defaults
 # =============================================================================
 
-# Default predictor_strength per complexity level
-COMPLEXITY_STRENGTH_DEFAULTS <- c(
-  "1" = "strong",    # C1 Linear              : w = 1.0
-  "2" = "strong",   # C2 Quadratic             : w = 1.0
-  "3" = "strong",   # C3 Quad + Interaction    : w = 1.0
-  "4" = "strong"     # C4 Friedman            : w = 1.0
-)
-
 # Default distribution per complexity level (applies when distribution = "normal"
 # and binary_prevalence = 0)
 COMPLEXITY_DIST_DEFAULTS <- c(
@@ -99,11 +86,18 @@ COMPLEXITY_DIST_DEFAULTS <- c(
   "4" = "uniform"   # Friedman canonical
 )
 
-# Strength-weight lookup
-STRENGTH_WEIGHTS <- c(
-  strong   = 1.0,
-  moderate = 0.5,
-  weak     = 0.3
+# Nonlinear strength per complexity for C2/C3: the FRACTION of signal variance
+# carried by the nonlinear (linearly-inaccessible) component. 0 = pure linear.
+# Internally converted to the nonlinear-to-linear SD ratio kappa = sqrt(f/(1-f))
+# so the realised nonlinear variance fraction equals f exactly. Larger f hides
+# more signal from a linear-in-X model => harder for AUC / C-index and more
+# sample size required. C1 and C4 ignore this (C1 is pure linear; C4 uses the
+# canonical Friedman form).
+COMPLEXITY_NONLINEAR_STRENGTH_DEFAULTS <- c(
+  "1" = 0.0,
+  "2" = 0.2,
+  "3" = 0.3,
+  "4" = 0.0
 )
 
 # =============================================================================
@@ -144,56 +138,35 @@ default_data_generators <- function(opts) {
 #' Simulate continuous outcome data
 #'
 #' @param n                  Sample size.
-#' @param n_signal_parameters           Number of signal predictors. These occupy the
+#' @param n_signal_parameters Number of signal predictors. These occupy the
 #'   first \code{n_signal_parameters} columns (\code{x1} ... \code{x_S}).
-#' @param noise_parameters            Number of noise predictors (zero coefficient).
-#' @param beta_signal        Base effect size. Effective beta per predictor =
-#'   \code{beta_signal * w}, where \code{w} is the strength weight.
+#' @param noise_parameters    Number of noise predictors (zero coefficient).
+#' @param beta_signal        Base effect size / overall scale of the signal.
 #' @param complexity         Integer 1-4 specifying the functional form of the
-#'   linear predictor and (by default) the predictor strength weight:
+#'   linear predictor:
 #'   \enumerate{
-#'     \item \strong{Linear} — \eqn{lp = \alpha + w\beta\sum_j x_j}.
-#'       Default strength: \code{"strong"} (w = 1).
-#'     \item \strong{Quadratic} — linear + quadratic terms on all signal
-#'       predictors. Default strength: \code{"moderate"} (w = 0.5).
-#'     \item \strong{Quadratic + Interaction} — C2 terms + pairwise products
-#'       across all signal predictors. Default strength: \code{"moderate"}
-#'       (w = 0.5).
-#'     \item \strong{Friedman} — canonical Friedman (1991) benchmark scaled by
-#'       \code{w * beta_signal}, extended beyond 5 signal predictors.
-#'       Default strength: \code{"strong"} (w = 1).
+#'     \item \strong{Linear} — \eqn{lp = \alpha + \beta\sum_j x_j}.
+#'     \item \strong{Quadratic} — linear + a quadratic nonlinear component.
+#'     \item \strong{Quadratic + Interaction} — linear + quadratic and pairwise
+#'       interaction nonlinear component.
+#'     \item \strong{Friedman} — canonical Friedman (1991) benchmark.
 #'   }
-#' @param predictor_strength Global linear-nonlinear strength weight applied
-#'   uniformly to all signal predictors. One of \code{"strong"} (w = 1.0),
-#'   \code{"moderate"} (w = 0.5), or \code{"weak"} (w = 0.3).
-#'   When \code{NULL} (default), the complexity-level default is used:
-#'   C1 = strong, C2 = moderate, C3 = moderate, C4 = strong.
+#' @param nonlinear_strength Fraction of signal variance carried by the
+#'   nonlinear component (C2/C3 only), in [0, 1). When \code{NULL} (default), the
+#'   complexity-level default is used: C1 = 0, C2 = 0.2, C3 = 0.3, C4 = 0.
+#'   Ignored for C1 (pure linear) and C4 (canonical Friedman).
 #' @param predictor_type     Type of predictors: \code{"continuous"} (default)
 #'   or \code{"binary"}. When \code{"binary"}, all predictors are drawn as
 #'   Bernoulli(\code{binary_prevalence}); \code{binary_prevalence} must be in
-#'   (0, 1] and \code{distribution} is ignored. When \code{"continuous"},
-#'   \code{distribution} governs the family for all predictors.
+#'   (0, 1] and \code{distribution} is ignored.
 #' @param binary_prevalence  Scalar in (0, 1]. Bernoulli probability applied to
-#'   all predictors when \code{predictor_type = "binary"}. Required (and used)
-#'   only when \code{predictor_type = "binary"}; ignored otherwise. Default = 0.
+#'   all predictors when \code{predictor_type = "binary"}. Default = 0.
 #' @param correlation        Scalar in [-1, 1]. Common pairwise correlation
-#'   applied to all predictors via a Gaussian copula (equicorrelation,
-#'   rank-based Cholesky). Default = 0.3. Set to 0 for independence. The
-#'   copula step preserves each predictor's marginal distribution exactly.
-#' @param distribution       Single character string naming the distribution
-#'   family for \emph{all} continuous predictors
-#'   (\code{predictor_type = "continuous"} only). Default = \code{"normal"}.
-#'   For complexity 4, if left at \code{"normal"} the framework automatically
-#'   uses \code{"uniform"} (Friedman canonical). Ignored when
-#'   \code{predictor_type = "binary"}. Supported families:
-#'   \itemize{
-#'     \item \code{"normal"}      — mean = 0, sd = 1
-#'     \item \code{"uniform"}     — min = 0, max = 1
-#'     \item \code{"exponential"} — rate = 1
-#'     \item \code{"lognormal"}   — meanlog = 0, sdlog = 1
-#'     \item \code{"t"}           — df = 5
-#'     \item \code{"laplace"}     — location = 0, scale = 1
-#'   }
+#'   applied via a Gaussian copula (equicorrelation, rank-based Cholesky).
+#'   Default = 0.3. Set to 0 for independence.
+#' @param distribution       Distribution family for \emph{all} continuous
+#'   predictors. Default = \code{"normal"}. For complexity 4, if left at
+#'   \code{"normal"} the framework uses \code{"uniform"} (Friedman canonical).
 #' @param intercept          Scalar intercept added to the linear predictor.
 #'   Default = 0.
 #'
@@ -201,11 +174,7 @@ default_data_generators <- function(opts) {
 #'
 #' @references
 #' Friedman, J. H. (1991). Multivariate adaptive regression splines.
-#'   \emph{The Annals of Statistics}, 19(1), 1-67.
-#'   \doi{10.1214/aos/1176347963}
-#'
-#' Breiman, L. (1996). Bagging predictors.
-#'   \emph{Machine Learning}, 24(2), 123-140.
+#'   \emph{The Annals of Statistics}, 19(1), 1-67. \doi{10.1214/aos/1176347963}
 #'
 #' @keywords internal
 generate_continuous_data <- function(
@@ -214,20 +183,19 @@ generate_continuous_data <- function(
     noise_parameters,
     beta_signal,
     complexity         = 1,
-    predictor_strength = NULL,
+    nonlinear_strength = NULL,
     predictor_type     = "continuous",
     binary_prevalence  = 0,
     correlation        = 0.3,
     distribution       = "normal",
     intercept          = 0
 ) {
-  predictor_strength <- resolve_strength(predictor_strength, complexity)
   X  <- generate_predictors(n, n_signal_parameters, noise_parameters,
                             complexity, predictor_type,
                             binary_prevalence, correlation, distribution)
   lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters,
                                   intercept, beta_signal,
-                                  complexity, predictor_strength)
+                                  complexity, nonlinear_strength)
   y  <- stats::rnorm(n, lp, 1)
   return(as.data.frame(cbind(y, X)))
 }
@@ -247,7 +215,7 @@ generate_binary_data <- function(
     noise_parameters,
     beta_signal,
     complexity         = 1,
-    predictor_strength = NULL,
+    nonlinear_strength = NULL,
     predictor_type     = "continuous",
     binary_prevalence  = 0,
     correlation        = 0.3,
@@ -255,13 +223,12 @@ generate_binary_data <- function(
     mu_lp              = 0,
     baseline_prob      = 0.5
 ) {
-  predictor_strength <- resolve_strength(predictor_strength, complexity)
   X  <- generate_predictors(n, n_signal_parameters, noise_parameters,
                             complexity, predictor_type,
                             binary_prevalence, correlation, distribution)
   lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters,
                                   intercept = mu_lp, beta_signal,
-                                  complexity, predictor_strength)
+                                  complexity, nonlinear_strength)
   y  <- stats::rbinom(n, 1, stats::plogis(lp))
   return(as.data.frame(cbind(y, X)))
 }
@@ -283,20 +250,19 @@ generate_survival_data <- function(
     baseline_hazard,
     censoring_rate,
     complexity         = 1,
-    predictor_strength = NULL,
+    nonlinear_strength = NULL,
     predictor_type     = "continuous",
     binary_prevalence  = 0,
     correlation        = 0.3,
     distribution       = "normal",
     intercept          = 0
 ) {
-  predictor_strength <- resolve_strength(predictor_strength, complexity)
   X  <- generate_predictors(n, n_signal_parameters, noise_parameters,
                             complexity, predictor_type,
                             binary_prevalence, correlation, distribution)
   lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters,
                                   intercept, beta_signal,
-                                  complexity, predictor_strength)
+                                  complexity, nonlinear_strength)
   
   event_time    <- stats::rexp(n, rate = baseline_hazard * exp(lp))
   T_observe     <- stats::quantile(event_time, 1 - censoring_rate)
@@ -326,25 +292,24 @@ update_arguments <- function(fn, opts) {
 }
 
 # -----------------------------------------------------------------------------
-# resolve_strength
+# resolve_nonlinear_strength
 #
-# Returns the predictor_strength keyword to use, applying the complexity-level
-# default when the user has not supplied an explicit value (NULL).
-# Also validates the keyword against STRENGTH_WEIGHTS.
+# Returns the nonlinear-strength fraction to use, applying the complexity-level
+# default when the user has not supplied an explicit value (NULL), and
+# validating that it lies in [0, 1).
 # -----------------------------------------------------------------------------
-resolve_strength <- function(predictor_strength, complexity) {
-  if (is.null(predictor_strength)) {
-    predictor_strength <- COMPLEXITY_STRENGTH_DEFAULTS[[as.character(complexity)]]
+resolve_nonlinear_strength <- function(nonlinear_strength, complexity) {
+  if (is.null(nonlinear_strength)) {
+    nonlinear_strength <-
+      COMPLEXITY_NONLINEAR_STRENGTH_DEFAULTS[[as.character(complexity)]]
   }
-  
-  if (!predictor_strength %in% names(STRENGTH_WEIGHTS))
-    stop(sprintf(
-      'predictor_strength must be one of: "%s". Got: "%s".',
-      paste(names(STRENGTH_WEIGHTS), collapse = '", "'),
-      predictor_strength
-    ))
-  
-  return(predictor_strength)
+  if (!is.numeric(nonlinear_strength) || length(nonlinear_strength) != 1 ||
+      !is.finite(nonlinear_strength) ||
+      nonlinear_strength < 0 || nonlinear_strength >= 1) {
+    stop("nonlinear_strength must be a single number in [0, 1). Got: ",
+         format(nonlinear_strength))
+  }
+  return(nonlinear_strength)
 }
 
 # -----------------------------------------------------------------------------
@@ -467,8 +432,8 @@ apply_correlation <- function(X, rho) {
 #' optionally applies an equicorrelation structure via a Gaussian copula.
 #'
 #' @param n                Sample size.
-#' @param n_signal_parameters         Number of signal predictors.
-#' @param noise_parameters          Number of noise predictors.
+#' @param n_signal_parameters Number of signal predictors.
+#' @param noise_parameters  Number of noise predictors.
 #' @param complexity       Integer 1-4 (used to resolve the C4 distribution
 #'   default).
 #' @param predictor_type   \code{"continuous"} (default) or \code{"binary"}.
@@ -530,52 +495,65 @@ generate_predictors <- function(n,
 #' Construct the linear predictor
 #'
 #' @param X                  n x p predictor matrix (colnames: x1, x2, ...).
-#' @param n_signal_parameters           Signal predictor count.
-#' @param noise_parameters            Noise predictor count.
-#' @param intercept          Scalar intercept.
-#' @param beta_signal        Base effect size.
+#' @param n_signal_parameters Signal predictor count.
+#' @param noise_parameters    Noise predictor count.
+#' @param intercept          Scalar intercept (log-odds intercept for binary,
+#'   log-hazard intercept for survival, mean intercept for continuous).
+#' @param beta_signal        Base effect size (overall scale). The tuning
+#'   routines scale this to hit the target oracle metric.
 #' @param complexity         Integer 1-4.
-#' @param predictor_strength Resolved strength keyword ("strong", "moderate",
-#'   or "weak"); must not be NULL at this point.
+#' @param nonlinear_strength Fraction of signal variance carried by the
+#'   nonlinear component (C2/C3 only), in [0, 1). \code{NULL} uses the
+#'   complexity-level default in \code{COMPLEXITY_NONLINEAR_STRENGTH_DEFAULTS}.
 #'
 #' @details
-#' Noise predictors always contribute zero to the linear predictor.
-#' The effective beta depends on the term type and complexity level:
+#' \strong{Why variance fraction rather than an R^2 split.}
+#' For a continuous outcome whose target is R^2, splitting the signal by
+#' latent-scale variance is exact: R^2 is a variance ratio, so a correctly
+#' specified linear model recovers exactly the linear share. For binary (AUC)
+#' and survival (Harrell's C) outcomes that logic is only approximate, because
+#' AUC and C are rank/link-mediated. What carries over is the key property: the
+#' nonlinear component is built to be \emph{inaccessible to any linear-in-X
+#' model}, so the discrimination it carries genuinely requires a nonlinear
+#' learner and more sample size.
 #'
-#' \strong{Complexity 1 — Linear} (unchanged):
-#' \deqn{lp = \alpha + w\beta \sum_{j=1}^{S} x_j}
-#' Full weight \eqn{w} applies to every linear term.
+#' \strong{Construction.} The linear predictor is
+#' \deqn{lp = \alpha + \beta\,\Bigl(\,\underbrace{\textstyle\sum_j x_j}_{L}
+#'        \; + \; \kappa\,\mathrm{sd}(L)\, \underbrace{\tilde N}_{N\,\mathrm{std}} \Bigr)}
+#' where \eqn{L = \sum_j x_j} is the linear score (identical to complexity 1)
+#' and \eqn{\tilde N} is the nonlinear aggregate (\eqn{\sum_j x_j^2} for C2;
+#' plus \eqn{\sum_{j<k} x_j x_k} for C3) \emph{residualised against the full
+#' design} \eqn{[1, x_1, \ldots, x_S]} and standardised to unit SD. Because
+#' \eqn{L} and \eqn{\tilde N} are orthogonal, the nonlinear variance fraction is
+#' \deqn{f = \frac{\kappa^2}{1 + \kappa^2},\qquad\text{equivalently}\qquad
+#'       \kappa = \sqrt{\frac{f}{1 - f}}.}
+#' The user supplies \code{nonlinear_strength} = \eqn{f} (e.g. 0.2 = 20% of the
+#' signal variance is nonlinear) and \eqn{\kappa} is computed internally so the
+#' realised fraction equals \eqn{f} exactly.
 #'
-#' \strong{Complexity 2 — Quadratic}:
-#' \deqn{lp = \alpha
-#'   + w\beta \sum_{j=1}^{S} x_j
-#'   + \frac{w\beta}{S} \sum_{j=1}^{S} x_j^2}
-#' Linear terms retain the full weight \eqn{w}. The quadratic weight
-#' \eqn{w/S} distributes \eqn{w} evenly across the \eqn{S} quadratic terms so
-#' the total quadratic contribution equals \eqn{w\beta \cdot \overline{x^2}},
-#' matching the scale of the linear contribution for large \eqn{S}.
+#' Because the bracket is fixed given X, \code{lp} is linear in
+#' \code{beta_signal}, so the tuning routines (which scale \code{beta_signal} to
+#' hit the target oracle AUC / C-index) work unchanged.
 #'
-#' \strong{Complexity 3 — Quadratic + Pairwise Interactions}:
-#' \deqn{lp = \alpha
-#'   + w\beta \sum_{j=1}^{S} x_j
-#'   + \frac{w\beta}{S} \sum_{j=1}^{S} x_j^2
-#'   + \frac{w\beta}{C(S,2)} \sum_{j < k}^{S} x_j x_k}
-#' where \eqn{C(S,2) = S(S-1)/2}. The interaction weight \eqn{w/C(S,2)}
-#' distributes \eqn{w} evenly across all pairwise products, preventing
-#' the interaction contribution from inflating with \eqn{S}.
+#' \strong{Calibrating difficulty.} \eqn{f} sets the difficulty order but not, by
+#' itself, a precise AUC/C-index gap: the metric reduction a given \eqn{f}
+#' produces also depends on the tuned scale, the prevalence/censoring, and the
+#' predictor family. To target a specific linear-accessible metric, calibrate
+#' \eqn{f} per complexity by simulation (raise it until a fitted GLM/Cox on the
+#' linear terms reaches the desired value while \code{beta_signal} keeps the
+#' oracle metric on target).
 #'
-#' \strong{Complexity 4 — Friedman (1991)} (unchanged):
-#' \deqn{lp = \alpha
-#'   + w\beta \bigl[10\sin(\pi x_1 x_2) + 20(x_3-0.5)^2 + 10x_4 + 5x_5\bigr]}
-#' For each signal predictor k \eqn{\ge} 6:
-#' \deqn{+ w\beta \bigl[\sin(\pi x_k x_{k-1}) + (x_k-0.5)^2\bigr]}
+#' \strong{Complexity 1 — Linear:} \eqn{lp = \alpha + \beta \sum_j x_j}.
+#'
+#' \strong{Complexity 4 — Friedman (1991)} (canonical, \code{nonlinear_strength}
+#' ignored): \eqn{lp = \alpha + \beta[10\sin(\pi x_1 x_2) + 20(x_3-0.5)^2
+#' + 10x_4 + 5x_5]}. Friedman contains linear-accessible terms
+#' (\eqn{10x_4 + 5x_5}); to place C4 on the same controlled ladder as C2/C3,
+#' residualise the Friedman vector against Xs and apply the same kappa split.
 #'
 #' @references
 #' Friedman, J. H. (1991). Multivariate adaptive regression splines.
 #'   \emph{The Annals of Statistics}, 19(1), 1-67.
-#'
-#' Breiman, L. (1996). Bagging predictors.
-#'   \emph{Machine Learning}, 24(2), 123-140.
 #'
 #' @return Numeric vector of length n.
 #' @keywords internal
@@ -585,124 +563,77 @@ generate_linear_predictor <- function(X,
                                       intercept,
                                       beta_signal,
                                       complexity,
-                                      predictor_strength) {
+                                      nonlinear_strength = NULL) {
   
   n  <- nrow(X)
   lp <- rep(intercept, n)
   
   if (n_signal_parameters == 0) return(lp)
   
-  # Strength weight (from your original setup)
-  w_strength <- STRENGTH_WEIGHTS[[predictor_strength]]
+  eff_beta <- beta_signal               # overall signal scale (no strength weight)
   
-  # Nonlinear variance fraction w (you can change these defaults)
-  w_nonlinear <- switch(as.character(complexity),
-                        "1" = 0.00,
-                        "2" = 0.20,     # 20% of signal variance is nonlinear
-                        "3" = 0.25,     # 25% of signal variance is nonlinear
-                        "4" = 1.00,     # Friedman is fully nonlinear
-                        0.00)
+  Xs  <- X[, seq_len(n_signal_parameters), drop = FALSE]
+  S   <- n_signal_parameters
+  lin <- rowSums(Xs)
   
-  eff_beta <- beta_signal * w_strength
-  
-  Xs <- X[, seq_len(n_signal_parameters), drop = FALSE]
-  
-  # ===================================================================
-  # Complexity 1: Pure linear (unchanged)
-  # ===================================================================
+  # ---- Complexity 1: pure linear (the f -> 0 limit) -------------------------
   if (complexity == 1) {
-    lp <- lp + eff_beta * rowSums(Xs)
-    
-    # ===================================================================
-    # Complexity 2: Linear + Quadratic  (Corrected variance split)
-    # ===================================================================
-  } else if (complexity == 2) {
-    S <- n_signal_parameters
-    
-    # Linear part: explains exactly (1 - w) of the *signal* variance
-    linear_contrib <- sqrt(1 - w_nonlinear) * eff_beta * rowSums(Xs)
-    
-    # Quadratic raw
-    quad_raw <- rowSums(Xs^2)
-    
-    # Orthogonalize quadratic w.r.t. the linear direction
-    lin_sum <- rowSums(Xs)
-    proj_coeff <- sum(quad_raw * lin_sum) / sum(lin_sum^2)
-    quad_ortho <- quad_raw - proj_coeff * lin_sum
-    
-    # Scale quadratic to contribute exactly w * signal variance
-    # We normalize so that var(quad_scaled) ≈ w_nonlinear * var(linear_contrib) / (1 - w_nonlinear)
-    quad_scaled <- sqrt(w_nonlinear) * eff_beta * (quad_ortho / sd(quad_ortho) * sd(lin_sum))
-    
-    lp <- lp + linear_contrib + quad_scaled
-    
-    # ===================================================================
-    # Complexity 3: Linear + Quadratic + Pairwise Interactions (Corrected)
-    # ===================================================================
-  } else if (complexity == 3) {
-    S <- n_signal_parameters
-    if (S < 2) {
-      warning("Complexity 3 needs at least 2 signal parameters. Falling back to complexity 2.")
-      return(generate_linear_predictor(X, n_signal_parameters, noise_parameters, 
-                                       intercept, beta_signal, 2, predictor_strength))
-    }
-    
-    lin_sum <- rowSums(Xs)
-    
-    # Linear part: (1 - w) of signal variance
-    linear_contrib <- sqrt(1 - w_nonlinear) * eff_beta * lin_sum
-    
-    # Quadratic part (60% of nonlinear budget)
-    quad_raw <- rowSums(Xs^2)
-    proj_q <- sum(quad_raw * lin_sum) / sum(lin_sum^2)
-    quad_ortho <- quad_raw - proj_q * lin_sum
-    quad_scaled <- sqrt(w_nonlinear * 0.6) * eff_beta * 
-      (quad_ortho / sd(quad_ortho) * sd(lin_sum))
-    
-    # Interaction part (40% of nonlinear budget)
-    inter_raw <- numeric(n)
-    pairs <- utils::combn(S, 2)
-    for (k in seq_len(ncol(pairs))) {
-      j1 <- pairs[1, k]
-      j2 <- pairs[2, k]
-      inter_raw <- inter_raw + Xs[, j1] * Xs[, j2]
-    }
-    
-    # Orthogonalize interactions w.r.t. linear and quadratic
-    proj_lin <- sum(inter_raw * lin_sum) / sum(lin_sum^2)
-    proj_quad <- sum(inter_raw * quad_raw) / sum(quad_raw^2)
-    inter_ortho <- inter_raw - proj_lin * lin_sum - proj_quad * quad_raw
-    
-    inter_scaled <- sqrt(w_nonlinear * 0.4) * eff_beta * 
-      (inter_ortho / sd(inter_ortho) * sd(lin_sum))
-    
-    lp <- lp + linear_contrib + quad_scaled + inter_scaled
-    
-    # ===================================================================
-    # Complexity 4: Friedman (left as-is)
-    # ===================================================================
-  } else if (complexity == 4) {
-    # ... your original Friedman code unchanged ...
-    if (n_signal_parameters < 5) {
-      warning(sprintf("Complexity 4 requires >=5 signal predictors; only %d supplied.", 
-                      n_signal_parameters))
-    }
-    xcol <- function(k) if (k <= n_signal_parameters) Xs[,k] else rep(0, n)
-    
+    return(lp + eff_beta * lin)
+  }
+  
+  # ---- Complexity 4: canonical Friedman (1991); nonlinear_strength ignored --
+  if (complexity == 4) {
+    if (n_signal_parameters < 5)
+      warning(sprintf(
+        "Complexity 4 requires >=5 signal predictors; only %d supplied.",
+        n_signal_parameters))
+    xcol <- function(k) if (k <= S) Xs[, k] else rep(0, n)
     x1 <- xcol(1); x2 <- xcol(2); x3 <- xcol(3); x4 <- xcol(4); x5 <- xcol(5)
-    
-    if (n_signal_parameters >= 2) lp <- lp + eff_beta * 10 * sin(pi * x1 * x2)
-    if (n_signal_parameters >= 3) lp <- lp + eff_beta * 20 * (x3 - 0.5)^2
-    if (n_signal_parameters >= 4) lp <- lp + eff_beta * 10 * x4
-    if (n_signal_parameters >= 5) lp <- lp + eff_beta *  5 * x5
-    
-    if (n_signal_parameters >= 6) {
-      for (k in 6:n_signal_parameters) lp <- lp + 0 * xcol(k)
+    fr <- 10 * sin(pi * x1 * x2) + 20 * (x3 - 0.5)^2 + 10 * x4 + 5 * x5
+    return(lp + eff_beta * fr)
+  }
+  
+  # ---- Complexity 2 / 3: linear + inaccessible nonlinear component ----------
+  # Resolve the nonlinear variance fraction f and convert to the SD ratio kappa.
+  f     <- resolve_nonlinear_strength(nonlinear_strength, complexity)
+  kappa <- sqrt(f / (1 - f))            # f = kappa^2 / (1 + kappa^2)
+  
+  if (kappa == 0) {                     # f = 0 -> reduces to pure linear
+    return(lp + eff_beta * lin)
+  }
+  
+  if (complexity == 2) {
+    Nraw <- rowSums(Xs^2)
+  } else if (complexity == 3) {
+    if (S < 2) {
+      warning("Complexity 3 needs >= 2 signal predictors. Falling back to C2.")
+      return(generate_linear_predictor(X, n_signal_parameters, noise_parameters,
+                                       intercept, beta_signal, 2,
+                                       nonlinear_strength))
     }
-    
+    inter <- rowSums(vapply(
+      seq_len(S - 1),
+      function(j) Xs[, j] * rowSums(Xs[, (j + 1):S, drop = FALSE]),
+      numeric(n)
+    ))
+    Nraw <- rowSums(Xs^2) + inter
   } else {
     stop("complexity must be 1, 2, 3 or 4.")
   }
   
-  return(lp)
+  # Residualise the nonlinear aggregate against the FULL design [1, x1..xS] so
+  # that no linear-in-X learner can access it, then standardise to unit SD.
+  N_ortho <- residuals(stats::lm(Nraw ~ Xs))
+  sd_N    <- stats::sd(N_ortho)
+  if (!is.finite(sd_N) || sd_N <= 0)
+    stop("Nonlinear component is degenerate -- e.g. binary predictors under ",
+         "complexity 2/3, where x^2 = x collapses the quadratic term. Use ",
+         "continuous predictors for C2/C3 (or complexity 1 for binary ",
+         "predictors).")
+  N_std <- N_ortho / sd_N
+  
+  # lp = intercept + eff_beta * ( L + kappa * SD(L) * N_std )
+  # Linear part identical to C1; nonlinear variance fraction equals f exactly.
+  # Linear in beta_signal, so the oracle-metric tuning scales it unchanged.
+  lp + eff_beta * (lin + kappa * stats::sd(lin) * N_std)
 }
