@@ -73,7 +73,7 @@ default_models <- list(
     },
     rf = function(d) {
       require_optional_packages(
-        c("randomForest", "ranger"),
+        c("ranger"),
         "random-forest models"
       )
 
@@ -86,20 +86,20 @@ default_models <- list(
       
       #### new
 
-      ff <- NULL
-      invisible(
-        capture.output(
-          ff <- randomForest::tuneRF(x, y, trace = FALSE, plot = FALSE)
-        )
-      )
+      #ff <- NULL
+     # invisible(
+      #  capture.output(
+      #    ff <- randomForest::tuneRF(x, y, trace = FALSE, plot = FALSE)
+      #  )
+      #)
 
-      bestmtry <- data.frame(ff)
-      mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
+      #bestmtry <- data.frame(ff)
+      #mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
 
       ranger::ranger(
         x = x,
         y = y,
-        mtry = mtry_best,
+        mtry = max(1, floor(ncol(x) / 3)),
         probability = TRUE,
         num.trees = 300,
         num.threads = nthreads
@@ -162,7 +162,7 @@ default_models <- list(
     },
     rf = function(d) {
       require_optional_packages(
-        c("randomForest", "ranger"),
+        c("ranger"),
         "random-forest models"
       )
 
