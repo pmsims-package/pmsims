@@ -255,7 +255,7 @@ simulate_custom <- function(
   if (!is.null(output$history)) {
     results_list$history <- output$history
   }
-  #attr(results_list, "class") <- "pmsims"
+  attr(results_list, "class") <- "pmsims"
   return(results_list)
 }
 
