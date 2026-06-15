@@ -1,5 +1,5 @@
 # =============================================================================
-# Internal plumbing shared by simulate_binary(), simulate_continuous() and
+# Internal wrappers shared by simulate_binary(), simulate_continuous() and
 # simulate_survival().
 #
 # These helpers translate the user-facing `complexity` + `data_control`
@@ -338,7 +338,7 @@ simulate_binary <- function(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
   
-  metric_2 <- if (metric == "calib_slope") "auc" else "calib_slope"
+  metric_2 <- if (metric %in% c("csse","calib_slope")) "auc" else "calib_slope"
   
   test_n <- 30000
   metric_function_2 <- default_metric_generator(metric_2, data_function)
@@ -485,7 +485,7 @@ simulate_continuous <- function(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
   
-  metric_2 <- if (metric == "calib_slope") "r2" else "calib_slope"
+  metric_2 <- if (metric %in% c("csse","calib_slope")) "r2" else "calib_slope"
   
   metric_function_2 <- default_metric_generator(metric_2, data_function)
   
@@ -644,7 +644,7 @@ simulate_survival <- function(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
   
-  metric_2 <- if (metric == "calib_slope") "cindex" else "calib_slope"
+  metric_2 <- if (metric %in% c("csse","calib_slope")) "cindex" else "calib_slope"
   
   test_n <- 30000
   metric_function_2 <- default_metric_generator(metric_2, data_function)

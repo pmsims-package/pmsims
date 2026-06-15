@@ -1,37 +1,6 @@
 # =============================================================================
 # Tuning for a survival outcome model
 #
-# What was wrong (recovery failed at every complexity, including C1)
-# -----------------------------------------------------------------
-# 1. INVERTED CONCORDANCE. The objective used
-#        survival::concordance(Surv(time, event) ~ lp)$concordance
-#    whose default convention treats a LARGER covariate as predicting LONGER
-#    survival. Here lp is a log-hazard, so larger lp = higher risk = SHORTER
-#    survival, and the call returned 1 - C. The optimiser therefore chased
-#    1 - C = target, i.e. it tried to make lp anti-predictive, collapsing
-#    beta toward 0 (C1 -> C-index 0.5). Fixed with reverse = TRUE (verified:
-#    concordance(.. , reverse = TRUE) == Harrell's C computed by hand).
-#
-# 2. FLIPPED CENSORING QUANTILE. The objective censored at
-#        quantile(event_time, 1 - target_prevalence)
-#    which yields an event rate of (1 - target_prevalence), whereas
-#    generate_survival_data() produces an event rate of target_prevalence
-#    (it censors at 1 - censoring_rate with censoring_rate = 1 - prevalence).
-#    Because the C-index depends on the censoring level, tuning under the
-#    wrong event rate biases the result. Now censors at
-#        quantile(event_time, target_prevalence).
-#
-# 3. STOCHASTIC OBJECTIVE + L-BFGS-B. A fresh rexp() draw on every objective
-#    evaluation made the objective noisy, so L-BFGS-B's finite-difference
-#    gradients were meaningless and beta barely moved from its start value.
-#
-# 4. UNIDENTIFIED BASELINE HAZARD. With administrative (quantile) censoring,
-#    T = E / (lambda * exp(lp)); lambda scales all times uniformly and the
-#    censoring quantile scales with it, so BOTH the C-index and the event rate
-#    are invariant to lambda. Optimising over lambda just added a flat search
-#    dimension. lambda is therefore not searched; it only sets the time scale
-#    and is returned for the generator's baseline_hazard slot.
-#
 # Strategy
 # --------
 # The event rate is exact by construction (quantile censoring), and the
