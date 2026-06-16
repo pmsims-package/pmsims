@@ -1,0 +1,47 @@
+.navbar #dropdown-versions {
+  margin-right: 0.75rem;
+}
+
+.navbar #search-input {
+  background-color: #053f45;
+  border-color: rgba(216, 251, 255, 0.35);
+  color: #ffffff;
+}
+
+.navbar #search-input::placeholder {
+  color: rgba(216, 251, 255, 0.78);
+}
+
+.navbar #search-input:focus {
+  background-color: #033136;
+  border-color: #9eeaf2;
+  box-shadow: 0 0 0 0.15rem rgba(4, 173, 191, 0.35);
+  color: #ffffff;
+}
+
+.navbar small.nav-text.text-danger {
+  background-color: #053f45;
+  border: 1px solid rgba(216, 251, 255, 0.55);
+  border-radius: 999px;
+  color: #d8fbff !important;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+}
+
+.navbar small.nav-text.text-danger::before {
+  content: "Development ";
+}
+
+body:has(.navbar small.nav-text.text-danger) main::before {
+  background: #e7fbfd;
+  border-left: 0.35rem solid #04adbf;
+  border-radius: 0.35rem;
+  color: #053f45;
+  content: "Development documentation for pmsims. APIs and results may change before the next stable release.";
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.45;
+  margin: 0 0 1.5rem;
+  padding: 0.85rem 1rem;
+}
