@@ -59,6 +59,7 @@ Survival
 ## Installation
 
 ``` r
+
 # install.packages("remotes")
 # remotes::install_github("pmsims-package/pmsims")
 library(pmsims)
@@ -69,6 +70,7 @@ library(pmsims)
 We target the smallest *n* that meets the **assurance** criterion.
 
 ``` r
+
 set.seed(123)
 
 binary_example <- simulate_binary(
@@ -102,17 +104,18 @@ binary_example
     #>                                  Model : glm
     #>                        Simulation reps : 1,000
     #> ──────────────────────────────────── Results ───────────────────────────────────
-    #>              Final minimum sample size : 793
-    #>             Estimated performance at N : 0.847 (Calibration slope ('calib_slope') = 0.850)
-    #>            Estimated other metric at N : 0.787 (Auc ('auc'))
+    #>              Final minimum sample size : 1,044
+    #>             Estimated performance at N : 0.849 (Calibration slope ('calib_slope') = 0.850)
+    #>            Estimated other metric at N : 0.782 (Auc ('auc'))
     #>                                  Model : glm
     #>                                   Mode : Assurance
-    #>                           Running time : 1 minute 22 seconds
+    #>                           Running time : 2 minutes 39 seconds
     #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 Plot the estimated learning curve and identified sample size:
 
 ``` r
+
 plot(binary_example)
 ```
 
@@ -122,6 +125,7 @@ outcome](pmsims_files/figure-html/unnamed-chunk-3-1.png)
 ## Continuous-outcome example
 
 ``` r
+
 continuous_example <- simulate_continuous(
   signal_parameters = 15,
   noise_parameters = 0,
@@ -150,15 +154,16 @@ continuous_example
     #>                                  Model : lm
     #>                        Simulation reps : 1,000
     #> ──────────────────────────────────── Results ───────────────────────────────────
-    #>              Final minimum sample size : 263
-    #>             Estimated performance at N : 0.899 (Calibration slope ('calib_slope') = 0.900)
-    #>            Estimated other metric at N : 0.449 (R2 ('r2'))
+    #>              Final minimum sample size : 239
+    #>             Estimated performance at N : 0.900 (Calibration slope ('calib_slope') = 0.900)
+    #>            Estimated other metric at N : 0.486 (R2 ('r2'))
     #>                                  Model : lm
     #>                                   Mode : Assurance
-    #>                           Running time : 35 seconds
+    #>                           Running time : 52 seconds
     #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 ``` r
+
 plot(continuous_example)
 ```
 
@@ -168,8 +173,9 @@ outcome](pmsims_files/figure-html/unnamed-chunk-6-1.png)
 ## Session info
 
 ``` r
+
 sessionInfo()
-#> R version 4.5.3 (2026-03-11)
+#> R version 4.6.0 (2026-04-24)
 #> Platform: x86_64-pc-linux-gnu
 #> Running under: Ubuntu 24.04.4 LTS
 #> 
@@ -193,15 +199,16 @@ sessionInfo()
 #> [1] pmsims_0.5.0
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] Matrix_1.7-4       gtable_0.3.6       jsonlite_2.0.0     compiler_4.5.3    
-#>  [5] crayon_1.5.3       jquerylib_0.1.4    splines_4.5.3      systemfonts_1.3.2 
+#>  [1] Matrix_1.7-5       gtable_0.3.6       jsonlite_2.0.0     compiler_4.6.0    
+#>  [5] crayon_1.5.3       jquerylib_0.1.4    splines_4.6.0      systemfonts_1.3.2 
 #>  [9] scales_1.4.0       textshaping_1.0.5  yaml_2.3.12        fastmap_1.2.0     
-#> [13] lattice_0.22-9     ggplot2_4.0.2      R6_2.6.1           labeling_0.4.3    
-#> [17] knitr_1.51         htmlwidgets_1.6.4  desc_1.4.3         bslib_0.10.0      
-#> [21] RColorBrewer_1.1-3 rlang_1.1.7        cachem_1.1.0       xfun_0.57         
-#> [25] fs_2.0.1           DiceKriging_1.6.1  sass_0.4.10        S7_0.2.1          
-#> [29] cli_3.6.5          pkgdown_2.2.0      withr_3.0.2        digest_0.6.39     
-#> [33] grid_4.5.3         lifecycle_1.0.5    mlpwr_1.1.1        vctrs_0.7.2       
-#> [37] evaluate_1.0.5     glue_1.8.0         farver_2.1.2       ragg_1.5.2        
-#> [41] survival_3.8-6     rmarkdown_2.31     tools_4.5.3        htmltools_0.5.9
+#> [13] lattice_0.22-9     ggplot2_4.0.3      R6_2.6.1           labeling_0.4.3    
+#> [17] knitr_1.51         htmlwidgets_1.6.4  desc_1.4.3         bslib_0.11.0      
+#> [21] RColorBrewer_1.1-3 rlang_1.2.0        cachem_1.1.0       xfun_0.58         
+#> [25] fs_2.1.0           DiceKriging_1.6.1  sass_0.4.10        S7_0.2.2          
+#> [29] otel_0.2.0         cli_3.6.6          pkgdown_2.2.0      withr_3.0.2       
+#> [33] digest_0.6.39      grid_4.6.0         lifecycle_1.0.5    mlpwr_1.1.1       
+#> [37] vctrs_0.7.3        evaluate_1.0.5     glue_1.8.1         farver_2.1.2      
+#> [41] ragg_1.5.2         survival_3.8-6     rmarkdown_2.31     tools_4.6.0       
+#> [45] htmltools_0.5.9
 ```

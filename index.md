@@ -27,6 +27,7 @@ details.
 Install version `0.5.0` from GitHub:
 
 ``` r
+
 # install.packages("remotes")
 remotes::install_github("pmsims-package/pmsims", ref = "v0.5.0")
 ```
@@ -34,6 +35,7 @@ remotes::install_github("pmsims-package/pmsims", ref = "v0.5.0")
 ## Minimal example
 
 ``` r
+
 library(pmsims)
 set.seed(123)
 
@@ -87,6 +89,7 @@ updated to the published versions. In R, you can retrieve the package
 citation with:
 
 ``` r
+
 citation("pmsims")
 ```
 

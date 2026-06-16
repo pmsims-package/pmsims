@@ -27,6 +27,7 @@ We will try to estimate the minimum sample size required for a
 prediction model to predict `diabetes`.
 
 ``` r
+
 library(pmsims)
 library(mlbench)
 library(synthpop)
@@ -60,6 +61,7 @@ dataset. We will then sample from this dataset to obtain a dataset of
 any required size.
 
 ``` r
+
 set.seed(1234)
 data("PimaIndiansDiabetes", package = "mlbench")
 real_data <- PimaIndiansDiabetes
@@ -77,6 +79,7 @@ synthetic_data <- synthpop::syn(
     ## Variable(s): diabetes numeric but with only 2 or fewer distinct values turned into factor(s) for synthesis.
 
 ``` r
+
 my_data_generator <- function(n, data = synthetic_data$syn) {
   data[sample(seq_len(nrow(data)), n, replace = FALSE), ]
 }
@@ -109,6 +112,7 @@ data must be in the form of a matrix. We aim to predict `diabetes` using
 the remaining columns in the dataset.
 
 ``` r
+
 my_model_function <- function(data) {
   data_matrix <- as.matrix(data)
   outcome <- "diabetes"
@@ -150,6 +154,7 @@ you can optionally set `attr(my_metric, "value_on_error")` to define the
 fallback value returned for failed simulation runs.
 
 ``` r
+
 my_metric <- function(test_data, fitted_model, model_name) {
   test_data_matrix <- as.matrix(test_data)
   y <- which(names(test_data) == "diabetes")
@@ -198,6 +203,7 @@ particularly XGBoost, this may be insufficient, and larger samples may
 be needed.
 
 ``` r
+
 set.seed(1234)
 maximum_achievable_data <- my_data_generator(n = 10000)
 test_data <- my_data_generator(n = 30000)
@@ -217,6 +223,7 @@ happens when we have limited data. We run this a few times because
 small-sample performance can be highly variable.
 
 ``` r
+
 set.seed(1234)
 small_sample_performance <- rep(NA, 10)
 for(i in 1:10) {
@@ -237,6 +244,7 @@ print(small_sample_performance)
     ##  [7] -0.1789102 -0.1864845 -0.1856546 -0.1898357
 
 ``` r
+
 mean(small_sample_performance)
 ```
 
@@ -257,6 +265,7 @@ we will set the total number of replications to 1000. We use default
 arguments for all other parameters.
 
 ``` r
+
 set.seed(1234)
 result <- simulate_custom(
   data_function = my_data_generator,
@@ -273,6 +282,7 @@ result <- simulate_custom(
     ## Estimating second stage... (Gaussian process algorithm)
 
 ``` r
+
 print(result)
 ```
 
@@ -283,16 +293,16 @@ print(result)
     ##   Target for chosen performance metric :  = -0.165
     ##                        Simulation reps : 1,000
     ## ──────────────────────────────────── Results ───────────────────────────────────
-    ##              Final minimum sample size : 210
+    ##              Final minimum sample size : 207
     ##             Estimated performance at N : -0.165 ( = -0.165)
     ##            Estimated other metric at N : <NA> ()
     ##                                   Mode : Assurance
-    ##                           Running time : 3 minutes 12 seconds
+    ##                           Running time : 1 minute 41 seconds
     ##     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 ### Interpretation
 
-The results show a minimum sample size of 210. This is calculated using
+The results show a minimum sample size of 207. This is calculated using
 the assurance criterion, which means that we would expect 80% of models
 developed on samples of this size to have a negative Brier score of
 -0.165 or better.

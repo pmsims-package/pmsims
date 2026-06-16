@@ -21,7 +21,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/pmsims-package/pmsims/blob/test/codecov/inst/CITATION)
+[`inst/CITATION`](https://github.com/pmsims-package/pmsims/blob/main/inst/CITATION)
 
 Carr E, Forbes G, Olaniran R, Shamsutdinova D, Stahl D, Markham S,
 Zimmer F (2026). *pmsims: Simulation-based Sample Size Tools for
@@ -40,7 +40,7 @@ Shamsutdinova D, Zimmer F, Olaniran O, Markham S, Stahl D, Forbes G,
 Carr E (2026). “Sample Size Calculations for Developing Clinical
 Prediction Models: Overview and pmsims R package.” *arXiv*,
 **arXiv:2602.23507**.
-[doi:10.48550/arXiv.2602.23507](https://doi.org/10.48550/arXiv.2602.23507),
+[doi:10.48550/arXiv.2602.23507](https://doi.org/10.48550/arXiv.2602.23507).
 Preprint, <https://arxiv.org/abs/2602.23507>.
 
     @Article{,
@@ -58,7 +58,7 @@ Olaniran O, Shamsutdinova D, Markham S, Zimmer F, Stahl D, Forbes G,
 Carr E (2026). “Adaptive Gaussian Process Search for Simulation-Based
 Sample Size Estimation in Clinical Prediction Models: Validation of the
 pmsims R Package.” *arXiv*, **arXiv:2603.23688**.
-[doi:10.48550/arXiv.2603.23688](https://doi.org/10.48550/arXiv.2603.23688),
+[doi:10.48550/arXiv.2603.23688](https://doi.org/10.48550/arXiv.2603.23688).
 Preprint, <https://arxiv.org/abs/2603.23688>.
 
     @Article{,

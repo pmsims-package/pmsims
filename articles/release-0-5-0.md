@@ -45,6 +45,7 @@ sample size such that a high proportion of repeated studies (for
 example, 80%) meet the target performance, rather than only on average.
 
 ``` r
+
 library(pmsims)
 
 set.seed(123)
@@ -94,6 +95,7 @@ the main wrapper functions and explains the key simulation inputs.
 Install version `0.5.0` of `pmsims` from GitHub with:
 
 ``` r
+
 # install.packages("remotes")
 remotes::install_github("pmsims-package/pmsims", ref = "v0.5.0")
 ```
