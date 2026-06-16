@@ -97,15 +97,20 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>Install version <code>0.5.0</code> from GitHub:</p>
+<p>Install the stable <code>0.5.0</code> release from GitHub:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"pmsims-package/pmsims"</span>, ref <span class="op">=</span> <span class="st">"v0.5.0"</span><span class="op">)</span></span></code></pre></div>
+<p>If you are interested in trying the development version, install from the <code>dev</code> branch:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"pmsims-package/pmsims"</span>, ref <span class="op">=</span> <span class="st">"dev"</span><span class="op">)</span></span></code></pre></div>
+<p>The development version includes work in progress and may change before the next tagged release.</p>
 </div>
 <div class="section level2">
 <h2 id="minimal-example">Minimal example<a class="anchor" aria-label="anchor" href="#minimal-example"></a>
 </h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pmsims-package.github.io/pmsims/">pmsims</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
 <span></span>
@@ -143,7 +148,7 @@
 <li><p>Olaniran OR, Shamsutdinova D, Markham S, Zimmer F, Stahl D, Forbes G, Carr E (2026). <em>Adaptive Gaussian Process Search for Simulation-Based Sample Size Estimation in Clinical Prediction Models: Validation of the pmsims R Package</em>. arXiv. <a href="https://arxiv.org/abs/2603.23688" class="external-link uri">https://arxiv.org/abs/2603.23688</a></p></li>
 </ul>
 <p>Once peer-reviewed articles are available, these citations should be updated to the published versions. In R, you can retrieve the package citation with:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"pmsims"</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
