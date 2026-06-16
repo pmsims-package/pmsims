@@ -2,8 +2,9 @@
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    branches: [main, master]
+    branches: [main, dev]
   pull_request:
+    branches: [main, dev]
   release:
     types: [published]
   workflow_dispatch:
@@ -11,7 +12,7 @@ on:
 name: pkgdown.yaml
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: pages
@@ -40,23 +41,19 @@ jobs:
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
 
-      - name: Upload Pages artifact
-        if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy stable site
+        if: ${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.event_name == 'release') }}
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: docs
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          keep_files: true
 
-  deploy:
-    if: ${{ github.event_name != 'pull_request' }}
-    needs: pkgdown
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Deploy development site
+        if: ${{ github.event_name != 'pull_request' && github.ref_name == 'dev' }}
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/dev
+          destination_dir: dev
+          keep_files: true
