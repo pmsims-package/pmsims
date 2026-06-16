@@ -59,6 +59,13 @@
 </li>
       </ul>
 <ul class="navbar-nav">
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-versions" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Versions</button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-versions">
+<li><a class="dropdown-item" href="https://pmsims-package.github.io/pmsims/">Stable</a></li>
+    <li><a class="dropdown-item" href="https://pmsims-package.github.io/pmsims/dev/">Development</a></li>
+  </ul>
+</li>
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
@@ -354,16 +361,16 @@ parameters.</p>
 <span><span class="co">##   <span style="color: #00BBBB;">Target for chosen performance metric</span> :  = -0.165</span></span>
 <span><span class="co">##   <span style="color: #00BBBB;">                     Simulation reps</span> : 1,000</span></span>
 <span><span class="co">## ──────────────────────────────────── Results ───────────────────────────────────</span></span>
-<span><span class="co">##   <span style="color: #0000BB;">           Final minimum sample size</span> : <span style="font-weight: bold;">207</span></span></span>
+<span><span class="co">##   <span style="color: #0000BB;">           Final minimum sample size</span> : <span style="font-weight: bold;">208</span></span></span>
 <span><span class="co">##   <span style="color: #0000BB;">          Estimated performance at N</span> : -0.165 ( = -0.165)</span></span>
 <span><span class="co">##   <span style="color: #0000BB;">         Estimated other metric at N</span> : &lt;NA&gt; ()</span></span>
 <span><span class="co">##   <span style="color: #0000BB;">                                Mode</span> : Assurance</span></span>
-<span><span class="co">##   <span style="color: #0000BB;">                        Running time</span> : 1 minute 41 seconds</span></span>
+<span><span class="co">##   <span style="color: #0000BB;">                        Running time</span> : 1 minute 44 seconds</span></span>
 <span><span class="co">##     <span style="color: #555555; font-style: italic;">Assurance mode ensures the target metric is met with high probability across repeated datasets.</span></span></span></code></pre>
 <div class="section level3">
 <h3 id="interpretation">Interpretation<a class="anchor" aria-label="anchor" href="#interpretation"></a>
 </h3>
-<p>The results show a minimum sample size of 207. This is calculated
+<p>The results show a minimum sample size of 208. This is calculated
 using the assurance criterion, which means that we would expect 80% of
 models developed on samples of this size to have a negative Brier score
 of -0.165 or better.</p>
