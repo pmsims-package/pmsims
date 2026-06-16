@@ -12,7 +12,7 @@ on:
 name: pkgdown.yaml
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -64,6 +64,13 @@ jobs:
             find .pages -mindepth 1 -maxdepth 1 ! -name dev -exec rm -rf {} +
             cp -a docs/. .pages/
           fi
+
+      - name: Mirror Pages artifact to gh-pages
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .pages
 
       - name: Upload Pages artifact
         if: ${{ github.event_name != 'pull_request' }}
