@@ -48,10 +48,9 @@
 #'   that are noise predictors (zero coefficient). Must be in [0, 1).
 #' @param complexity Integer 1-4 controlling the functional form of the linear
 #'   predictor passed to the data generator.  Default = 1.
-#' @param predictor_strength One of \code{"strong"} (w = 1.0),
-#'   \code{"moderate"} (w = 0.5), or \code{"weak"} (w = 0.3).
-#'   When \code{NULL} (default) the complexity-level default is used (strong
-#'   for C1 and C4; moderate for C2 and C3).
+#' @param nonlinear_strength Fraction of signal variance carried by the
+#'   nonlinear component (C2/C3 only), in [0, 1). When \code{NULL} (default), the
+#'   complexity-level default is used: C1 = 0, C2 = 0.2, C3 = 0.3, C4 = 0.
 #' @param correlation Common pairwise predictor correlation.  Default = 0.
 #' @param distribution Global continuous predictor distribution family passed
 #'   to the data generator.  Default = \code{"normal"}.
@@ -74,7 +73,7 @@ continuous_tuning <- function(
     candidate_features,
     proportion_noise_features,
     complexity          = 1,
-    predictor_strength  = NULL,
+    nonlinear_strength  = NULL,
     correlation         = 0,
     distribution        = "normal",
     predictor_type      = "continuous",
@@ -97,9 +96,9 @@ continuous_tuning <- function(
   if (n_signal < 1)
     stop("proportion_noise_features leaves no signal predictors.")
   
-  # ---- resolve predictor strength --------------------------------------------
-  predictor_strength <- resolve_strength(predictor_strength, complexity)
-  w                  <- STRENGTH_WEIGHTS[[predictor_strength]]
+  # ---- resolve nonlinear strength --------------------------------------------
+  nonlinear_strength <- resolve_nonlinear_strength(nonlinear_strength, complexity)
+  #w                  <- STRENGTH_WEIGHTS[[predictor_strength]]
   
   # ---- Step 1: estimate Var(LP) with beta_signal = 1 ------------------------
   #
@@ -132,7 +131,7 @@ continuous_tuning <- function(
     intercept           = 0,
     beta_signal         = 1,           # unit beta; we scale analytically below
     complexity          = complexity,
-    predictor_strength  = predictor_strength
+    nonlinear_strength  = nonlinear_strength
   )
   
   var_lp_unit <- stats::var(lp_unit)

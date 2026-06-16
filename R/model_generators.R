@@ -73,7 +73,7 @@ default_models <- list(
     },
     rf = function(d) {
       require_optional_packages(
-        c("randomForest", "ranger"),
+        c("ranger"),
         "random-forest models"
       )
 
@@ -86,20 +86,20 @@ default_models <- list(
       
       #### new
 
-      ff <- NULL
-      invisible(
-        capture.output(
-          ff <- randomForest::tuneRF(x, y, trace = FALSE, plot = FALSE)
-        )
-      )
+      #ff <- NULL
+     # invisible(
+      #  capture.output(
+      #    ff <- randomForest::tuneRF(x, y, trace = FALSE, plot = FALSE)
+      #  )
+      #)
 
-      bestmtry <- data.frame(ff)
-      mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
+      #bestmtry <- data.frame(ff)
+      #mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
 
       ranger::ranger(
         x = x,
         y = y,
-        mtry = mtry_best,
+        mtry = max(1, floor(ncol(x) / 3)),
         probability = TRUE,
         num.trees = 300,
         num.threads = nthreads
@@ -162,7 +162,7 @@ default_models <- list(
     },
     rf = function(d) {
       require_optional_packages(
-        c("randomForest", "ranger"),
+        c("ranger"),
         "random-forest models"
       )
 
@@ -213,9 +213,9 @@ default_models <- list(
     xgboost = function(d,
                        params = list(objective   = "reg:squarederror",
                                      eval_metric  = "rmse",
-                                     eta          = 0.3,
-                                     max_depth    = 2L,
-                                     subsample    = 0.7,
+                                     eta          = 0.05,
+                                     max_depth    = 4L,
+                                     subsample    = 0.8,
                                      min_child_weight = 5L)) {
       # expects first column y (numeric), remaining columns predictors.
       # nrounds is selected via xgb.cv early stopping (see .xgb_cv_nrounds).
@@ -263,7 +263,7 @@ default_models <- list(
       glmnet::cv.glmnet(x, y, alpha = 0, family = "cox")  # L2 (ridge)
     },
     rf = function(d) {
-      require_optional_packages("ranger", "random-forest models")
+      require_optional_packages(c("randomForestSRC", "ranger"), "random-forest models")
 
       # ranger survival forest: formula interface with Surv()
       ncores <- parallel::detectCores(logical = FALSE)
@@ -272,6 +272,8 @@ default_models <- list(
       stopifnot(all(c("time", "event") %in% colnames(d)))
       formula <- stats::as.formula("survival::Surv(time, event) ~ .")
       ranger::ranger(formula, data = d, num.trees = 300, num.threads = nthreads)
+      #formula <- stats::as.formula("Surv(time, event) ~ .")
+      #randomForestSRC::rfsrc(formula, data = d, ntree = 300)
     },
     xgboost = function(d,
                        params = list(objective   = "survival:cox",
