@@ -2,6 +2,7 @@ url: https://pmsims-package.github.io/pmsims/
 
 development:
   mode: auto
+  version_tooltip: "Documentation for the development version of pmsims"
 
 template:
   bootstrap: 5
@@ -22,7 +23,15 @@ extra_files:
 navbar:
   structure:
     left: [get-started, reference, articles, news]
+    right: [versions, search, github, lightswitch]
   components:
+    versions:
+      text: Versions
+      menu:
+        - text: Stable
+          href: https://pmsims-package.github.io/pmsims/
+        - text: Development
+          href: https://pmsims-package.github.io/pmsims/dev/
     get-started:
       text: Get started
       href: articles/pmsims.html
