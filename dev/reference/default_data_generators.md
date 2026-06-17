@@ -1,6 +1,6 @@
-# Title Create default data generating functions
+# Create default data generating functions
 
-Title Create default data generating functions
+Create default data generating functions
 
 ## Usage
 
@@ -12,16 +12,18 @@ default_data_generators(opts)
 
 - opts:
 
-  A list of options to be used with the data generating function. Must
-  include type as either "binary", "continuous", or "survival".
-  Arguments to be passed to the data generating function must be stored
-  in a list item named args. For options that can be passed to the
-  different default generators see
-  [generate_continuous_data](https://pmsims-package.github.io/pmsims/dev/reference/generate_continuous_data.md),
-  [generate_binary_data](https://pmsims-package.github.io/pmsims/dev/reference/generate_binary_data.md),
-  or
-  [generate_survival_data](https://pmsims-package.github.io/pmsims/dev/reference/generate_survival_data.md).
+  A list with two elements:
+
+  `type`
+
+  :   Outcome type: `"continuous"`, `"binary"`, or `"survival"`.
+
+  `args`
+
+  :   Named list of arguments to pre-set on the corresponding generator
+      function.
 
 ## Value
 
-A function with default arguments set to the values passed with opts
+A partially-applied generator function whose formals have been set to
+the values in `opts$args`.

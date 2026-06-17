@@ -6,7 +6,13 @@ arguments
 ## Usage
 
 ``` r
-default_models
+.xgb_cv_nrounds(
+  dtrain,
+  params,
+  nrounds_max = 500L,
+  nfold = 5L,
+  early_stopping_rounds = 20L
+)
 ```
 
 ## Format
