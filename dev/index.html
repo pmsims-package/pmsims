@@ -117,12 +117,12 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">binary_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/simulate_binary.html">simulate_binary</a></span><span class="op">(</span></span>
-<span>  signal_parameters <span class="op">=</span> <span class="fl">15</span>,</span>
-<span>  noise_parameters  <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span>
-<span>  binary_predictor_prevalence <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  signal_parameters <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  noise_parameters <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  complexity <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  data_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nonlinear_strength <span class="op">=</span> <span class="fl">0.4</span>, correlation <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span>,</span>
 <span>  outcome_prevalence <span class="op">=</span> <span class="fl">0.20</span>,</span>
-<span>  maximum_achievable_cstatistic <span class="op">=</span> <span class="fl">0.80</span>,</span>
+<span>  maximum_achievable_cstatistic <span class="op">=</span> <span class="fl">0.75</span>,</span>
 <span>  model <span class="op">=</span> <span class="st">"glm"</span>,</span>
 <span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span>
 <span>  target_performance <span class="op">=</span> <span class="fl">0.90</span>,</span>
