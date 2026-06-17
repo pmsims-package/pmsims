@@ -2,7 +2,7 @@
   display: none;
 }
 
-.navbar #dropdown-versions {
+.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-toggle {
   background-color: #ffffff;
   border: 1px solid rgba(5, 63, 69, 0.22);
   border-radius: 0.35rem;
@@ -13,25 +13,25 @@
   padding: 0.35rem 0.65rem;
 }
 
-.navbar #dropdown-versions:hover,
-.navbar #dropdown-versions:focus {
+.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-toggle:hover,
+.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-toggle:focus {
   background-color: #f7fbfc;
   border-color: rgba(5, 63, 69, 0.38);
   color: #053f45;
 }
 
-.navbar #dropdown-versions + .dropdown-menu {
+.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-menu {
   border-color: rgba(5, 63, 69, 0.18);
   box-shadow: 0 0.5rem 1.25rem rgba(5, 63, 69, 0.16);
   min-width: 10rem;
   padding: 0.25rem 0;
 }
 
-.navbar #dropdown-versions + .dropdown-menu .dropdown-item {
+.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-menu .dropdown-item {
   padding: 0.55rem 1rem;
 }
 
-.navbar #dropdown-versions + .dropdown-menu li:first-child .dropdown-item {
+.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-menu li:first-child .dropdown-item {
   color: #067f8d;
   font-weight: 700;
 }
