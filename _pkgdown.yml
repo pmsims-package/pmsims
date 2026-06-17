@@ -58,6 +58,15 @@ home:
   description: >
     Simulation-based sample size estimation for prediction modelling, with
     experimental machine-learning extensions.
+  sidebar:
+    structure: [links, license, community, citation, status, authors]
+    components:
+      status:
+        title: Status
+        text: |
+          [![GitHub release](https://img.shields.io/github/v/release/pmsims-package/pmsims?display_name=release)](https://github.com/pmsims-package/pmsims/releases)
+          [![R-CMD-check](https://github.com/pmsims-package/pmsims/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pmsims-package/pmsims/actions/workflows/R-CMD-check.yaml)
+          [![Codecov test coverage](https://codecov.io/gh/pmsims-package/pmsims/graph/badge.svg)](https://app.codecov.io/gh/pmsims-package/pmsims)
 
 reference:
   - title: Main functions
