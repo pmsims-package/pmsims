@@ -2,6 +2,11 @@
   display: none;
 }
 
+.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) {
+  align-items: center;
+  display: flex;
+}
+
 .navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-toggle {
   background-color: #8edae2;
   border-radius: 0.35rem;
