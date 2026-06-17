@@ -68,12 +68,12 @@ library(pmsims)
 set.seed(123)
 
 binary_example <- simulate_binary(
-  signal_parameters = 15,
-  noise_parameters  = 0,
-  predictor_type = "continuous",
-  binary_predictor_prevalence = NULL,
+  signal_parameters = 10,
+  noise_parameters = 10,
+  complexity = 2,
+  data_control = list(nonlinear_strength = 0.4, correlation = 0.2),
   outcome_prevalence = 0.20,
-  maximum_achievable_cstatistic = 0.80,
+  maximum_achievable_cstatistic = 0.75,
   model = "glm",
   metric = "calibration_slope",
   target_performance = 0.90,
