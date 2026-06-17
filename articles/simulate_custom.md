@@ -297,7 +297,7 @@ print(result)
     ##             Estimated performance at N : -0.165 ( = -0.165)
     ##            Estimated other metric at N : <NA> ()
     ##                                   Mode : Assurance
-    ##                           Running time : 1 minute 46 seconds
+    ##                           Running time : 1 minute 42 seconds
     ##     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 ### Interpretation
