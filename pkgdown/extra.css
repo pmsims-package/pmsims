@@ -1,5 +1,39 @@
+.navbar small.nav-text {
+  display: none;
+}
+
 .navbar #dropdown-versions {
-  margin-right: 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid rgba(5, 63, 69, 0.22);
+  border-radius: 0.35rem;
+  color: #252a35;
+  font-weight: 650;
+  line-height: 1.2;
+  margin-right: 1rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.navbar #dropdown-versions:hover,
+.navbar #dropdown-versions:focus {
+  background-color: #f7fbfc;
+  border-color: rgba(5, 63, 69, 0.38);
+  color: #053f45;
+}
+
+.navbar #dropdown-versions + .dropdown-menu {
+  border-color: rgba(5, 63, 69, 0.18);
+  box-shadow: 0 0.5rem 1.25rem rgba(5, 63, 69, 0.16);
+  min-width: 10rem;
+  padding: 0.25rem 0;
+}
+
+.navbar #dropdown-versions + .dropdown-menu .dropdown-item {
+  padding: 0.55rem 1rem;
+}
+
+.navbar #dropdown-versions + .dropdown-menu li:first-child .dropdown-item {
+  color: #067f8d;
+  font-weight: 700;
 }
 
 .navbar #search-input {
@@ -17,31 +51,4 @@
   border-color: #9eeaf2;
   box-shadow: 0 0 0 0.15rem rgba(4, 173, 191, 0.35);
   color: #ffffff;
-}
-
-.navbar small.nav-text.text-danger {
-  background-color: #053f45;
-  border: 1px solid rgba(216, 251, 255, 0.55);
-  border-radius: 999px;
-  color: #d8fbff !important;
-  font-weight: 700;
-  padding: 0.18rem 0.55rem;
-}
-
-.navbar small.nav-text.text-danger::before {
-  content: "Development ";
-}
-
-body:has(.navbar small.nav-text.text-danger) main::before {
-  background: #e7fbfd;
-  border-left: 0.35rem solid #04adbf;
-  border-radius: 0.35rem;
-  color: #053f45;
-  content: "Development documentation for pmsims. APIs and results may change before the next stable release.";
-  display: block;
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.45;
-  margin: 0 0 1.5rem;
-  padding: 0.85rem 1rem;
 }

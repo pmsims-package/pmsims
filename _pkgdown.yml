@@ -26,11 +26,11 @@ navbar:
     right: [versions, search, github, lightswitch]
   components:
     versions:
-      text: Versions
+      text: 0.5.0
       menu:
-        - text: Stable
+        - text: 0.5.0 (stable)
           href: https://pmsims-package.github.io/pmsims/
-        - text: Development
+        - text: dev
           href: https://pmsims-package.github.io/pmsims/dev/
     get-started:
       text: Get started
