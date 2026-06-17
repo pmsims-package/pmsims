@@ -2,21 +2,62 @@
 % Please edit documentation in R/continuous_tuning.R
 \name{continuous_tuning}
 \alias{continuous_tuning}
-\title{Analytical tuning function for continuous outcome}
+\title{Tuning function for a continuous outcome model}
 \usage{
-continuous_tuning(r2, proportion_noise_features, candidate_features)
+continuous_tuning(
+  r2,
+  candidate_features,
+  proportion_noise_features,
+  complexity = 1,
+  nonlinear_strength = NULL,
+  correlation = 0,
+  distribution = "normal",
+  predictor_type = "continuous",
+  binary_prevalence = 0,
+  n_sim = 1e+05
+)
 }
 \arguments{
-\item{r2}{Large sample $R^2$ or c-statistic}
+\item{r2}{Target large-sample \eqn{R^2} (proportion of variance explained).
+Must be in (0, 1).}
 
-\item{proportion_noise_features}{Proportion of noise features}
+\item{candidate_features}{Total number of predictors (signal + noise).}
 
-\item{candidate_features}{Number of candidate features}
+\item{proportion_noise_features}{Proportion of \code{candidate_features}
+that are noise predictors (zero coefficient). Must be in [0, 1).}
+
+\item{complexity}{Integer 1-4 controlling the functional form of the linear
+predictor passed to the data generator.  Default = 1.}
+
+\item{nonlinear_strength}{Fraction of signal variance carried by the
+nonlinear component (C2/C3 only), in [0, 1). When \code{NULL} (default), the
+complexity-level default is used: C1 = 0, C2 = 0.2, C3 = 0.3, C4 = 0.}
+
+\item{correlation}{Common pairwise predictor correlation.  Default = 0.}
+
+\item{distribution}{Global continuous predictor distribution family passed
+to the data generator.  Default = \code{"normal"}.}
+
+\item{predictor_type}{\code{"continuous"} (default) or \code{"binary"}.}
+
+\item{binary_prevalence}{Bernoulli probability for binary predictors.
+Required (and used) only when \code{predictor_type = "binary"}.}
+
+\item{n_sim}{Sample size used to estimate Var(LP).  Larger values give more
+stable estimates.  Default = 100 000.}
 }
 \value{
-The tuned beta value
+A named numeric vector:
+\describe{
+\item{\code{beta_signal}}{Tuned effect size.}
+\item{\code{r2_achieved}}{Empirical R^2 verified in a large simulation.}
+\item{\code{var_lp_unit}}{Estimated Var(LP) at beta_signal = 1 (the
+scaling constant).}
+}
 }
 \description{
-Analytical tuning function for continuous outcome
+Finds the \code{beta_signal} value that produces a target large-sample
+\eqn{R^2} under the exact data-generating settings (complexity,
+predictor_strength, correlation, distribution, predictor_type).
 }
 \keyword{internal}

@@ -2,46 +2,74 @@
 % Please edit documentation in R/survival_tuning.R
 \name{survival_tuning}
 \alias{survival_tuning}
-\title{Tuning for a survival outcome model}
+\title{Tuning function for a survival outcome model}
 \usage{
 survival_tuning(
   target_prevalence,
   target_performance,
-  min.opt = c(-3, -10),
-  max.opt = c(3, 10),
-  tolerance = 1e-06,
-  proportion_noise_features,
   candidate_features,
-  N_sim_optim = 20000,
-  N_sim_final = 50000
+  proportion_noise_features,
+  complexity = 1,
+  nonlinear_strength = NULL,
+  correlation = 0.3,
+  distribution = "normal",
+  predictor_type = "continuous",
+  binary_prevalence = 0,
+  n_sim = 50000,
+  n_validate = 1e+05,
+  beta_interval = c(1e-04, 20),
+  beta_tol = 1e-04,
+  tolerance = 0.02
 )
 }
 \arguments{
-\item{target_prevalence}{The desired model performance in a large sample}
+\item{target_prevalence}{Target event rate (proportion of events) in (0, 1).
+Equivalently 1 - censoring_rate.}
 
-\item{target_performance}{The desired model performance in a large sample}
+\item{target_performance}{Target C-index in (0.5, 1).}
 
-\item{min.opt}{Numeric vector of lower bounds for the optimisation
-parameters.}
+\item{candidate_features}{Total number of predictors (signal + noise).}
 
-\item{max.opt}{Numeric vector of upper bounds for the optimisation
-parameters.}
+\item{proportion_noise_features}{Proportion of \code{candidate_features}
+that are noise predictors. Must be in [0, 1).}
 
-\item{tolerance}{The tolerance in the large sample performance}
+\item{complexity}{Integer 1-4. Default = 1.}
 
-\item{proportion_noise_features}{Proportion of candidate features that should
-behave as noise features.}
+\item{nonlinear_strength}{Fraction of signal variance carried by the
+nonlinear component (C2/C3 only), in [0, 1). When \code{NULL} (default), the
+complexity-level default is used: C1 = 0, C2 = 0.2, C3 = 0.3, C4 = 0.}
 
-\item{candidate_features}{Total number of candidate predictors.}
+\item{correlation}{Common pairwise predictor correlation. Default = 0.3 (to
+match generate_survival_data()).}
 
-\item{N_sim_optim}{Integer optimisation-phase simulation size.}
+\item{distribution}{Global continuous predictor distribution family.
+Default = \code{"normal"}.}
 
-\item{N_sim_final}{Integer validation-phase simulation size.}
+\item{predictor_type}{\code{"continuous"} (default) or \code{"binary"}.}
+
+\item{binary_prevalence}{Bernoulli probability for binary predictors.}
+
+\item{n_sim}{Sample size for LP simulation and the bisection. Default 50000.}
+
+\item{n_validate}{Sample size for the independent validation. Default 100000.}
+
+\item{beta_interval}{Search interval c(lo, hi) for beta_signal. The upper
+bound is doubled automatically if the C-index at hi is below target.}
+
+\item{beta_tol}{Absolute convergence tolerance for the beta bisection.}
+
+\item{tolerance}{Acceptable absolute deviation of the validated event rate
+and C-index from their targets before a warning is raised. Default 0.02.}
 }
 \value{
-The optimal value for the tuning parameter
+A named numeric vector: \code{lambda_opt} (baseline hazard / time
+scale), \code{beta_signal}, \code{event_rate}, \code{cindex},
+\code{var_lp_unit}.
 }
 \description{
-Tuning for a survival outcome model
+Finds the \code{beta_signal} that produces the target C-index under the exact
+data-generating settings (complexity, nonlinear_strength, correlation,
+distribution, predictor_type). The event rate is set exactly by quantile
+censoring, and the baseline hazard only fixes the time scale.
 }
 \keyword{internal}

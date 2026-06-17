@@ -2,38 +2,73 @@
 % Please edit documentation in R/data_generators.R
 \name{generate_binary_data}
 \alias{generate_binary_data}
-\title{Title Simulate binary data}
+\title{Simulate binary outcome data}
 \usage{
 generate_binary_data(
   n,
-  mu_lp,
-  beta_signal,
   n_signal_parameters,
   noise_parameters,
-  predictor_type,
-  predictor_prop = NULL,
-  baseline_prob
+  beta_signal,
+  complexity = 1,
+  nonlinear_strength = NULL,
+  predictor_type = "continuous",
+  binary_prevalence = 0,
+  correlation = 0.3,
+  distribution = "normal",
+  mu_lp = 0,
+  baseline_prob = 0.5
 )
 }
 \arguments{
-\item{n}{Sample size of simulated dataset}
+\item{n}{Sample size.}
 
-\item{beta_signal}{Association between signal predictors and the outcome}
+\item{n_signal_parameters}{Number of signal predictors. These occupy the
+first \code{n_signal_parameters} columns (\code{x1} ... \code{x_S}).}
 
-\item{n_signal_parameters}{Number of predictors that have a non zero association with the outcome}
+\item{noise_parameters}{Number of noise predictors (zero coefficient).}
 
-\item{noise_parameters}{Number of predictors with no association with outcome}
+\item{beta_signal}{Base effect size / overall scale of the signal.}
 
-\item{predictor_type}{Type of predictor, can be "continuous" or "binary"}
+\item{complexity}{Integer 1-4 specifying the functional form of the
+linear predictor:
+\enumerate{
+\item \strong{Linear} — \eqn{lp = \alpha + \beta\sum_j x_j}.
+\item \strong{Quadratic} — linear + a quadratic nonlinear component.
+\item \strong{Quadratic + Interaction} — linear + quadratic and pairwise
+interaction nonlinear component.
+\item \strong{Friedman} — canonical Friedman (1991) benchmark.
+}}
 
-\item{predictor_prop}{If predictor type is binary, the probability of a predictor taking value 1}
+\item{nonlinear_strength}{Fraction of signal variance carried by the
+nonlinear component (C2/C3 only), in [0, 1). When \code{NULL} (default), the
+complexity-level default is used: C1 = 0, C2 = 0.2, C3 = 0.3, C4 = 0.
+Ignored for C1 (pure linear) and C4 (canonical Friedman).}
 
-\item{baseline_prob}{Baseline probability of outcome (i.e., probability when all predictors are 0)}
+\item{predictor_type}{Type of predictors: \code{"continuous"} (default)
+or \code{"binary"}. When \code{"binary"}, all predictors are drawn as
+Bernoulli(\code{binary_prevalence}); \code{binary_prevalence} must be in
+(0, 1] and \code{distribution} is ignored.}
+
+\item{binary_prevalence}{Scalar in (0, 1]. Bernoulli probability applied to
+all predictors when \code{predictor_type = "binary"}. Default = 0.}
+
+\item{correlation}{Scalar in \link{-1, 1}. Common pairwise correlation
+applied via a Gaussian copula (equicorrelation, rank-based Cholesky).
+Default = 0.3. Set to 0 for independence.}
+
+\item{distribution}{Distribution family for \emph{all} continuous
+predictors. Default = \code{"normal"}. For complexity 4, if left at
+\code{"normal"} the framework uses \code{"uniform"} (Friedman canonical).}
+
+\item{mu_lp}{Intercept on the log-odds scale. Default = 0.}
+
+\item{baseline_prob}{Nominal baseline event probability (documentation only;
+the realised probability is determined by \code{mu_lp}).}
 }
 \value{
-A data frame with one outcome column and n_signal_parameters + noise_parameters predictor columns
+A data frame with columns \code{y} (0/1), \code{x1}, \code{x2}, ...
 }
 \description{
-Title Simulate binary data
+Simulate binary outcome data
 }
 \keyword{internal}

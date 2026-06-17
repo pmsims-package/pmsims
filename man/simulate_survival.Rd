@@ -7,12 +7,12 @@
 simulate_survival(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = "continuous",
-  binary_predictor_prevalence = NULL,
+  complexity = 1,
+  data_control = NULL,
   maximum_achievable_cindex,
   baseline_hazard = 1,
   censoring_rate,
-  model = "coxph",
+  model = c("coxph", "lasso", "ridge", "rf", "xgboost"),
   metric = "calibration_slope",
   target_performance,
   n_reps_total = 1000,
@@ -27,11 +27,11 @@ with the outcome (i.e., true signal features).}
 \item{noise_parameters}{Integer. Number of candidate predictors not
 associated with the outcome (noise features). Default is 0.}
 
-\item{predictor_type}{Character string, either \code{"continuous"} or \code{"binary"}.
-Specifies the type of simulated candidate predictors.}
+\item{complexity}{Integer in 1:4 selecting the data-generating signal
+structure (see \emph{Data control}). Default \code{1}.}
 
-\item{binary_predictor_prevalence}{Optional numeric in (0, 1). Prevalence of
-the binary predictors when \code{predictor_type = "binary"}. Ignored otherwise.}
+\item{data_control}{Optional named list controlling the predictors (see
+\emph{Data control}). Default \code{NULL} (generator defaults).}
 
 \item{maximum_achievable_cindex}{Numeric in (0, 1). Maximum achievable
 C-index with effectively unlimited data. This is used to calibrate the
@@ -45,13 +45,10 @@ baseline). Larger values imply shorter event times, all else equal.}
 to be censored in the simulated datasets (administrative or random
 censoring). Higher values imply fewer observed events for a fixed \eqn{n}.}
 
-\item{model}{Character string specifying the modelling algorithm. Supported
-values are \code{"coxph"} (Cox proportional hazards), \code{"lasso"}
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} (regularised Cox regression), \code{"rf"}
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} (random survival forest), and
-\code{"xgboost"} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} (gradient boosting with a
-Cox objective). The machine-learning options are experimental because they
-have not yet undergone the package's main validation study.}
+\item{model}{Character string specifying the modelling algorithm. One of
+\code{"coxph"} (Cox proportional hazards), \code{"lasso"}, \code{"ridge"}, \code{"rf"} (random
+survival forest), or \code{"xgboost"} (gradient boosting with a Cox objective).
+The machine-learning options are experimental.}
 
 \item{metric}{Character string naming the performance metric used to assess
 the sample size; defaults to \code{"calibration_slope"}. (Internally mapped to
@@ -103,15 +100,42 @@ criterion explicitly accounts for variability across training sets; models
 with higher variance typically require larger \eqn{n} to satisfy it.
 }
 
+\section{Data control}{
+
+\code{complexity} selects the signal structure of the data-generating mechanism:
+\code{1} purely linear, \code{2} linear + quadratic, \code{3} linear + quadratic +
+interaction, \code{4} the Friedman function. \code{data_control} is an optional list
+fine-tuning the predictors:
+\describe{
+\item{\code{nonlinear_strength}}{Numeric in \verb{[0, 1)}. Fraction of the signal
+variance carried by the nonlinear, linearly-inaccessible component.
+Applies to complexity 2 and 3 only; ignored (with a warning) for 1 and 4.
+If omitted, the generator's per-complexity default is used.}
+\item{\code{correlation}}{Numeric in \verb{[-1, 1]}. Pairwise correlation among the
+candidate predictors. Default \code{0.3}.}
+\item{\code{predictor_distribution}}{One of \code{"normal"}, \code{"uniform"}, \code{"binary"},
+\code{"exponential"}, \code{"lognormal"}, \code{"t"}, \code{"laplace"}. \code{"binary"} selects
+0/1 predictors and requires \code{binary_predictor_prevalence}; any other
+value selects continuous predictors from that family. Default \code{"normal"}.}
+\item{\code{binary_predictor_prevalence}}{Numeric in \verb{(0, 1)}. Prevalence of the
+binary predictors; required when \code{predictor_distribution = "binary"},
+ignored (with a warning) otherwise. Note: binary predictors are
+incompatible with complexity 2/3 because squaring a 0/1 variable returns
+itself.}
+}
+}
+
 \examples{
 \dontrun{
 est <- simulate_survival(
   signal_parameters = 10,
   noise_parameters = 10,
-  predictor_type = "continuous",
+  complexity = 2,
+  data_control = list(nonlinear_strength = 0.5),
   maximum_achievable_cindex = 0.70,
   baseline_hazard = 0.01,
   censoring_rate = 0.30,
+  model = "coxph",
   metric = "calibration_slope",
   target_performance = 0.9,
   n_reps_total = 1000,
