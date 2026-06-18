@@ -58,6 +58,8 @@ home:
   description: >
     Simulation-based sample size estimation for prediction modelling, with
     experimental machine-learning extensions.
+  sidebar:
+    structure: [links, license, community, citation, dev, authors]
 
 reference:
   - title: Main functions
