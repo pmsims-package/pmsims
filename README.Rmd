@@ -71,7 +71,10 @@ binary_example <- simulate_binary(
   signal_parameters = 10,
   noise_parameters = 10,
   complexity = 2,
-  data_control = list(nonlinear_strength = 0.4, correlation = 0.2),
+  data_control = list(
+    nonlinear_strength = 0.4,
+    correlation = 0.2
+  ),
   outcome_prevalence = 0.20,
   maximum_achievable_cstatistic = 0.75,
   model = "glm",
