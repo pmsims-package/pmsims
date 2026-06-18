@@ -188,6 +188,17 @@ test_that("compute_start_sample_sizes covers binary continuous and survival bran
   )
   expect_equal(continuous_r2$start_max_sample_size, 200 * continuous_r2$npar)
 
+  custom_metric <- function(data, fit, model) 0.8
+  custom <- compute_start_sample_sizes(
+    data_function = make_continuous_data_function(),
+    metric_function = custom_metric,
+    target_performance = 0.5,
+    mean_or_assurance = "mean"
+  )
+  expect_null(custom$metric_used)
+  expect_equal(custom$start_min_sample_size, 10 * custom$npar)
+  expect_true(is.na(custom$start_max_sample_size))
+
   survival <- compute_start_sample_sizes(
     data_function = make_survival_data_function(censoring_rate = 0.3),
     metric_function = cindex_metric,

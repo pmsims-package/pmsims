@@ -421,6 +421,7 @@ compute_start_sample_sizes <- function(
   
   npar <- formals(data_function)$n_signal_parameters + 
           formals(data_function)$noise_parameters
+  default_start_value <- max(10L, 10L * npar)
   
   # 2. Inspect data_function formals to infer outcome type
   formals_list <- formals(data_function)

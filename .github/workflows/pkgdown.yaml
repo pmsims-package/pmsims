@@ -2,8 +2,9 @@
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    branches: [main, master]
+    branches: [main, dev]
   pull_request:
+    branches: [main, dev]
   release:
     types: [published]
   workflow_dispatch:
@@ -11,7 +12,9 @@ on:
 name: pkgdown.yaml
 
 permissions:
-  contents: read
+  contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: pages
@@ -40,23 +43,44 @@ jobs:
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
 
+      - name: Checkout existing published site
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: .published-site
+
+      - name: Prepare Pages artifact
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          rm -rf .pages
+          cp -a .published-site .pages
+          rm -rf .pages/.git
+
+          if [ "${GITHUB_REF_NAME}" = "dev" ]; then
+            rm -rf .pages/dev
+            cp -a docs/dev .pages/dev
+          else
+            find .pages -mindepth 1 -maxdepth 1 ! -name dev -exec rm -rf {} +
+            cp -a docs/. .pages/
+          fi
+
+      - name: Mirror Pages artifact to gh-pages
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .pages
+
       - name: Upload Pages artifact
         if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: .pages
 
-  deploy:
-    if: ${{ github.event_name != 'pull_request' }}
-    needs: pkgdown
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
+        if: ${{ github.event_name != 'pull_request' }}
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages
