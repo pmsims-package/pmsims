@@ -537,7 +537,7 @@ print(result)
     ## {
     ##     data[sample(seq_len(nrow(data)), n, replace = FALSE), ]
     ## }
-    ## <bytecode: 0x5609805fdcd8>
+    ## <bytecode: 0x563b1156fc60>
     ## 
     ## $model_function
     ## function (data) 
@@ -549,7 +549,7 @@ print(result)
     ##     glmnet::cv.glmnet(x, y, family = "binomial", alpha = 0.5, 
     ##         nfolds = 10)
     ## }
-    ## <bytecode: 0x560983aac110>
+    ## <bytecode: 0x563b14b115e8>
     ## 
     ## $metric_function
     ## function (test_data, fitted_model, model_name) 
@@ -563,7 +563,7 @@ print(result)
     ##     brier_score <- DescTools::BrierScore(y_test, pred = predictions)
     ##     return(-brier_score)
     ## }
-    ## <bytecode: 0x560991d44c68>
+    ## <bytecode: 0x563b22cc9050>
     ## 
     ## $model
     ## NULL
@@ -599,7 +599,7 @@ print(result)
     ## [1] FALSE
     ## 
     ## $simulation_time
-    ## Time difference of 97.41348 secs
+    ## Time difference of 100.086 secs
     ## 
     ## $mean_or_assurance
     ## [1] "assurance"
