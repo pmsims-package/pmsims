@@ -263,7 +263,8 @@ default_models <- list(
       glmnet::cv.glmnet(x, y, alpha = 0, family = "cox")  # L2 (ridge)
     },
     rf = function(d) {
-      require_optional_packages(c("randomForestSRC", "ranger"), "random-forest models")
+      #require_optional_packages(c("randomForestSRC", "ranger"), "random-forest models")
+      require_optional_packages(c("ranger"), "random-forest models")
 
       # ranger survival forest: formula interface with Surv()
       ncores <- parallel::detectCores(logical = FALSE)
