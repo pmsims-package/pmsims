@@ -34,8 +34,20 @@
     verbose              = 0,
     showsd               = FALSE
   )
+  #best <- cv$best_iteration
+  #if (is.null(best) || is.na(best) || best < 1L) best <- nrounds_max
+  #as.integer(best)
+  
+  ## xgboost <= 1.7
   best <- cv$best_iteration
-  if (is.null(best) || is.na(best) || best < 1L) best <- nrounds_max
+  
+  ## xgboost >= 3.x
+  if (is.null(best) && !is.null(cv$early_stop))
+    best <- cv$early_stop$best_iteration
+  
+  if (is.null(best) || is.na(best) || best < 1L)
+    best <- nrounds_max
+  
   as.integer(best)
 }
 # ---------------------------------------------------------------------------
@@ -206,7 +218,6 @@ default_models <- list(
         y = y,
         mtry = max(1, floor(ncol(x) / 3)),
         num.trees = 300L,
-        replace = FALSE,
         num.threads = nthreads 
       )
     },
