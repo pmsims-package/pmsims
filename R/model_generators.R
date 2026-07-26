@@ -114,6 +114,7 @@ default_models <- list(
         mtry = max(1, floor(ncol(x) / 3)),
         probability = TRUE,
         num.trees = 300,
+        min.node.size = 15,
         num.threads = nthreads
       )
     },
@@ -283,7 +284,7 @@ default_models <- list(
 
       stopifnot(all(c("time", "event") %in% colnames(d)))
       formula <- stats::as.formula("survival::Surv(time, event) ~ .")
-      ranger::ranger(formula, data = d, num.trees = 300, num.threads = nthreads)
+      ranger::ranger(formula, data = d, num.trees = 300, min.node.size = 15, num.threads = nthreads)
       #formula <- stats::as.formula("Surv(time, event) ~ .")
       #randomForestSRC::rfsrc(formula, data = d, ntree = 300)
     },
@@ -293,7 +294,7 @@ default_models <- list(
                                      eta          = 0.05,
                                      max_depth    = 4L,
                                      subsample    = 0.8,
-                                     min_child_weight = 5L)) {
+                                     min_child_weight = 15L)) {
       # XGBoost Cox objective: observed times as label, event indicator as
       # sample weight (1 = event, 0 = censored) — a standard pragmatic approach.
       # nrounds is selected via xgb.cv early stopping (see .xgb_cv_nrounds),
@@ -304,6 +305,8 @@ default_models <- list(
       label_time <- as.numeric(d$time)
       event      <- as.numeric(d$event)
       dtrain     <- xgboost::xgb.DMatrix(data = x, label = label_time, weight = event)
+      #lab    <- ifelse(d$event == 1, as.numeric(d$time), -as.numeric(d$time))
+      #dtrain <- xgboost::xgb.DMatrix(data = x, label = lab)
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
         params  = params,
