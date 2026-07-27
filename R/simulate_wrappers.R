@@ -190,7 +190,7 @@ make_data_args <- function(
 #'     variance carried by the nonlinear, linearly-inaccessible component.
 #'     Applies to complexity 2 and 3 only; ignored (with a warning) for 1 and 4.
 #'     If omitted, the generator's per-complexity default is used.}
-#'   \item{`correlation`}{Numeric in `[-1, 1]`. Pairwise correlation among the
+#'   \item{`correlation`}{Numeric in \eqn{[-1, 1]}. Pairwise correlation among the
 #'     candidate predictors. Default `0.3`.}
 #'   \item{`predictor_distribution`}{One of `"normal"`, `"uniform"`, `"binary"`,
 #'     `"exponential"`, `"lognormal"`, `"t"`, `"laplace"`. `"binary"` selects

@@ -114,34 +114,44 @@ adaptive_startvalues <- function(
 
 #' Calculate adaptive start bounds
 #'
-#' @param data_function
-#' @param model_function
-#' @param metric_function
-#' @param value_on_error
-#' @param start_n
-#' @param test_n
-#' @param n_reps_per
-#' @param n_reps_total
-#' @param target_performance
-#' @param threshold
-#' @param mean_or_assurance
-#' @param plateau_k
-#' @param plateau_tol
-#' @param large_perf_check
-#' @param large_n
-#' @param large_n_tol
-#' @param c_statistic
-#' @param parallel
-#' @param cores
-#' @param verbose
+#' Derive lower and upper sample-size bounds by repeatedly simulating model
+#' performance from an initial sample size.
 #'
-#' @returns
+#' @param data_function Function taking a sample size and returning a simulated
+#'   training dataset.
+#' @param model_function Function fitting a model to a simulated training
+#'   dataset.
+#' @param metric_function Function evaluating the fitted model on test data.
+#' @param value_on_error Numeric fallback used when fitting or evaluation fails.
+#' @param start_n Positive integer initial sample size.
+#' @param test_n Positive integer size of the fixed test dataset.
+#' @param n_reps_per Positive integer simulations performed at each sample size.
+#' @param n_reps_total Positive integer total simulation budget.
+#' @param target_performance Numeric performance threshold used to define the
+#'   search bounds.
+#' @param threshold Numeric tolerance around `target_performance`.
+#' @param mean_or_assurance Character string selecting the mean or 20th-percentile
+#'   performance summary.
+#' @param plateau_k Positive integer number of recent iterations used to detect
+#'   a performance plateau.
+#' @param plateau_tol Numeric maximum change treated as a plateau.
+#' @param large_perf_check Logical; whether to probe a large sample size before
+#'   beginning the adaptive search.
+#' @param large_n Optional positive integer sample size for the preliminary
+#'   performance probe.
+#' @param large_n_tol Numeric shortfall beyond which the target is considered
+#'   unreachable at `large_n`.
+#' @param c_statistic Reserved for compatibility with callers that supply an
+#'   anticipated discrimination value.
+#' @param parallel Logical; whether simulations at each sample size use a
+#'   parallel backend.
+#' @param cores Positive integer number of parallel workers.
+#' @param verbose Logical; whether to report search progress.
+#'
 #' @export
 #'
 #' @return A list containing lower and upper sample-size bounds, the associated
 #'   performance summaries, and the search trace.
-#' @keywords internal
-#' @noRd
 calculate_adaptive_bounds <- function(
   data_function,
   model_function,
@@ -188,10 +198,12 @@ calculate_adaptive_bounds <- function(
       cl <- parallel::makeCluster(cores)
       doParallel::registerDoParallel(cl)
       on.exit(parallel::stopCluster(cl), add = TRUE)
-      vals <- foreach::foreach(i = seq_len(n_reps_per), .combine = c) %dopar%
+      vals <- foreach::`%dopar%`(
+        foreach::foreach(i = seq_len(n_reps_per), .combine = c),
         {
           single_run(n)
         }
+      )
     } else {
       vals <- vapply(
         seq_len(n_reps_per),
@@ -203,7 +215,7 @@ calculate_adaptive_bounds <- function(
     perf_summary <- if (mean_or_assurance == "mean") {
       mean(vals, na.rm = TRUE)
     } else {
-      as.numeric(quantile(vals, probs = 0.20, na.rm = TRUE))
+      as.numeric(stats::quantile(vals, probs = 0.20, na.rm = TRUE))
     }
 
     list(y_summary = perf_summary, y = vals)
@@ -213,7 +225,7 @@ calculate_adaptive_bounds <- function(
     if (length(track) < k + 1) {
       return(FALSE)
     }
-    recent <- tail(track, k + 1)
+    recent <- utils::tail(track, k + 1)
     perfs <- sapply(recent, `[[`, "performance")
     gains <- diff(perfs)
     all(abs(gains) < tol)

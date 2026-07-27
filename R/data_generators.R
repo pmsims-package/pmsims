@@ -161,7 +161,7 @@ default_data_generators <- function(opts) {
 #'   (0, 1] and \code{distribution} is ignored.
 #' @param binary_prevalence  Scalar in (0, 1]. Bernoulli probability applied to
 #'   all predictors when \code{predictor_type = "binary"}. Default = 0.
-#' @param correlation        Scalar in [-1, 1]. Common pairwise correlation
+#' @param correlation        Scalar in \eqn{[-1, 1]}. Common pairwise correlation
 #'   applied via a Gaussian copula (equicorrelation, rank-based Cholesky).
 #'   Default = 0.3. Set to 0 for independence.
 #' @param distribution       Distribution family for \emph{all} continuous
@@ -473,7 +473,7 @@ apply_correlation <- function(X, rho) {
 
   L <- chol(cor_mat)
   U <- apply(X, 2, function(col) rank(col, ties.method = "average") / (n + 1))
-  Z_corr <- qnorm(U) %*% t(L)
+  Z_corr <- stats::qnorm(U) %*% t(L)
 
   X_corr <- X
   for (j in seq_len(p)) {
@@ -723,7 +723,7 @@ generate_linear_predictor <- function(
 
   # Residualise the nonlinear aggregate against the FULL design [1, x1..xS] so
   # that no linear-in-X learner can access it, then standardise to unit SD.
-  N_ortho <- residuals(stats::lm(Nraw ~ Xs))
+  N_ortho <- stats::residuals(stats::lm(Nraw ~ Xs))
   sd_N <- stats::sd(N_ortho)
   if (!is.finite(sd_N) || sd_N <= 0) {
     stop(
