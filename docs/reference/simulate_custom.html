@@ -5,7 +5,7 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Minimum sample size for custom simulation workflows — simulate_custom"><meta name="description" content="Compute the minimum sample size required to achieve a target level of
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet"><meta property="og:title" content="Minimum sample size for custom simulation workflows — simulate_custom"><meta name="description" content="Compute the minimum sample size required to achieve a target level of
 predictive performance using user-defined simulation components.
 simulate_custom() is the low-level interface in pmsims: users supply a
 data-generating function, a model-fitting function, and a metric function,
@@ -23,7 +23,7 @@ selected performance criterion."><meta property="og:image" content="https://pmsi
 
     <a class="navbar-brand me-2" href="../index.html">pmsims</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,12 @@ selected performance criterion."><meta property="og:image" content="https://pmsi
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
   </ul></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
+      </ul><ul class="navbar-nav"><li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-dev" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">dev</button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-dev"><li><a class="dropdown-item" href="https://pmsims-package.github.io/pmsims/dev/">dev</a></li>
+    <li><a class="dropdown-item" href="https://pmsims-package.github.io/pmsims/">0.5.0 (stable)</a></li>
+  </ul></li>
+<li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/pmsims-package/pmsims/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
@@ -94,9 +99,10 @@ selected performance criterion.</p>
 
 
 <dl><dt id="arg-data-function">data_function<a class="anchor" aria-label="anchor" href="#arg-data-function"></a></dt>
-<dd><p>Function taking a single argument, <code>n</code>, giving the
-training sample size, and returning a dataset that can be passed to
-<code>model_function</code>.</p></dd>
+<dd><p>Function taking <code>n</code>, the training sample size, and
+returning a dataset that can be passed to <code>model_function</code>. It should also
+declare <code>n_signal_parameters</code> and <code>noise_parameters</code> arguments with numeric
+defaults so the start-value heuristics can infer the number of predictors.</p></dd>
 
 
 <dt id="arg-model-function">model_function<a class="anchor" aria-label="anchor" href="#arg-model-function"></a></dt>
@@ -189,23 +195,19 @@ the iteration history on the returned object.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1234</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">data_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="va">x1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">x2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">x3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">x4</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">x5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">0.35</span> <span class="op">*</span> <span class="va">x1</span> <span class="op">-</span> <span class="fl">0.3</span> <span class="op">*</span> <span class="va">x2</span> <span class="op">+</span> <span class="fl">0.2</span> <span class="op">*</span> <span class="va">x3</span> <span class="op">+</span> <span class="fl">0.1</span> <span class="op">*</span> <span class="va">x4</span> <span class="op">-</span> <span class="fl">0.1</span> <span class="op">*</span> <span class="va">x5</span> <span class="op">+</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, sd <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">y</span>, x1 <span class="op">=</span> <span class="va">x1</span>, x2 <span class="op">=</span> <span class="va">x2</span>, x3 <span class="op">=</span> <span class="va">x3</span>, x4 <span class="op">=</span> <span class="va">x4</span>, x5 <span class="op">=</span> <span class="va">x5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">data_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">n_signal_parameters</span> <span class="op">=</span> <span class="fl">2</span>, <span class="va">noise_parameters</span> <span class="op">=</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="va">x1</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">x2</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">0.5</span> <span class="op">*</span> <span class="va">x1</span> <span class="op">-</span> <span class="fl">0.25</span> <span class="op">*</span> <span class="va">x2</span> <span class="op">+</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">y</span>, x1 <span class="op">=</span> <span class="va">x1</span>, x2 <span class="op">=</span> <span class="va">x2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">model_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">dat</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">.</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">model_fun</span>, <span class="st">"model"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"lm"</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">metric_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">test_data</span>, <span class="va">fit</span>, <span class="va">model</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="va">preds</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, newdata <span class="op">=</span> <span class="va">test_data</span><span class="op">)</span></span></span>
@@ -214,23 +216,23 @@ the iteration history on the returned object.</p></dd>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">metric_fun</span>, <span class="st">"metric"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"r2"</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">maximum_achievable_data</span> <span class="op">&lt;-</span> <span class="fu">data_fun</span><span class="op">(</span><span class="fl">100000</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">test_data</span> <span class="op">&lt;-</span> <span class="fu">data_fun</span><span class="op">(</span><span class="fl">50000</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">maximum_achievable_fit</span> <span class="op">&lt;-</span> <span class="fu">model_fun</span><span class="op">(</span><span class="va">maximum_achievable_data</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">maximum_achievable_performance</span> <span class="op">&lt;-</span> <span class="fu">metric_fun</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">test_data</span>,</span></span>
-<span class="r-in"><span>  <span class="va">maximum_achievable_fit</span>,</span></span>
-<span class="r-in"><span>  <span class="st">"lm"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">est</span> <span class="op">&lt;-</span> <span class="fu">simulate_custom</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data_function <span class="op">=</span> <span class="va">data_fun</span>,</span></span>
 <span class="r-in"><span>  model_function <span class="op">=</span> <span class="va">model_fun</span>,</span></span>
 <span class="r-in"><span>  metric_function <span class="op">=</span> <span class="va">metric_fun</span>,</span></span>
-<span class="r-in"><span>  target_performance <span class="op">=</span> <span class="va">maximum_achievable_performance</span> <span class="op">-</span> <span class="fl">0.02</span></span></span>
+<span class="r-in"><span>  target_performance <span class="op">=</span> <span class="fl">0.1</span>,</span></span>
+<span class="r-in"><span>  mean_or_assurance <span class="op">=</span> <span class="st">"mean"</span>,</span></span>
+<span class="r-in"><span>  test_n <span class="op">=</span> <span class="fl">200</span>,</span></span>
+<span class="r-in"><span>  min_sample_size <span class="op">=</span> <span class="fl">20</span>,</span></span>
+<span class="r-in"><span>  max_sample_size <span class="op">=</span> <span class="fl">80</span>,</span></span>
+<span class="r-in"><span>  n_reps_total <span class="op">=</span> <span class="fl">20</span>,</span></span>
+<span class="r-in"><span>  n_reps_per <span class="op">=</span> <span class="fl">5</span>,</span></span>
+<span class="r-in"><span>  method <span class="op">=</span> <span class="st">"bisection"</span>,</span></span>
+<span class="r-in"><span>  progress <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">est</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.</span>
+<span class="r-in"><span><span class="va">est</span><span class="op">$</span><span class="va">min_n</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 31</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -242,7 +244,7 @@ the iteration history on the returned object.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>
