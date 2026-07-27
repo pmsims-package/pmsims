@@ -51,7 +51,7 @@ Bernoulli(\code{binary_prevalence}); \code{binary_prevalence} must be in
 \item{binary_prevalence}{Scalar in (0, 1]. Bernoulli probability applied to
 all predictors when \code{predictor_type = "binary"}. Default = 0.}
 
-\item{correlation}{Scalar in \link{-1, 1}. Common pairwise correlation
+\item{correlation}{Scalar in \eqn{[-1, 1]}. Common pairwise correlation
 applied via a Gaussian copula (equicorrelation, rank-based Cholesky).
 Default = 0.3. Set to 0 for independence.}
 

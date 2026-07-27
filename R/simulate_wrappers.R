@@ -10,7 +10,7 @@
 
 #' Resolve a `data_control` list into generator/tuner arguments
 #'
-#' Validates `data_control` (via [validate_data_control()]) and maps the
+#' Validates `data_control` and maps the
 #' user-facing `predictor_distribution` onto the generator's internal
 #' `predictor_type` + `distribution` + `binary_prevalence`:
 #' `"binary"` selects binary predictors (with the supplied prevalence); any
@@ -63,15 +63,15 @@ resolve_data_control <- function(data_control, complexity) {
 #' tuned effect size will not recover the requested performance. This helper
 #' passes `complexity`, `nonlinear_strength`, `correlation`, `distribution`,
 #' `predictor_type` and `binary_prevalence` to the tuner, silently dropping any
-#' the tuner does not declare (so it works with both the current and older
-#' tuner signatures). If a non-default `nonlinear_strength` cannot be passed,
+#' the tuner does not declare (so it works across the supported tuner
+#' signatures). If a non-default `nonlinear_strength` cannot be passed,
 #' a warning is raised because C2/C3 tuning would then be inconsistent with the
 #' generated data.
 #'
 #' @param tuner A tuning function (e.g. `binary_tuning`).
 #' @param required A named list of the tuner's required arguments. Must include
 #'   `.complexity`, which is forwarded as `complexity`.
-#' @param dc The list returned by [resolve_data_control()].
+#' @param dc The list returned by `resolve_data_control()`.
 #' @return The tuner's return value.
 #' @keywords internal
 #' @noRd
