@@ -118,17 +118,24 @@ itself.}
 }
 
 \examples{
-\dontrun{
+\donttest{
+set.seed(123)
+# Small budgets keep this example fast; use larger values for an analysis.
 est <- simulate_continuous(
-  signal_parameters = 8,
-  noise_parameters = 8,
-  complexity = 3,
-  maximum_achievable_rsquared = 0.50,
+  signal_parameters = 3,
+  noise_parameters = 2,
+  maximum_achievable_rsquared = 0.3,
   model = "lm",
-  metric = "calibration_slope",
-  target_performance = 0.9,
-  n_reps_total = 1000,
-  mean_or_assurance = "assurance"
+  metric = "r2",
+  target_performance = 0.15,
+  n_reps_total = 20,
+  mean_or_assurance = "mean",
+  method = "bisection",
+  min_sample_size = 20,
+  max_sample_size = 80,
+  n_reps_per = 5,
+  test_n = 200,
+  progress = FALSE
 )
 est
 }

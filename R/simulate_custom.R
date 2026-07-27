@@ -7,9 +7,10 @@
 #' and the chosen search engine estimates the smallest \eqn{n} meeting the
 #' selected performance criterion.
 #'
-#' @param data_function Function taking a single argument, `n`, giving the
-#'   training sample size, and returning a dataset that can be passed to
-#'   `model_function`.
+#' @param data_function Function taking `n`, the training sample size, and
+#'   returning a dataset that can be passed to `model_function`. It should also
+#'   declare `n_signal_parameters` and `noise_parameters` arguments with numeric
+#'   defaults so the start-value heuristics can infer the number of predictors.
 #' @param model_function Function that fits a model to the dataset returned by
 #'   `data_function`. It must take the generated dataset as its only argument
 #'   and return a fitted model object.
@@ -53,23 +54,19 @@
 #' @seealso [simulate_binary()], [simulate_continuous()], [simulate_survival()]
 #'
 #' @examples
-#' \dontrun{
-#' set.seed(1234)
+#' set.seed(123)
 #'
-#' data_fun <- function(n) {
-#'   x1 <- rnorm(n)
-#'   x2 <- rnorm(n)
-#'   x3 <- rnorm(n)
-#'   x4 <- rnorm(n)
-#'   x5 <- rnorm(n)
-#'   y <- 0.35 * x1 - 0.3 * x2 + 0.2 * x3 + 0.1 * x4 - 0.1 * x5 +
-#'     rnorm(n, sd = 1)
-#'   data.frame(y = y, x1 = x1, x2 = x2, x3 = x3, x4 = x4, x5 = x5)
+#' data_fun <- function(n, n_signal_parameters = 2, noise_parameters = 0) {
+#'   x1 <- stats::rnorm(n)
+#'   x2 <- stats::rnorm(n)
+#'   y <- 0.5 * x1 - 0.25 * x2 + stats::rnorm(n)
+#'   data.frame(y = y, x1 = x1, x2 = x2)
 #' }
 #'
 #' model_fun <- function(dat) {
 #'   stats::lm(y ~ ., data = dat)
 #' }
+#' attr(model_fun, "model") <- "lm"
 #'
 #' metric_fun <- function(test_data, fit, model) {
 #'   preds <- stats::predict(fit, newdata = test_data)
@@ -78,23 +75,21 @@
 #' }
 #' attr(metric_fun, "metric") <- "r2"
 #'
-#' maximum_achievable_data <- data_fun(100000)
-#' test_data <- data_fun(50000)
-#' maximum_achievable_fit <- model_fun(maximum_achievable_data)
-#' maximum_achievable_performance <- metric_fun(
-#'   test_data,
-#'   maximum_achievable_fit,
-#'   "lm"
-#' )
-#'
 #' est <- simulate_custom(
 #'   data_function = data_fun,
 #'   model_function = model_fun,
 #'   metric_function = metric_fun,
-#'   target_performance = maximum_achievable_performance - 0.02
+#'   target_performance = 0.1,
+#'   mean_or_assurance = "mean",
+#'   test_n = 200,
+#'   min_sample_size = 20,
+#'   max_sample_size = 80,
+#'   n_reps_total = 20,
+#'   n_reps_per = 5,
+#'   method = "bisection",
+#'   progress = FALSE
 #' )
-#' est
-#' }
+#' est$min_n
 #' @export
 simulate_custom <- function(
   data_function,

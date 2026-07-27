@@ -242,19 +242,25 @@ make_data_args <- function(
 #' @seealso [simulate_continuous()], [simulate_survival()], [simulate_custom()]
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' set.seed(123)
+#' # Small budgets keep this example fast; use larger values for an analysis.
 #' est <- simulate_binary(
-#'   signal_parameters = 10,
-#'   noise_parameters = 10,
-#'   complexity = 2,
-#'   data_control = list(nonlinear_strength = 0.4, correlation = 0.2),
-#'   outcome_prevalence = 0.2,
-#'   maximum_achievable_cstatistic = 0.75,
+#'   signal_parameters = 3,
+#'   noise_parameters = 2,
+#'   outcome_prevalence = 0.3,
+#'   maximum_achievable_cstatistic = 0.7,
 #'   model = "glm",
-#'   metric = "calibration_slope",
-#'   target_performance = 0.9,
-#'   n_reps_total = 1000,
-#'   mean_or_assurance = "assurance"
+#'   metric = "auc",
+#'   target_performance = 0.6,
+#'   n_reps_total = 20,
+#'   mean_or_assurance = "mean",
+#'   method = "bisection",
+#'   min_sample_size = 40,
+#'   max_sample_size = 100,
+#'   n_reps_per = 5,
+#'   test_n = 200,
+#'   progress = FALSE
 #' )
 #' est
 #' }
@@ -407,17 +413,24 @@ simulate_binary <- function(
 #' @seealso [simulate_binary()], [simulate_survival()], [simulate_custom()]
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' set.seed(123)
+#' # Small budgets keep this example fast; use larger values for an analysis.
 #' est <- simulate_continuous(
-#'   signal_parameters = 8,
-#'   noise_parameters = 8,
-#'   complexity = 3,
-#'   maximum_achievable_rsquared = 0.50,
+#'   signal_parameters = 3,
+#'   noise_parameters = 2,
+#'   maximum_achievable_rsquared = 0.3,
 #'   model = "lm",
-#'   metric = "calibration_slope",
-#'   target_performance = 0.9,
-#'   n_reps_total = 1000,
-#'   mean_or_assurance = "assurance"
+#'   metric = "r2",
+#'   target_performance = 0.15,
+#'   n_reps_total = 20,
+#'   mean_or_assurance = "mean",
+#'   method = "bisection",
+#'   min_sample_size = 20,
+#'   max_sample_size = 80,
+#'   n_reps_per = 5,
+#'   test_n = 200,
+#'   progress = FALSE
 #' )
 #' est
 #' }
@@ -559,20 +572,26 @@ simulate_continuous <- function(
 #' @seealso [simulate_binary()], [simulate_continuous()], [simulate_custom()]
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' set.seed(123)
+#' # Small budgets keep this example fast; use larger values for an analysis.
 #' est <- simulate_survival(
-#'   signal_parameters = 10,
-#'   noise_parameters = 10,
-#'   complexity = 2,
-#'   data_control = list(nonlinear_strength = 0.5),
-#'   maximum_achievable_cindex = 0.70,
-#'   baseline_hazard = 0.01,
-#'   censoring_rate = 0.30,
+#'   signal_parameters = 3,
+#'   noise_parameters = 2,
+#'   maximum_achievable_cindex = 0.65,
+#'   baseline_hazard = 0.1,
+#'   censoring_rate = 0.3,
 #'   model = "coxph",
-#'   metric = "calibration_slope",
-#'   target_performance = 0.9,
-#'   n_reps_total = 1000,
-#'   mean_or_assurance = "assurance"
+#'   metric = "cindex",
+#'   target_performance = 0.55,
+#'   n_reps_total = 20,
+#'   mean_or_assurance = "mean",
+#'   method = "bisection",
+#'   min_sample_size = 20,
+#'   max_sample_size = 80,
+#'   n_reps_per = 5,
+#'   test_n = 200,
+#'   progress = FALSE
 #' )
 #' est
 #' }
