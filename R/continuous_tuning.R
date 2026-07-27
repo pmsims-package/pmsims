@@ -69,37 +69,45 @@
 #'   }
 #' @keywords internal
 continuous_tuning <- function(
-    r2,
-    candidate_features,
-    proportion_noise_features,
-    complexity          = 1,
-    nonlinear_strength  = NULL,
-    correlation         = 0,
-    distribution        = "normal",
-    predictor_type      = "continuous",
-    binary_prevalence   = 0,
-    n_sim               = 100000
+  r2,
+  candidate_features,
+  proportion_noise_features,
+  complexity = 1,
+  nonlinear_strength = NULL,
+  correlation = 0,
+  distribution = "normal",
+  predictor_type = "continuous",
+  binary_prevalence = 0,
+  n_sim = 100000
 ) {
-  
   # ---- input validation ------------------------------------------------------
-  if (!is.numeric(r2) || length(r2) != 1 || r2 <= 0 || r2 >= 1)
+  if (!is.numeric(r2) || length(r2) != 1 || r2 <= 0 || r2 >= 1) {
     stop("r2 must be a single numeric value in (0, 1).")
-  if (!is.numeric(proportion_noise_features) ||
-      proportion_noise_features < 0 || proportion_noise_features >= 1)
+  }
+  if (
+    !is.numeric(proportion_noise_features) ||
+      proportion_noise_features < 0 ||
+      proportion_noise_features >= 1
+  ) {
     stop("proportion_noise_features must be in [0, 1).")
-  
+  }
+
   # ---- derive signal / noise counts ------------------------------------------
   n_signal <- candidate_features -
     round(candidate_features * proportion_noise_features)
-  noise    <- candidate_features - n_signal
-  
-  if (n_signal < 1)
+  noise <- candidate_features - n_signal
+
+  if (n_signal < 1) {
     stop("proportion_noise_features leaves no signal predictors.")
-  
+  }
+
   # ---- resolve nonlinear strength --------------------------------------------
-  nonlinear_strength <- resolve_nonlinear_strength(nonlinear_strength, complexity)
+  nonlinear_strength <- resolve_nonlinear_strength(
+    nonlinear_strength,
+    complexity
+  )
   #w                  <- STRENGTH_WEIGHTS[[predictor_strength]]
-  
+
   # ---- Step 1: estimate Var(LP) with beta_signal = 1 ------------------------
   #
   # generate_linear_predictor multiplies every coefficient by
@@ -112,52 +120,55 @@ continuous_tuning <- function(
   # generate_continuous_data() with sigma = 0 (no noise) by using
   # generate_predictors + generate_linear_predictor directly so we can
   # capture lp without noise.
-  
+
   X_unit <- generate_predictors(
-    n                 = n_sim,
+    n = n_sim,
     n_signal_parameters = n_signal,
-    noise_parameters    = noise,
-    complexity          = complexity,
-    predictor_type      = predictor_type,
-    binary_prevalence   = binary_prevalence,
-    correlation         = correlation,
-    distribution        = distribution
+    noise_parameters = noise,
+    complexity = complexity,
+    predictor_type = predictor_type,
+    binary_prevalence = binary_prevalence,
+    correlation = correlation,
+    distribution = distribution
   )
-  
+
   lp_unit <- generate_linear_predictor(
-    X                   = X_unit,
+    X = X_unit,
     n_signal_parameters = n_signal,
-    noise_parameters    = noise,
-    intercept           = 0,
-    beta_signal         = 1,           # unit beta; we scale analytically below
-    complexity          = complexity,
-    nonlinear_strength  = nonlinear_strength
+    noise_parameters = noise,
+    intercept = 0,
+    beta_signal = 1, # unit beta; we scale analytically below
+    complexity = complexity,
+    nonlinear_strength = nonlinear_strength
   )
-  
+
   var_lp_unit <- stats::var(lp_unit)
-  
-  if (var_lp_unit <= 0)
-    stop("Estimated Var(LP) at beta_signal = 1 is zero or negative. ",
-         "Check that n_signal >= 1 and the complexity/distribution settings ",
-         "produce non-degenerate predictors.")
-  
+
+  if (var_lp_unit <= 0) {
+    stop(
+      "Estimated Var(LP) at beta_signal = 1 is zero or negative. ",
+      "Check that n_signal >= 1 and the complexity/distribution settings ",
+      "produce non-degenerate predictors."
+    )
+  }
+
   # ---- Step 2: solve for beta_signal analytically ----------------------------
   #
   # Var(LP | beta) = beta^2 * var_lp_unit   [LP is linear-in-beta by design]
   # R^2 = Var(LP) / (Var(LP) + 1)           [epsilon ~ N(0,1), Var = 1]
   # => beta^2 = R2 / (var_lp_unit * (1 - R2))
-  
+
   beta_signal <- sqrt(r2 / (var_lp_unit * (1 - r2)))
-  
+
   # ---- Step 3: verify with a second large simulation -------------------------
-  lp_verify <- beta_signal * lp_unit   # rescale the already-simulated lp
+  lp_verify <- beta_signal * lp_unit # rescale the already-simulated lp
   # (exact because LP is linear in beta_signal)
-  y_verify   <- lp_verify + stats::rnorm(n_sim)
+  y_verify <- lp_verify + stats::rnorm(n_sim)
   r2_achieved <- 1 - stats::var(y_verify - lp_verify) / stats::var(y_verify)
-  
+
   return(c(
-    beta_signal  = beta_signal,
-    r2_achieved  = r2_achieved,
-    var_lp_unit  = var_lp_unit
+    beta_signal = beta_signal,
+    r2_achieved = r2_achieved,
+    var_lp_unit = var_lp_unit
   ))
 }

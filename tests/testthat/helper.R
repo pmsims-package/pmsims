@@ -15,7 +15,7 @@ get_binary_data_model_metric <- function() {
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model = "glm")
 
-  metric_function = default_metric_generator(
+  metric_function <- default_metric_generator(
     "auc",
     data_function
   )

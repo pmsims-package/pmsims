@@ -83,7 +83,7 @@ COMPLEXITY_DIST_DEFAULTS <- c(
   "1" = "normal",
   "2" = "normal",
   "3" = "normal",
-  "4" = "uniform"   # Friedman canonical
+  "4" = "uniform" # Friedman canonical
 )
 
 # Nonlinear strength per complexity for C2/C3: the FRACTION of signal variance
@@ -121,8 +121,8 @@ default_data_generators <- function(opts) {
   f <- switch(
     type,
     continuous = generate_continuous_data,
-    binary     = generate_binary_data,
-    survival   = generate_survival_data,
+    binary = generate_binary_data,
+    survival = generate_survival_data,
     stop(sprintf(
       'opts$type must be "continuous", "binary", or "survival". Got: "%s".',
       type
@@ -178,25 +178,38 @@ default_data_generators <- function(opts) {
 #'
 #' @keywords internal
 generate_continuous_data <- function(
+  n,
+  n_signal_parameters,
+  noise_parameters,
+  beta_signal,
+  complexity = 1,
+  nonlinear_strength = NULL,
+  predictor_type = "continuous",
+  binary_prevalence = 0,
+  correlation = 0.3,
+  distribution = "normal",
+  intercept = 0
+) {
+  X <- generate_predictors(
     n,
     n_signal_parameters,
     noise_parameters,
+    complexity,
+    predictor_type,
+    binary_prevalence,
+    correlation,
+    distribution
+  )
+  lp <- generate_linear_predictor(
+    X,
+    n_signal_parameters,
+    noise_parameters,
+    intercept,
     beta_signal,
-    complexity         = 1,
-    nonlinear_strength = NULL,
-    predictor_type     = "continuous",
-    binary_prevalence  = 0,
-    correlation        = 0.3,
-    distribution       = "normal",
-    intercept          = 0
-) {
-  X  <- generate_predictors(n, n_signal_parameters, noise_parameters,
-                            complexity, predictor_type,
-                            binary_prevalence, correlation, distribution)
-  lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters,
-                                  intercept, beta_signal,
-                                  complexity, nonlinear_strength)
-  y  <- stats::rnorm(n, lp, 1)
+    complexity,
+    nonlinear_strength
+  )
+  y <- stats::rnorm(n, lp, 1)
   return(as.data.frame(cbind(y, X)))
 }
 
@@ -210,26 +223,39 @@ generate_continuous_data <- function(
 #' @return A data frame with columns \code{y} (0/1), \code{x1}, \code{x2}, ...
 #' @keywords internal
 generate_binary_data <- function(
+  n,
+  n_signal_parameters,
+  noise_parameters,
+  beta_signal,
+  complexity = 1,
+  nonlinear_strength = NULL,
+  predictor_type = "continuous",
+  binary_prevalence = 0,
+  correlation = 0.3,
+  distribution = "normal",
+  mu_lp = 0,
+  baseline_prob = 0.5
+) {
+  X <- generate_predictors(
     n,
     n_signal_parameters,
     noise_parameters,
+    complexity,
+    predictor_type,
+    binary_prevalence,
+    correlation,
+    distribution
+  )
+  lp <- generate_linear_predictor(
+    X,
+    n_signal_parameters,
+    noise_parameters,
+    intercept = mu_lp,
     beta_signal,
-    complexity         = 1,
-    nonlinear_strength = NULL,
-    predictor_type     = "continuous",
-    binary_prevalence  = 0,
-    correlation        = 0.3,
-    distribution       = "normal",
-    mu_lp              = 0,
-    baseline_prob      = 0.5
-) {
-  X  <- generate_predictors(n, n_signal_parameters, noise_parameters,
-                            complexity, predictor_type,
-                            binary_prevalence, correlation, distribution)
-  lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters,
-                                  intercept = mu_lp, beta_signal,
-                                  complexity, nonlinear_strength)
-  y  <- stats::rbinom(n, 1, stats::plogis(lp))
+    complexity,
+    nonlinear_strength
+  )
+  y <- stats::rbinom(n, 1, stats::plogis(lp))
   return(as.data.frame(cbind(y, X)))
 }
 
@@ -243,33 +269,46 @@ generate_binary_data <- function(
 #'   1 = event), \code{x1}, \code{x2}, ...
 #' @keywords internal
 generate_survival_data <- function(
+  n,
+  n_signal_parameters,
+  noise_parameters,
+  beta_signal,
+  baseline_hazard,
+  censoring_rate,
+  complexity = 1,
+  nonlinear_strength = NULL,
+  predictor_type = "continuous",
+  binary_prevalence = 0,
+  correlation = 0.3,
+  distribution = "normal",
+  intercept = 0
+) {
+  X <- generate_predictors(
     n,
     n_signal_parameters,
     noise_parameters,
+    complexity,
+    predictor_type,
+    binary_prevalence,
+    correlation,
+    distribution
+  )
+  lp <- generate_linear_predictor(
+    X,
+    n_signal_parameters,
+    noise_parameters,
+    intercept,
     beta_signal,
-    baseline_hazard,
-    censoring_rate,
-    complexity         = 1,
-    nonlinear_strength = NULL,
-    predictor_type     = "continuous",
-    binary_prevalence  = 0,
-    correlation        = 0.3,
-    distribution       = "normal",
-    intercept          = 0
-) {
-  X  <- generate_predictors(n, n_signal_parameters, noise_parameters,
-                            complexity, predictor_type,
-                            binary_prevalence, correlation, distribution)
-  lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters,
-                                  intercept, beta_signal,
-                                  complexity, nonlinear_strength)
-  
-  event_time    <- stats::rexp(n, rate = baseline_hazard * exp(lp))
-  T_observe     <- stats::quantile(event_time, 1 - censoring_rate)
-  censor_time   <- rep(T_observe, n)
-  event         <- as.numeric(event_time <= censor_time)
+    complexity,
+    nonlinear_strength
+  )
+
+  event_time <- stats::rexp(n, rate = baseline_hazard * exp(lp))
+  T_observe <- stats::quantile(event_time, 1 - censoring_rate)
+  censor_time <- rep(T_observe, n)
+  event <- as.numeric(event_time <= censor_time)
   survival_time <- pmin(event_time, censor_time)
-  
+
   return(data.frame(time = survival_time, event = event, X))
 }
 
@@ -303,11 +342,17 @@ resolve_nonlinear_strength <- function(nonlinear_strength, complexity) {
     nonlinear_strength <-
       COMPLEXITY_NONLINEAR_STRENGTH_DEFAULTS[[as.character(complexity)]]
   }
-  if (!is.numeric(nonlinear_strength) || length(nonlinear_strength) != 1 ||
+  if (
+    !is.numeric(nonlinear_strength) ||
+      length(nonlinear_strength) != 1 ||
       !is.finite(nonlinear_strength) ||
-      nonlinear_strength < 0 || nonlinear_strength >= 1) {
-    stop("nonlinear_strength must be a single number in [0, 1). Got: ",
-         format(nonlinear_strength))
+      nonlinear_strength < 0 ||
+      nonlinear_strength >= 1
+  ) {
+    stop(
+      "nonlinear_strength must be a single number in [0, 1). Got: ",
+      format(nonlinear_strength)
+    )
   }
   return(nonlinear_strength)
 }
@@ -329,35 +374,36 @@ resolve_nonlinear_strength <- function(nonlinear_strength, complexity) {
 #   binary      : prop = binary_prevalence  (passed in as argument)
 # -----------------------------------------------------------------------------
 draw_predictors <- function(n, p, family, binary_prevalence = 0) {
-  
   vals <- switch(
     family,
-    
+
     normal = stats::rnorm(n * p),
-    
+
     uniform = stats::runif(n * p),
-    
+
     exponential = stats::rexp(n * p),
-    
+
     lognormal = stats::rlnorm(n * p),
-    
+
     t = stats::rt(n * p, df = 5),
-    
+
     laplace = {
       u <- stats::runif(n * p, -0.5, 0.5)
-      -sign(u) * log(1 - 2 * abs(u))   # standard Laplace (loc=0, scale=1)
+      -sign(u) * log(1 - 2 * abs(u)) # standard Laplace (loc=0, scale=1)
     },
-    
+
     binary = stats::rbinom(n * p, 1, binary_prevalence),
-    
+
     stop(sprintf(
-      paste0('Unknown distribution "%s". ',
-             'Supported: "normal", "uniform", "exponential", ',
-             '"lognormal", "t", "laplace".'),
+      paste0(
+        'Unknown distribution "%s". ',
+        'Supported: "normal", "uniform", "exponential", ',
+        '"lognormal", "t", "laplace".'
+      ),
       family
     ))
   )
-  
+
   matrix(vals, nrow = n, ncol = p)
 }
 
@@ -370,10 +416,18 @@ draw_predictors <- function(n, p, family, binary_prevalence = 0) {
 #                                  -> "uniform" (C4 Friedman canonical default)
 #   3. Otherwise                   -> distribution as supplied
 # -----------------------------------------------------------------------------
-resolve_family <- function(complexity, predictor_type, distribution,
-                           binary_prevalence) {
-  if (predictor_type == "binary") return("binary")
-  if (complexity == 4 && distribution == "normal") return("uniform")
+resolve_family <- function(
+  complexity,
+  predictor_type,
+  distribution,
+  binary_prevalence
+) {
+  if (predictor_type == "binary") {
+    return("binary")
+  }
+  if (complexity == 4 && distribution == "normal") {
+    return("uniform")
+  }
   return(distribution)
 }
 
@@ -387,37 +441,50 @@ resolve_family <- function(complexity, predictor_type, distribution,
 apply_correlation <- function(X, rho) {
   n <- nrow(X)
   p <- ncol(X)
-  
-  if (rho == 0) return(X)
-  
+
+  if (rho == 0) {
+    return(X)
+  }
+
   min_rho <- if (p > 1) -1 / (p - 1) else -1
-  if (rho < min_rho)
+  if (rho < min_rho) {
     warning(sprintf(
-      paste0("correlation = %.3f may produce a non-PSD equicorrelation matrix ",
-             "for p = %d predictors (minimum valid rho = %.4f)."),
-      rho, p, min_rho
+      paste0(
+        "correlation = %.3f may produce a non-PSD equicorrelation matrix ",
+        "for p = %d predictors (minimum valid rho = %.4f)."
+      ),
+      rho,
+      p,
+      min_rho
     ))
-  
-  cor_mat <- matrix(rho, p, p); diag(cor_mat) <- 1
-  
+  }
+
+  cor_mat <- matrix(rho, p, p)
+  diag(cor_mat) <- 1
+
   eigs <- eigen(cor_mat, symmetric = TRUE, only.values = TRUE)$values
-  if (any(eigs < -1e-8))
+  if (any(eigs < -1e-8)) {
     stop(sprintf(
       "Equicorrelation matrix with rho = %.3f is not PSD for p = %d.",
-      rho, p
+      rho,
+      p
     ))
-  
-  L      <- chol(cor_mat)
-  U      <- apply(X, 2, function(col) rank(col, ties.method = "average") / (n + 1))
+  }
+
+  L <- chol(cor_mat)
+  U <- apply(X, 2, function(col) rank(col, ties.method = "average") / (n + 1))
   Z_corr <- qnorm(U) %*% t(L)
-  
+
   X_corr <- X
   for (j in seq_len(p)) {
-    orig_sorted   <- sort(X[, j])
-    new_ranks_int <- pmax(1L, pmin(n, round(rank(Z_corr[, j], ties.method = "average"))))
-    X_corr[, j]  <- orig_sorted[new_ranks_int]
+    orig_sorted <- sort(X[, j])
+    new_ranks_int <- pmax(
+      1L,
+      pmin(n, round(rank(Z_corr[, j], ties.method = "average")))
+    )
+    X_corr[, j] <- orig_sorted[new_ranks_int]
   }
-  
+
   colnames(X_corr) <- colnames(X)
   return(X_corr)
 }
@@ -445,45 +512,62 @@ apply_correlation <- function(X, rho) {
 #'
 #' @return Named n x p numeric matrix (column names: x1, x2, ...).
 #' @keywords internal
-generate_predictors <- function(n,
-                                n_signal_parameters,
-                                noise_parameters,
-                                complexity        = 1,
-                                predictor_type    = "continuous",
-                                binary_prevalence = 0,
-                                correlation       = 0.3,
-                                distribution      = "normal") {
-  
-  p         <- n_signal_parameters + noise_parameters
+generate_predictors <- function(
+  n,
+  n_signal_parameters,
+  noise_parameters,
+  complexity = 1,
+  predictor_type = "continuous",
+  binary_prevalence = 0,
+  correlation = 0.3,
+  distribution = "normal"
+) {
+  p <- n_signal_parameters + noise_parameters
   col_names <- paste0("x", seq_len(p))
-  
+
   # ---- validate inputs -------------------------------------------------------
-  if (!is.numeric(n_signal_parameters) || n_signal_parameters < 1)
+  if (!is.numeric(n_signal_parameters) || n_signal_parameters < 1) {
     stop("n_signal_parameters must be a positive integer.")
-  if (!is.numeric(noise_parameters)  || noise_parameters  < 0)
-    stop("noise_parameters must be a non-negative integer.")
-  if (!predictor_type %in% c("continuous", "binary"))
-    stop('predictor_type must be "continuous" or "binary".')
-  if (!is.numeric(correlation) || length(correlation) != 1 ||
-      correlation < -1 || correlation > 1)
-    stop("correlation must be a single numeric value in [-1, 1].")
-  if (predictor_type == "binary") {
-    if (binary_prevalence <= 0 || binary_prevalence > 1)
-      stop("binary_prevalence must be in (0, 1] when predictor_type = \"binary\".")
   }
-  
+  if (!is.numeric(noise_parameters) || noise_parameters < 0) {
+    stop("noise_parameters must be a non-negative integer.")
+  }
+  if (!predictor_type %in% c("continuous", "binary")) {
+    stop('predictor_type must be "continuous" or "binary".')
+  }
+  if (
+    !is.numeric(correlation) ||
+      length(correlation) != 1 ||
+      correlation < -1 ||
+      correlation > 1
+  ) {
+    stop("correlation must be a single numeric value in [-1, 1].")
+  }
+  if (predictor_type == "binary") {
+    if (binary_prevalence <= 0 || binary_prevalence > 1) {
+      stop(
+        "binary_prevalence must be in (0, 1] when predictor_type = \"binary\"."
+      )
+    }
+  }
+
   # ---- determine distribution family -----------------------------------------
-  family <- resolve_family(complexity, predictor_type, distribution,
-                           binary_prevalence)
-  
+  family <- resolve_family(
+    complexity,
+    predictor_type,
+    distribution,
+    binary_prevalence
+  )
+
   # ---- draw all predictors from the global family ----------------------------
-  X           <- draw_predictors(n, p, family, binary_prevalence)
+  X <- draw_predictors(n, p, family, binary_prevalence)
   colnames(X) <- col_names
-  
+
   # ---- apply equicorrelation if requested ------------------------------------
-  if (correlation != 0)
+  if (correlation != 0) {
     X <- apply_correlation(X, correlation)
-  
+  }
+
   colnames(X) <- col_names
   return(X)
 }
@@ -557,59 +641,75 @@ generate_predictors <- function(n,
 #'
 #' @return Numeric vector of length n.
 #' @keywords internal
-generate_linear_predictor <- function(X,
-                                      n_signal_parameters,
-                                      noise_parameters,
-                                      intercept,
-                                      beta_signal,
-                                      complexity,
-                                      nonlinear_strength = NULL) {
-  
-  n  <- nrow(X)
+generate_linear_predictor <- function(
+  X,
+  n_signal_parameters,
+  noise_parameters,
+  intercept,
+  beta_signal,
+  complexity,
+  nonlinear_strength = NULL
+) {
+  n <- nrow(X)
   lp <- rep(intercept, n)
-  
-  if (n_signal_parameters == 0) return(lp)
-  
-  eff_beta <- beta_signal               # overall signal scale (no strength weight)
-  
-  Xs  <- X[, seq_len(n_signal_parameters), drop = FALSE]
-  S   <- n_signal_parameters
+
+  if (n_signal_parameters == 0) {
+    return(lp)
+  }
+
+  eff_beta <- beta_signal # overall signal scale (no strength weight)
+
+  Xs <- X[, seq_len(n_signal_parameters), drop = FALSE]
+  S <- n_signal_parameters
   lin <- rowSums(Xs)
-  
+
   # ---- Complexity 1: pure linear (the f -> 0 limit) -------------------------
   if (complexity == 1) {
     return(lp + eff_beta * lin)
   }
-  
+
   # ---- Complexity 4: canonical Friedman (1991); nonlinear_strength ignored --
   if (complexity == 4) {
-    if (n_signal_parameters < 5)
+    if (n_signal_parameters < 5) {
       warning(sprintf(
         "Complexity 4 requires >=5 signal predictors; only %d supplied.",
-        n_signal_parameters))
+        n_signal_parameters
+      ))
+    }
     xcol <- function(k) if (k <= S) Xs[, k] else rep(0, n)
-    x1 <- xcol(1); x2 <- xcol(2); x3 <- xcol(3); x4 <- xcol(4); x5 <- xcol(5)
+    x1 <- xcol(1)
+    x2 <- xcol(2)
+    x3 <- xcol(3)
+    x4 <- xcol(4)
+    x5 <- xcol(5)
     fr <- 10 * sin(pi * x1 * x2) + 20 * (x3 - 0.5)^2 + 10 * x4 + 5 * x5
     return(lp + eff_beta * fr)
   }
-  
+
   # ---- Complexity 2 / 3: linear + inaccessible nonlinear component ----------
   # Resolve the nonlinear variance fraction f and convert to the SD ratio kappa.
-  f     <- resolve_nonlinear_strength(nonlinear_strength, complexity)
-  kappa <- sqrt(f / (1 - f))            # f = kappa^2 / (1 + kappa^2)
-  
-  if (kappa == 0) {                     # f = 0 -> reduces to pure linear
+  f <- resolve_nonlinear_strength(nonlinear_strength, complexity)
+  kappa <- sqrt(f / (1 - f)) # f = kappa^2 / (1 + kappa^2)
+
+  if (kappa == 0) {
+    # f = 0 -> reduces to pure linear
     return(lp + eff_beta * lin)
   }
-  
+
   if (complexity == 2) {
     Nraw <- rowSums(Xs^2)
   } else if (complexity == 3) {
     if (S < 2) {
       warning("Complexity 3 needs >= 2 signal predictors. Falling back to C2.")
-      return(generate_linear_predictor(X, n_signal_parameters, noise_parameters,
-                                       intercept, beta_signal, 2,
-                                       nonlinear_strength))
+      return(generate_linear_predictor(
+        X,
+        n_signal_parameters,
+        noise_parameters,
+        intercept,
+        beta_signal,
+        2,
+        nonlinear_strength
+      ))
     }
     inter <- rowSums(vapply(
       seq_len(S - 1),
@@ -620,18 +720,21 @@ generate_linear_predictor <- function(X,
   } else {
     stop("complexity must be 1, 2, 3 or 4.")
   }
-  
+
   # Residualise the nonlinear aggregate against the FULL design [1, x1..xS] so
   # that no linear-in-X learner can access it, then standardise to unit SD.
   N_ortho <- residuals(stats::lm(Nraw ~ Xs))
-  sd_N    <- stats::sd(N_ortho)
-  if (!is.finite(sd_N) || sd_N <= 0)
-    stop("Nonlinear component is degenerate -- e.g. binary predictors under ",
-         "complexity 2/3, where x^2 = x collapses the quadratic term. Use ",
-         "continuous predictors for C2/C3 (or complexity 1 for binary ",
-         "predictors).")
+  sd_N <- stats::sd(N_ortho)
+  if (!is.finite(sd_N) || sd_N <= 0) {
+    stop(
+      "Nonlinear component is degenerate -- e.g. binary predictors under ",
+      "complexity 2/3, where x^2 = x collapses the quadratic term. Use ",
+      "continuous predictors for C2/C3 (or complexity 1 for binary ",
+      "predictors)."
+    )
+  }
   N_std <- N_ortho / sd_N
-  
+
   # lp = intercept + eff_beta * ( L + kappa * SD(L) * N_std )
   # Linear part identical to C1; nonlinear variance fraction equals f exactly.
   # Linear in beta_signal, so the oracle-metric tuning scales it unchanged.

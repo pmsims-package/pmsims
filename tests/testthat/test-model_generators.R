@@ -107,7 +107,10 @@ test_that("resolve_mlr_measures rejects unknown ids", {
   skip_if_not_installed("mlr")
 
   expect_error(
-    resolve_mlr_measures("definitely_not_a_real_measure", task_type = "classif"),
+    resolve_mlr_measures(
+      "definitely_not_a_real_measure",
+      task_type = "classif"
+    ),
     "Unknown mlr measure: definitely_not_a_real_measure",
     fixed = TRUE
   )

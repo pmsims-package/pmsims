@@ -70,11 +70,10 @@ test_that("simulate_custom", {
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model = "glm")
 
-  metric_function = default_metric_generator(
+  metric_function <- default_metric_generator(
     "auc",
     data_function
   )
-  
 
   sim_results_mlpwr <- suppressWarnings(simulate_custom(
     data_function = data_function,
@@ -103,7 +102,6 @@ test_that("simulate_custom", {
   expect_identical(sim_results_mlpwr$min_sample_size, 75)
   expect_identical(sim_results_mlpwr$max_sample_size, 200)
   expect_identical(sim_results_mlpwr$c_statistic, 0.8)
-  
 
   sim_results_mlpwr_bs <- suppressWarnings(simulate_custom(
     data_function = data_function,
