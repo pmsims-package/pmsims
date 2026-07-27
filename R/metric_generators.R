@@ -35,8 +35,8 @@ default_metric_generator <- function(metric, data_function) {
     } else if (metric == "csse") {
       metric_function <- survival_csse
     } else if (metric == "IBS") {
-      # Integrated Brier Score
-      metric_function <- NULL # survival_ibs; TODO: Implement survival IBS
+      # Reserved for future Integrated Brier Score support.
+      metric_function <- NULL
     } else {
       stop(paste(
         "Default metric",
@@ -84,13 +84,6 @@ default_metric_generator <- function(metric, data_function) {
 #' @keywords internal
 #' @noRd
 predict_custom <- function(x, y = NULL, fit, model, type = "response") {
-  # x: data.frame or matrix of predictors (no outcome column)
-  # y: optional (not used here, kept for API compatibility)
-  # fit: fitted model object
-  # model: string identifying model type: "lm", "glm", "lasso", "rf", "xgboost", "coxph" etc.
-  # type: "response", "link", "lp", "survival" (if supported)
-  # return: numeric vector (or matrix for survival probabilities when appropriate)
-
   # Ensure x is data.frame or matrix for predict functions
   if (is.data.frame(x)) {
     x_df <- x
@@ -107,10 +100,8 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
 
   # LASSO / RIDGE (glmnet::cv.glmnet)
   if (model %in% c("lasso", "ridge")) {
-    # Expect fit is cv.glmnet (or glmnet object) and x_mat is numeric matrix
+    # glmnet prediction requires a numeric matrix.
     require_optional_packages("glmnet", "lasso predictions")
-    #s_val <- if (!is.null(fit$lambda.1se)) fit$lambda.1se else if (!is.null(fit$lambda.min)) fit$lambda.min else NULL
-    #if (is.null(s_val)) s_val <- NULL
 
     s_val <- "lambda.min"
 
@@ -128,12 +119,11 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
       s = s_val,
       type = glmnet_type
     ))
-    # for binary response, glmnet::predict(..., type="response") returns probabilities
-    # for cox (survival) family, glmnet::predict(..., type="link") returns linear predictor
+    # For binary responses, type = "response" returns probabilities.
+    # For Cox models, type = "link" returns the linear predictor.
     return(preds)
   }
 
-  # Random forest via ranger
   # Random forest via ranger or randomForestSRC (rfsrc)
   if (model %in% c("rf", "ranger", "rfsrc")) {
     is_ranger <- inherits(fit, "ranger")
@@ -320,7 +310,7 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
   stop("predict_custom: unknown model type '", model, "'.")
 }
 
-#### Binary metric functions (unchanged except using predict_custom where used) ####
+# Binary metrics
 
 binary_auc_metric <- function(data, fit, model) {
   y <- data[, "y"]
@@ -392,7 +382,7 @@ binary_brier_score_scaled <- function(data, fit, model) {
   return(1 - mean((y - y_hat)^2) / mean((y - mean(y))^2))
 }
 
-#### Continuous metrics: use predict_custom so lasso/xgboost/ranger work ####
+# Continuous metrics
 
 continuous_r2 <- function(data, fit, model) {
   y <- data[, "y"]
@@ -426,34 +416,6 @@ continuous_csse <- function(data, fit, model) {
   return(-(1 - calib_slope)^2)
 }
 
-
-#continuous_calib_slope <- function(data, fit, model) {
-#  y <- data[, "y"]
-#  x <- data[, names(data) != "y", drop = FALSE]
-#  y_hat <- predict_custom(x, y, fit, model, type = "response")
-#  slope <- try(stats::lm(y ~ y_hat), silent = TRUE)
-#  if (inherits(slope, "try-error")) {
-#    return(NaN)
-#  } else {
-#    return( -(1 - as.numeric(stats::coef(slope)[2]))^2)
-#  }
-#}
-
-#continuous_calib_slope <- function(data, fit, model) {
-#  y <- data[, "y"]
-#  x <- data[, names(data) != "y", drop = FALSE]
-#  y_hat <- predict_custom(x, y, fit, model, type = "response")
-#  n <- length(y)
-#  mse <- sum((y_hat - y) ^ 2) / n
-#  mst <- stats::var(y) * (n + 1) / n
-#  r2 <- 1 - (mse / mst)
-#  slope <- try(stats::lm(y ~ y_hat), silent = TRUE)
-#  calib_slope <-as.numeric(stats::coef(slope)[2])
-#  r2_eff <- r2 / calib_slope
-#
-#  return(r2_eff)
-#}
-
 continuous_calib_itl <- function(data, fit, model) {
   y <- data[, "y"]
   x <- data[, names(data) != "y", drop = FALSE]
@@ -466,7 +428,7 @@ continuous_calib_itl <- function(data, fit, model) {
   }
 }
 
-#### Survival metrics: use predict_custom(type="lp") for linear predictors where possible ####
+# Survival metrics
 
 survival_cindex <- function(data, fit, model) {
   y_surv <- survival::Surv(data$time, data$event)
@@ -488,8 +450,7 @@ survival_cindex <- function(data, fit, model) {
   return(cf$concordance)
 }
 
-# New Calibration free slope metric
-#
+# Horizon-based calibration slope for survival models.
 # Random survival forests (ranger) do NOT produce a proportional-hazards linear
 # predictor. Their ensemble-mortality score log(sum_t H(t)) is a fine RANKING
 # statistic (used by C-index / AUC) but is not on a log-hazard scale where the
@@ -536,12 +497,7 @@ survival_calib_slope <- function(data, fit, model, eval_time = NULL) {
   as.numeric(stats::coef(fit_slope)[2])
 }
 
-# Random survival forests (ranger) do NOT produce a proportional-hazards linear
-# predictor. Their ensemble-mortality score log(sum_t H(t)) is a fine RANKING
-# statistic (used by C-index / AUC) but is not on a log-hazard scale where the
-# calibrated slope is 1: under non-proportional hazards it is an arbitrary,
-# time-grid-weighted aggregate. rf is therefore routed to a horizon-based
-# calibration slope using the predicted log cumulative hazard, log H_i(t*).
+# Alternative calibration slope using PH linear predictors when available.
 survival_calib_slope_PH <- function(data, fit, model, eval_time = NULL) {
   y_surv <- survival::Surv(data$time, data$event)
   x <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
@@ -583,8 +539,7 @@ survival_calib_slope_PH <- function(data, fit, model, eval_time = NULL) {
 }
 
 
-# Calibration slope squared error. Reuses survival_calib_slope() so that the
-# rf and all models (horizon-based).
+# Calibration-slope squared error using the horizon-based metric for every model.
 survival_csse <- function(data, fit, model) {
   slope <- survival_calib_slope(data, fit, model)
   if (!is.finite(slope)) {
@@ -665,7 +620,7 @@ ipcw_binary_at_time <- function(data, eval_time) {
   list(y = y_obs, w = w)
 }
 
-# Old Model-free IPCW calibration slope at a horizon t*.
+# Model-free IPCW calibration slope at a horizon t*.
 #
 # Works for any model that yields a predicted survival probability (rf via its
 # survival matrix; coxph/lasso/ridge/xgboost via a Breslow baseline applied to

@@ -89,18 +89,6 @@ default_models <- list(
       x <- d[, -1, drop = FALSE]
       y <- as.factor(d[, 1])
 
-      #### new
-
-      #ff <- NULL
-      # invisible(
-      #  capture.output(
-      #    ff <- randomForest::tuneRF(x, y, trace = FALSE, plot = FALSE)
-      #  )
-      #)
-
-      #bestmtry <- data.frame(ff)
-      #mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
-
       ranger::ranger(
         x = x,
         y = y,
@@ -181,34 +169,6 @@ default_models <- list(
 
       x <- d[, -1, drop = FALSE]
       y <- d[, 1]
-
-      # cvranger <- cv.ranger_tune(data = d, formula = y ~ .,
-      #                      type = "regression",
-      ##                      num.trees = 300,
-      #                      iters = 30,
-      #                      iters.warmup = 30,
-      #                      time.budget = NULL,
-      #                      num.threads = nthreads,
-      #                       tune.parameters = "mtry",
-      #                       measure = NULL,
-      #                       build.final.model = TRUE,
-      #                       show.info = FALSE)
-
-      #maxd <- cvranger$max.depth[which.max(cvranger$mean_metric)]
-
-      # best model
-
-      # cvranger$model$learner.model
-
-      #ff <- NULL
-      #invisible(
-      #  capture.output(
-      #    ff <- randomForest::tuneRF(x, y, trace = FALSE, plot = FALSE)
-      #  )
-      #)
-
-      #bestmtry <- data.frame(ff)
-      #mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
 
       ranger::ranger(
         x = x,
@@ -291,8 +251,6 @@ default_models <- list(
       stopifnot(all(c("time", "event") %in% colnames(d)))
       formula <- stats::as.formula("survival::Surv(time, event) ~ .")
       ranger::ranger(formula, data = d, num.trees = 300, num.threads = nthreads)
-      #formula <- stats::as.formula("Surv(time, event) ~ .")
-      #randomForestSRC::rfsrc(formula, data = d, ntree = 300)
     },
     xgboost = function(
       d,
@@ -405,7 +363,7 @@ cv.ranger_tune <- function(
   seed = 123,
   ...
 ) {
-  # ===== dependencies =====
+  # Dependencies
   require_optional_packages(
     c("tuneRanger", "mlr", "ranger"),
     "ranger tuning"
@@ -414,7 +372,7 @@ cv.ranger_tune <- function(
   type <- match.arg(type)
   set.seed(seed)
 
-  # ===== build mlr task =====
+  # Build the mlr task.
   # For survival, expect Surv(time, status) ~ .
   if (type == "survival") {
     # extract Surv var names from formula LHS
@@ -442,8 +400,7 @@ cv.ranger_tune <- function(
     }
   }
 
-  # ===== prepare measure: tuneRanger expects a LIST of mlr measure objects =====
-  # If user provided NULL -> choose sensible defaults
+  # tuneRanger expects a list of mlr measure objects.
   if (is.null(measure)) {
     if (type == "regression") {
       measure_obj <- list(mlr::mse)
@@ -482,7 +439,7 @@ cv.ranger_tune <- function(
     }
   }
 
-  # ===== call tuneRanger =====
+  # Call tuneRanger.
   tune_args <- list(
     task = task,
     measure = measure_obj,
@@ -498,7 +455,7 @@ cv.ranger_tune <- function(
     show.info = show.info
   )
 
-  # merge extra args
+  # Merge extra arguments.
   extra_args <- list(...)
   if (length(extra_args) > 0) {
     tune_args <- c(tune_args, extra_args)
@@ -506,7 +463,7 @@ cv.ranger_tune <- function(
 
   tune_res <- do.call(tuneRanger::tuneRanger, tune_args)
 
-  # ===== tidy output =====
+  # Tidy the output.
   out <- list(
     recommended.pars = tune_res$recommended.pars,
     results = tune_res$results,
@@ -520,7 +477,7 @@ cv.ranger_tune <- function(
   return(out)
 }
 
-# simple print method
+# Print method
 #' @keywords internal
 #' @noRd
 print.cv.ranger_tune <- function(x, ...) {

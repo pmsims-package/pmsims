@@ -1,45 +1,27 @@
 # =============================================================================
 # Tuning for a continuous outcome model
 #
-# Revision notes
-# --------------
-# The original implementation used the closed-form identity
-#
-#   beta_signal = sqrt( R2 / (S * (1 - R2)) )
-#
-# where S = non-noise predictors. This identity assumes:
-#   (a) Complexity 1 (linear LP):  Var(LP) = S * beta^2
-#   (b) Predictor strength = "strong" (w = 1)
-#   (c) Zero predictor correlation
-#   (d) Standard-normal predictors
-#
-# Under complexity 2-4, non-zero correlation, or predictor_strength != strong
-# those assumptions break: Var(LP) is no longer S*beta^2 and the analytic
-# formula under-estimates or over-estimates beta_signal, producing the wrong
-# R^2 in practice.
-#
-# The revised approach estimates Var(LP | beta = 1) via simulation across the
-# exact generator settings, then scales beta to hit the target R^2:
+# Estimate Var(LP | beta_signal = 1) under the requested generator settings,
+# then scale beta_signal to reach the target R^2:
 #
 #   R^2 = Var(LP) / (Var(LP) + Var(epsilon))
 #       = Var(LP) / (Var(LP) + 1)                  [epsilon ~ N(0,1)]
 #
-# Because LP is linear in beta (or beta enters multiplicatively as eff_beta
-# in generate_linear_predictor), Var(LP) = beta^2 * V1 where V1 = Var(LP at
-# beta=1). Solving for beta:
+# Because generate_linear_predictor() is linear in beta_signal,
+# Var(LP) = beta_signal^2 * V1, where V1 = Var(LP | beta_signal = 1).
+# Solving for beta_signal gives:
 #
 #   beta_signal = sqrt( R2 / (V1 * (1 - R2)) )
 #
-# This is exact for complexity 1 (where V1 = S, recovering the old formula)
-# and correct by simulation for complexities 2-4, any correlation, any
-# predictor_strength, and any continuous distribution.
+# This applies across all supported complexities, correlations, predictor types,
+# and continuous distributions.
 # =============================================================================
 
 #' Tuning function for a continuous outcome model
 #'
 #' Finds the \code{beta_signal} value that produces a target large-sample
 #' \eqn{R^2} under the exact data-generating settings (complexity,
-#' predictor_strength, correlation, distribution, predictor_type).
+#' nonlinear_strength, correlation, distribution, predictor_type).
 #'
 #' @param r2 Target large-sample \eqn{R^2} (proportion of variance explained).
 #'   Must be in (0, 1).
@@ -106,20 +88,11 @@ continuous_tuning <- function(
     nonlinear_strength,
     complexity
   )
-  #w                  <- STRENGTH_WEIGHTS[[predictor_strength]]
 
   # ---- Step 1: estimate Var(LP) with beta_signal = 1 ------------------------
   #
-  # generate_linear_predictor multiplies every coefficient by
-  #   eff_beta = beta_signal * w
-  # So at beta_signal = 1:  eff_beta = w  ->  Var(LP) = w^2 * V_raw
-  # where V_raw = Var(LP at eff_beta = 1).
-  #
-  # Equivalently, we can just run the generator at beta_signal = 1 and
-  # measure the variance of the resulting LP directly. We call
-  # generate_continuous_data() with sigma = 0 (no noise) by using
-  # generate_predictors + generate_linear_predictor directly so we can
-  # capture lp without noise.
+  # Run the predictor and linear-predictor generators at beta_signal = 1 and
+  # measure the resulting LP variance directly, without outcome noise.
 
   X_unit <- generate_predictors(
     n = n_sim,

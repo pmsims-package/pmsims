@@ -122,9 +122,8 @@ print.pmsims <- function(x, ..., max_width = 80) {
   simtime <- x$simulation_time %||% NA
   cstatistic <- x$cstatistic
   r2 <- x$r2
-  #statistic_2 <- ifelse(is.null(cstatistic), r2, cstatistic)
 
-  # --- Inputs table (non-null only)
+  # Inputs
   inputs <- list(
     "Outcome" = x$outcome,
     "Predictor type" = x$predictor_type,
@@ -158,7 +157,7 @@ print.pmsims <- function(x, ..., max_width = 80) {
   keep_inputs <- vapply(inputs, is_present, logical(1))
   inputs <- inputs[keep_inputs]
 
-  # --- Results table
+  # Results
 
   results <- list(
     "Final minimum sample size" = bold(fmt_int(min_n)),
@@ -184,7 +183,7 @@ print.pmsims <- function(x, ..., max_width = 80) {
   keep_results <- vapply(results, is_present, logical(1))
   results <- results[keep_results]
 
-  # --- Header box
+  # Header
   if (has_cli) {
     cli::cat_boxx(
       bold(" pmsims: Sample size simulation summary "),
@@ -196,17 +195,17 @@ print.pmsims <- function(x, ..., max_width = 80) {
     cat("\n", bold("pmsims: Sample size simulation summary"), "\n", sep = "")
   }
 
-  # --- Shared alignment width for BOTH tables
+  # Use a shared label width for both tables.
   shared_w <- max(nchar(c(names(inputs), names(results))), 25L)
 
-  # --- Inputs (aligned two-column, cyan labels)
+  # Aligned input table with cyan labels.
   rule("Inputs")
   for (nm in names(inputs)) {
     label <- format(nm, width = shared_w, justify = "right")
     cat("  ", cyan(label), " : ", inputs[[nm]], "\n", sep = "")
   }
 
-  # --- Results (aligned two-column, blue labels)
+  # Aligned results table with blue labels.
   rule("Results")
   for (nm in names(results)) {
     label <- format(nm, width = shared_w, justify = "right")

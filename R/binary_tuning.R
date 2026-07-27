@@ -314,12 +314,7 @@ binary_tuning <- function(
   ))
 }
 
-# -----------------------------------------------------------------------------
-# check_generator_defaults
-# Errors if the shared predictor-generation defaults of binary_tuning() and
-# generate_binary_data() have drifted apart. This is what would have caught the
-# correlation 0 vs 0.3 mismatch at source.
-# -----------------------------------------------------------------------------
+# Ensure tuning and generation use the same predictor defaults.
 check_generator_defaults <- function() {
   shared <- c(
     "correlation",

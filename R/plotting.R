@@ -74,7 +74,7 @@ plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
     type = "Prediction"
   )
 
-  #### plot annotations
+  # Plot annotations
   min_n <- if (!is.null(x$min_n)) as.numeric(x$min_n) else NA_real_
   perf_n <- if (!is.null(x$perf_n)) {
     as.numeric(x$perf_n)

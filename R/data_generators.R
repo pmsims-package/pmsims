@@ -737,6 +737,6 @@ generate_linear_predictor <- function(
 
   # lp = intercept + eff_beta * ( L + kappa * SD(L) * N_std )
   # Linear part identical to C1; nonlinear variance fraction equals f exactly.
-  # Linear in beta_signal, so the oracle-metric tuning scales it unchanged.
+  # Linearity in beta_signal lets oracle-metric tuning scale it directly.
   lp + eff_beta * (lin + kappa * stats::sd(lin) * N_std)
 }

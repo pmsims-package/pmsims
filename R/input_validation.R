@@ -115,10 +115,8 @@ check_pmsims_args <- function(arg, choices, several.ok = FALSE) {
 # =============================================================================
 # Complexity and data_control validation
 #
-# Added for the complexity / data_control interface used by simulate_binary(),
-# simulate_continuous() and simulate_survival(). `validate_data_control()` is
-# the single place where incompatible-combination errors and warnings live, so
-# new rules can be added here without touching the wrappers.
+# `validate_data_control()` centralises incompatible-combination errors and
+# warnings for simulate_binary(), simulate_continuous(), and simulate_survival().
 # =============================================================================
 
 #' Validate the `complexity` argument

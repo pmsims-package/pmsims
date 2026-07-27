@@ -113,7 +113,8 @@ simulate_custom <- function(
   verbose = FALSE,
   ...
 ) {
-  n_init <- 4 # fixing n_init at 4. This is the number of initial sample sizes calculated after the min max are established and before the main search algorithm begins.
+  # Evaluate four initial sample sizes after establishing the search bounds.
+  n_init <- 4
   se_final <- NULL # Reserved for internal engine use.
 
   if (is.null(data_function)) {
@@ -124,7 +125,7 @@ simulate_custom <- function(
     stop("'n_reps_total' must be specified.")
   }
 
-  # Checking min and max_sample_size inputs.
+  # Validate the optional sample-size bounds.
   if (
     (!is.null(min_sample_size) && is.null(max_sample_size)) ||
       (is.null(min_sample_size) && !is.null(max_sample_size))
@@ -152,7 +153,7 @@ simulate_custom <- function(
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
   }
 
-  # Define a default metric value if calculations fail; 0.5 for default
+  # Choose the metric-specific fallback used when a simulation fails.
   value_on_error <- resolve_value_on_error(metric_function)
   time_1 <- Sys.time()
 
@@ -230,11 +231,9 @@ simulate_custom <- function(
       "Not possible. Increase sample or lower performance",
       output$perf_n
     ),
-    #mlpwr_ds = output$mlpwr_ds,
     target_performance = target_performance,
     summaries = output$summaries,
     data = output$results,
-    #train_size = rownames(output$results),
     data_function = data_function,
     model_function = model_function,
     metric_function = metric_function,
@@ -255,7 +254,6 @@ simulate_custom <- function(
   if (!is.null(output$history)) {
     results_list$history <- output$history
   }
-  #attr(results_list, "class") <- "pmsims"
   return(results_list)
 }
 
@@ -339,10 +337,7 @@ parse_inputs <- function(data_spec, metric, model) {
     model
   )
 
-  # Set a metric, based on outcome type
-  # TODO:
-  # Currently, we're selecting the first element in 'metric' only.
-  # In future, we will expand this to handle multiple metrics.
+  # The current interface uses the first requested metric.
   metric_function <- default_metric_generator(metric[[1]], data_function)
   return(list(
     data_function = data_function,

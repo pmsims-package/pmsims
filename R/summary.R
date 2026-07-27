@@ -8,7 +8,6 @@ summary.pmsims <- function(object, ...) {
     "Target performance:     ",
     object$target_performance,
     "\n",
-    # "Number of parameters:   ", result$parameters, "\n",
     "---------------------------------",
     "\n",
     "Minimum sample size:    ",

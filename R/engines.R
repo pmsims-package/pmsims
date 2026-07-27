@@ -80,14 +80,11 @@ calculate_mlpwr <- function(
     "\n"
   )
 
-  # Calculate metrics for sample size n
-
-  # TODO: Explain this better
-  # processing final_estimate_se
-  # Auto-stopping or not
+  # When supplied, use the requested final standard error to control stopping.
+  # A deliberately high simulation budget ensures the CI criterion dominates.
   if (!(is.null(se_final))) {
     ci <- se_final * stats::qnorm(0.975) * 2
-    n_reps_total <- 10000 # setting large nreps so ci dominates.
+    n_reps_total <- 10000
   } else {
     ci <- NULL
   }
@@ -387,7 +384,7 @@ calculate_bisection <- function(
     for (e in envs) {
       if (!is.null(e)) {
         objs <- ls(envir = e, all.names = TRUE)
-        # avoid exporting names that are obviously internal to base packages (optional)
+        # Avoid exporting names that are internal to base packages.
         if (length(objs) > 0) {
           try(
             parallel::clusterExport(cl, varlist = objs, envir = e),
@@ -411,7 +408,7 @@ calculate_bisection <- function(
     )
   }
 
-  # Helper: run 1 simulation (kept as regular R function)
+  # Run one simulation.
   single_run <- function(n) {
     tryCatch(
       {
@@ -423,7 +420,7 @@ calculate_bisection <- function(
     )
   }
 
-  # Helper: summary of metric for n_reps_per repetitions
+  # Summarise the metric over n_reps_per simulations.
   summary_at_n <- function(n) {
     if (isTRUE(parallel) && registered_parallel) {
       vals <- foreach::`%dopar%`(
@@ -496,7 +493,7 @@ calculate_bisection <- function(
     iter <- iter + 1
   }
 
-  # stop cluster if not already stopped (on.exit covers normal exit, but ensure here as well)
+  # Stop the cluster now; on.exit remains a fallback for early exits.
   if (!is.null(cl)) {
     try(parallel::stopCluster(cl), silent = TRUE)
     try(doParallel::stopImplicitCluster(), silent = TRUE)
@@ -581,7 +578,6 @@ calculate_mlpwr_bs <- function(
     prev_max_sample_size <- max_sample_size
   }
 
-  #cat("Estimating first stage... (Bisection algorithm)\n")
   prev <- calculate_bisection(
     data_function = data_function,
     model_function = model_function,
@@ -636,12 +632,11 @@ calculate_mlpwr_bs <- function(
   # Calculate bootstrapped quantile variance
   noise_fun <- function(x) var_bootstrap(x$y)
 
-  # TODO Explain
-  # processing final_estimate_se
-  # Auto-stopping or not
+  # When supplied, use the requested final standard error to control stopping.
+  # A deliberately high simulation budget ensures the CI criterion dominates.
   if (!(is.null(se_final))) {
     ci <- se_final * stats::qnorm(0.975) * 2
-    n_reps_total <- 10000 # setting large nreps so ci dominates.
+    n_reps_total <- 10000
   } else {
     ci <- NULL
   }

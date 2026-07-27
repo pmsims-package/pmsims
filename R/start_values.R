@@ -81,7 +81,7 @@ adaptive_startvalues <- function(
     bisection_summary[i, ] <- c(n, est, se, ll, ul)
   }
 
-  ## --- Find min value ---
+  # Find the lower bound.
   ordered_by_ul <- bisection_summary[
     order(bisection_summary[, "ul"], decreasing = TRUE),
   ]
@@ -93,7 +93,7 @@ adaptive_startvalues <- function(
     min_value <- max(below_target[, "n"])
   }
 
-  ## --- Find max value ---
+  # Find the upper bound.
   ordered_by_ll <- bisection_summary[
     order(bisection_summary[, "ll"], decreasing = TRUE),
   ]
@@ -156,9 +156,9 @@ calculate_adaptive_bounds <- function(
   mean_or_assurance = "mean",
   plateau_k = 3,
   plateau_tol = 0.005,
-  large_perf_check = FALSE, # <-- NEW: toggle for alternative approach
-  large_n = NULL, # <-- NEW: large sample size to probe
-  large_n_tol = 0.05, # <-- NEW: gap tolerance for "unreachable"
+  large_perf_check = FALSE, # Probe performance at a large sample size first.
+  large_n = NULL, # Sample size used for the optional probe.
+  large_n_tol = 0.05, # Gap beyond which the target is considered unreachable.
   c_statistic = NULL,
   parallel = FALSE,
   cores = 20,
@@ -221,9 +221,7 @@ calculate_adaptive_bounds <- function(
 
   vcat <- function(...) if (verbose) message(sprintf(...))
 
-  # -----------------------------------------------------------------------
-  # Initialise
-  # -----------------------------------------------------------------------
+  # Initialise the search state.
   iter <- 0L
   track <- list()
   stop_reason <- "budget_exhausted"
@@ -231,11 +229,9 @@ calculate_adaptive_bounds <- function(
   lower_perf <- NA_real_
   upper_n <- NA_real_
   upper_perf <- NA_real_
-  max_achievable_perf <- NA_real_ # <-- NEW: reported when target unreachable
+  max_achievable_perf <- NA_real_ # Reported when the target is unreachable.
 
-  # -----------------------------------------------------------------------
-  # ALTERNATIVE APPROACH: pre-check at large_n
-  # -----------------------------------------------------------------------
+  # Optionally check reachability at a large sample size before searching.
   if (isTRUE(large_perf_check)) {
     if (is.null(large_n)) {
       # Default: use the largest n we could reach by doubling from start_n
@@ -320,9 +316,7 @@ calculate_adaptive_bounds <- function(
       )
     }
   } else {
-    # -----------------------------------------------------------------------
-    # ORIGINAL APPROACH: start at start_n
-    # -----------------------------------------------------------------------
+    # Start from the configured sample size when no pre-check is requested.
     iter <- iter + 1L
     res <- summary_at_n(start_n)
     perf <- res$y_summary
@@ -462,9 +456,7 @@ compute_start_sample_sizes <- function(
 ) {
   mean_or_assurance <- match.arg(mean_or_assurance)
 
-  # 1. Number of predictors (exclude outcome column)
-  #npar <- dim(data_function(100))[2] - 1
-
+  # Infer the number of predictors from the generator formals.
   npar <- formals(data_function)$n_signal_parameters +
     formals(data_function)$noise_parameters
   default_start_value <- max(10L, 10L * npar)
@@ -490,9 +482,7 @@ compute_start_sample_sizes <- function(
     target_performance <- 1 - sqrt(abs(target_performance))
   }
 
-  ## -----------------------
-  ## SURVIVAL OUTCOME
-  ## -----------------------
+  # Survival outcome
   if ("censoring_rate" %in% args_names) {
     censoring_rate <- eval(
       formals_list[["censoring_rate"]],
@@ -523,9 +513,7 @@ compute_start_sample_sizes <- function(
       prev_max_sample_size <- 10 * prev_min_sample_size
     }
 
-    ## -----------------------
-    ## BINARY OUTCOME
-    ## -----------------------
+    # Binary outcome
   } else if ("baseline_prob" %in% args_names) {
     baseline_prob <- eval(
       formals_list[["baseline_prob"]],
@@ -604,9 +592,7 @@ compute_start_sample_sizes <- function(
       }
     }
 
-    ## -----------------------
-    ## CONTINUOUS OUTCOME
-    ## -----------------------
+    # Continuous outcome
   } else {
     if (metric_used == "calib_slope") {
       prev_min_sample_size <- get_min_sample_size(
@@ -748,7 +734,6 @@ get_min_sample_size <- function(
         if (npar > 10) {
           adj <- 1 + (1 - calib_slope)
         } else {
-          #adj <- 1 / (1 - calib_slope)
           adj <- 1 + (1 - calib_slope)
         }
         n_cont <- round(n_cont * adj)
