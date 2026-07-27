@@ -379,100 +379,15 @@ below keeps the vignette quick; use larger values for an analysis.</p>
 <span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.</span></span></code></pre>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## $outcome</span></span>
-<span><span class="co">## NULL</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $min_n</span></span>
+<code class="sourceCode R"><span><span class="va">result</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"min_n"</span>, <span class="st">"perf_n"</span>, <span class="st">"target_performance"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<pre><code><span><span class="co">## $min_n</span></span>
 <span><span class="co">## [1] 96</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $perf_n</span></span>
 <span><span class="co">## logical(0)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $target_performance</span></span>
-<span><span class="co">## [1] -0.05029851</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $summaries</span></span>
-<span><span class="co">## NULL</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $data</span></span>
-<span><span class="co">## NULL</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $data_function</span></span>
-<span><span class="co">## function (n, n_signal_parameters = 9, noise_parameters = 0, data = synthetic_data$syn) </span></span>
-<span><span class="co">## {</span></span>
-<span><span class="co">##     data[sample(seq_len(nrow(data)), n, replace = TRUE), ]</span></span>
-<span><span class="co">## }</span></span>
-<span><span class="co">## &lt;bytecode: 0xc416b2e40&gt;</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $model_function</span></span>
-<span><span class="co">## function (data) </span></span>
-<span><span class="co">## {</span></span>
-<span><span class="co">##     data_matrix &lt;- as.matrix(data)</span></span>
-<span><span class="co">##     outcome &lt;- "Class"</span></span>
-<span><span class="co">##     x &lt;- data_matrix[, colnames(data_matrix) != outcome, drop = FALSE]</span></span>
-<span><span class="co">##     y &lt;- data_matrix[, outcome]</span></span>
-<span><span class="co">##     glmnet::cv.glmnet(x, y, family = "binomial", alpha = 0.5, </span></span>
-<span><span class="co">##         nfolds = 5)</span></span>
-<span><span class="co">## }</span></span>
-<span><span class="co">## &lt;bytecode: 0xc3f9313b8&gt;</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $metric_function</span></span>
-<span><span class="co">## function (test_data, fitted_model, model_name) </span></span>
-<span><span class="co">## {</span></span>
-<span><span class="co">##     test_data_matrix &lt;- as.matrix(test_data)</span></span>
-<span><span class="co">##     y &lt;- which(names(test_data) == "Class")</span></span>
-<span><span class="co">##     x_test &lt;- test_data_matrix[, -y]</span></span>
-<span><span class="co">##     y_test &lt;- test_data_matrix[, y]</span></span>
-<span><span class="co">##     predictions &lt;- predict(fitted_model, newx = x_test, s = "lambda.min", </span></span>
-<span><span class="co">##         type = "response")</span></span>
-<span><span class="co">##     brier_score &lt;- DescTools::BrierScore(y_test, pred = predictions)</span></span>
-<span><span class="co">##     return(-brier_score)</span></span>
-<span><span class="co">## }</span></span>
-<span><span class="co">## &lt;bytecode: 0xc443902e0&gt;</span></span>
-<span><span class="co">## attr(,"metric")</span></span>
-<span><span class="co">## [1] "brier_score"</span></span>
-<span><span class="co">## attr(,"value_on_error")</span></span>
-<span><span class="co">## [1] -1</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $model</span></span>
-<span><span class="co">## NULL</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $metric</span></span>
-<span><span class="co">## [1] "brier_score"</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $c_statistic</span></span>
-<span><span class="co">## NULL</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $test_n</span></span>
-<span><span class="co">## [1] 500</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $min_sample_size</span></span>
-<span><span class="co">## [1] 50</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $max_sample_size</span></span>
-<span><span class="co">## [1] 300</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $n_reps_total</span></span>
-<span><span class="co">## [1] 20</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $n_reps_per</span></span>
-<span><span class="co">## [1] 5</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $method</span></span>
-<span><span class="co">## [1] "bisection"</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $progress</span></span>
-<span><span class="co">## [1] FALSE</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $verbose</span></span>
-<span><span class="co">## [1] FALSE</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $simulation_time</span></span>
-<span><span class="co">## Time difference of 0.5285511 secs</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## $mean_or_assurance</span></span>
-<span><span class="co">## [1] "mean"</span></span></code></pre>
+<span><span class="co">## [1] -0.05029851</span></span></code></pre>
 <div class="section level3">
 <h3 id="interpretation">Interpretation<a class="anchor" aria-label="anchor" href="#interpretation"></a>
 </h3>

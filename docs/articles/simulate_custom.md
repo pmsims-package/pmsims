@@ -178,11 +178,8 @@ an analysis.
 
     ## Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
 
-[`print`](https://rdrr.io/r/base/print.html)`(``result``)`
+`result``[`[`c`](https://rdrr.io/r/base/c.html)`(``"min_n"``, ``"perf_n"``, ``"target_performance"``)``]`
 
-    ## $outcome
-    ## NULL
-    ## 
     ## $min_n
     ## [1] 96
     ## 
@@ -191,88 +188,6 @@ an analysis.
     ## 
     ## $target_performance
     ## [1] -0.05029851
-    ## 
-    ## $summaries
-    ## NULL
-    ## 
-    ## $data
-    ## NULL
-    ## 
-    ## $data_function
-    ## function (n, n_signal_parameters = 9, noise_parameters = 0, data = synthetic_data$syn) 
-    ## {
-    ##     data[sample(seq_len(nrow(data)), n, replace = TRUE), ]
-    ## }
-    ## <bytecode: 0xc416b2e40>
-    ## 
-    ## $model_function
-    ## function (data) 
-    ## {
-    ##     data_matrix <- as.matrix(data)
-    ##     outcome <- "Class"
-    ##     x <- data_matrix[, colnames(data_matrix) != outcome, drop = FALSE]
-    ##     y <- data_matrix[, outcome]
-    ##     glmnet::cv.glmnet(x, y, family = "binomial", alpha = 0.5, 
-    ##         nfolds = 5)
-    ## }
-    ## <bytecode: 0xc3f9313b8>
-    ## 
-    ## $metric_function
-    ## function (test_data, fitted_model, model_name) 
-    ## {
-    ##     test_data_matrix <- as.matrix(test_data)
-    ##     y <- which(names(test_data) == "Class")
-    ##     x_test <- test_data_matrix[, -y]
-    ##     y_test <- test_data_matrix[, y]
-    ##     predictions <- predict(fitted_model, newx = x_test, s = "lambda.min", 
-    ##         type = "response")
-    ##     brier_score <- DescTools::BrierScore(y_test, pred = predictions)
-    ##     return(-brier_score)
-    ## }
-    ## <bytecode: 0xc443902e0>
-    ## attr(,"metric")
-    ## [1] "brier_score"
-    ## attr(,"value_on_error")
-    ## [1] -1
-    ## 
-    ## $model
-    ## NULL
-    ## 
-    ## $metric
-    ## [1] "brier_score"
-    ## 
-    ## $c_statistic
-    ## NULL
-    ## 
-    ## $test_n
-    ## [1] 500
-    ## 
-    ## $min_sample_size
-    ## [1] 50
-    ## 
-    ## $max_sample_size
-    ## [1] 300
-    ## 
-    ## $n_reps_total
-    ## [1] 20
-    ## 
-    ## $n_reps_per
-    ## [1] 5
-    ## 
-    ## $method
-    ## [1] "bisection"
-    ## 
-    ## $progress
-    ## [1] FALSE
-    ## 
-    ## $verbose
-    ## [1] FALSE
-    ## 
-    ## $simulation_time
-    ## Time difference of 0.5285511 secs
-    ## 
-    ## $mean_or_assurance
-    ## [1] "mean"
 
 ### Interpretation
 

@@ -66,5 +66,7 @@ jobs:
 
       - name: Verify generated files are current
         run: |
+          # pkgdown records the current build time in this metadata file.
+          git checkout -- docs/pkgdown.yml
           git diff --exit-code -- NAMESPACE man README.md docs
           test -z "$(git ls-files --others --exclude-standard -- NAMESPACE man README.md docs)"

@@ -246,7 +246,7 @@ result <- simulate_custom(
   method = "bisection",
   progress = FALSE
 )
-print(result)
+result[c("min_n", "perf_n", "target_performance")]
 ```
 
 ### Interpretation
