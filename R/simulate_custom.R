@@ -226,6 +226,7 @@ simulate_custom <- function(
       "Not possible. Increase sample or lower performance",
       output$perf_n
     ),
+    mlpwr_ds = output$mlpwr_ds,
     target_performance = target_performance,
     summaries = output$summaries,
     data = output$results,
@@ -249,6 +250,7 @@ simulate_custom <- function(
   if (!is.null(output$history)) {
     results_list$history <- output$history
   }
+  attr(results_list, "class") <- "pmsims"
   return(results_list)
 }
 
