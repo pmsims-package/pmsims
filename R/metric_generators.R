@@ -620,7 +620,12 @@ ipcw_binary_at_time <- function(data, eval_time) {
   list(y = y_obs, w = w)
 }
 
-# Model-free IPCW calibration slope at a horizon t*.
+# Previous model-free IPCW calibration-slope method.
+#
+# This logit-risk formulation has been superseded by
+# survival_calib_slope() above, which uses the complementary log-log scale to
+# align predicted survival with cumulative hazard. It is retained only for the
+# legacy internal "calib_slope_free" metric selector.
 #
 # Works for any model that yields a predicted survival probability (rf via its
 # survival matrix; coxph/lasso/ridge/xgboost via a Breslow baseline applied to
