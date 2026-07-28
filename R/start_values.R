@@ -148,7 +148,7 @@ adaptive_startvalues <- function(
 #' @param cores Positive integer number of parallel workers.
 #' @param verbose Logical; whether to report search progress.
 #'
-#' @export
+#' @noRd
 #'
 #' @return A list containing lower and upper sample-size bounds, the associated
 #'   performance summaries, and the search trace.

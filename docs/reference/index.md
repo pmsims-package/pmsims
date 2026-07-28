@@ -10,8 +10,3 @@
   : Minimum sample size for survival‐outcome prediction models
 - [`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md)
   : Minimum sample size for custom simulation workflows
-
-## Advanced helpers
-
-- [`calculate_adaptive_bounds()`](https://pmsims-package.github.io/pmsims/reference/calculate_adaptive_bounds.md)
-  : Calculate adaptive start bounds

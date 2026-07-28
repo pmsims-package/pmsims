@@ -68,6 +68,3 @@ reference:
       - simulate_continuous
       - simulate_survival
       - simulate_custom
-  - title: Advanced helpers
-    contents:
-      - calculate_adaptive_bounds
