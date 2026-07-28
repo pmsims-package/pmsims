@@ -25,10 +25,9 @@ calculate_bisection(
 )
 }
 \arguments{
-\item{data_function}{Function taking \code{n}, the training sample size, and
-returning a dataset that can be passed to \code{model_function}. It should also
-declare \code{n_signal_parameters} and \code{noise_parameters} arguments with numeric
-defaults so the start-value heuristics can infer the number of predictors.}
+\item{data_function}{Function taking a single argument, \code{n}, giving the
+training sample size, and returning a dataset that can be passed to
+\code{model_function}.}
 
 \item{model_function}{Function that fits a model to the dataset returned by
 \code{data_function}. It must take the generated dataset as its only argument

@@ -61,28 +61,21 @@ library(pmsims)
 set.seed(123)
 
 binary_example <- simulate_binary(
-  signal_parameters = 3,
-  noise_parameters = 2,
-  outcome_prevalence = 0.3,
-  maximum_achievable_cstatistic = 0.7,
+  signal_parameters = 10,
+  noise_parameters = 10,
+  complexity = 2,
+  data_control = list(nonlinear_strength = 0.4, correlation = 0.2),
+  outcome_prevalence = 0.20,
+  maximum_achievable_cstatistic = 0.75,
   model = "glm",
-  metric = "auc",
-  target_performance = 0.6,
-  n_reps_total = 20,
-  mean_or_assurance = "mean",
-  method = "bisection",
-  min_sample_size = 40,
-  max_sample_size = 100,
-  n_reps_per = 5,
-  test_n = 200,
-  progress = FALSE
+  metric = "calibration_slope",
+  target_performance = 0.90,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance"
 )
 
-binary_example$min_n
+binary_example
 ```
-
-The small simulation budget keeps this example quick. Use larger
-`n_reps_total`, `n_reps_per`, and `test_n` values for an analysis.
 
 `maximum_achievable_cstatistic` and `target_performance` have different
 roles:
@@ -90,8 +83,8 @@ roles:
 - `maximum_achievable_cstatistic` represents the best plausible
   C-statistic with effectively unlimited data and calibrates the data
   generator.
-- `target_performance` is the minimum acceptable AUC used to determine
-  the required sample size.
+- `target_performance` is the minimum acceptable metric value used to
+  determine the required sample size.
 
 ------------------------------------------------------------------------
 
@@ -109,8 +102,8 @@ Current preprints:
 
 - Olaniran OR, Shamsutdinova D, Markham S, Zimmer F, Stahl D, Forbes G,
   Carr E (2026). *Adaptive Gaussian Process Search for Simulation-Based
-  Sample Size Estimation in Clinical Prediction Models: Validation of
-  the pmsims R Package*. arXiv. <https://arxiv.org/abs/2603.23688>
+  Sample Size Estimation in Clinical Prediction Models: Validation of the
+  pmsims R Package*. arXiv. <https://arxiv.org/abs/2603.23688>
 
 Once peer-reviewed articles are available, these citations should be
 updated to the published versions. In R, you can retrieve the package
