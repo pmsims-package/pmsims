@@ -166,6 +166,14 @@ calculate_adaptive_bounds <- function(
   mean_or_assurance = "mean",
   plateau_k = 3,
   plateau_tol = 0.005,
+  # Optional large-sample pre-check. When enabled, the search first evaluates
+  # performance at large_n. If the target is more than large_n_tol above that
+  # estimate, it stops and reports the target as unreachable. Otherwise, the
+  # result determines the initial search bound and direction.
+  #
+  # Disabled by default because the preliminary large-sample fit did not work
+  # reliably for some machine-learning models. The default search starts at
+  # start_n and detects an unreachable target when recent gains plateau.
   large_perf_check = FALSE, # Probe performance at a large sample size first.
   large_n = NULL, # Sample size used for the optional probe.
   large_n_tol = 0.05, # Gap beyond which the target is considered unreachable.
