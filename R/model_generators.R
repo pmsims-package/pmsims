@@ -304,9 +304,9 @@ default_models <- list(
       x          <- as.matrix(d[, setdiff(colnames(d), c("time", "event")), drop = FALSE])
       label_time <- as.numeric(d$time)
       event      <- as.numeric(d$event)
-      dtrain     <- xgboost::xgb.DMatrix(data = x, label = label_time, weight = event)
-      #lab    <- ifelse(d$event == 1, as.numeric(d$time), -as.numeric(d$time))
-      #dtrain <- xgboost::xgb.DMatrix(data = x, label = lab)
+      #dtrain     <- xgboost::xgb.DMatrix(data = x, label = label_time, weight = event)
+      lab    <- ifelse(d$event == 1, as.numeric(d$time), -as.numeric(d$time))
+      dtrain <- xgboost::xgb.DMatrix(data = x, label = lab)
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
         params  = params,
