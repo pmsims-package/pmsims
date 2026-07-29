@@ -359,7 +359,7 @@ simulate_binary <- function(
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
 
-  output$parameters <- signal_parameters
+  output$signal_parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$complexity <- complexity
   output$nonlinear_strength <- dc$nonlinear_strength
@@ -509,7 +509,7 @@ simulate_continuous <- function(
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
 
-  output$parameters <- signal_parameters
+  output$signal_parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$complexity <- complexity
   output$nonlinear_strength <- dc$nonlinear_strength
@@ -679,7 +679,7 @@ simulate_survival <- function(
   output$metric_2 <- metric_2
 
   # Append input parameters
-  output$parameters <- signal_parameters
+  output$signal_parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$complexity <- complexity
   output$nonlinear_strength <- dc$nonlinear_strength

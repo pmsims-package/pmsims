@@ -40,6 +40,8 @@ test_that("simulate_binary returns a pmsims object", {
   expect_true(is.numeric(result$min_n))
   expect_gt(result$min_n, 0)
   expect_equal(result$target_performance, 0.9)
+  expect_identical(result$signal_parameters, 10)
+  expect_null(result$parameters)
 })
 
 test_that("simulate_continuous returns a pmsims object", {
@@ -65,6 +67,8 @@ test_that("simulate_continuous returns a pmsims object", {
   expect_true(is.numeric(result$min_n))
   expect_gt(result$min_n, 0)
   expect_equal(result$target_performance, 0.9)
+  expect_identical(result$signal_parameters, 10)
+  expect_null(result$parameters)
 })
 
 test_that("simulate_survival returns a pmsims object", {
@@ -94,6 +98,8 @@ test_that("simulate_survival returns a pmsims object", {
   expect_true(is.numeric(result$min_n))
   expect_gt(result$min_n, 0)
   expect_equal(result$target_performance, 0.9)
+  expect_identical(result$signal_parameters, 10)
+  expect_null(result$parameters)
 })
 
 test_that("wrapper dots are forwarded to simulate_custom", {

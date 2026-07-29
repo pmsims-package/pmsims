@@ -186,7 +186,7 @@ est
 #> ──────────────────────────────────── Inputs ────────────────────────────────────
 #>                                Outcome : continuous
 #>                         Predictor type : continuous
-#>                   Number of predictors : 3
+#>                   Signal predictors : 3
 #>                       Noise predictors : 2
 #>      Expected large-sample performance : R² ('r2') = 0.300
 #>   Target for chosen performance metric : R2 ('r2') = 0.150

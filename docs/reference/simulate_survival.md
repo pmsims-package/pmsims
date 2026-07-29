@@ -199,7 +199,7 @@ est
 #> ──────────────────────────────────── Inputs ────────────────────────────────────
 #>                                Outcome : survival
 #>                         Predictor type : continuous
-#>                   Number of predictors : 3
+#>                   Signal predictors : 3
 #>                       Noise predictors : 2
 #>                        Baseline hazard : 0.1
 #>                         Censoring rate : 0.3

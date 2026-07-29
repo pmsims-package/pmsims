@@ -72,7 +72,7 @@ We target the smallest *n* that meets the **assurance** criterion.
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
     #>                                Outcome : binary
     #>                         Predictor type : continuous
-    #>                   Number of predictors : 20
+    #>                   Signal predictors : 20
     #>                       Noise predictors : 0
     #>                             Prevalence : 0.3
     #>      Expected large-sample performance : C-statistic ('cstatistic') = 0.800
@@ -105,7 +105,7 @@ outcome](pmsims_files/figure-html/unnamed-chunk-3-1.png)
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
     #>                                Outcome : continuous
     #>                         Predictor type : continuous
-    #>                   Number of predictors : 15
+    #>                   Signal predictors : 15
     #>                       Noise predictors : 0
     #>      Expected large-sample performance : R² ('r2') = 0.500
     #>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.900

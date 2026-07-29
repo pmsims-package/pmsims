@@ -192,7 +192,7 @@ est
 #> ──────────────────────────────────── Inputs ────────────────────────────────────
 #>                                Outcome : binary
 #>                         Predictor type : continuous
-#>                   Number of predictors : 3
+#>                   Signal predictors : 3
 #>                       Noise predictors : 2
 #>                             Prevalence : 0.3
 #>      Expected large-sample performance : C-statistic ('cstatistic') = 0.700

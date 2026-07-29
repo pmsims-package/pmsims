@@ -122,12 +122,13 @@ print.pmsims <- function(x, ..., max_width = 80) {
   simtime <- x$simulation_time %||% NA
   cstatistic <- x$cstatistic
   r2 <- x$r2
+  signal_parameters <- x$signal_parameters %||% x$parameters
 
   # Inputs
   inputs <- list(
     "Outcome" = x$outcome,
     "Predictor type" = x$predictor_type,
-    "Number of predictors" = x$parameters,
+    "Signal predictors" = signal_parameters,
     "Noise predictors" = x$noise_parameters,
     "Prevalence" = x$prevalence,
     "Baseline hazard" = x$baseline_hazard,

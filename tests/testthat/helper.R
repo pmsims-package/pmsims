@@ -154,7 +154,7 @@ make_minimal_pmsims_object <- function(
     list(
       outcome = "binary",
       predictor_type = "continuous",
-      parameters = 5L,
+      signal_parameters = 5L,
       noise_parameters = 2L,
       prevalence = 0.2,
       cstatistic = 0.85,
