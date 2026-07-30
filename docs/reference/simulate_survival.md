@@ -210,7 +210,7 @@ est
 #> ──────────────────────────────────── Results ───────────────────────────────────
 #>              Final minimum sample size : 23
 #>             Estimated performance at N :  (Cindex ('cindex') = 0.550)
-#>            Estimated other metric at N : 0.048 (Calibration slope ('calib_slope'))
+#>            Estimated other metric at N : 0.048 (Calibration slope ('calibration_slope'))
 #>                                  Model : coxph
 #>                                   Mode : Mean
 #>                           Running time : 0 seconds

@@ -221,8 +221,9 @@ make_data_args <- function(
 #'   forest), or `"xgboost"` (gradient-boosted trees). The machine-learning
 #'   options are experimental.
 #' @param metric Character string naming the performance metric used to assess
-#'   the sample size; defaults to `"calibration_slope"`. (Internally mapped to
-#'   the engine's metric identifiers.)
+#'   the sample size; defaults to `"calibration_slope"`. Metric identifiers use
+#'   one canonical form throughout the package, such as `"calibration_slope"`,
+#'   `"calibration_in_the_large"`, `"auc"`, `"r2"`, and `"cindex"`.
 #' @param target_performance Numeric. Minimum acceptable value of the selected
 #'   performance metric \eqn{M^*}; the algorithm searches for the smallest
 #'   \eqn{n} meeting the chosen criterion with respect to this threshold.
@@ -279,10 +280,8 @@ simulate_binary <- function(
   ...
 ) {
   model <- check_pmsims_args(model, c("glm", "lasso", "ridge", "rf", "xgboost"))
-  metric_public <- normalize_metric_name(metric)
-  metric_internal <- normalize_metric_name(metric, internal = TRUE)
   validate_metric_constraints(
-    metric = metric_public,
+    metric = metric,
     target_performance = target_performance,
     maximum_achievable_performance = maximum_achievable_cstatistic
   )
@@ -327,7 +326,7 @@ simulate_binary <- function(
 
   simulate_custom_args <- utils::modifyList(
     list(
-      metric_function = default_metric_generator(metric_internal, data_function),
+      metric_function = default_metric_generator(metric, data_function),
       target_performance = target_performance,
       c_statistic = maximum_achievable_cstatistic,
       data_function = data_function,
@@ -345,15 +344,14 @@ simulate_binary <- function(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
 
-  metric_2_internal <- if (metric_internal %in% c("csse", "calib_slope")) {
+  metric_2 <- if (metric %in% c("csse", "calibration_slope")) {
     "auc"
   } else {
-    "calib_slope"
+    "calibration_slope"
   }
-  metric_2 <- normalize_metric_name(metric_2_internal)
 
   test_n <- 30000
-  metric_function_2 <- default_metric_generator(metric_2_internal, data_function)
+  metric_function_2 <- default_metric_generator(metric_2, data_function)
 
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
@@ -374,7 +372,7 @@ simulate_binary <- function(
   output$outcome_prevalence <- outcome_prevalence
   output$maximum_achievable_cstatistic <- maximum_achievable_cstatistic
   output$model <- model
-  output$metric <- metric_public
+  output$metric <- metric
   output$n_reps_total <- n_reps_total
   output$mean_or_assurance <- mean_or_assurance
   est <- output
@@ -440,10 +438,8 @@ simulate_continuous <- function(
   ...
 ) {
   model <- check_pmsims_args(model, c("lm", "lasso", "ridge", "rf", "xgboost"))
-  metric_public <- normalize_metric_name(metric)
-  metric_internal <- normalize_metric_name(metric, internal = TRUE)
   validate_metric_constraints(
-    metric = metric_public,
+    metric = metric,
     target_performance = target_performance,
     maximum_achievable_performance = maximum_achievable_rsquared
   )
@@ -482,7 +478,7 @@ simulate_continuous <- function(
 
   simulate_custom_args <- utils::modifyList(
     list(
-      metric_function = default_metric_generator(metric_internal, data_function),
+      metric_function = default_metric_generator(metric, data_function),
       target_performance = target_performance,
       c_statistic = maximum_achievable_rsquared,
       data_function = data_function,
@@ -500,14 +496,13 @@ simulate_continuous <- function(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
 
-  metric_2_internal <- if (metric_internal %in% c("csse", "calib_slope")) {
+  metric_2 <- if (metric %in% c("csse", "calibration_slope")) {
     "r2"
   } else {
-    "calib_slope"
+    "calibration_slope"
   }
-  metric_2 <- normalize_metric_name(metric_2_internal)
 
-  metric_function_2 <- default_metric_generator(metric_2_internal, data_function)
+  metric_function_2 <- default_metric_generator(metric_2, data_function)
 
   test_n <- 30000
   data_2 <- data_function(output$min_n)
@@ -528,7 +523,7 @@ simulate_continuous <- function(
   output$binary_predictor_prevalence <- dc$binary_prevalence
   output$maximum_achievable_rsquared <- maximum_achievable_rsquared
   output$model <- model
-  output$metric <- metric_public
+  output$metric <- metric
   output$n_reps_total <- n_reps_total
   output$mean_or_assurance <- mean_or_assurance
   class(output) <- "pmsims"
@@ -605,10 +600,8 @@ simulate_survival <- function(
     model,
     c("coxph", "lasso", "ridge", "rf", "xgboost")
   )
-  metric_public <- normalize_metric_name(metric)
-  metric_internal <- normalize_metric_name(metric, internal = TRUE)
   validate_metric_constraints(
-    metric = metric_public,
+    metric = metric,
     target_performance = target_performance,
     maximum_achievable_performance = maximum_achievable_cindex
   )
@@ -652,7 +645,7 @@ simulate_survival <- function(
 
   simulate_custom_args <- utils::modifyList(
     list(
-      metric_function = default_metric_generator(metric_internal, data_function),
+      metric_function = default_metric_generator(metric, data_function),
       target_performance = target_performance,
       c_statistic = maximum_achievable_cindex,
       data_function = data_function,
@@ -670,15 +663,14 @@ simulate_survival <- function(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
 
-  metric_2_internal <- if (metric_internal %in% c("csse", "calib_slope")) {
+  metric_2 <- if (metric %in% c("csse", "calibration_slope")) {
     "cindex"
   } else {
-    "calib_slope"
+    "calibration_slope"
   }
-  metric_2 <- normalize_metric_name(metric_2_internal)
 
   test_n <- 30000
-  metric_function_2 <- default_metric_generator(metric_2_internal, data_function)
+  metric_function_2 <- default_metric_generator(metric_2, data_function)
 
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
@@ -701,7 +693,7 @@ simulate_survival <- function(
   output$censoring_rate <- censoring_rate
   output$maximum_achievable_cindex <- maximum_achievable_cindex
   output$model <- model
-  output$metric <- metric_public
+  output$metric <- metric
   output$n_reps_total <- n_reps_total
   output$mean_or_assurance <- mean_or_assurance
   class(output) <- "pmsims"

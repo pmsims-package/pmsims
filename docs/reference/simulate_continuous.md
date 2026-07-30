@@ -195,7 +195,7 @@ est
 #> ──────────────────────────────────── Results ───────────────────────────────────
 #>              Final minimum sample size : 35
 #>             Estimated performance at N :  (R2 ('r2') = 0.150)
-#>            Estimated other metric at N : 0.575 (Calibration slope ('calib_slope'))
+#>            Estimated other metric at N : 0.575 (Calibration slope ('calibration_slope'))
 #>                                  Model : lm
 #>                                   Mode : Mean
 #>                           Running time : 0 seconds

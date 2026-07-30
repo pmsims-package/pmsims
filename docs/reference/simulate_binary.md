@@ -202,7 +202,7 @@ est
 #> ──────────────────────────────────── Results ───────────────────────────────────
 #>              Final minimum sample size : 43
 #>             Estimated performance at N :  (Auc ('auc') = 0.600)
-#>            Estimated other metric at N : 0.235 (Calibration slope ('calib_slope'))
+#>            Estimated other metric at N : 0.235 (Calibration slope ('calibration_slope'))
 #>                                  Model : glm
 #>                                   Mode : Mean
 #>                           Running time : 0 seconds

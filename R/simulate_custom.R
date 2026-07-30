@@ -286,8 +286,8 @@ resolve_value_on_error <- function(metric_function) {
     r2 = 0,
     brier_score_scaled = 0,
     brier_score = 1,
-    IBS = 1,
-    calib_slope = 0
+    ibs = 1,
+    calibration_slope = 0
   )
 
   if (!is.null(custom_value_on_error)) {

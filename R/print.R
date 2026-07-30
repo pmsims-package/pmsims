@@ -97,9 +97,7 @@ print.pmsims <- function(x, ..., max_width = 80) {
     m <- tolower(metric)
     nice <- switch(
       m,
-      "calib_slope" = "Calibration slope",
       "calibration_slope" = "Calibration slope",
-      "calib_itl" = "Calibration-in-the-large",
       "calibration_in_the_large" = "Calibration-in-the-large",
       "ibs" = "Integrated Brier score",
       "cstatistic" = "C-statistic",

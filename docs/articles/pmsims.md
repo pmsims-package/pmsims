@@ -76,12 +76,12 @@ We target the smallest *n* that meets the **assurance** criterion.
     #>                       Noise predictors : 0
     #>                             Prevalence : 0.3
     #>      Expected large-sample performance : C-statistic ('cstatistic') = 0.800
-    #>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.850
+    #>   Target for chosen performance metric : Calibration slope ('calibration_slope') = 0.850
     #>                                  Model : glm
     #>                        Simulation reps : 1,000
     #> ──────────────────────────────────── Results ───────────────────────────────────
     #>              Final minimum sample size : 1,044
-    #>             Estimated performance at N : 0.849 (Calibration slope ('calib_slope') = 0.850)
+    #>             Estimated performance at N : 0.849 (Calibration slope ('calibration_slope') = 0.850)
     #>            Estimated other metric at N : 0.782 (Auc ('auc'))
     #>                                  Model : glm
     #>                                   Mode : Assurance
@@ -108,12 +108,12 @@ outcome](pmsims_files/figure-html/unnamed-chunk-3-1.png)
     #>                   Signal predictors : 15
     #>                       Noise predictors : 0
     #>      Expected large-sample performance : R² ('r2') = 0.500
-    #>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.900
+    #>   Target for chosen performance metric : Calibration slope ('calibration_slope') = 0.900
     #>                                  Model : lm
     #>                        Simulation reps : 1,000
     #> ──────────────────────────────────── Results ───────────────────────────────────
     #>              Final minimum sample size : 239
-    #>             Estimated performance at N : 0.900 (Calibration slope ('calib_slope') = 0.900)
+    #>             Estimated performance at N : 0.900 (Calibration slope ('calibration_slope') = 0.900)
     #>            Estimated other metric at N : 0.486 (R2 ('r2'))
     #>                                  Model : lm
     #>                                   Mode : Assurance

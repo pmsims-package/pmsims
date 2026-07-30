@@ -499,7 +499,7 @@ compute_start_sample_sizes <- function(
   }
 
   if (metric_used == "csse") {
-    metric_used <- "calib_slope"
+    metric_used <- "calibration_slope"
     target_performance <- 1 - sqrt(abs(target_performance))
   }
 
@@ -515,7 +515,7 @@ compute_start_sample_sizes <- function(
         npar = npar,
         prevalence = 1 - censoring_rate,
         c_stat = target_performance,
-        calib_slope = NULL,
+        calibration_slope = NULL,
         epv_value = 3 * (1 - censoring_rate),
         outcome_type = "survival"
       )
@@ -526,7 +526,7 @@ compute_start_sample_sizes <- function(
         npar = npar,
         prevalence = 1 - censoring_rate,
         c_stat = c_statistic,
-        calib_slope = target_performance,
+        calibration_slope = target_performance,
         epv_value = 10,
         outcome_type = "survival"
       )
@@ -560,7 +560,7 @@ compute_start_sample_sizes <- function(
         npar = npar,
         prevalence = baseline_prob,
         c_stat = target_performance,
-        calib_slope = NULL,
+        calibration_slope = NULL,
         epv_value = epv_val,
         outcome_type = "binary"
       )
@@ -578,7 +578,7 @@ compute_start_sample_sizes <- function(
           npar = npar,
           prevalence = baseline_prob,
           c_stat = c_statistic,
-          calib_slope = target_performance,
+          calibration_slope = target_performance,
           epv_value = epv_val,
           outcome_type = "binary"
         )
@@ -591,7 +591,7 @@ compute_start_sample_sizes <- function(
           npar = npar,
           prevalence = baseline_prob,
           c_stat = c_statistic,
-          calib_slope = target_performance,
+          calibration_slope = target_performance,
           epv_value = epv_val,
           outcome_type = "binary"
         )
@@ -604,7 +604,7 @@ compute_start_sample_sizes <- function(
           npar = npar,
           prevalence = baseline_prob,
           c_stat = target_performance,
-          calib_slope = NULL,
+          calibration_slope = NULL,
           epv_value = epv_val,
           outcome_type = "binary"
         )
@@ -615,12 +615,12 @@ compute_start_sample_sizes <- function(
 
     # Continuous outcome
   } else {
-    if (metric_used == "calib_slope") {
+    if (metric_used == "calibration_slope") {
       prev_min_sample_size <- get_min_sample_size(
         npar = npar,
         prevalence = NULL,
         c_stat = NULL,
-        calib_slope = target_performance,
+        calibration_slope = target_performance,
         outcome_type = "continuous"
       )
 
@@ -630,7 +630,7 @@ compute_start_sample_sizes <- function(
         npar = npar,
         prevalence = NULL,
         c_stat = target_performance,
-        calib_slope = NULL,
+        calibration_slope = NULL,
         outcome_type = "continuous"
       )
 
@@ -657,7 +657,7 @@ compute_start_sample_sizes <- function(
 #' @param prevalence Numeric in `[0, 1]`; optional event rate or case fraction
 #'   used for EPV calculations.
 #' @param c_stat Numeric in (0.5, 1]; anticipated discrimination (C-statistic). Lower values inflate the heuristic.
-#' @param calib_slope Numeric; anticipated calibration slope. Values below 1 trigger a modest inflation.
+#' @param calibration_slope Numeric; anticipated calibration slope. Values below 1 trigger a modest inflation.
 #' @param epv_value Numeric; target events-per-variable (EPV) value applied when prevalence is supplied.
 #' @param outcome_type Character string; must be one of `"binary"`, `"survival"`, or `"continuous"`.
 #' @return Integer recommended starting value from which to calculate the minimum sample size.
@@ -666,7 +666,7 @@ get_min_sample_size <- function(
   npar,
   prevalence = NULL,
   c_stat = NULL,
-  calib_slope = NULL,
+  calibration_slope = NULL,
   epv_value = NULL,
   outcome_type = c("binary", "survival", "continuous")
 ) {
@@ -749,13 +749,13 @@ get_min_sample_size <- function(
       n_cont <- round(n_cont * adj)
     }
 
-    if (!is.null(calib_slope)) {
-      if (calib_slope > 0 && calib_slope < 1) {
+    if (!is.null(calibration_slope)) {
+      if (calibration_slope > 0 && calibration_slope < 1) {
         # Lower slope means more shrinkage needed → increase N slightly
         if (npar > 10) {
-          adj <- 1 + (1 - calib_slope)
+          adj <- 1 + (1 - calibration_slope)
         } else {
-          adj <- 1 + (1 - calib_slope)
+          adj <- 1 + (1 - calibration_slope)
         }
         n_cont <- round(n_cont * adj)
       }

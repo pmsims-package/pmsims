@@ -2,23 +2,12 @@ predict.fake_rf <- function(object, newdata, ...) {
   rep(0.4, nrow(newdata))
 }
 
-test_that("metric names are normalized at public and internal boundaries", {
-  expect_identical(normalize_metric_name("calib_slope"), "calibration_slope")
-  expect_identical(
-    normalize_metric_name("calibration_slope", internal = TRUE),
-    "calib_slope"
-  )
-  expect_identical(
-    normalize_metric_name("calib_itl"),
-    "calibration_in_the_large"
-  )
-  expect_identical(normalize_metric_name("IBS"), "ibs")
-
+test_that("metric generators retain canonical metric names", {
   metric_function <- default_metric_generator(
     "calibration_slope",
     make_binary_data_function()
   )
-  expect_identical(attr(metric_function, "metric"), "calib_slope")
+  expect_identical(attr(metric_function, "metric"), "calibration_slope")
 })
 
 make_continuous_inputs <- function(metric) {
@@ -214,7 +203,11 @@ test_that("binary metric functions return finite values", {
 })
 
 test_that("continuous metrics use the current metric API", {
-  for (metric_name in c("r2", "calib_slope", "calib_itl")) {
+  for (metric_name in c(
+    "r2",
+    "calibration_slope",
+    "calibration_in_the_large"
+  )) {
     inputs <- make_continuous_inputs(metric_name)
     set.seed(1234)
     data <- inputs$data_function(300)

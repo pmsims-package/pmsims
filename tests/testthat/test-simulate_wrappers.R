@@ -50,31 +50,6 @@ test_that("simulate_binary returns a pmsims object", {
   expect_null(result$cstatistic)
 })
 
-test_that("wrappers return canonical metric names for legacy aliases", {
-  local_mocked_bindings(
-    binary_tuning = function(...) {
-      c(mu_lp = 0, sigma_sq = 1, beta_signal = 0.3)
-    },
-    simulate_custom = mock_simulate_custom,
-    .package = "pmsims"
-  )
-
-  result <- simulate_binary(
-    signal_parameters = 10,
-    noise_parameters = 0,
-    data_control = list(predictor_distribution = "normal"),
-    outcome_prevalence = 0.2,
-    maximum_achievable_cstatistic = 0.75,
-    metric = "calib_slope",
-    target_performance = 0.9,
-    n_reps_total = 40,
-    mean_or_assurance = "assurance"
-  )
-
-  expect_identical(result$metric, "calibration_slope")
-  expect_identical(result$metric_2, "auc")
-})
-
 test_that("simulate_continuous returns a pmsims object", {
   local_mocked_bindings(
     continuous_tuning = function(...) 0.25,

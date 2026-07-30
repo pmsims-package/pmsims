@@ -51,8 +51,9 @@ survival forest), or \code{"xgboost"} (gradient boosting with a Cox objective).
 The machine-learning options are experimental.}
 
 \item{metric}{Character string naming the performance metric used to assess
-the sample size; defaults to \code{"calibration_slope"}. (Internally mapped to
-the engine's metric identifiers.)}
+the sample size; defaults to \code{"calibration_slope"}. Metric identifiers use
+one canonical form throughout the package, such as \code{"calibration_slope"},
+\code{"calibration_in_the_large"}, \code{"auc"}, \code{"r2"}, and \code{"cindex"}.}
 
 \item{target_performance}{Numeric. Minimum acceptable value of the selected
 performance metric \eqn{M^*}; the algorithm searches for the smallest

@@ -1,12 +1,11 @@
 default_metric_generator <- function(metric, data_function) {
-  metric <- normalize_metric_name(metric, internal = TRUE)
   outcome <- attr(data_function, "outcome")
   if (outcome == "binary") {
     if (metric == "auc") {
       metric_function <- binary_auc_metric
-    } else if (metric == "calib_slope") {
+    } else if (metric == "calibration_slope") {
       metric_function <- binary_calib_slope
-    } else if (metric == "calib_itl") {
+    } else if (metric == "calibration_in_the_large") {
       metric_function <- binary_calib_itl
     } else if (metric == "brier_score") {
       metric_function <- binary_brier_score
@@ -29,13 +28,13 @@ default_metric_generator <- function(metric, data_function) {
       metric_function <- survival_cindex
     } else if (metric == "auc") {
       metric_function <- survival_auc
-    } else if (metric == "calib_slope") {
+    } else if (metric == "calibration_slope") {
       metric_function <- survival_calib_slope
-    } else if (metric == "calib_slope_free") {
+    } else if (metric == "calibration_slope_free") {
       metric_function <- survival_calib_slope_free
     } else if (metric == "csse") {
       metric_function <- survival_csse
-    } else if (metric == "IBS") {
+    } else if (metric == "ibs") {
       # Reserved for future Integrated Brier Score support.
       metric_function <- NULL
     } else {
@@ -51,9 +50,9 @@ default_metric_generator <- function(metric, data_function) {
   if (outcome == "continuous") {
     if (metric == "r2") {
       metric_function <- continuous_r2
-    } else if (metric == "calib_slope") {
+    } else if (metric == "calibration_slope") {
       metric_function <- continuous_calib_slope
-    } else if (metric == "calib_itl") {
+    } else if (metric == "calibration_in_the_large") {
       metric_function <- continuous_calib_itl
     } else if (metric == "csse") {
       metric_function <- continuous_csse
@@ -626,7 +625,7 @@ ipcw_binary_at_time <- function(data, eval_time) {
 # This logit-risk formulation has been superseded by
 # survival_calib_slope() above, which uses the complementary log-log scale to
 # align predicted survival with cumulative hazard. It is retained only for the
-# legacy internal "calib_slope_free" metric selector.
+# internal "calibration_slope_free" metric selector.
 #
 # Works for any model that yields a predicted survival probability (rf via its
 # survival matrix; coxph/lasso/ridge/xgboost via a Breslow baseline applied to
