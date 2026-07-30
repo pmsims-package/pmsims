@@ -1,4 +1,5 @@
 default_metric_generator <- function(metric, data_function) {
+  metric <- normalize_metric_name(metric, internal = TRUE)
   outcome <- attr(data_function, "outcome")
   if (outcome == "binary") {
     if (metric == "auc") {

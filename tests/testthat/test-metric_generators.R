@@ -2,6 +2,25 @@ predict.fake_rf <- function(object, newdata, ...) {
   rep(0.4, nrow(newdata))
 }
 
+test_that("metric names are normalized at public and internal boundaries", {
+  expect_identical(normalize_metric_name("calib_slope"), "calibration_slope")
+  expect_identical(
+    normalize_metric_name("calibration_slope", internal = TRUE),
+    "calib_slope"
+  )
+  expect_identical(
+    normalize_metric_name("calib_itl"),
+    "calibration_in_the_large"
+  )
+  expect_identical(normalize_metric_name("IBS"), "ibs")
+
+  metric_function <- default_metric_generator(
+    "calibration_slope",
+    make_binary_data_function()
+  )
+  expect_identical(attr(metric_function, "metric"), "calib_slope")
+})
+
 make_continuous_inputs <- function(metric) {
   parse_inputs(
     data_spec = list(

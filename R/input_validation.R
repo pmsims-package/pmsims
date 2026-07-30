@@ -1,9 +1,46 @@
+normalize_metric_name <- function(metric, internal = FALSE) {
+  if (!is.character(metric) || length(metric) != 1L || is.na(metric)) {
+    stop("`metric` must be a single non-missing character string.", call. = FALSE)
+  }
+
+  public_aliases <- c(
+    calibration_slope = "calibration_slope",
+    calib_slope = "calibration_slope",
+    calibration_in_the_large = "calibration_in_the_large",
+    calib_itl = "calibration_in_the_large",
+    ibs = "ibs",
+    IBS = "ibs"
+  )
+
+  public_name <- if (metric %in% names(public_aliases)) {
+    unname(public_aliases[[metric]])
+  } else {
+    metric
+  }
+
+  if (!internal) {
+    return(public_name)
+  }
+
+  internal_names <- c(
+    calibration_slope = "calib_slope",
+    calibration_in_the_large = "calib_itl",
+    ibs = "IBS"
+  )
+
+  if (public_name %in% names(internal_names)) {
+    unname(internal_names[[public_name]])
+  } else {
+    public_name
+  }
+}
+
 validate_metric_constraints <- function(
   metric,
   target_performance,
   maximum_achievable_performance = NULL
 ) {
-  metric_lower <- tolower(metric)
+  metric_lower <- tolower(normalize_metric_name(metric))
   metric_label <- switch(
     metric_lower,
     auc = "AUC",
