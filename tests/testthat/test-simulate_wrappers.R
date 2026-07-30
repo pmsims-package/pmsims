@@ -44,6 +44,10 @@ test_that("simulate_binary returns a pmsims object", {
   expect_null(result$parameters)
   expect_identical(result$metric, "calibration_slope")
   expect_identical(result$metric_2, "auc")
+  expect_identical(result$outcome_prevalence, 0.2)
+  expect_identical(result$maximum_achievable_cstatistic, 0.75)
+  expect_null(result$prevalence)
+  expect_null(result$cstatistic)
 })
 
 test_that("wrappers return canonical metric names for legacy aliases", {
@@ -96,6 +100,8 @@ test_that("simulate_continuous returns a pmsims object", {
   expect_equal(result$target_performance, 0.9)
   expect_identical(result$signal_parameters, 10)
   expect_null(result$parameters)
+  expect_identical(result$maximum_achievable_rsquared, 0.5)
+  expect_null(result$r2)
 })
 
 test_that("simulate_survival returns a pmsims object", {
@@ -127,6 +133,8 @@ test_that("simulate_survival returns a pmsims object", {
   expect_equal(result$target_performance, 0.9)
   expect_identical(result$signal_parameters, 10)
   expect_null(result$parameters)
+  expect_identical(result$maximum_achievable_cindex, 0.75)
+  expect_null(result$cstatistic)
 })
 
 test_that("wrapper dots are forwarded to simulate_custom", {

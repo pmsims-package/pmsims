@@ -124,9 +124,23 @@ print.pmsims <- function(x, ..., max_width = 80) {
   perf_at <- x$perf_n %||% NA
   perf2_at <- x$metric_2_at_n %||% NA
   simtime <- x$simulation_time %||% NA
-  cstatistic <- x$cstatistic
-  r2 <- x$r2
+  maximum_achievable_cstatistic <- x$maximum_achievable_cstatistic
+  maximum_achievable_cindex <- x$maximum_achievable_cindex
+  maximum_achievable_rsquared <- x$maximum_achievable_rsquared %||% x$r2
+  if (
+    is.null(maximum_achievable_cstatistic) &&
+      identical(x$outcome, "binary")
+  ) {
+    maximum_achievable_cstatistic <- x$cstatistic
+  }
+  if (
+    is.null(maximum_achievable_cindex) &&
+      identical(x$outcome, "survival")
+  ) {
+    maximum_achievable_cindex <- x$cstatistic
+  }
   signal_parameters <- x$signal_parameters %||% x$parameters
+  outcome_prevalence <- x$outcome_prevalence %||% x$prevalence
 
   # Inputs
   inputs <- list(
@@ -134,20 +148,26 @@ print.pmsims <- function(x, ..., max_width = 80) {
     "Predictor type" = x$predictor_type,
     "Signal predictors" = signal_parameters,
     "Noise predictors" = x$noise_parameters,
-    "Prevalence" = x$prevalence,
+    "Prevalence" = outcome_prevalence,
     "Baseline hazard" = x$baseline_hazard,
     "Censoring rate" = x$censoring_rate
   )
-  if (is_present(cstatistic)) {
+  if (is_present(maximum_achievable_cstatistic)) {
     inputs[["Expected large-sample performance"]] <- paste0(
-      "C-statistic ('cstatistic') = ",
-      fmt_num(cstatistic, 3)
+      "C-statistic ('maximum_achievable_cstatistic') = ",
+      fmt_num(maximum_achievable_cstatistic, 3)
     )
   }
-  if (is_present(r2)) {
+  if (is_present(maximum_achievable_cindex)) {
     inputs[["Expected large-sample performance"]] <- paste0(
-      "R\u00B2 ('r2') = ",
-      fmt_num(r2, 3)
+      "C-index ('maximum_achievable_cindex') = ",
+      fmt_num(maximum_achievable_cindex, 3)
+    )
+  }
+  if (is_present(maximum_achievable_rsquared)) {
+    inputs[["Expected large-sample performance"]] <- paste0(
+      "R\u00B2 ('maximum_achievable_rsquared') = ",
+      fmt_num(maximum_achievable_rsquared, 3)
     )
   }
   if (is_present(metric) || is_present(target)) {

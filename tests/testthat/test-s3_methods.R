@@ -32,6 +32,19 @@ test_that("print.pmsims supports the legacy parameters field", {
   expect_false(grepl("Number of predictors", output, fixed = TRUE))
 })
 
+test_that("print.pmsims supports legacy performance input fields", {
+  object <- make_minimal_pmsims_object()
+  object$prevalence <- object$outcome_prevalence
+  object$outcome_prevalence <- NULL
+  object$cstatistic <- object$maximum_achievable_cstatistic
+  object$maximum_achievable_cstatistic <- NULL
+
+  output <- paste(capture.output(print(object)), collapse = "\n")
+
+  expect_match(output, "Prevalence", fixed = TRUE)
+  expect_match(output, "C-statistic", fixed = TRUE)
+})
+
 test_that("summary.pmsims prints a compact summary", {
   object <- make_minimal_pmsims_object()
 

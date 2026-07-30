@@ -371,8 +371,8 @@ simulate_binary <- function(
   output$predictor_distribution <- dc$predictor_distribution
   output$predictor_type <- dc$predictor_type
   output$binary_predictor_prevalence <- dc$binary_prevalence
-  output$prevalence <- outcome_prevalence
-  output$cstatistic <- maximum_achievable_cstatistic
+  output$outcome_prevalence <- outcome_prevalence
+  output$maximum_achievable_cstatistic <- maximum_achievable_cstatistic
   output$model <- model
   output$metric <- metric_public
   output$n_reps_total <- n_reps_total
@@ -526,7 +526,7 @@ simulate_continuous <- function(
   output$predictor_distribution <- dc$predictor_distribution
   output$predictor_type <- dc$predictor_type
   output$binary_predictor_prevalence <- dc$binary_prevalence
-  output$r2 <- maximum_achievable_rsquared
+  output$maximum_achievable_rsquared <- maximum_achievable_rsquared
   output$model <- model
   output$metric <- metric_public
   output$n_reps_total <- n_reps_total
@@ -699,7 +699,7 @@ simulate_survival <- function(
   output$binary_predictor_prevalence <- dc$binary_prevalence
   output$baseline_hazard <- baseline_hazard
   output$censoring_rate <- censoring_rate
-  output$cstatistic <- maximum_achievable_cindex
+  output$maximum_achievable_cindex <- maximum_achievable_cindex
   output$model <- model
   output$metric <- metric_public
   output$n_reps_total <- n_reps_total
