@@ -1,13 +1,19 @@
 test_that("generate_predictors", {
-  data <- generate_predictors(n = 100, parameters = 10, type = "continuous")
+  data <- generate_predictors(
+    n = 100,
+    n_signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "continuous"
+  )
   expect_equal(nrow(data), 100)
   expect_equal(ncol(data), 10)
 
   data2 <- generate_predictors(
     n = 100,
-    parameters = 10,
-    type = "binary",
-    predictor_prop = 0.3
+    n_signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "binary",
+    binary_prevalence = 0.3
   )
   expect_equal(nrow(data2), 100)
   expect_equal(ncol(data2), 10)
@@ -15,13 +21,19 @@ test_that("generate_predictors", {
 })
 
 test_that("generate_linear_predictor", {
-  X <- generate_predictors(n = 100, parameters = 10, type = "continuous")
+  X <- generate_predictors(
+    n = 100,
+    n_signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "continuous"
+  )
   lp <- generate_linear_predictor(
     X,
     n_signal_parameters = 5,
     noise_parameters = 5,
     intercept = 1,
-    beta_signal = 0.5
+    beta_signal = 0.5,
+    complexity = 1
   )
   expect_equal(length(lp), 100)
 })
@@ -35,7 +47,7 @@ test_that("generate_continuous_data", {
     n_signal_parameters = signal_parameters,
     noise_parameters = noise_parameters,
     predictor_type = "binary",
-    predictor_prop = 0.1,
+    binary_prevalence = 0.1,
     beta_signal = 0.1
   )
 
@@ -100,7 +112,7 @@ test_that("update_arguments", {
       n_signal_parameters = signal_parameters,
       noise_parameters = noise_parameters,
       predictor_type = "binary",
-      predictor_prop = 0.1,
+      binary_prevalence = 0.1,
       beta_signal = 0.1
     )
   )
@@ -123,7 +135,7 @@ test_that("default_data_generators", {
       n_signal_parameters = signal_parameters,
       noise_parameters = noise_parameters,
       predictor_type = "binary",
-      predictor_prop = 0.1,
+      binary_prevalence = 0.1,
       beta_signal = 0.1
     )
   )
