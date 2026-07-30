@@ -235,6 +235,7 @@ simulate_custom <- function(
     target_performance = target_performance,
     summaries = output$summaries,
     data = output$results,
+    train_size = rownames(output$results),
     data_function = data_function,
     model_function = model_function,
     metric_function = metric_function,

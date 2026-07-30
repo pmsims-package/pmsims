@@ -252,6 +252,7 @@ calculate_adaptive_bounds <- function(
   max_achievable_perf <- NA_real_ # Reported when the target is unreachable.
 
   # Optionally check reachability at a large sample size before searching.
+  # This is not used by default.
   if (isTRUE(large_perf_check)) {
     if (is.null(large_n)) {
       # Default: use the largest n we could reach by doubling from start_n
