@@ -268,7 +268,7 @@ test_that("survival metric helpers return NaN on unsupported probability paths",
 
   expect_warning(
     metric <- survival_calib_slope_free(data, fit = NULL, model = "xgboost"),
-    "predicted survival probabilities not available",
+    "predicted survival not available",
     fixed = FALSE
   )
   expect_true(is.nan(metric))
