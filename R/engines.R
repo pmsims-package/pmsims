@@ -4,6 +4,7 @@
 #' @param progress Logical flag controlling whether the `mlpwr` progress bar is shown.
 #' @param verbose Logical flag passed to `mlpwr`; when `TRUE` verbose output is printed.
 #' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
+#' @param ... Additional options passed to [mlpwr::find.design()].
 #' @keywords internal
 calculate_mlpwr <- function(
   test_n,
@@ -21,7 +22,8 @@ calculate_mlpwr <- function(
   data_function,
   model_function,
   metric_function,
-  value_on_error
+  value_on_error,
+  ...
 ) {
   # Determine initial start values
   start_values <- tryCatch(
@@ -230,18 +232,24 @@ calculate_mlpwr <- function(
 
   ds <- tryCatch(
     {
-      mlpwr::find.design(
-        simfun = mlpwr_simulation_function,
-        aggregate_fun = aggregate_fun,
-        noise_fun = noise_fun,
-        boundaries = c(start_min_sample_size, start_max_sample_size),
-        power = target_performance,
-        surrogate = "gpr",
-        setsize = n_reps_per,
-        evaluations = n_reps_total,
-        ci = ci,
-        n.startsets = n_init,
-        silent = !isTRUE(progress)
+      do.call(
+        mlpwr::find.design,
+        utils::modifyList(
+          list(
+            simfun = mlpwr_simulation_function,
+            aggregate_fun = aggregate_fun,
+            noise_fun = noise_fun,
+            boundaries = c(start_min_sample_size, start_max_sample_size),
+            power = target_performance,
+            surrogate = "gpr",
+            setsize = n_reps_per,
+            evaluations = n_reps_total,
+            ci = ci,
+            n.startsets = n_init,
+            silent = !isTRUE(progress)
+          ),
+          list(...)
+        )
       )
     },
     error = function(e) {
@@ -522,6 +530,7 @@ calculate_bisection <- function(
 #' @param progress Logical flag controlling whether the `mlpwr` progress bar is shown.
 #' @param verbose Logical flag passed to `mlpwr`; when `TRUE` verbose output is printed.
 #' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
+#' @param ... Additional options passed to [mlpwr::find.design()].
 #'
 #' @return List containing the combined bisection and mlpwr results (`results`, `summaries`, `min_n`, `perf_n`, and `mlpwr_ds`).
 #' @keywords internal
@@ -540,7 +549,8 @@ calculate_mlpwr_bs <- function(
   data_function,
   model_function,
   metric_function,
-  value_on_error
+  value_on_error,
+  ...
 ) {
   # Calculate the first stage bisection
 
@@ -669,20 +679,25 @@ calculate_mlpwr_bs <- function(
     mlpwrbs_max_sample_size <- max_sample_size
   }
 
-  ds <-
-    mlpwr::find.design(
-      simfun = mlpwr_simulation_function,
-      aggregate_fun = aggregate_fun,
-      noise_fun = noise_fun,
-      boundaries = c(mlpwrbs_min_sample_size, mlpwrbs_max_sample_size),
-      power = target_performance,
-      surrogate = "gpr",
-      setsize = n_reps_per,
-      evaluations = n_reps_total,
-      ci = ci,
-      n.startsets = 4,
-      silent = !isTRUE(progress)
+  ds <- do.call(
+    mlpwr::find.design,
+    utils::modifyList(
+      list(
+        simfun = mlpwr_simulation_function,
+        aggregate_fun = aggregate_fun,
+        noise_fun = noise_fun,
+        boundaries = c(mlpwrbs_min_sample_size, mlpwrbs_max_sample_size),
+        power = target_performance,
+        surrogate = "gpr",
+        setsize = n_reps_per,
+        evaluations = n_reps_total,
+        ci = ci,
+        n.startsets = 4,
+        silent = !isTRUE(progress)
+      ),
+      list(...)
     )
+  )
 
   # Process results from mlpwr
   perfs <- ds$dat

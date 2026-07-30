@@ -158,62 +158,79 @@ simulate_custom <- function(
   time_1 <- Sys.time()
 
   if (method == "mlpwr") {
-    output <- calculate_mlpwr(
-      test_n = test_n,
-      n_reps_total = n_reps_total,
-      n_reps_per = n_reps_per,
-      se_final = se_final,
-      min_sample_size = min_sample_size,
-      max_sample_size = max_sample_size,
-      target_performance = target_performance,
-      c_statistic = c_statistic,
-      mean_or_assurance,
-      n_init = n_init,
-      progress = progress,
-      verbose = verbose,
-      data_function = data_function,
-      model_function = model_function,
-      metric_function = metric_function,
-      value_on_error = value_on_error
+    output <- do.call(
+      calculate_mlpwr,
+      utils::modifyList(
+        list(
+          test_n = test_n,
+          n_reps_total = n_reps_total,
+          n_reps_per = n_reps_per,
+          se_final = se_final,
+          min_sample_size = min_sample_size,
+          max_sample_size = max_sample_size,
+          target_performance = target_performance,
+          c_statistic = c_statistic,
+          mean_or_assurance = mean_or_assurance,
+          n_init = n_init,
+          progress = progress,
+          verbose = verbose,
+          data_function = data_function,
+          model_function = model_function,
+          metric_function = metric_function,
+          value_on_error = value_on_error
+        ),
+        list(...)
+      )
     )
   } else if (method == "bisection") {
-    output <- calculate_bisection(
-      data_function = data_function,
-      model_function = model_function,
-      metric_function = metric_function,
-      value_on_error = value_on_error,
-      min_sample_size = min_sample_size,
-      max_sample_size = max_sample_size,
-      test_n = test_n,
-      n_reps_total = n_reps_total,
-      n_reps_per = n_reps_per,
-      target_performance = target_performance,
-      c_statistic = c_statistic,
-      mean_or_assurance = mean_or_assurance,
-      tol = 1e-3,
-      parallel = FALSE,
-      cores = 20,
-      verbose = verbose,
-      budget = TRUE,
-      ...
+    output <- do.call(
+      calculate_bisection,
+      utils::modifyList(
+        list(
+          data_function = data_function,
+          model_function = model_function,
+          metric_function = metric_function,
+          value_on_error = value_on_error,
+          min_sample_size = min_sample_size,
+          max_sample_size = max_sample_size,
+          test_n = test_n,
+          n_reps_total = n_reps_total,
+          n_reps_per = n_reps_per,
+          target_performance = target_performance,
+          c_statistic = c_statistic,
+          mean_or_assurance = mean_or_assurance,
+          tol = 1e-3,
+          parallel = FALSE,
+          cores = 20,
+          verbose = verbose,
+          budget = TRUE
+        ),
+        list(...)
+      )
     )
   } else if (method == "mlpwr-bs") {
-    output <- calculate_mlpwr_bs(
-      test_n = test_n,
-      n_reps_total = n_reps_total,
-      n_reps_per = n_reps_per,
-      se_final = se_final,
-      min_sample_size = min_sample_size,
-      max_sample_size = max_sample_size,
-      target_performance = target_performance,
-      c_statistic = c_statistic,
-      mean_or_assurance,
-      progress = progress,
-      verbose = verbose,
-      data_function = data_function,
-      model_function = model_function,
-      metric_function = metric_function,
-      value_on_error = value_on_error
+    output <- do.call(
+      calculate_mlpwr_bs,
+      utils::modifyList(
+        list(
+          test_n = test_n,
+          n_reps_total = n_reps_total,
+          n_reps_per = n_reps_per,
+          se_final = se_final,
+          min_sample_size = min_sample_size,
+          max_sample_size = max_sample_size,
+          target_performance = target_performance,
+          c_statistic = c_statistic,
+          mean_or_assurance = mean_or_assurance,
+          progress = progress,
+          verbose = verbose,
+          data_function = data_function,
+          model_function = model_function,
+          metric_function = metric_function,
+          value_on_error = value_on_error
+        ),
+        list(...)
+      )
     )
   } else {
     stop("Method not found")

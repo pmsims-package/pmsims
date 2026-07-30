@@ -226,6 +226,68 @@ test_that("simulate_custom can suppress the mlpwr progress bar", {
   expect_false(any(grepl("sims \\(", output)))
 })
 
+test_that("simulate_custom forwards options to every engine", {
+  captured <- list()
+  engine_output <- function() {
+    list(
+      min_n = 50,
+      perf_n = 0.8,
+      mlpwr_ds = NULL,
+      summaries = list(),
+      results = matrix(0.8, nrow = 1, dimnames = list("50", NULL))
+    )
+  }
+
+  local_mocked_bindings(
+    calculate_mlpwr = function(...) {
+      captured$mlpwr <<- list(...)
+      engine_output()
+    },
+    calculate_bisection = function(...) {
+      captured$bisection <<- list(...)
+      engine_output()
+    },
+    calculate_mlpwr_bs = function(...) {
+      captured$mlpwr_bs <<- list(...)
+      engine_output()
+    },
+    .package = "pmsims"
+  )
+
+  data_function <- function(n) data.frame(y = rep(0, n), x1 = rep(0, n))
+  model_function <- function(data) NULL
+  metric_function <- function(test_data, fit, model) 0.8
+  attr(data_function, "outcome") <- "binary"
+  attr(model_function, "model") <- "glm"
+  attr(metric_function, "metric") <- "auc"
+
+  common <- list(
+    data_function = data_function,
+    model_function = model_function,
+    metric_function = metric_function,
+    target_performance = 0.8,
+    n_reps_total = 20,
+    n_reps_per = 5
+  )
+
+  do.call(
+    simulate_custom,
+    c(common, list(method = "mlpwr", ci_perc = 0.9))
+  )
+  do.call(
+    simulate_custom,
+    c(common, list(method = "bisection", tol = 0.25))
+  )
+  do.call(
+    simulate_custom,
+    c(common, list(method = "mlpwr-bs", ci_perc = 0.85))
+  )
+
+  expect_identical(captured$mlpwr$ci_perc, 0.9)
+  expect_identical(captured$bisection$tol, 0.25)
+  expect_identical(captured$mlpwr_bs$ci_perc, 0.85)
+})
+
 test_that("resolve_value_on_error preserves current defaults and supports custom overrides", {
   builtin_metric <- function(test_data, fitted_model, model_name) 0.8
   attr(builtin_metric, "metric") <- "auc"

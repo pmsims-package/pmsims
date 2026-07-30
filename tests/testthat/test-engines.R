@@ -44,6 +44,7 @@ test_that("calculate_mlpwr", {
 
 test_that("calculate_mlpwr calls mlpwr::find.design once", {
   calls <- 0L
+  find_design_args <- NULL
 
   local_mocked_bindings(
     compute_start_sample_sizes = function(...) {
@@ -61,6 +62,7 @@ test_that("calculate_mlpwr calls mlpwr::find.design once", {
   local_mocked_bindings(
     find.design = function(...) {
       calls <<- calls + 1L
+      find_design_args <<- list(...)
       list(
         dat = list(list(x = 50, y = c(0.79, 0.81))),
         fit = list(),
@@ -94,11 +96,13 @@ test_that("calculate_mlpwr calls mlpwr::find.design once", {
     data_function = data_function,
     model_function = model_function,
     metric_function = metric_function,
-    value_on_error = 0.5
+    value_on_error = 0.5,
+    ci_perc = 0.9
   )
 
   expect_identical(calls, 1L)
   expect_identical(output$min_n, 50)
+  expect_identical(find_design_args$ci_perc, 0.9)
 })
 
 test_that("calculate_mlpwr_bs", {

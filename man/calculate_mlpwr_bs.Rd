@@ -19,7 +19,8 @@ calculate_mlpwr_bs(
   data_function,
   model_function,
   metric_function,
-  value_on_error
+  value_on_error,
+  ...
 )
 }
 \arguments{
@@ -71,6 +72,8 @@ single numeric fallback value to be returned if model fitting or metric
 evaluation fails during a simulation run.}
 
 \item{value_on_error}{Numeric fallback value used if model fitting or metric calculation fails.}
+
+\item{...}{Additional options passed to \code{\link[mlpwr:find.design]{mlpwr::find.design()}}.}
 }
 \value{
 List containing the combined bisection and mlpwr results (\code{results}, \code{summaries}, \code{min_n}, \code{perf_n}, and \code{mlpwr_ds}).
