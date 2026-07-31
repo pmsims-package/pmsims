@@ -2,7 +2,7 @@
 
 Finds the `beta_signal` value that produces a target large-sample
 \\R^2\\ under the exact data-generating settings (complexity,
-predictor_strength, correlation, distribution, predictor_type).
+nonlinear_strength, correlation, distribution, predictor_type).
 
 ## Usage
 

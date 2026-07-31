@@ -96,16 +96,16 @@ binary_example
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
     #>                                Outcome : binary
     #>                         Predictor type : continuous
-    #>                   Number of predictors : 20
+    #>                      Signal predictors : 20
     #>                       Noise predictors : 0
     #>                             Prevalence : 0.3
-    #>      Expected large-sample performance : C-statistic ('cstatistic') = 0.800
-    #>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.850
+    #>      Expected large-sample performance : C-statistic ('maximum_achievable_cstatistic') = 0.800
+    #>   Target for chosen performance metric : Calib Slope ('calib_slope') = 0.850
     #>                                  Model : glm
     #>                        Simulation reps : 1,000
     #> ──────────────────────────────────── Results ───────────────────────────────────
     #>              Final minimum sample size : 1,044
-    #>             Estimated performance at N : 0.849 (Calibration slope ('calib_slope') = 0.850)
+    #>             Estimated performance at N : 0.849 (Calib Slope ('calib_slope') = 0.850)
     #>            Estimated other metric at N : 0.782 (Auc ('auc'))
     #>                                  Model : glm
     #>                                   Mode : Assurance
@@ -147,15 +147,15 @@ continuous_example
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
     #>                                Outcome : continuous
     #>                         Predictor type : continuous
-    #>                   Number of predictors : 15
+    #>                      Signal predictors : 15
     #>                       Noise predictors : 0
-    #>      Expected large-sample performance : R² ('r2') = 0.500
-    #>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.900
+    #>      Expected large-sample performance : R² ('maximum_achievable_rsquared') = 0.500
+    #>   Target for chosen performance metric : Calib Slope ('calib_slope') = 0.900
     #>                                  Model : lm
     #>                        Simulation reps : 1,000
     #> ──────────────────────────────────── Results ───────────────────────────────────
     #>              Final minimum sample size : 239
-    #>             Estimated performance at N : 0.900 (Calibration slope ('calib_slope') = 0.900)
+    #>             Estimated performance at N : 0.900 (Calib Slope ('calib_slope') = 0.900)
     #>            Estimated other metric at N : 0.486 (R2 ('r2'))
     #>                                  Model : lm
     #>                                   Mode : Assurance
@@ -175,7 +175,7 @@ outcome](pmsims_files/figure-html/unnamed-chunk-6-1.png)
 ``` r
 
 sessionInfo()
-#> R version 4.6.0 (2026-04-24)
+#> R version 4.6.1 (2026-06-24)
 #> Platform: x86_64-pc-linux-gnu
 #> Running under: Ubuntu 24.04.4 LTS
 #> 
@@ -199,16 +199,17 @@ sessionInfo()
 #> [1] pmsims_0.5.0.9000
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] Matrix_1.7-5       gtable_0.3.6       jsonlite_2.0.0     compiler_4.6.0    
-#>  [5] crayon_1.5.3       jquerylib_0.1.4    splines_4.6.0      systemfonts_1.3.2 
-#>  [9] scales_1.4.0       textshaping_1.0.5  yaml_2.3.12        fastmap_1.2.0     
-#> [13] lattice_0.22-9     ggplot2_4.0.3      R6_2.6.1           labeling_0.4.3    
-#> [17] knitr_1.51         htmlwidgets_1.6.4  desc_1.4.3         bslib_0.11.0      
-#> [21] RColorBrewer_1.1-3 rlang_1.2.0        cachem_1.1.0       xfun_0.58         
-#> [25] fs_2.1.0           DiceKriging_1.6.1  sass_0.4.10        S7_0.2.2          
-#> [29] otel_0.2.0         cli_3.6.6          pkgdown_2.2.0      withr_3.0.2       
-#> [33] digest_0.6.39      grid_4.6.0         lifecycle_1.0.5    mlpwr_1.1.1       
-#> [37] vctrs_0.7.3        evaluate_1.0.5     glue_1.8.1         farver_2.1.2      
-#> [41] ragg_1.5.2         survival_3.8-6     rmarkdown_2.31     tools_4.6.0       
-#> [45] htmltools_0.5.9
+#>  [1] Matrix_1.7-5       gtable_0.3.6       jsonlite_2.0.0     dplyr_1.2.1       
+#>  [5] compiler_4.6.1     crayon_1.5.3       tidyselect_1.2.1   jquerylib_0.1.4   
+#>  [9] splines_4.6.1      systemfonts_1.3.2  scales_1.4.0       textshaping_1.0.5 
+#> [13] yaml_2.3.12        fastmap_1.2.0      lattice_0.22-9     ggplot2_4.0.3     
+#> [17] R6_2.6.1           labeling_0.4.3     generics_0.1.4     knitr_1.51        
+#> [21] htmlwidgets_1.6.4  tibble_3.3.1       desc_1.4.3         pillar_1.11.1     
+#> [25] bslib_0.11.0       RColorBrewer_1.1-3 rlang_1.3.0        cachem_1.1.0      
+#> [29] xfun_0.60          fs_2.1.0           DiceKriging_1.6.1  sass_0.4.10       
+#> [33] S7_0.2.2           otel_0.2.0         cli_3.6.6          withr_3.0.3       
+#> [37] magrittr_2.0.5     pkgdown_2.2.1      digest_0.6.39      grid_4.6.1        
+#> [41] lifecycle_1.0.5    mlpwr_1.1.1        vctrs_0.7.3        evaluate_1.0.5    
+#> [45] glue_1.8.1         farver_2.1.2       ragg_1.5.2         survival_3.8-6    
+#> [49] rmarkdown_2.31     pkgconfig_2.0.3    tools_4.6.1        htmltools_0.5.9
 ```

@@ -27,9 +27,6 @@ Useful links:
 
 Authors:
 
-- Ewan Carr <pmsims@kcl.ac.uk>
-  ([ORCID](https://orcid.org/0000-0002-1146-4922))
-
 - Gordon Forbes ([ORCID](https://orcid.org/0000-0001-8662-3636))
 
 - Ridwan Olaniran ([ORCID](https://orcid.org/0000-0001-7342-8639))

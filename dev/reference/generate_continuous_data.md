@@ -73,9 +73,9 @@ generate_continuous_data(
 
 - correlation:
 
-  Scalar in -1, 1. Common pairwise correlation applied via a Gaussian
-  copula (equicorrelation, rank-based Cholesky). Default = 0.3. Set to 0
-  for independence.
+  Scalar in \\\[-1, 1\]\\. Common pairwise correlation applied via a
+  Gaussian copula (equicorrelation, rank-based Cholesky). Default = 0.3.
+  Set to 0 for independence.
 
 - distribution:
 

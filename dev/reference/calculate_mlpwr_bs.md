@@ -21,7 +21,8 @@ calculate_mlpwr_bs(
   data_function,
   model_function,
   metric_function,
-  value_on_error
+  value_on_error,
+  ...
 )
 ```
 
@@ -104,6 +105,11 @@ calculate_mlpwr_bs(
 
   Numeric fallback value used if model fitting or metric calculation
   fails.
+
+- ...:
+
+  Additional options passed to
+  [`mlpwr::find.design()`](https://rdrr.io/pkg/mlpwr/man/find.design.html).
 
 ## Value
 

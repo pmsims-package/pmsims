@@ -76,8 +76,10 @@ simulate_survival(
 - metric:
 
   Character string naming the performance metric used to assess the
-  sample size; defaults to `"calibration_slope"`. (Internally mapped to
-  the engine's metric identifiers.)
+  sample size; defaults to `"calibration_slope"`. Metric identifiers use
+  one canonical form throughout the package, such as
+  `"calibration_slope"`, `"calibration_in_the_large"`, `"auc"`, `"r2"`,
+  and `"cindex"`.
 
 - target_performance:
 
@@ -144,7 +146,7 @@ optional list fine-tuning the predictors:
 
 - `correlation`:
 
-  Numeric in `[-1, 1]`. Pairwise correlation among the candidate
+  Numeric in \\\[-1, 1\]\\. Pairwise correlation among the candidate
   predictors. Default `0.3`.
 
 - `predictor_distribution`:
