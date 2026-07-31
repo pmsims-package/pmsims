@@ -38,6 +38,10 @@
     showsd = FALSE
   )
   best <- cv$best_iteration
+  # xgboost >= 3.x reports the best iteration under cv$early_stop instead
+  if (is.null(best) && !is.null(cv$early_stop)) {
+    best <- cv$early_stop$best_iteration
+  }
   if (is.null(best) || is.na(best) || best < 1L) {
     best <- nrounds_max
   }
@@ -95,6 +99,7 @@ default_models <- list(
         mtry = max(1, floor(ncol(x) / 3)),
         probability = TRUE,
         num.trees = 300,
+        min.node.size = 15,
         num.threads = nthreads
       )
     },
@@ -175,7 +180,6 @@ default_models <- list(
         y = y,
         mtry = max(1, floor(ncol(x) / 3)),
         num.trees = 300L,
-        replace = FALSE,
         num.threads = nthreads
       )
     },
@@ -240,7 +244,7 @@ default_models <- list(
     },
     rf = function(d) {
       require_optional_packages(
-        c("randomForestSRC", "ranger"),
+        c("ranger"),
         "random-forest models"
       )
 
@@ -250,7 +254,13 @@ default_models <- list(
 
       stopifnot(all(c("time", "event") %in% colnames(d)))
       formula <- stats::as.formula("survival::Surv(time, event) ~ .")
-      ranger::ranger(formula, data = d, num.trees = 300, num.threads = nthreads)
+      ranger::ranger(
+        formula,
+        data = d,
+        num.trees = 300,
+        min.node.size = 15,
+        num.threads = nthreads
+      )
     },
     xgboost = function(
       d,
@@ -260,7 +270,7 @@ default_models <- list(
         eta = 0.05,
         max_depth = 4L,
         subsample = 0.8,
-        min_child_weight = 5L
+        min_child_weight = 15L
       )
     ) {
       # XGBoost Cox objective: observed times as label, event indicator as
