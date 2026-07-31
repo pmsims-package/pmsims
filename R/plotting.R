@@ -74,7 +74,7 @@ plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
     type = "Prediction"
   )
 
-  #### plot annotations
+  # Plot annotations
   min_n <- if (!is.null(x$min_n)) as.numeric(x$min_n) else NA_real_
   perf_n <- if (!is.null(x$perf_n)) {
     as.numeric(x$perf_n)
@@ -193,7 +193,11 @@ mlpwr_results_to_dataframe <- function(dat, aggregate = TRUE, aggregate_fun) {
   rows <- lapply(dat, function(entry) {
     x_vals <- entry$x
     if (is.null(names(x_vals))) {
-      names(x_vals) <- if (length(x_vals) == 1) "n" else paste0("x", seq_along(x_vals))
+      names(x_vals) <- if (length(x_vals) == 1) {
+        "n"
+      } else {
+        paste0("x", seq_along(x_vals))
+      }
     }
 
     y_vals <- entry$y

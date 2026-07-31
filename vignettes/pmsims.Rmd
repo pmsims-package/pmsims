@@ -17,9 +17,12 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE
 )
-vignette_cache_dir <- file.path(dirname(knitr::current_input(dir = TRUE)), "cache")
-if (!dir.exists(vignette_cache_dir)) {
-  stop("Could not locate vignette cache directory: ", vignette_cache_dir)
+vignette_data_dir <- file.path(
+  dirname(knitr::current_input(dir = TRUE)),
+  "precomputed"
+)
+if (!dir.exists(vignette_data_dir)) {
+  stop("Could not locate precomputed vignette data: ", vignette_data_dir)
 }
 ```
 
@@ -430,7 +433,7 @@ binary_example
 
 ```{r Run binary}
 #| echo: false
-binary_example <- readRDS(file.path(vignette_cache_dir, "binary.rds"))
+binary_example <- readRDS(file.path(vignette_data_dir, "binary.rds"))
 print(binary_example)
 ```
 
@@ -463,7 +466,7 @@ continuous_example
 
 ```{r}
 #| echo: false
-continuous_example <- readRDS(file.path(vignette_cache_dir, "continuous.rds"))
+continuous_example <- readRDS(file.path(vignette_data_dir, "continuous.rds"))
 print(continuous_example)
 ```
 

@@ -51,8 +51,9 @@ survival forest), or \code{"xgboost"} (gradient boosting with a Cox objective).
 The machine-learning options are experimental.}
 
 \item{metric}{Character string naming the performance metric used to assess
-the sample size; defaults to \code{"calibration_slope"}. (Internally mapped to
-the engine's metric identifiers.)}
+the sample size; defaults to \code{"calibration_slope"}. Metric identifiers use
+one canonical form throughout the package, such as \code{"calibration_slope"},
+\code{"calibration_in_the_large"}, \code{"auc"}, \code{"r2"}, and \code{"cindex"}.}
 
 \item{target_performance}{Numeric. Minimum acceptable value of the selected
 performance metric \eqn{M^*}; the algorithm searches for the smallest
@@ -111,7 +112,7 @@ fine-tuning the predictors:
 variance carried by the nonlinear, linearly-inaccessible component.
 Applies to complexity 2 and 3 only; ignored (with a warning) for 1 and 4.
 If omitted, the generator's per-complexity default is used.}
-\item{\code{correlation}}{Numeric in \verb{[-1, 1]}. Pairwise correlation among the
+\item{\code{correlation}}{Numeric in \eqn{[-1, 1]}. Pairwise correlation among the
 candidate predictors. Default \code{0.3}.}
 \item{\code{predictor_distribution}}{One of \code{"normal"}, \code{"uniform"}, \code{"binary"},
 \code{"exponential"}, \code{"lognormal"}, \code{"t"}, \code{"laplace"}. \code{"binary"} selects

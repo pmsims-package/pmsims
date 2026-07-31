@@ -5,6 +5,7 @@
 pmsims.Rproj
 .DS_store
 vignettes/.quarto/project-cache
-..Rcheck
+*.Rcheck/
+*.tar.gz
 .positai
 inst/doc

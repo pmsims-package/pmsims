@@ -8,7 +8,7 @@ get_min_sample_size(
   npar,
   prevalence = NULL,
   c_stat = NULL,
-  calib_slope = NULL,
+  calibration_slope = NULL,
   epv_value = NULL,
   outcome_type = c("binary", "survival", "continuous")
 )
@@ -21,7 +21,7 @@ used for EPV calculations.}
 
 \item{c_stat}{Numeric in (0.5, 1]; anticipated discrimination (C-statistic). Lower values inflate the heuristic.}
 
-\item{calib_slope}{Numeric; anticipated calibration slope. Values below 1 trigger a modest inflation.}
+\item{calibration_slope}{Numeric; anticipated calibration slope. Values below 1 trigger a modest inflation.}
 
 \item{epv_value}{Numeric; target events-per-variable (EPV) value applied when prevalence is supplied.}
 

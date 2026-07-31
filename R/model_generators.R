@@ -21,33 +21,30 @@
 # @param early_stopping_rounds  stop if no improvement for this many rounds
 # @return integer best nrounds (at least 1)
 # @keywords internal
-.xgb_cv_nrounds <- function(dtrain, params,
-                            nrounds_max          = 500L,
-                            nfold                = 5L,
-                            early_stopping_rounds = 20L) {
+.xgb_cv_nrounds <- function(
+  dtrain,
+  params,
+  nrounds_max = 500L,
+  nfold = 5L,
+  early_stopping_rounds = 20L
+) {
   cv <- xgboost::xgb.cv(
-    params               = params,
-    data                 = dtrain,
-    nrounds              = nrounds_max,
-    nfold                = nfold,
+    params = params,
+    data = dtrain,
+    nrounds = nrounds_max,
+    nfold = nfold,
     early_stopping_rounds = early_stopping_rounds,
-    verbose              = 0,
-    showsd               = FALSE
+    verbose = 0,
+    showsd = FALSE
   )
-  #best <- cv$best_iteration
-  #if (is.null(best) || is.na(best) || best < 1L) best <- nrounds_max
-  #as.integer(best)
-  
-  ## xgboost <= 1.7
   best <- cv$best_iteration
-  
-  ## xgboost >= 3.x
-  if (is.null(best) && !is.null(cv$early_stop))
+  # xgboost >= 3.x reports the best iteration under cv$early_stop instead
+  if (is.null(best) && !is.null(cv$early_stop)) {
     best <- cv$early_stop$best_iteration
-  
-  if (is.null(best) || is.na(best) || best < 1L)
+  }
+  if (is.null(best) || is.na(best) || best < 1L) {
     best <- nrounds_max
-  
+  }
   as.integer(best)
 }
 # ---------------------------------------------------------------------------
@@ -67,7 +64,7 @@ default_models <- list(
       glmnet::cv.glmnet(
         x,
         y,
-        alpha  = 1,        # L1 penalty (LASSO)
+        alpha = 1, # L1 penalty (LASSO)
         family = "binomial"
       )
     },
@@ -79,7 +76,7 @@ default_models <- list(
       glmnet::cv.glmnet(
         x,
         y,
-        alpha  = 0,        # L2 penalty (ridge)
+        alpha = 0, # L2 penalty (ridge)
         family = "binomial"
       )
     },
@@ -95,18 +92,6 @@ default_models <- list(
 
       x <- d[, -1, drop = FALSE]
       y <- as.factor(d[, 1])
-      
-      #### new
-
-      #ff <- NULL
-     # invisible(
-      #  capture.output(
-      #    ff <- randomForest::tuneRF(x, y, trace = FALSE, plot = FALSE)
-      #  )
-      #)
-
-      #bestmtry <- data.frame(ff)
-      #mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
 
       ranger::ranger(
         x = x,
@@ -118,25 +103,29 @@ default_models <- list(
         num.threads = nthreads
       )
     },
-    xgboost = function(d,
-                       params = list(objective  = "binary:logistic",
-                                     eval_metric = "logloss",
-                                     eta         = 0.05,
-                                     max_depth   = 4L,
-                                     subsample   = 0.8,
-                                     min_child_weight = 5L)) {
+    xgboost = function(
+      d,
+      params = list(
+        objective = "binary:logistic",
+        eval_metric = "logloss",
+        eta = 0.05,
+        max_depth = 4L,
+        subsample = 0.8,
+        min_child_weight = 5L
+      )
+    ) {
       # expects first column y (0/1), remaining columns predictors.
       # nrounds is selected automatically via xgb.cv (early stopping) so that
       # model complexity adapts to sample size — the analogue of cv.glmnet's
       # lambda selection.  Fixed nrounds = 100 caused severe over-fitting at
       # small n, collapsing the calibration slope well below 1.
-      x      <- as.matrix(d[, -1, drop = FALSE])
-      y      <- as.numeric(d[, 1])
+      x <- as.matrix(d[, -1, drop = FALSE])
+      y <- as.numeric(d[, 1])
       dtrain <- xgboost::xgb.DMatrix(data = x, label = y)
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
-        params  = params,
-        data    = dtrain,
+        params = params,
+        data = dtrain,
         nrounds = best_nrounds,
         verbose = 0
       )
@@ -157,7 +146,7 @@ default_models <- list(
       glmnet::cv.glmnet(
         x,
         y,
-        alpha  = 1,        # L1 penalty (LASSO)
+        alpha = 1, # L1 penalty (LASSO)
         family = "gaussian"
       )
     },
@@ -169,7 +158,7 @@ default_models <- list(
       glmnet::cv.glmnet(
         x,
         y,
-        alpha  = 0,        # L2 penalty (ridge)
+        alpha = 0, # L2 penalty (ridge)
         family = "gaussian"
       )
     },
@@ -186,62 +175,38 @@ default_models <- list(
       x <- d[, -1, drop = FALSE]
       y <- d[, 1]
 
-      # cvranger <- cv.ranger_tune(data = d, formula = y ~ .,
-      #                      type = "regression",
-      ##                      num.trees = 300,
-      #                      iters = 30,
-      #                      iters.warmup = 30,
-      #                      time.budget = NULL,
-      #                      num.threads = nthreads,
-      #                       tune.parameters = "mtry",
-      #                       measure = NULL,
-      #                       build.final.model = TRUE,
-      #                       show.info = FALSE)
-
-      #maxd <- cvranger$max.depth[which.max(cvranger$mean_metric)]
-
-      # best model
-
-      # cvranger$model$learner.model
-      
-      #ff <- NULL
-      #invisible(
-      #  capture.output(
-      #    ff <- randomForest::tuneRF(x, y, trace = FALSE, plot = FALSE)
-      #  )
-      #)
-      
-      #bestmtry <- data.frame(ff)
-      #mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
-      
       ranger::ranger(
         x = x,
         y = y,
         mtry = max(1, floor(ncol(x) / 3)),
         num.trees = 300L,
-        num.threads = nthreads 
+        num.threads = nthreads
       )
     },
-    xgboost = function(d,
-                       params = list(objective   = "reg:squarederror",
-                                     eval_metric  = "rmse",
-                                     eta          = 0.05,
-                                     max_depth    = 4L,
-                                     subsample    = 0.8,
-                                     min_child_weight = 5L)) {
+    xgboost = function(
+      d,
+      params = list(
+        objective = "reg:squarederror",
+        eval_metric = "rmse",
+        eta = 0.05,
+        max_depth = 4L,
+        subsample = 0.8,
+        min_child_weight = 5L
+      )
+    ) {
       # expects first column y (numeric), remaining columns predictors.
       # nrounds is selected via xgb.cv early stopping (see .xgb_cv_nrounds).
       # This is essential for continuous calibration slope stability: fixed
       # nrounds = 100 led to over-dispersed predictions at small n (slope << 1)
       # because XGBoost memorises training-scale variation without regularisation
       # on the number of rounds.
-      x      <- as.matrix(d[, -1, drop = FALSE])
-      y      <- as.numeric(d[, 1])
+      x <- as.matrix(d[, -1, drop = FALSE])
+      y <- as.numeric(d[, 1])
       dtrain <- xgboost::xgb.DMatrix(data = x, label = y)
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
-        params  = params,
-        data    = dtrain,
+        params = params,
+        data = dtrain,
         nrounds = best_nrounds,
         verbose = 0
       )
@@ -265,18 +230,23 @@ default_models <- list(
         drop = FALSE
       ])
       y <- survival::Surv(d$time, d$event)
-      glmnet::cv.glmnet(x, y, alpha = 1, family = "cox")  # L1 (LASSO)
+      glmnet::cv.glmnet(x, y, alpha = 1, family = "cox") # L1 (LASSO)
     },
     ridge = function(d) {
       # Ridge Cox regression via glmnet (alpha = 0); lambda selected by CV
       stopifnot(all(c("time", "event") %in% colnames(d)))
-      x <- as.matrix(d[, setdiff(colnames(d), c("time", "event")), drop = FALSE])
+      x <- as.matrix(d[,
+        setdiff(colnames(d), c("time", "event")),
+        drop = FALSE
+      ])
       y <- survival::Surv(d$time, d$event)
-      glmnet::cv.glmnet(x, y, alpha = 0, family = "cox")  # L2 (ridge)
+      glmnet::cv.glmnet(x, y, alpha = 0, family = "cox") # L2 (ridge)
     },
     rf = function(d) {
-      #require_optional_packages(c("randomForestSRC", "ranger"), "random-forest models")
-      require_optional_packages(c("ranger"), "random-forest models")
+      require_optional_packages(
+        c("ranger"),
+        "random-forest models"
+      )
 
       # ranger survival forest: formula interface with Surv()
       ncores <- parallel::detectCores(logical = FALSE)
@@ -284,33 +254,46 @@ default_models <- list(
 
       stopifnot(all(c("time", "event") %in% colnames(d)))
       formula <- stats::as.formula("survival::Surv(time, event) ~ .")
-      ranger::ranger(formula, data = d, num.trees = 300, min.node.size = 15, num.threads = nthreads)
-      #formula <- stats::as.formula("Surv(time, event) ~ .")
-      #randomForestSRC::rfsrc(formula, data = d, ntree = 300)
+      ranger::ranger(
+        formula,
+        data = d,
+        num.trees = 300,
+        min.node.size = 15,
+        num.threads = nthreads
+      )
     },
-    xgboost = function(d,
-                       params = list(objective   = "survival:cox",
-                                     eval_metric  = "cox-nloglik",
-                                     eta          = 0.05,
-                                     max_depth    = 4L,
-                                     subsample    = 0.8,
-                                     min_child_weight = 15L)) {
+    xgboost = function(
+      d,
+      params = list(
+        objective = "survival:cox",
+        eval_metric = "cox-nloglik",
+        eta = 0.05,
+        max_depth = 4L,
+        subsample = 0.8,
+        min_child_weight = 15L
+      )
+    ) {
       # XGBoost Cox objective: observed times as label, event indicator as
       # sample weight (1 = event, 0 = censored) — a standard pragmatic approach.
       # nrounds is selected via xgb.cv early stopping (see .xgb_cv_nrounds),
       # which prevents over-fitting the training hazard at small sample sizes
       # and stabilises the calibration slope toward 1 at moderate n.
       stopifnot(all(c("time", "event") %in% colnames(d)))
-      x          <- as.matrix(d[, setdiff(colnames(d), c("time", "event")), drop = FALSE])
+      x <- as.matrix(d[,
+        setdiff(colnames(d), c("time", "event")),
+        drop = FALSE
+      ])
       label_time <- as.numeric(d$time)
-      event      <- as.numeric(d$event)
-      dtrain     <- xgboost::xgb.DMatrix(data = x, label = label_time, weight = event)
-      #lab    <- ifelse(d$event == 1, as.numeric(d$time), -as.numeric(d$time))
-      #dtrain <- xgboost::xgb.DMatrix(data = x, label = lab)
+      event <- as.numeric(d$event)
+      dtrain <- xgboost::xgb.DMatrix(
+        data = x,
+        label = label_time,
+        weight = event
+      )
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
-        params  = params,
-        data    = dtrain,
+        params = params,
+        data = dtrain,
         nrounds = best_nrounds,
         verbose = 0
       )
@@ -390,7 +373,7 @@ cv.ranger_tune <- function(
   seed = 123,
   ...
 ) {
-  # ===== dependencies =====
+  # Dependencies
   require_optional_packages(
     c("tuneRanger", "mlr", "ranger"),
     "ranger tuning"
@@ -399,7 +382,7 @@ cv.ranger_tune <- function(
   type <- match.arg(type)
   set.seed(seed)
 
-  # ===== build mlr task =====
+  # Build the mlr task.
   # For survival, expect Surv(time, status) ~ .
   if (type == "survival") {
     # extract Surv var names from formula LHS
@@ -427,8 +410,7 @@ cv.ranger_tune <- function(
     }
   }
 
-  # ===== prepare measure: tuneRanger expects a LIST of mlr measure objects =====
-  # If user provided NULL -> choose sensible defaults
+  # tuneRanger expects a list of mlr measure objects.
   if (is.null(measure)) {
     if (type == "regression") {
       measure_obj <- list(mlr::mse)
@@ -467,7 +449,7 @@ cv.ranger_tune <- function(
     }
   }
 
-  # ===== call tuneRanger =====
+  # Call tuneRanger.
   tune_args <- list(
     task = task,
     measure = measure_obj,
@@ -483,7 +465,7 @@ cv.ranger_tune <- function(
     show.info = show.info
   )
 
-  # merge extra args
+  # Merge extra arguments.
   extra_args <- list(...)
   if (length(extra_args) > 0) {
     tune_args <- c(tune_args, extra_args)
@@ -491,7 +473,7 @@ cv.ranger_tune <- function(
 
   tune_res <- do.call(tuneRanger::tuneRanger, tune_args)
 
-  # ===== tidy output =====
+  # Tidy the output.
   out <- list(
     recommended.pars = tune_res$recommended.pars,
     results = tune_res$results,
@@ -505,7 +487,7 @@ cv.ranger_tune <- function(
   return(out)
 }
 
-# simple print method
+# Print method
 #' @keywords internal
 #' @noRd
 print.cv.ranger_tune <- function(x, ...) {

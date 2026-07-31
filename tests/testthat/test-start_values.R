@@ -151,7 +151,7 @@ test_that("calculate_adaptive_bounds errors clearly on non-finite summaries", {
 
 test_that("compute_start_sample_sizes covers binary continuous and survival branches", {
   auc_metric <- make_metric_stub("auc")
-  slope_metric <- make_metric_stub("calib_slope")
+  slope_metric <- make_metric_stub("calibration_slope")
   cindex_metric <- make_metric_stub("cindex")
 
   binary <- compute_start_sample_sizes(

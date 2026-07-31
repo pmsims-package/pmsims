@@ -1,0 +1,127 @@
+# pmsims: Simulation-based Sample Size Tools for Prediction Models
+
+**pmsims** is an R package for estimating how much data are needed to
+develop reliable and generalisable prediction models. It uses a
+**simulation-based learning curve** approach to quantify how model
+performance improves with increasing sample size, supporting principled
+study planning and feasibility assessment.
+
+The package is fully model-agnostic: users can define how data are
+generated, how models are fitted, and how predictive performance is
+measured. It currently supports regression-based prediction models with
+continuous, binary, and time-to-event outcomes.
+
+`pmsims` also includes experimental machine-learning model options via
+regularised regression, random forest, and XGBoost. These options have
+not yet undergone the package’s main validation study and should be
+treated as experimental in `0.5.0`.
+
+Developed at [King’s College London](https://www.kcl.ac.uk/) (Department
+of Biostatistics & Health Informatics) with input from researchers,
+clinicians, and patient partners. See the [pmsims project
+site](https://pmsims-package.github.io/pmsims-website/) for further
+details.
+
+## Installation
+
+Install the stable `0.5.0` release from GitHub:
+
+`# install.packages("remotes")`` ``remotes``::`[`install_github`](https://remotes.r-lib.org/reference/install_github.html)`(``"pmsims-package/pmsims"``, ref ``=`` ``"v0.5.0"``)`
+
+If you are interested in trying the development version, install from
+the `dev` branch:
+
+`# install.packages("remotes")`` ``remotes``::`[`install_github`](https://remotes.r-lib.org/reference/install_github.html)`(``"pmsims-package/pmsims"``, ref ``=`` ``"dev"``)`
+
+The development version includes work in progress and may change before
+the next tagged release.
+
+## Minimal example
+
+[`library`](https://rdrr.io/r/base/library.html)`(`[`pmsims`](https://pmsims-package.github.io/pmsims/)`)`` `[`set.seed`](https://rdrr.io/r/base/Random.html)`(``123``)`` `` ``binary_example`` ``<-`` `[`simulate_binary`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md)`(`` `` signal_parameters ``=`` ``3``,`` `` noise_parameters ``=`` ``2``,`` `` outcome_prevalence ``=`` ``0.3``,`` `` maximum_achievable_cstatistic ``=`` ``0.7``,`` `` model ``=`` ``"glm"``,`` `` metric ``=`` ``"auc"``,`` `` target_performance ``=`` ``0.6``,`` `` n_reps_total ``=`` ``20``,`` `` mean_or_assurance ``=`` ``"mean"``,`` `` method ``=`` ``"bisection"``,`` `` min_sample_size ``=`` ``40``,`` `` max_sample_size ``=`` ``100``,`` `` n_reps_per ``=`` ``5``,`` `` test_n ``=`` ``200``,`` `` progress ``=`` ``FALSE`` ``)`` `` ``binary_example``$``min_n`
+
+The small simulation budget keeps this example quick. Use larger
+`n_reps_total`, `n_reps_per`, and `test_n` values for an analysis.
+
+`maximum_achievable_cstatistic` and `target_performance` have different
+roles:
+
+- `maximum_achievable_cstatistic` represents the best plausible
+  C-statistic with effectively unlimited data and calibrates the data
+  generator.
+- `target_performance` is the minimum acceptable AUC used to determine
+  the required sample size.
+
+------------------------------------------------------------------------
+
+## Citing pmsims
+
+If you use `pmsims`, please cite the package and either or both
+accompanying preprints.
+
+Current preprints:
+
+- Shamsutdinova D, Zimmer F, Olaniran OR, Markham S, Stahl D, Forbes G,
+  Carr E (2026). *Sample Size Calculations for Developing Clinical
+  Prediction Models: Overview and pmsims R package*. arXiv.
+  <https://arxiv.org/abs/2602.23507>
+
+- Olaniran OR, Shamsutdinova D, Markham S, Zimmer F, Stahl D, Forbes G,
+  Carr E (2026). *Adaptive Gaussian Process Search for Simulation-Based
+  Sample Size Estimation in Clinical Prediction Models: Validation of
+  the pmsims R Package*. arXiv. <https://arxiv.org/abs/2603.23688>
+
+Once peer-reviewed articles are available, these citations should be
+updated to the published versions. In R, you can retrieve the package
+citation with:
+
+[`citation`](https://rdrr.io/r/utils/citation.html)`(``"pmsims"``)`
+
+------------------------------------------------------------------------
+
+## Get in touch
+
+We welcome questions, suggestions, and collaboration enquiries.
+
+- **Email:**
+  [pmsims@kcl.ac.uk](mailto:pmsims@kcl.ac.uk?subject=pmsims%20enquiry)
+- **Feedback or bugs:** please [open a GitHub
+  issue](https://github.com/pmsims-package/pmsims/issues)
+
+------------------------------------------------------------------------
+
+## Funding
+
+This work is supported by the **National Institute for Health and Care
+Research (NIHR)** under the **Research for Patient Benefit (RfPB)**
+Programme
+([*NIHR206858*](https://www.fundingawards.nihr.ac.uk/award/NIHR206858)).
+
+![NIHR and KCL logos](reference/figures/funder-logos.png)
+
+*The views expressed are those of the authors and not necessarily those
+of the NIHR or the Department of Health and Social Care.*
+
+# Package index
+
+## Main functions
+
+- [`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md)
+  : Minimum sample size for binary-outcome prediction models
+- [`simulate_continuous()`](https://pmsims-package.github.io/pmsims/reference/simulate_continuous.md)
+  : Minimum sample size for continuous‐outcome prediction models
+- [`simulate_survival()`](https://pmsims-package.github.io/pmsims/reference/simulate_survival.md)
+  : Minimum sample size for survival‐outcome prediction models
+- [`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md)
+  : Minimum sample size for custom simulation workflows
+
+# Articles
+
+### All vignettes
+
+- [Getting started with
+  pmsims](https://pmsims-package.github.io/pmsims/articles/pmsims.md):
+- [pmsims 0.5.0: Initial
+  release](https://pmsims-package.github.io/pmsims/articles/release-0-5-0.md):
+- [Defining custom simulation
+  workflows](https://pmsims-package.github.io/pmsims/articles/simulate_custom.md):

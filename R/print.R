@@ -97,7 +97,9 @@ print.pmsims <- function(x, ..., max_width = 80) {
     m <- tolower(metric)
     nice <- switch(
       m,
-      "calib_slope" = "Calibration slope",
+      "calibration_slope" = "Calibration slope",
+      "calibration_in_the_large" = "Calibration-in-the-large",
+      "ibs" = "Integrated Brier score",
       "cstatistic" = "C-statistic",
       "brier" = "Brier score",
       "rmse" = "RMSE",
@@ -120,30 +122,50 @@ print.pmsims <- function(x, ..., max_width = 80) {
   perf_at <- x$perf_n %||% NA
   perf2_at <- x$metric_2_at_n %||% NA
   simtime <- x$simulation_time %||% NA
-  cstatistic <- x$cstatistic
-  r2 <- x$r2
-  #statistic_2 <- ifelse(is.null(cstatistic), r2, cstatistic)
+  maximum_achievable_cstatistic <- x$maximum_achievable_cstatistic
+  maximum_achievable_cindex <- x$maximum_achievable_cindex
+  maximum_achievable_rsquared <- x$maximum_achievable_rsquared %||% x$r2
+  if (
+    is.null(maximum_achievable_cstatistic) &&
+      identical(x$outcome, "binary")
+  ) {
+    maximum_achievable_cstatistic <- x$cstatistic
+  }
+  if (
+    is.null(maximum_achievable_cindex) &&
+      identical(x$outcome, "survival")
+  ) {
+    maximum_achievable_cindex <- x$cstatistic
+  }
+  signal_parameters <- x$signal_parameters %||% x$parameters
+  outcome_prevalence <- x$outcome_prevalence %||% x$prevalence
 
-  # --- Inputs table (non-null only)
+  # Inputs
   inputs <- list(
     "Outcome" = x$outcome,
     "Predictor type" = x$predictor_type,
-    "Number of predictors" = x$parameters,
+    "Signal predictors" = signal_parameters,
     "Noise predictors" = x$noise_parameters,
-    "Prevalence" = x$prevalence,
+    "Prevalence" = outcome_prevalence,
     "Baseline hazard" = x$baseline_hazard,
     "Censoring rate" = x$censoring_rate
   )
-  if (is_present(cstatistic)) {
+  if (is_present(maximum_achievable_cstatistic)) {
     inputs[["Expected large-sample performance"]] <- paste0(
-      "C-statistic ('cstatistic') = ",
-      fmt_num(cstatistic, 3)
+      "C-statistic ('maximum_achievable_cstatistic') = ",
+      fmt_num(maximum_achievable_cstatistic, 3)
     )
   }
-  if (is_present(r2)) {
+  if (is_present(maximum_achievable_cindex)) {
     inputs[["Expected large-sample performance"]] <- paste0(
-      "R\u00B2 ('r2') = ",
-      fmt_num(r2, 3)
+      "C-index ('maximum_achievable_cindex') = ",
+      fmt_num(maximum_achievable_cindex, 3)
+    )
+  }
+  if (is_present(maximum_achievable_rsquared)) {
+    inputs[["Expected large-sample performance"]] <- paste0(
+      "R\u00B2 ('maximum_achievable_rsquared') = ",
+      fmt_num(maximum_achievable_rsquared, 3)
     )
   }
   if (is_present(metric) || is_present(target)) {
@@ -158,7 +180,7 @@ print.pmsims <- function(x, ..., max_width = 80) {
   keep_inputs <- vapply(inputs, is_present, logical(1))
   inputs <- inputs[keep_inputs]
 
-  # --- Results table
+  # Results
 
   results <- list(
     "Final minimum sample size" = bold(fmt_int(min_n)),
@@ -184,7 +206,7 @@ print.pmsims <- function(x, ..., max_width = 80) {
   keep_results <- vapply(results, is_present, logical(1))
   results <- results[keep_results]
 
-  # --- Header box
+  # Header
   if (has_cli) {
     cli::cat_boxx(
       bold(" pmsims: Sample size simulation summary "),
@@ -196,17 +218,17 @@ print.pmsims <- function(x, ..., max_width = 80) {
     cat("\n", bold("pmsims: Sample size simulation summary"), "\n", sep = "")
   }
 
-  # --- Shared alignment width for BOTH tables
+  # Use a shared label width for both tables.
   shared_w <- max(nchar(c(names(inputs), names(results))), 25L)
 
-  # --- Inputs (aligned two-column, cyan labels)
+  # Aligned input table with cyan labels.
   rule("Inputs")
   for (nm in names(inputs)) {
     label <- format(nm, width = shared_w, justify = "right")
     cat("  ", cyan(label), " : ", inputs[[nm]], "\n", sep = "")
   }
 
-  # --- Results (aligned two-column, blue labels)
+  # Aligned results table with blue labels.
   rule("Results")
   for (nm in names(results)) {
     label <- format(nm, width = shared_w, justify = "right")

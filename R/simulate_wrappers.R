@@ -10,7 +10,7 @@
 
 #' Resolve a `data_control` list into generator/tuner arguments
 #'
-#' Validates `data_control` (via [validate_data_control()]) and maps the
+#' Validates `data_control` and maps the
 #' user-facing `predictor_distribution` onto the generator's internal
 #' `predictor_type` + `distribution` + `binary_prevalence`:
 #' `"binary"` selects binary predictors (with the supplied prevalence); any
@@ -25,33 +25,33 @@
 #' @noRd
 resolve_data_control <- function(data_control, complexity) {
   validate_data_control(data_control, complexity)
-  
+
   ctrl <- utils::modifyList(
     list(
-      nonlinear_strength          = NULL,
-      correlation                 = 0.3,
-      predictor_distribution      = "normal",
+      nonlinear_strength = NULL,
+      correlation = 0.3,
+      predictor_distribution = "normal",
       binary_predictor_prevalence = NULL
     ),
     if (is.null(data_control)) list() else data_control
   )
-  
+
   if (identical(ctrl$predictor_distribution, "binary")) {
-    predictor_type    <- "binary"
-    distribution      <- "normal" # ignored by the generator for binary predictors
+    predictor_type <- "binary"
+    distribution <- "normal" # ignored by the generator for binary predictors
     binary_prevalence <- ctrl$binary_predictor_prevalence
   } else {
-    predictor_type    <- "continuous"
-    distribution      <- ctrl$predictor_distribution
+    predictor_type <- "continuous"
+    distribution <- ctrl$predictor_distribution
     binary_prevalence <- 0
   }
-  
+
   list(
-    nonlinear_strength     = ctrl$nonlinear_strength,
-    correlation            = ctrl$correlation,
-    predictor_type         = predictor_type,
-    distribution           = distribution,
-    binary_prevalence      = binary_prevalence,
+    nonlinear_strength = ctrl$nonlinear_strength,
+    correlation = ctrl$correlation,
+    predictor_type = predictor_type,
+    distribution = distribution,
+    binary_prevalence = binary_prevalence,
     predictor_distribution = ctrl$predictor_distribution
   )
 }
@@ -63,32 +63,32 @@ resolve_data_control <- function(data_control, complexity) {
 #' tuned effect size will not recover the requested performance. This helper
 #' passes `complexity`, `nonlinear_strength`, `correlation`, `distribution`,
 #' `predictor_type` and `binary_prevalence` to the tuner, silently dropping any
-#' the tuner does not declare (so it works with both the current and older
-#' tuner signatures). If a non-default `nonlinear_strength` cannot be passed,
+#' the tuner does not declare (so it works across the supported tuner
+#' signatures). If a non-default `nonlinear_strength` cannot be passed,
 #' a warning is raised because C2/C3 tuning would then be inconsistent with the
 #' generated data.
 #'
 #' @param tuner A tuning function (e.g. `binary_tuning`).
 #' @param required A named list of the tuner's required arguments. Must include
 #'   `.complexity`, which is forwarded as `complexity`.
-#' @param dc The list returned by [resolve_data_control()].
+#' @param dc The list returned by `resolve_data_control()`.
 #' @return The tuner's return value.
 #' @keywords internal
 #' @noRd
 call_tuner <- function(tuner, required, dc) {
-  fmls       <- names(formals(tuner))
+  fmls <- names(formals(tuner))
   complexity <- required$.complexity
   required$.complexity <- NULL
-  
+
   data_config <- list(
-    complexity         = complexity,
+    complexity = complexity,
     nonlinear_strength = dc$nonlinear_strength,
-    correlation        = dc$correlation,
-    distribution       = dc$distribution,
-    predictor_type     = dc$predictor_type,
-    binary_prevalence  = dc$binary_prevalence
+    correlation = dc$correlation,
+    distribution = dc$distribution,
+    predictor_type = dc$predictor_type,
+    binary_prevalence = dc$binary_prevalence
   )
-  
+
   if (!is.null(dc$nonlinear_strength) && !("nonlinear_strength" %in% fmls)) {
     warning(
       "The tuning function does not accept `nonlinear_strength`; the tuned ",
@@ -97,7 +97,7 @@ call_tuner <- function(tuner, required, dc) {
       call. = FALSE
     )
   }
-  
+
   optional <- data_config[names(data_config) %in% fmls]
   do.call(tuner, c(required, optional))
 }
@@ -127,17 +127,22 @@ get_param <- function(tp, name) {
 #'
 #' @keywords internal
 #' @noRd
-make_data_args <- function(signal_parameters, noise_parameters, complexity,
-                           dc, extra = list()) {
+make_data_args <- function(
+  signal_parameters,
+  noise_parameters,
+  complexity,
+  dc,
+  extra = list()
+) {
   args <- c(
     list(
       n_signal_parameters = signal_parameters,
-      noise_parameters    = noise_parameters,
-      complexity          = complexity,
-      predictor_type      = dc$predictor_type,
-      binary_prevalence   = dc$binary_prevalence,
-      correlation         = dc$correlation,
-      distribution        = dc$distribution
+      noise_parameters = noise_parameters,
+      complexity = complexity,
+      predictor_type = dc$predictor_type,
+      binary_prevalence = dc$binary_prevalence,
+      correlation = dc$correlation,
+      distribution = dc$distribution
     ),
     extra
   )
@@ -185,7 +190,7 @@ make_data_args <- function(signal_parameters, noise_parameters, complexity,
 #'     variance carried by the nonlinear, linearly-inaccessible component.
 #'     Applies to complexity 2 and 3 only; ignored (with a warning) for 1 and 4.
 #'     If omitted, the generator's per-complexity default is used.}
-#'   \item{`correlation`}{Numeric in `[-1, 1]`. Pairwise correlation among the
+#'   \item{`correlation`}{Numeric in \eqn{[-1, 1]}. Pairwise correlation among the
 #'     candidate predictors. Default `0.3`.}
 #'   \item{`predictor_distribution`}{One of `"normal"`, `"uniform"`, `"binary"`,
 #'     `"exponential"`, `"lognormal"`, `"t"`, `"laplace"`. `"binary"` selects
@@ -216,8 +221,9 @@ make_data_args <- function(signal_parameters, noise_parameters, complexity,
 #'   forest), or `"xgboost"` (gradient-boosted trees). The machine-learning
 #'   options are experimental.
 #' @param metric Character string naming the performance metric used to assess
-#'   the sample size; defaults to `"calibration_slope"`. (Internally mapped to
-#'   the engine's metric identifiers.)
+#'   the sample size; defaults to `"calibration_slope"`. Metric identifiers use
+#'   one canonical form throughout the package, such as `"calibration_slope"`,
+#'   `"calibration_in_the_large"`, `"auc"`, `"r2"`, and `"cindex"`.
 #' @param target_performance Numeric. Minimum acceptable value of the selected
 #'   performance metric \eqn{M^*}; the algorithm searches for the smallest
 #'   \eqn{n} meeting the chosen criterion with respect to this threshold.
@@ -255,7 +261,7 @@ make_data_args <- function(signal_parameters, noise_parameters, complexity,
 #' }
 #' @export
 simulate_binary <- function(
-    # Predictors
+  # Predictors
   signal_parameters,
   noise_parameters = 0,
   complexity = 1,
@@ -282,42 +288,42 @@ simulate_binary <- function(
   validate_complexity(complexity)
   validate_outcome_prevalence(outcome_prevalence)
   dc <- resolve_data_control(data_control, complexity)
-  
-  candidate_features        <- signal_parameters + noise_parameters
+
+  candidate_features <- signal_parameters + noise_parameters
   proportion_noise_features <- noise_parameters / candidate_features
-  
+
   # Tune the data-generating function under the SAME data configuration.
   tune_param <- call_tuner(
     binary_tuning,
     required = list(
-      target_prevalence         = outcome_prevalence,
-      target_performance        = maximum_achievable_cstatistic,
-      candidate_features        = candidate_features,
+      target_prevalence = outcome_prevalence,
+      target_performance = maximum_achievable_cstatistic,
+      candidate_features = candidate_features,
       proportion_noise_features = proportion_noise_features,
-      .complexity               = complexity
+      .complexity = complexity
     ),
     dc = dc
   )
-  
+
   data_spec <- list(
     type = "binary",
     args = make_data_args(
-      signal_parameters, noise_parameters, complexity, dc,
+      signal_parameters,
+      noise_parameters,
+      complexity,
+      dc,
       extra = list(
-        mu_lp         = get_param(tune_param, "mu_lp"),
-        beta_signal   = get_param(tune_param, "beta_signal"),
+        mu_lp = get_param(tune_param, "mu_lp"),
+        beta_signal = get_param(tune_param, "beta_signal"),
         baseline_prob = outcome_prevalence
       )
     )
   )
-  
-  data_function  <- default_data_generators(data_spec)
-  outcome_type   <- attr(data_function, "outcome")
+
+  data_function <- default_data_generators(data_spec)
+  outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
-  
-  # Redefine metrics to internal syntax lang
-  metric <- ifelse(metric == "calibration_slope", "calib_slope", metric)
-  
+
   simulate_custom_args <- utils::modifyList(
     list(
       metric_function = default_metric_generator(metric, data_function),
@@ -333,25 +339,29 @@ simulate_binary <- function(
     ),
     list(...)
   )
-  
+
   suppressWarnings(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
-  
-  metric_2 <- if (metric %in% c("csse","calib_slope")) "auc" else "calib_slope"
-  
+
+  metric_2 <- if (metric %in% c("csse", "calibration_slope")) {
+    "auc"
+  } else {
+    "calibration_slope"
+  }
+
   test_n <- 30000
   metric_function_2 <- default_metric_generator(metric_2, data_function)
-  
+
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
   fit_2 <- model_function(data_2)
   metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
-  
+
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
-  
-  output$parameters <- signal_parameters
+
+  output$signal_parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$complexity <- complexity
   output$nonlinear_strength <- dc$nonlinear_strength
@@ -359,8 +369,8 @@ simulate_binary <- function(
   output$predictor_distribution <- dc$predictor_distribution
   output$predictor_type <- dc$predictor_type
   output$binary_predictor_prevalence <- dc$binary_prevalence
-  output$prevalence <- outcome_prevalence
-  output$cstatistic <- maximum_achievable_cstatistic
+  output$outcome_prevalence <- outcome_prevalence
+  output$maximum_achievable_cstatistic <- maximum_achievable_cstatistic
   output$model <- model
   output$metric <- metric
   output$n_reps_total <- n_reps_total
@@ -415,17 +425,17 @@ simulate_binary <- function(
 #' }
 #' @export
 simulate_continuous <- function(
-    signal_parameters,
-    noise_parameters = 0,
-    complexity = 1,
-    data_control = NULL,
-    maximum_achievable_rsquared,
-    model = c("lm", "lasso", "ridge", "rf", "xgboost"),
-    metric = "calibration_slope",
-    target_performance,
-    n_reps_total = 1000,
-    mean_or_assurance = "assurance",
-    ...
+  signal_parameters,
+  noise_parameters = 0,
+  complexity = 1,
+  data_control = NULL,
+  maximum_achievable_rsquared,
+  model = c("lm", "lasso", "ridge", "rf", "xgboost"),
+  metric = "calibration_slope",
+  target_performance,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance",
+  ...
 ) {
   model <- check_pmsims_args(model, c("lm", "lasso", "ridge", "rf", "xgboost"))
   validate_metric_constraints(
@@ -435,36 +445,37 @@ simulate_continuous <- function(
   )
   validate_complexity(complexity)
   dc <- resolve_data_control(data_control, complexity)
-  
-  candidate_features        <- signal_parameters + noise_parameters
+
+  candidate_features <- signal_parameters + noise_parameters
   proportion_noise_features <- noise_parameters / candidate_features
-  
+
   # Tune the data-generating function under the SAME data configuration.
   tune_param <- call_tuner(
     continuous_tuning,
     required = list(
-      r2                        = maximum_achievable_rsquared,
-      candidate_features        = candidate_features,
+      r2 = maximum_achievable_rsquared,
+      candidate_features = candidate_features,
       proportion_noise_features = proportion_noise_features,
-      .complexity               = complexity
+      .complexity = complexity
     ),
     dc = dc
   )
-  
+
   data_spec <- list(
     type = "continuous",
     args = make_data_args(
-      signal_parameters, noise_parameters, complexity, dc,
+      signal_parameters,
+      noise_parameters,
+      complexity,
+      dc,
       extra = list(beta_signal = get_param(tune_param, "beta_signal"))
     )
   )
-  
-  data_function  <- default_data_generators(data_spec)
-  outcome_type   <- attr(data_function, "outcome")
+
+  data_function <- default_data_generators(data_spec)
+  outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
-  
-  metric <- ifelse(metric == "calibration_slope", "calib_slope", metric)
-  
+
   simulate_custom_args <- utils::modifyList(
     list(
       metric_function = default_metric_generator(metric, data_function),
@@ -480,25 +491,29 @@ simulate_continuous <- function(
     ),
     list(...)
   )
-  
+
   suppressWarnings(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
-  
-  metric_2 <- if (metric %in% c("csse","calib_slope")) "r2" else "calib_slope"
-  
+
+  metric_2 <- if (metric %in% c("csse", "calibration_slope")) {
+    "r2"
+  } else {
+    "calibration_slope"
+  }
+
   metric_function_2 <- default_metric_generator(metric_2, data_function)
-  
+
   test_n <- 30000
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
   fit_2 <- model_function(data_2)
   metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
-  
+
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
-  
-  output$parameters <- signal_parameters
+
+  output$signal_parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$complexity <- complexity
   output$nonlinear_strength <- dc$nonlinear_strength
@@ -506,7 +521,7 @@ simulate_continuous <- function(
   output$predictor_distribution <- dc$predictor_distribution
   output$predictor_type <- dc$predictor_type
   output$binary_predictor_prevalence <- dc$binary_prevalence
-  output$r2 <- maximum_achievable_rsquared
+  output$maximum_achievable_rsquared <- maximum_achievable_rsquared
   output$model <- model
   output$metric <- metric
   output$n_reps_total <- n_reps_total
@@ -567,21 +582,24 @@ simulate_continuous <- function(
 #' }
 #' @export
 simulate_survival <- function(
-    signal_parameters,
-    noise_parameters = 0,
-    complexity = 1,
-    data_control = NULL,
-    maximum_achievable_cindex,
-    baseline_hazard = 1,
-    censoring_rate,
-    model = c("coxph", "lasso", "ridge", "rf", "xgboost"),
-    metric = "calibration_slope",
-    target_performance,
-    n_reps_total = 1000,
-    mean_or_assurance = "assurance",
-    ...
+  signal_parameters,
+  noise_parameters = 0,
+  complexity = 1,
+  data_control = NULL,
+  maximum_achievable_cindex,
+  baseline_hazard = 1,
+  censoring_rate,
+  model = c("coxph", "lasso", "ridge", "rf", "xgboost"),
+  metric = "calibration_slope",
+  target_performance,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance",
+  ...
 ) {
-  model <- check_pmsims_args(model, c("coxph", "lasso", "ridge", "rf", "xgboost"))
+  model <- check_pmsims_args(
+    model,
+    c("coxph", "lasso", "ridge", "rf", "xgboost")
+  )
   validate_metric_constraints(
     metric = metric,
     target_performance = target_performance,
@@ -589,41 +607,42 @@ simulate_survival <- function(
   )
   validate_complexity(complexity)
   dc <- resolve_data_control(data_control, complexity)
-  
-  candidate_features        <- signal_parameters + noise_parameters
+
+  candidate_features <- signal_parameters + noise_parameters
   proportion_noise_features <- noise_parameters / candidate_features
-  
+
   # Tune the data-generating function under the SAME data configuration.
   tune_param <- call_tuner(
     survival_tuning,
     required = list(
-      target_prevalence         = 1 - censoring_rate,
-      target_performance        = maximum_achievable_cindex,
-      candidate_features        = candidate_features,
+      target_prevalence = 1 - censoring_rate,
+      target_performance = maximum_achievable_cindex,
+      candidate_features = candidate_features,
       proportion_noise_features = proportion_noise_features,
-      .complexity               = complexity
+      .complexity = complexity
     ),
     dc = dc
   )
-  
+
   data_spec <- list(
     type = "survival",
     args = make_data_args(
-      signal_parameters, noise_parameters, complexity, dc,
+      signal_parameters,
+      noise_parameters,
+      complexity,
+      dc,
       extra = list(
         baseline_hazard = baseline_hazard,
-        beta_signal     = get_param(tune_param, "beta_signal"),
-        censoring_rate  = censoring_rate
+        beta_signal = get_param(tune_param, "beta_signal"),
+        censoring_rate = censoring_rate
       )
     )
   )
-  
-  data_function  <- default_data_generators(data_spec)
-  outcome_type   <- attr(data_function, "outcome")
+
+  data_function <- default_data_generators(data_spec)
+  outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
-  
-  metric <- ifelse(metric == "calibration_slope", "calib_slope", metric)
-  
+
   simulate_custom_args <- utils::modifyList(
     list(
       metric_function = default_metric_generator(metric, data_function),
@@ -639,26 +658,30 @@ simulate_survival <- function(
     ),
     list(...)
   )
-  
+
   suppressWarnings(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
-  
-  metric_2 <- if (metric %in% c("csse","calib_slope")) "cindex" else "calib_slope"
-  
+
+  metric_2 <- if (metric %in% c("csse", "calibration_slope")) {
+    "cindex"
+  } else {
+    "calibration_slope"
+  }
+
   test_n <- 30000
   metric_function_2 <- default_metric_generator(metric_2, data_function)
-  
+
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
   fit_2 <- model_function(data_2)
   metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
-  
+
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
-  
+
   # Append input parameters
-  output$parameters <- signal_parameters
+  output$signal_parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$complexity <- complexity
   output$nonlinear_strength <- dc$nonlinear_strength
@@ -668,7 +691,7 @@ simulate_survival <- function(
   output$binary_predictor_prevalence <- dc$binary_prevalence
   output$baseline_hazard <- baseline_hazard
   output$censoring_rate <- censoring_rate
-  output$cstatistic <- maximum_achievable_cindex
+  output$maximum_achievable_cindex <- maximum_achievable_cindex
   output$model <- model
   output$metric <- metric
   output$n_reps_total <- n_reps_total

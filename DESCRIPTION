@@ -40,37 +40,33 @@ BugReports: https://github.com/pmsims-package/pmsims/issues
 Depends:
     R (>= 4.1.0)
 Imports:
+    cli,
+    ggplot2,
+    lifecycle,
     mlpwr,
     pROC,
     stats,
     survival,
     timeROC,
-    utils,
-    pec,
-    cli,
-    lifecycle,
-    ggplot2
+    utils
 Suggests:
-    testthat (>= 3.0.0),
     covr,
-    knitr,
-    pmsampsize,
-    rmarkdown,
-    GA,
     crayon,
+    DescTools,
     doParallel,
     foreach,
     glmnet,
-    mlr,
+    knitr,
     mlbench,
-    DescTools,
-    randomForest,
+    mlr,
+    randomForestSRC,
     ranger,
+    rmarkdown,
     synthpop,
+    testthat (>= 3.0.0),
     tuneRanger,
     xgboost
 Encoding: UTF-8
-LazyData: false
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

@@ -16,9 +16,11 @@
 <url><loc>https://pmsims-package.github.io/pmsims/reference/calculate_mlpwr_bs.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/continuous_tuning.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/default_data_generators.html</loc></url>
-<url><loc>https://pmsims-package.github.io/pmsims/reference/default_models.html</loc></url>
+<url><loc>https://pmsims-package.github.io/pmsims/reference/dot-xgb_cv_nrounds.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/generate_binary_data.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/generate_continuous_data.html</loc></url>
+<url><loc>https://pmsims-package.github.io/pmsims/reference/generate_linear_predictor.html</loc></url>
+<url><loc>https://pmsims-package.github.io/pmsims/reference/generate_predictors.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/generate_survival_data.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/get_min_sample_size.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/reference/index.html</loc></url>

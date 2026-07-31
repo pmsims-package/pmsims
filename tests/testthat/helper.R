@@ -15,7 +15,7 @@ get_binary_data_model_metric <- function() {
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model = "glm")
 
-  metric_function = default_metric_generator(
+  metric_function <- default_metric_generator(
     "auc",
     data_function
   )
@@ -154,13 +154,13 @@ make_minimal_pmsims_object <- function(
     list(
       outcome = "binary",
       predictor_type = "continuous",
-      parameters = 5L,
+      signal_parameters = 5L,
       noise_parameters = 2L,
-      prevalence = 0.2,
-      cstatistic = 0.85,
+      outcome_prevalence = 0.2,
+      maximum_achievable_cstatistic = 0.85,
       model = "glm",
       metric = metric,
-      metric_2 = "calib_slope",
+      metric_2 = "calibration_slope",
       target_performance = target_performance,
       min_n = 100,
       perf_n = 0.82,

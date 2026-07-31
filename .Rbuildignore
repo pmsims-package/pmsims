@@ -1,4 +1,5 @@
 ^pmsims\.Rproj$
+^\.git$
 ^\.Rproj\.user$
 ^\.github$
 ^codecov\.yml$
@@ -25,3 +26,5 @@
 ^vignettes/release-0-5-0\.html$
 ^vignettes/articles/simulate_custom\.html$
 ^vignettes/images/workflow\.afdesign$
+^.*\.Rcheck$
+^pmsims_.*\.tar\.gz$
