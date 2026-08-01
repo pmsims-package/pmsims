@@ -205,8 +205,10 @@ test_that("wrappers store binary predictor prevalence on output", {
   binary_result <- simulate_binary(
     signal_parameters = 10,
     noise_parameters = 0,
-    predictor_type = "binary",
-    binary_predictor_prevalence = 0.3,
+    data_control = list(
+      predictor_distribution = "binary",
+      binary_predictor_prevalence = 0.3
+    ),
     outcome_prevalence = 0.2,
     maximum_achievable_cstatistic = 0.75,
     metric = "calibration_slope",
@@ -218,8 +220,10 @@ test_that("wrappers store binary predictor prevalence on output", {
   continuous_result <- simulate_continuous(
     signal_parameters = 10,
     noise_parameters = 0,
-    predictor_type = "binary",
-    binary_predictor_prevalence = 0.4,
+    data_control = list(
+      predictor_distribution = "binary",
+      binary_predictor_prevalence = 0.4
+    ),
     maximum_achievable_rsquared = 0.5,
     metric = "calibration_slope",
     target_performance = 0.9,
@@ -230,8 +234,10 @@ test_that("wrappers store binary predictor prevalence on output", {
   survival_result <- simulate_survival(
     signal_parameters = 10,
     noise_parameters = 0,
-    predictor_type = "binary",
-    binary_predictor_prevalence = 0.25,
+    data_control = list(
+      predictor_distribution = "binary",
+      binary_predictor_prevalence = 0.25
+    ),
     maximum_achievable_cindex = 0.75,
     baseline_hazard = 0.01,
     censoring_rate = 0.3,

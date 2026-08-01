@@ -226,6 +226,19 @@ calculate_adaptive_bounds <- function(
       as.numeric(stats::quantile(vals, probs = 0.20, na.rm = TRUE))
     }
 
+    if (length(perf_summary) != 1L || !is.finite(perf_summary)) {
+      stop(
+        sprintf(
+          paste(
+            "Adaptive start value search produced a non-finite",
+            "performance summary at n = %d"
+          ),
+          n
+        ),
+        call. = FALSE
+      )
+    }
+
     list(y_summary = perf_summary, y = vals)
   }
 
