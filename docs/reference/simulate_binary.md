@@ -70,8 +70,10 @@ simulate_binary(
 - metric:
 
   Character string naming the performance metric used to assess the
-  sample size; defaults to `"calibration_slope"`. (Internally mapped to
-  the engine's metric identifiers.)
+  sample size; defaults to `"calibration_slope"`. Metric identifiers use
+  one canonical form throughout the package, such as
+  `"calibration_slope"`, `"calibration_in_the_large"`, `"auc"`, `"r2"`,
+  and `"cindex"`.
 
 - target_performance:
 
@@ -164,48 +166,20 @@ optional list fine-tuning the predictors:
 ## Examples
 
 ``` r
-# \donttest{
-set.seed(123)
-# Small budgets keep this example fast; use larger values for an analysis.
+if (FALSE) { # \dontrun{
 est <- simulate_binary(
-  signal_parameters = 3,
-  noise_parameters = 2,
-  outcome_prevalence = 0.3,
-  maximum_achievable_cstatistic = 0.7,
+  signal_parameters = 10,
+  noise_parameters = 10,
+  complexity = 2,
+  data_control = list(nonlinear_strength = 0.4, correlation = 0.2),
+  outcome_prevalence = 0.2,
+  maximum_achievable_cstatistic = 0.75,
   model = "glm",
-  metric = "auc",
-  target_performance = 0.6,
-  n_reps_total = 20,
-  mean_or_assurance = "mean",
-  method = "bisection",
-  min_sample_size = 40,
-  max_sample_size = 100,
-  n_reps_per = 5,
-  test_n = 200,
-  progress = FALSE
+  metric = "calibration_slope",
+  target_performance = 0.9,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance"
 )
-#> Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
 est
-#>                     ┌────────────────────────────────────────┐
-#>                     │ pmsims: Sample size simulation summary │
-#>                     └────────────────────────────────────────┘
-#> ──────────────────────────────────── Inputs ────────────────────────────────────
-#>                                Outcome : binary
-#>                         Predictor type : continuous
-#>                   Signal predictors : 3
-#>                       Noise predictors : 2
-#>                             Prevalence : 0.3
-#>      Expected large-sample performance : C-statistic ('cstatistic') = 0.700
-#>   Target for chosen performance metric : Auc ('auc') = 0.600
-#>                                  Model : glm
-#>                        Simulation reps : 20
-#> ──────────────────────────────────── Results ───────────────────────────────────
-#>              Final minimum sample size : 43
-#>             Estimated performance at N :  (Auc ('auc') = 0.600)
-#>            Estimated other metric at N : 0.235 (Calibration slope ('calibration_slope'))
-#>                                  Model : glm
-#>                                   Mode : Mean
-#>                           Running time : 0 seconds
-#>     Mean mode ensures the target metric is met on average across datasets.
-# }
+} # }
 ```

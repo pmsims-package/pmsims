@@ -16,12 +16,12 @@ default_data_generators(opts)
 
   `type`
 
-  : Outcome type: `"continuous"`, `"binary"`, or `"survival"`.
+  :   Outcome type: `"continuous"`, `"binary"`, or `"survival"`.
 
   `args`
 
-  : Named list of arguments to pre-set on the corresponding generator
-    function.
+  :   Named list of arguments to pre-set on the corresponding generator
+      function.
 
 ## Value
 

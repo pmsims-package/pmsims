@@ -21,7 +21,8 @@ calculate_mlpwr(
   data_function,
   model_function,
   metric_function,
-  value_on_error
+  value_on_error,
+  ...
 )
 ```
 
@@ -86,11 +87,8 @@ calculate_mlpwr(
 
 - data_function:
 
-  Function taking `n`, the training sample size, and returning a dataset
-  that can be passed to `model_function`. It should also declare
-  `n_signal_parameters` and `noise_parameters` arguments with numeric
-  defaults so the start-value heuristics can infer the number of
-  predictors.
+  Function taking a single argument, `n`, giving the training sample
+  size, and returning a dataset that can be passed to `model_function`.
 
 - model_function:
 
@@ -112,3 +110,8 @@ calculate_mlpwr(
 
   Numeric fallback value used if model fitting or metric calculation
   fails.
+
+- ...:
+
+  Additional options passed to
+  [`mlpwr::find.design()`](https://rdrr.io/pkg/mlpwr/man/find.design.html).

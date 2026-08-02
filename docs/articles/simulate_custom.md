@@ -25,11 +25,14 @@ For this vignette, we’ll use five packages:
 We will estimate the minimum sample size required for a prediction model
 to distinguish malignant from benign samples.
 
-[`library`](https://rdrr.io/r/base/library.html)`(`[`pmsims`](https://pmsims-package.github.io/pmsims/)`)`` `[`library`](https://rdrr.io/r/base/library.html)`(``mlbench``)`
+``` r
 
-    ## Warning: package 'mlbench' was built under R version 4.6.1
-
-[`library`](https://rdrr.io/r/base/library.html)`(``synthpop``)`` `[`library`](https://rdrr.io/r/base/library.html)`(`[`DescTools`](https://andrisignorell.github.io/DescTools/)`)`` `[`library`](https://rdrr.io/r/base/library.html)`(`[`glmnet`](https://glmnet.stanford.edu)`)`
+library(pmsims)
+library(mlbench)
+library(synthpop)
+library(DescTools)
+library(glmnet)
+```
 
 ## Defining your custom components
 
@@ -55,12 +58,45 @@ page](https://search.r-project.org/CRAN/refmans/mlbench/html/BreastCancer.html).
 We use `synthpop` to create a synthetic population and then sample
 datasets of the required size from it.
 
-[`set.seed`](https://rdrr.io/r/base/Random.html)`(``1234``)`` `[`data`](https://rdrr.io/r/utils/data.html)`(``"BreastCancer"``, package ``=`` ``"mlbench"``)`` ``real_data`` ``<-`` ``stats``::`[`na.omit`](https://rdrr.io/r/stats/na.fail.html)`(``BreastCancer``)`` ``real_data``$``Id`` ``<-`` ``NULL`` ``real_data``$``Class`` ``<-`` `[`as.integer`](https://rdrr.io/r/base/integer.html)`(``real_data``$``Class`` ``==`` ``"malignant"``)`` ``real_data``[``]`` ``<-`` `[`lapply`](https://rdrr.io/r/base/lapply.html)`(`` `` ``real_data``,`` `` ``function``(``x``)`` ``if`` ``(`[`is.factor`](https://rdrr.io/r/base/factor.html)`(``x``)``)`` `[`as.numeric`](https://rdrr.io/r/base/numeric.html)`(`[`as.character`](https://rdrr.io/r/base/character.html)`(``x``)``)`` ``else`` ``x`` ``)`` `` ``synthetic_data`` ``<-`` ``synthpop``::`[`syn`](https://rdrr.io/pkg/synthpop/man/syn.html)`(`` `` ``real_data``,`` `` k ``=`` ``5000``,`` `` print.flag ``=`` ``FALSE``,`` `` minnumlevels ``=`` ``2`` ``)`
+``` r
+
+set.seed(1234)
+data("BreastCancer", package = "mlbench")
+real_data <- stats::na.omit(BreastCancer)
+real_data$Id <- NULL
+real_data$Class <- as.integer(real_data$Class == "malignant")
+real_data[] <- lapply(
+  real_data,
+  function(x) if (is.factor(x)) as.numeric(as.character(x)) else x
+)
+
+synthetic_data <- synthpop::syn(
+  real_data,
+  k = 5000,
+  print.flag = FALSE,
+  minnumlevels = 2
+)
+```
 
     ## 
     ## Variable(s): Class numeric but with only 2 or fewer distinct values turned into factor(s) for synthesis.
 
-`synthetic_data``$``syn``$``Class`` ``<-`` `[`as.integer`](https://rdrr.io/r/base/integer.html)`(`[`as.character`](https://rdrr.io/r/base/character.html)`(``synthetic_data``$``syn``$``Class``)``)`` `` ``my_data_generator`` ``<-`` ``function``(`` `` ``n``,`` `` ``n_signal_parameters`` ``=`` ``9``,`` `` ``noise_parameters`` ``=`` ``0``,`` `` ``data`` ``=`` ``synthetic_data``$``syn`` ``)`` ``{`` `` ``data``[`[`sample`](https://rdrr.io/r/base/sample.html)`(`[`seq_len`](https://rdrr.io/r/base/seq.html)`(`[`nrow`](https://rdrr.io/r/base/nrow.html)`(``data``)``)``, ``n``, replace ``=`` ``TRUE``)``, ``]`` ``}`` `` ``example_data`` ``<-`` ``my_data_generator``(``n ``=`` ``10``)`` `[`print`](https://rdrr.io/r/base/print.html)`(``example_data``)`
+``` r
+
+synthetic_data$syn$Class <- as.integer(as.character(synthetic_data$syn$Class))
+
+my_data_generator <- function(
+  n,
+  n_signal_parameters = 9,
+  noise_parameters = 0,
+  data = synthetic_data$syn
+) {
+  data[sample(seq_len(nrow(data)), n, replace = TRUE), ]
+}
+
+example_data <- my_data_generator(n = 10)
+print(example_data)
+```
 
     ##      Cl.thickness Cell.size Cell.shape Marg.adhesion Epith.c.size Bare.nuclei
     ## 4886            8         6          3             2            5          10
@@ -96,7 +132,27 @@ setting the elastic net mixing parameter to 0.5. For this function, the
 data must be in the form of a matrix. We aim to predict `Class` using
 the remaining columns in the dataset.
 
-`my_model_function`` ``<-`` ``function``(``data``)`` ``{`` `` ``data_matrix`` ``<-`` `[`as.matrix`](https://rdrr.io/r/base/matrix.html)`(``data``)`` `` ``outcome`` ``<-`` ``"Class"`` `` ``x`` ``<-`` ``data_matrix``[``, `[`colnames`](https://rdrr.io/r/base/colnames.html)`(``data_matrix``)`` ``!=`` ``outcome``, drop ``=`` ``FALSE``]`` `` ``y`` ``<-`` ``data_matrix``[``, ``outcome``]`` `` `` ``glmnet``::`[`cv.glmnet`](https://glmnet.stanford.edu/reference/cv.glmnet.html)`(`` `` ``x``,`` `` ``y``,`` `` family ``=`` ``"binomial"``,`` `` alpha ``=`` ``0.5``,`` `` nfolds ``=`` ``5`` `` ``)`` ``}`` `` ``example_data`` ``<-`` ``my_data_generator``(``n ``=`` ``100``)`` ``example_fitted_model`` ``<-`` ``my_model_function``(``example_data``)`` ``fitted_model`` ``<-`` ``my_model_function``(``example_data``)`
+``` r
+
+my_model_function <- function(data) {
+  data_matrix <- as.matrix(data)
+  outcome <- "Class"
+  x <- data_matrix[, colnames(data_matrix) != outcome, drop = FALSE]
+  y <- data_matrix[, outcome]
+
+  glmnet::cv.glmnet(
+    x,
+    y,
+    family = "binomial",
+    alpha = 0.5,
+    nfolds = 5
+  )
+}
+
+example_data <- my_data_generator(n = 100)
+example_fitted_model <- my_model_function(example_data)
+fitted_model <- my_model_function(example_data)
+```
 
 ### Metric function
 
@@ -118,7 +174,29 @@ better performance. If your custom metric may fail for some datasets,
 you can optionally set `attr(my_metric, "value_on_error")` to define the
 fallback value returned for failed simulation runs.
 
-`my_metric`` ``<-`` ``function``(``test_data``, ``fitted_model``, ``model_name``)`` ``{`` `` ``test_data_matrix`` ``<-`` `[`as.matrix`](https://rdrr.io/r/base/matrix.html)`(``test_data``)`` `` ``y`` ``<-`` `[`which`](https://rdrr.io/r/base/which.html)`(`[`names`](https://rdrr.io/r/base/names.html)`(``test_data``)`` ``==`` ``"Class"``)`` `` ``x_test`` ``<-`` ``test_data_matrix``[``, ``-``y``]`` `` ``y_test`` ``<-`` ``test_data_matrix``[``, ``y``]`` `` ``predictions`` ``<-`` `[`predict`](https://rdrr.io/r/stats/predict.html)`(`` `` ``fitted_model``,`` `` newx ``=`` ``x_test``,`` `` s ``=`` ``"lambda.min"``,`` `` type ``=`` ``"response"`` `` ``)`` `` `` ``brier_score`` ``<-`` ``DescTools``::`[`BrierScore`](https://andrisignorell.github.io/DescTools/reference/BrierScore.html)`(``y_test``, pred ``=`` ``predictions``)`` `` `[`return`](https://rdrr.io/r/base/function.html)`(``-``brier_score``)`` ``}`` `[`attr`](https://rdrr.io/r/base/attr.html)`(``my_metric``, ``"metric"``)`` ``<-`` ``"brier_score"`` `[`attr`](https://rdrr.io/r/base/attr.html)`(``my_metric``, ``"value_on_error"``)`` ``<-`` ``-``1`` `` ``test_data`` ``<-`` ``my_data_generator``(``n ``=`` ``500``)`` ``my_metric``(``test_data``, ``example_fitted_model``, ``"elastic net regression"``)`
+``` r
+
+my_metric <- function(test_data, fitted_model, model_name) {
+  test_data_matrix <- as.matrix(test_data)
+  y <- which(names(test_data) == "Class")
+  x_test <- test_data_matrix[, -y]
+  y_test <- test_data_matrix[, y]
+  predictions <- predict(
+    fitted_model,
+    newx = x_test,
+    s = "lambda.min",
+    type = "response"
+  )
+
+  brier_score <- DescTools::BrierScore(y_test, pred = predictions)
+  return(-brier_score)
+}
+attr(my_metric, "metric") <- "brier_score"
+attr(my_metric, "value_on_error") <- -1
+
+test_data <- my_data_generator(n = 500)
+my_metric(test_data, example_fitted_model, "elastic net regression")
+```
 
     ## [1] -0.04277218
 
@@ -147,7 +225,19 @@ maximum achievable performance. For some machine learning models,
 particularly XGBoost, this may be insufficient, and larger samples may
 be needed.
 
-[`set.seed`](https://rdrr.io/r/base/Random.html)`(``1234``)`` ``maximum_achievable_data`` ``<-`` ``my_data_generator``(``n ``=`` ``3000``)`` ``test_data`` ``<-`` ``my_data_generator``(``n ``=`` ``1000``)`` ``test_model`` ``<-`` ``my_model_function``(``maximum_achievable_data``)`` ``maximum_achievable_performance`` ``<-`` ``my_metric``(`` `` ``test_data``,`` `` ``test_model``,`` `` ``"elastic net regression"`` ``)`` `[`print`](https://rdrr.io/r/base/print.html)`(``maximum_achievable_performance``)`
+``` r
+
+set.seed(1234)
+maximum_achievable_data <- my_data_generator(n = 3000)
+test_data <- my_data_generator(n = 1000)
+test_model <- my_model_function(maximum_achievable_data)
+maximum_achievable_performance <- my_metric(
+  test_data,
+  test_model,
+  "elastic net regression"
+)
+print(maximum_achievable_performance)
+```
 
     ## [1] -0.03029851
 
@@ -155,11 +245,30 @@ We will also look at small-sample performance, which reflects what
 happens when we have limited data. We run this a few times because
 small-sample performance can be highly variable.
 
-[`set.seed`](https://rdrr.io/r/base/Random.html)`(``1234``)`` ``small_sample_performance`` ``<-`` `[`rep`](https://rdrr.io/r/base/rep.html)`(``NA``, ``5``)`` ``for`` ``(``i`` ``in`` `[`seq_along`](https://rdrr.io/r/base/seq.html)`(``small_sample_performance``)``)`` ``{`` `` ``small_sample_data`` ``<-`` ``my_data_generator``(``n ``=`` ``50``)`` `` ``test_data`` ``<-`` ``my_data_generator``(``n ``=`` ``1000``)`` `` ``test_model`` ``<-`` ``my_model_function``(``small_sample_data``)`` `` ``small_sample_performance``[``i``]`` ``<-`` ``my_metric``(`` `` ``test_data``,`` `` ``test_model``,`` `` ``"elastic net regression"`` `` ``)`` ``}`` `` `[`print`](https://rdrr.io/r/base/print.html)`(``small_sample_performance``)`
+``` r
+
+set.seed(1234)
+small_sample_performance <- rep(NA, 5)
+for (i in seq_along(small_sample_performance)) {
+  small_sample_data <- my_data_generator(n = 50)
+  test_data <- my_data_generator(n = 1000)
+  test_model <- my_model_function(small_sample_data)
+  small_sample_performance[i] <- my_metric(
+    test_data,
+    test_model,
+    "elastic net regression"
+  )
+}
+
+print(small_sample_performance)
+```
 
     ## [1] -0.07020165 -0.05314556 -0.03743018 -0.04255960 -0.07313804
 
-[`mean`](https://rdrr.io/r/base/mean.html)`(``small_sample_performance``)`
+``` r
+
+mean(small_sample_performance)
+```
 
     ## [1] -0.05529501
 
@@ -174,11 +283,31 @@ estimated minimum sample size changes across target values. The small
 simulation budget below keeps the vignette quick; use larger values for
 an analysis.
 
-[`set.seed`](https://rdrr.io/r/base/Random.html)`(``1234``)`` ``result`` ``<-`` `[`simulate_custom`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md)`(`` `` data_function ``=`` ``my_data_generator``,`` `` model_function ``=`` ``my_model_function``,`` `` metric_function ``=`` ``my_metric``,`` `` target_performance ``=`` ``maximum_achievable_performance`` ``-`` ``0.02``,`` `` mean_or_assurance ``=`` ``"mean"``,`` `` test_n ``=`` ``500``,`` `` min_sample_size ``=`` ``50``,`` `` max_sample_size ``=`` ``300``,`` `` n_reps_total ``=`` ``20``,`` `` n_reps_per ``=`` ``5``,`` `` method ``=`` ``"bisection"``,`` `` progress ``=`` ``FALSE`` ``)`
+``` r
+
+set.seed(1234)
+result <- simulate_custom(
+  data_function = my_data_generator,
+  model_function = my_model_function,
+  metric_function = my_metric,
+  target_performance = maximum_achievable_performance - 0.02,
+  mean_or_assurance = "mean",
+  test_n = 500,
+  min_sample_size = 50,
+  max_sample_size = 300,
+  n_reps_total = 20,
+  n_reps_per = 5,
+  method = "bisection",
+  progress = FALSE
+)
+```
 
     ## Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
 
-`result``[`[`c`](https://rdrr.io/r/base/c.html)`(``"min_n"``, ``"perf_n"``, ``"target_performance"``)``]`
+``` r
+
+result[c("min_n", "perf_n", "target_performance")]
+```
 
     ## $min_n
     ## [1] 96

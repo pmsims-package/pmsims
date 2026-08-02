@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>mlpwr engine</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/HEAD/R/engines.R" class="external-link"><code>R/engines.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/R/engines.R" class="external-link"><code>R/engines.R</code></a></small>
       <div class="d-none name"><code>calculate_mlpwr.Rd</code></div>
     </div>
 
@@ -76,7 +76,8 @@
 <span>  <span class="va">data_function</span>,</span>
 <span>  <span class="va">model_function</span>,</span>
 <span>  <span class="va">metric_function</span>,</span>
-<span>  <span class="va">value_on_error</span></span>
+<span>  <span class="va">value_on_error</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -141,10 +142,9 @@ define the minimum sample size. Must be either <code>"mean"</code> or <code>"ass
 
 
 <dt id="arg-data-function">data_function<a class="anchor" aria-label="anchor" href="#arg-data-function"></a></dt>
-<dd><p>Function taking <code>n</code>, the training sample size, and
-returning a dataset that can be passed to <code>model_function</code>. It should also
-declare <code>n_signal_parameters</code> and <code>noise_parameters</code> arguments with numeric
-defaults so the start-value heuristics can infer the number of predictors.</p></dd>
+<dd><p>Function taking a single argument, <code>n</code>, giving the
+training sample size, and returning a dataset that can be passed to
+<code>model_function</code>.</p></dd>
 
 
 <dt id="arg-model-function">model_function<a class="anchor" aria-label="anchor" href="#arg-model-function"></a></dt>
@@ -164,6 +164,10 @@ evaluation fails during a simulation run.</p></dd>
 
 <dt id="arg-value-on-error">value_on_error<a class="anchor" aria-label="anchor" href="#arg-value-on-error"></a></dt>
 <dd><p>Numeric fallback value used if model fitting or metric calculation fails.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Additional options passed to <code><a href="https://rdrr.io/pkg/mlpwr/man/find.design.html" class="external-link">mlpwr::find.design()</a></code>.</p></dd>
 
 </dl></div>
 

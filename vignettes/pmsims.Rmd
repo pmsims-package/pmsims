@@ -473,9 +473,3 @@ print(continuous_example)
 ```{r, fig.alt="Plot showing learning curve for continuous outcome"}
 plot(continuous_example)
 ```
-
-## Session info
-
-```{r}
-sessionInfo()
-```

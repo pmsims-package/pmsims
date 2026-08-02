@@ -52,7 +52,7 @@ summaries of the chosen performance metric."><meta property="og:image" content="
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>The Bisection Engine</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/HEAD/R/engines.R" class="external-link"><code>R/engines.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/R/engines.R" class="external-link"><code>R/engines.R</code></a></small>
       <div class="d-none name"><code>calculate_bisection.Rd</code></div>
     </div>
 
@@ -89,10 +89,9 @@ summaries of the chosen performance metric.</p>
 
 
 <dl><dt id="arg-data-function">data_function<a class="anchor" aria-label="anchor" href="#arg-data-function"></a></dt>
-<dd><p>Function taking <code>n</code>, the training sample size, and
-returning a dataset that can be passed to <code>model_function</code>. It should also
-declare <code>n_signal_parameters</code> and <code>noise_parameters</code> arguments with numeric
-defaults so the start-value heuristics can infer the number of predictors.</p></dd>
+<dd><p>Function taking a single argument, <code>n</code>, giving the
+training sample size, and returning a dataset that can be passed to
+<code>model_function</code>.</p></dd>
 
 
 <dt id="arg-model-function">model_function<a class="anchor" aria-label="anchor" href="#arg-model-function"></a></dt>

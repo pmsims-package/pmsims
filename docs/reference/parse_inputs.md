@@ -19,11 +19,11 @@ parse_inputs(data_spec, metric, model)
 
   `type`
 
-  : A character string indicating the outcome type.
+  :   A character string indicating the outcome type.
 
   `args`
 
-  : A list of arguments to be passed to the data-generating function.
+  :   A list of arguments to be passed to the data-generating function.
 
 - metric:
 

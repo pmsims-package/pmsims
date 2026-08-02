@@ -86,7 +86,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Defining custom simulation workflows</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/HEAD/vignettes/articles/simulate_custom.Rmd" class="external-link"><code>vignettes/articles/simulate_custom.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/vignettes/articles/simulate_custom.Rmd" class="external-link"><code>vignettes/articles/simulate_custom.Rmd</code></a></small>
       <div class="d-none name"><code>simulate_custom.Rmd</code></div>
     </div>
 
@@ -122,10 +122,8 @@ to assess model performance.</li>
 model to distinguish malignant from benign samples.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pmsims-package.github.io/pmsims/">pmsims</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">mlbench</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Warning: package 'mlbench' was built under R version 4.6.1</span></span></code></pre>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">synthpop</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">mlbench</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">synthpop</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://andrisignorell.github.io/DescTools/" class="external-link">DescTools</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://glmnet.stanford.edu" class="external-link">glmnet</a></span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -157,7 +155,7 @@ characteristics of benign and malignant samples. For more details, see
 the <a href="https://search.r-project.org/CRAN/refmans/mlbench/html/BreastCancer.html" class="external-link">help
 page</a>. We use <code>synthpop</code> to create a synthetic population
 and then sample datasets of the required size from it.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1234</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"BreastCancer"</span>, package <span class="op">=</span> <span class="st">"mlbench"</span><span class="op">)</span></span>
 <span><span class="va">real_data</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.omit</a></span><span class="op">(</span><span class="va">BreastCancer</span><span class="op">)</span></span>
@@ -176,7 +174,7 @@ and then sample datasets of the required size from it.</p>
 <span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## </span></span>
 <span><span class="co">## Variable(s): Class numeric but with only 2 or fewer distinct values turned into factor(s) for synthesis.</span></span></code></pre>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">synthetic_data</span><span class="op">$</span><span class="va">syn</span><span class="op">$</span><span class="va">Class</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">synthetic_data</span><span class="op">$</span><span class="va">syn</span><span class="op">$</span><span class="va">Class</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">my_data_generator</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span></span>
@@ -225,7 +223,7 @@ regression model, setting the elastic net mixing parameter to 0.5. For
 this function, the data must be in the form of a matrix. We aim to
 predict <code>Class</code> using the remaining columns in the
 dataset.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_model_function</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">data</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">data_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span>
 <span>  <span class="va">outcome</span> <span class="op">&lt;-</span> <span class="st">"Class"</span></span>
@@ -272,7 +270,7 @@ indicate better performance. If your custom metric may fail for some
 datasets, you can optionally set
 <code>attr(my_metric, "value_on_error")</code> to define the fallback
 value returned for failed simulation runs.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_metric</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">test_data</span>, <span class="va">fitted_model</span>, <span class="va">model_name</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">test_data_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">test_data</span><span class="op">)</span></span>
 <span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">test_data</span><span class="op">)</span> <span class="op">==</span> <span class="st">"Class"</span><span class="op">)</span></span>
@@ -316,7 +314,7 @@ influence the minimum sample size returned.</p>
 maximum achievable performance. For some machine learning models,
 particularly XGBoost, this may be insufficient, and larger samples may
 be needed.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1234</span><span class="op">)</span></span>
 <span><span class="va">maximum_achievable_data</span> <span class="op">&lt;-</span> <span class="fu">my_data_generator</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">3000</span><span class="op">)</span></span>
 <span><span class="va">test_data</span> <span class="op">&lt;-</span> <span class="fu">my_data_generator</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span>
@@ -331,7 +329,7 @@ be needed.</p>
 <p>We will also look at small-sample performance, which reflects what
 happens when we have limited data. We run this a few times because
 small-sample performance can be highly variable.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1234</span><span class="op">)</span></span>
 <span><span class="va">small_sample_performance</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">small_sample_performance</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
@@ -347,7 +345,7 @@ small-sample performance can be highly variable.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">small_sample_performance</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] -0.07020165 -0.05314556 -0.03743018 -0.04255960 -0.07313804</span></span></code></pre>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">small_sample_performance</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] -0.05529501</span></span></code></pre>
 </div>
@@ -361,7 +359,7 @@ the estimated maximum. There are no universal criteria for choosing a
 Brier-score target, so it is useful to explore how the estimated minimum
 sample size changes across target values. The small simulation budget
 below keeps the vignette quick; use larger values for an analysis.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1234</span><span class="op">)</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_custom.html">simulate_custom</a></span><span class="op">(</span></span>
 <span>  data_function <span class="op">=</span> <span class="va">my_data_generator</span>,</span>
@@ -378,7 +376,7 @@ below keeps the vignette quick; use larger values for an analysis.</p>
 <span>  progress <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.</span></span></code></pre>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"min_n"</span>, <span class="st">"perf_n"</span>, <span class="st">"target_performance"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">## $min_n</span></span>
 <span><span class="co">## [1] 96</span></span>

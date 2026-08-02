@@ -44,7 +44,25 @@ recommended design objective is the assurance criterion: the smallest
 sample size such that a high proportion of repeated studies (for
 example, 80%) meet the target performance, rather than only on average.
 
-[`library`](https://rdrr.io/r/base/library.html)`(`[`pmsims`](https://pmsims-package.github.io/pmsims/)`)`` `` `[`set.seed`](https://rdrr.io/r/base/Random.html)`(``123``)`` `` ``binary_example`` ``<-`` `[`simulate_binary`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md)`(`` `` signal_parameters ``=`` ``15``,`` `` noise_parameters ``=`` ``0``,`` `` predictor_type ``=`` ``"continuous"``,`` `` outcome_prevalence ``=`` ``0.20``,`` `` maximum_achievable_cstatistic ``=`` ``0.80``,`` `` model ``=`` ``"glm"``,`` `` metric ``=`` ``"calibration_slope"``,`` `` target_performance ``=`` ``0.90``,`` `` n_reps_total ``=`` ``1000``,`` `` mean_or_assurance ``=`` ``"assurance"`` ``)`
+``` r
+
+library(pmsims)
+
+set.seed(123)
+
+binary_example <- simulate_binary(
+  signal_parameters = 15,
+  noise_parameters = 0,
+  predictor_type = "continuous",
+  outcome_prevalence = 0.20,
+  maximum_achievable_cstatistic = 0.80,
+  model = "glm",
+  metric = "calibration_slope",
+  target_performance = 0.90,
+  n_reps_total = 1000,
+  mean_or_assurance = "assurance"
+)
+```
 
 ## Custom simulation studies
 
@@ -76,6 +94,10 @@ the main wrapper functions and explains the key simulation inputs.
 
 Install version `0.5.0` of `pmsims` from GitHub with:
 
-`# install.packages("remotes")`` ``remotes``::`[`install_github`](https://remotes.r-lib.org/reference/install_github.html)`(``"pmsims-package/pmsims"``, ref ``=`` ``"v0.5.0"``)`
+``` r
+
+# install.packages("remotes")
+remotes::install_github("pmsims-package/pmsims", ref = "v0.5.0")
+```
 
 Version `0.5.0` is available from GitHub and is not yet a CRAN release.

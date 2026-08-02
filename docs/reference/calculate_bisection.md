@@ -31,11 +31,8 @@ calculate_bisection(
 
 - data_function:
 
-  Function taking `n`, the training sample size, and returning a dataset
-  that can be passed to `model_function`. It should also declare
-  `n_signal_parameters` and `noise_parameters` arguments with numeric
-  defaults so the start-value heuristics can infer the number of
-  predictors.
+  Function taking a single argument, `n`, giving the training sample
+  size, and returning a dataset that can be passed to `model_function`.
 
 - model_function:
 

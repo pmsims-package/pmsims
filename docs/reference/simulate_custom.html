@@ -60,7 +60,7 @@ selected performance criterion."><meta property="og:image" content="https://pmsi
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Minimum sample size for custom simulation workflows</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/HEAD/R/simulate_custom.R" class="external-link"><code>R/simulate_custom.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/R/simulate_custom.R" class="external-link"><code>R/simulate_custom.R</code></a></small>
       <div class="d-none name"><code>simulate_custom.Rd</code></div>
     </div>
 
@@ -99,10 +99,9 @@ selected performance criterion.</p>
 
 
 <dl><dt id="arg-data-function">data_function<a class="anchor" aria-label="anchor" href="#arg-data-function"></a></dt>
-<dd><p>Function taking <code>n</code>, the training sample size, and
-returning a dataset that can be passed to <code>model_function</code>. It should also
-declare <code>n_signal_parameters</code> and <code>noise_parameters</code> arguments with numeric
-defaults so the start-value heuristics can infer the number of predictors.</p></dd>
+<dd><p>Function taking a single argument, <code>n</code>, giving the
+training sample size, and returning a dataset that can be passed to
+<code>model_function</code>.</p></dd>
 
 
 <dt id="arg-model-function">model_function<a class="anchor" aria-label="anchor" href="#arg-model-function"></a></dt>
@@ -195,19 +194,23 @@ the iteration history on the returned object.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1234</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">data_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">n_signal_parameters</span> <span class="op">=</span> <span class="fl">2</span>, <span class="va">noise_parameters</span> <span class="op">=</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="va">x1</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">x2</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">0.5</span> <span class="op">*</span> <span class="va">x1</span> <span class="op">-</span> <span class="fl">0.25</span> <span class="op">*</span> <span class="va">x2</span> <span class="op">+</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">y</span>, x1 <span class="op">=</span> <span class="va">x1</span>, x2 <span class="op">=</span> <span class="va">x2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">data_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="va">x1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">x2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">x3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">x4</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">x5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">0.35</span> <span class="op">*</span> <span class="va">x1</span> <span class="op">-</span> <span class="fl">0.3</span> <span class="op">*</span> <span class="va">x2</span> <span class="op">+</span> <span class="fl">0.2</span> <span class="op">*</span> <span class="va">x3</span> <span class="op">+</span> <span class="fl">0.1</span> <span class="op">*</span> <span class="va">x4</span> <span class="op">-</span> <span class="fl">0.1</span> <span class="op">*</span> <span class="va">x5</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, sd <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">y</span>, x1 <span class="op">=</span> <span class="va">x1</span>, x2 <span class="op">=</span> <span class="va">x2</span>, x3 <span class="op">=</span> <span class="va">x3</span>, x4 <span class="op">=</span> <span class="va">x4</span>, x5 <span class="op">=</span> <span class="va">x5</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">model_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">dat</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">.</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">model_fun</span>, <span class="st">"model"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"lm"</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">metric_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">test_data</span>, <span class="va">fit</span>, <span class="va">model</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="va">preds</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, newdata <span class="op">=</span> <span class="va">test_data</span><span class="op">)</span></span></span>
@@ -216,23 +219,23 @@ the iteration history on the returned object.</p></dd>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">metric_fun</span>, <span class="st">"metric"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"r2"</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">maximum_achievable_data</span> <span class="op">&lt;-</span> <span class="fu">data_fun</span><span class="op">(</span><span class="fl">100000</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">test_data</span> <span class="op">&lt;-</span> <span class="fu">data_fun</span><span class="op">(</span><span class="fl">50000</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">maximum_achievable_fit</span> <span class="op">&lt;-</span> <span class="fu">model_fun</span><span class="op">(</span><span class="va">maximum_achievable_data</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">maximum_achievable_performance</span> <span class="op">&lt;-</span> <span class="fu">metric_fun</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">test_data</span>,</span></span>
+<span class="r-in"><span>  <span class="va">maximum_achievable_fit</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"lm"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">est</span> <span class="op">&lt;-</span> <span class="fu">simulate_custom</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data_function <span class="op">=</span> <span class="va">data_fun</span>,</span></span>
 <span class="r-in"><span>  model_function <span class="op">=</span> <span class="va">model_fun</span>,</span></span>
 <span class="r-in"><span>  metric_function <span class="op">=</span> <span class="va">metric_fun</span>,</span></span>
-<span class="r-in"><span>  target_performance <span class="op">=</span> <span class="fl">0.1</span>,</span></span>
-<span class="r-in"><span>  mean_or_assurance <span class="op">=</span> <span class="st">"mean"</span>,</span></span>
-<span class="r-in"><span>  test_n <span class="op">=</span> <span class="fl">200</span>,</span></span>
-<span class="r-in"><span>  min_sample_size <span class="op">=</span> <span class="fl">20</span>,</span></span>
-<span class="r-in"><span>  max_sample_size <span class="op">=</span> <span class="fl">80</span>,</span></span>
-<span class="r-in"><span>  n_reps_total <span class="op">=</span> <span class="fl">20</span>,</span></span>
-<span class="r-in"><span>  n_reps_per <span class="op">=</span> <span class="fl">5</span>,</span></span>
-<span class="r-in"><span>  method <span class="op">=</span> <span class="st">"bisection"</span>,</span></span>
-<span class="r-in"><span>  progress <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span>  target_performance <span class="op">=</span> <span class="va">maximum_achievable_performance</span> <span class="op">-</span> <span class="fl">0.02</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.</span>
-<span class="r-in"><span><span class="va">est</span><span class="op">$</span><span class="va">min_n</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 31</span>
+<span class="r-in"><span><span class="va">est</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

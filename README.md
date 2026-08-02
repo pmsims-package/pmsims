@@ -64,7 +64,10 @@ binary_example <- simulate_binary(
   signal_parameters = 10,
   noise_parameters = 10,
   complexity = 2,
-  data_control = list(nonlinear_strength = 0.4, correlation = 0.2),
+  data_control = list(
+    nonlinear_strength = 0.4,
+    correlation = 0.2
+  ),
   outcome_prevalence = 0.20,
   maximum_achievable_cstatistic = 0.75,
   model = "glm",
@@ -102,8 +105,8 @@ Current preprints:
 
 - Olaniran OR, Shamsutdinova D, Markham S, Zimmer F, Stahl D, Forbes G,
   Carr E (2026). *Adaptive Gaussian Process Search for Simulation-Based
-  Sample Size Estimation in Clinical Prediction Models: Validation of the
-  pmsims R Package*. arXiv. <https://arxiv.org/abs/2603.23688>
+  Sample Size Estimation in Clinical Prediction Models: Validation of
+  the pmsims R Package*. arXiv. <https://arxiv.org/abs/2603.23688>
 
 Once peer-reviewed articles are available, these citations should be
 updated to the published versions. In R, you can retrieve the package

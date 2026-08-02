@@ -488,6 +488,7 @@ cv.ranger_tune <- function(
 }
 
 # Print method
+#' @export
 #' @keywords internal
 #' @noRd
 print.cv.ranger_tune <- function(x, ...) {
