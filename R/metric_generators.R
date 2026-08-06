@@ -732,7 +732,7 @@ predicted_survival_at_time <- function(data, fit, model, eval_time) {
     ncores <- parallel::detectCores(logical = FALSE)
     nthreads <- max(1L, ifelse(is.na(ncores), 1L, ncores - 2L))
     
-    pr <- try(stats::predict(fit, data = as.data.frame(x), num.threads = nthreads), silent = TRUE)
+    pr <- try(stats::predict(fit, data = as.data.frame(x), num.threads = 2), silent = TRUE)
     if (inherits(pr, "try-error") || !is.list(pr) || is.null(pr$survival))
       return(NULL)
     times <- pr$unique.death.times
