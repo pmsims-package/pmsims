@@ -157,7 +157,7 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
       ncores   <- parallel::detectCores(logical = FALSE)
       nthreads <- max(1L, ifelse(is.na(ncores), 1L, ncores - 2L))
       
-      pr <- stats::predict(fit, data = x_df, num.threads = nthreads)
+      pr <- stats::predict(fit, data = x_df, num.threads = 2)
       
       # Survival forest
       if (identical(fit$treetype, "Survival")) {

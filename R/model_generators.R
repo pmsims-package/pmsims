@@ -276,17 +276,38 @@ default_models <- list(
     },
     rf = function(d) {
       #require_optional_packages(c("randomForestSRC", "ranger"), "random-forest models")
-      require_optional_packages(c("ranger"), "random-forest models")
+      #require_optional_packages(c("ranger"), "random-forest models")
 
       # ranger survival forest: formula interface with Surv()
-      ncores <- parallel::detectCores(logical = FALSE)
-      nthreads <- ncores - 2
+      #ncores <- parallel::detectCores(logical = FALSE)
+      #nthreads <- ncores - 2
 
-      stopifnot(all(c("time", "event") %in% colnames(d)))
-      formula <- stats::as.formula("survival::Surv(time, event) ~ .")
-      ranger::ranger(formula, data = d, num.trees = 300, min.node.size = 15, num.threads = nthreads)
+      #stopifnot(all(c("time", "event") %in% colnames(d)))
+      #formula <- stats::as.formula("survival::Surv(time, event) ~ .")
+      #ranger::ranger(formula, data = d, num.trees = 300, min.node.size = 15, num.threads = nthreads)
       #formula <- stats::as.formula("Surv(time, event) ~ .")
       #randomForestSRC::rfsrc(formula, data = d, ntree = 300)
+      
+      require_optional_packages(c("ranger"), "random-forest models")
+      
+      x <- d[, !(names(d) %in% c("time","event")), drop = FALSE]
+      y <- survival::Surv(d$time, d$event)
+      
+      ranger::ranger(
+        x = x,
+        y = y,
+        num.trees = 200,
+        min.node.size = 30,
+        mtry = max(1, floor(ncol(x) / 3)),
+        importance = "none",
+        num.random.splits = 1,
+        save.memory = TRUE,
+        keep.inbag = FALSE,
+        num.threads = 2,
+        write.forest = TRUE
+      )
+      
+      
     },
     xgboost = function(d,
                        params = list(objective   = "survival:cox",
