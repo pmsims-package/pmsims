@@ -108,7 +108,7 @@ default_models <- list(
       #bestmtry <- data.frame(ff)
       #mtry_best <- bestmtry$mtry[which.min(bestmtry$OOBError)]
 
-      ranger::ranger(
+     fit_rf <- ranger::ranger(
         x = x,
         y = y,
         mtry = max(1, floor(ncol(x) / 3)),
@@ -117,6 +117,9 @@ default_models <- list(
         min.node.size = 15,
         num.threads = nthreads
       )
+     
+     fit_rf$pmsims_train <- list(y = d[["y"]])
+     fit_rf
     },
     xgboost = function(d,
                        params = list(objective  = "binary:logistic",
@@ -293,21 +296,21 @@ default_models <- list(
       x <- d[, !(names(d) %in% c("time","event")), drop = FALSE]
       y <- survival::Surv(d$time, d$event)
       
-      ranger::ranger(
+     fit_rf <- ranger::ranger(
         x = x,
         y = y,
-        num.trees = 200,
+        num.trees = 300,
         min.node.size = 30,
         mtry = max(1, floor(ncol(x) / 3)),
         importance = "none",
-        num.random.splits = 1,
         save.memory = TRUE,
         keep.inbag = FALSE,
         num.threads = 2,
         write.forest = TRUE
       )
       
-      
+     fit_rf$pmsims_train <- list(time = d$time, event = d$event)
+     fit_rf
     },
     xgboost = function(d,
                        params = list(objective   = "survival:cox",
