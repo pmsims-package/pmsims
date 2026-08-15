@@ -551,14 +551,34 @@ survival_calib_slope_PH <- function(data, fit, model, eval_time = NULL) {
 }
 
 
-# Calibration slope squared error. Reuses survival_calib_slope() so that the
+# Calibration slope squared error. Reuses survival_calib_slope_PH() or survival_calib_slope() so that the
 # rf and all models (horizon-based).
 survival_csse <- function(data, fit, model) {
-  slope <- survival_calib_slope(data = data, fit = fit, model = model)
+  
+  ph_models <- c("coxph", "lasso", "ridge")
+  ml_models <- c("xgboost", "rf", "ranger")
+  
+  if (model %in% ph_models) {
+    slope <- survival_calib_slope_PH(
+      data = data,
+      fit = fit,
+      model = model
+    )
+  } else if (model %in% ml_models) {
+    slope <- survival_calib_slope(
+      data = data,
+      fit = fit,
+      model = model
+    )
+  } else {
+    stop("Unsupported model: ", model)
+  }
+  
   if (!is.finite(slope)) {
     return(NaN)
   }
-  return(-(1 - slope)^2)
+  
+  -(1 - slope)^2
 }
 
 #' Cox calibration slope at a landmark horizon
