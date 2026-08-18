@@ -608,6 +608,7 @@ survival_csse <- function(data, fit, model) {
 #'                   transform.
 #'
 #' @return A single numeric calibration slope (1 = calibrated), or \code{NaN}.
+#' @keywords internal
 survival_calib_slope_cox <- function(
   data,
   fit,

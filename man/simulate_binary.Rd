@@ -47,7 +47,26 @@ options are experimental.}
 \item{metric}{Character string naming the performance metric used to assess
 the sample size; defaults to \code{"calibration_slope"}. Metric identifiers use
 one canonical form throughout the package, such as \code{"calibration_slope"},
-\code{"calibration_in_the_large"}, \code{"auc"}, \code{"r2"}, and \code{"cindex"}.}
+\code{"calibration_in_the_large"}, \code{"auc"}, \code{"r2"}, \code{"cindex"}, and \code{"csse"}.
+
+\code{"calibration_slope"} is the slope from regressing the observed outcome on
+the model's linear predictor in held-out data; 1 indicates perfect
+calibration, and values below 1 indicate overfitting. Note that for the
+machine-learning models (\code{"lasso"}, \code{"ridge"}, \code{"rf"}, \code{"xgboost"}) this is
+converted internally to the calibration slope squared error for
+optimisation and translated back before results are returned; you don't
+need to do anything, and \code{target_performance} is still given on the
+calibration slope scale. Results derived this way are marked with a dagger
+in the printed output.
+
+\code{"csse"} is the calibration slope squared error, \eqn{-(1 - s)^2} for a
+calibration slope \eqn{s}, so that larger is better and 0 is perfect
+calibration. It can be requested directly, which is mainly useful for
+advanced use and for comparison against the internal conversion described
+above. When requesting it directly you are responsible for supplying
+\code{target_performance} on the CSSE scale: a calibration slope target of
+\code{0.9} corresponds to a CSSE target of \code{-0.01}. No adjustment is applied on
+your behalf, and results are reported on the CSSE scale.}
 
 \item{target_performance}{Numeric. Minimum acceptable value of the selected
 performance metric \eqn{M^*}; the algorithm searches for the smallest

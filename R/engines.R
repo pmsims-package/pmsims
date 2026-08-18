@@ -44,8 +44,10 @@ calculate_mlpwr <- function(
     }
   )
 
-  # Adaptive starting values search
+  # Adaptive starting values search. This stage is timed so the cost of the
+  # full run can be extrapolated from it (see R/runtime_estimate.R).
   cat("Estimating first stage... (Adaptive starting value search algorithm)\n")
+  stage_1_start <- Sys.time()
   start_values <- tryCatch(
     {
       calculate_adaptive_bounds(
@@ -70,6 +72,12 @@ calculate_mlpwr <- function(
       )
     }
   )
+
+  stage_1_secs <- as.numeric(difftime(
+    Sys.time(),
+    stage_1_start,
+    units = "secs"
+  ))
 
   start_min_sample_size <- start_values$min_sample_size
   start_max_sample_size <- start_values$max_sample_size
@@ -96,6 +104,18 @@ calculate_mlpwr <- function(
     start_min_sample_size <- min_sample_size
     start_max_sample_size <- max_sample_size
   }
+
+  # Extrapolate the timed first stage to the full run and tell the user if it
+  # is going to be a long one.
+  warn_if_long_run(
+    stage_1_secs = stage_1_secs,
+    track = start_values$track,
+    n_reps_per = n_reps_per,
+    n_reps_total = n_reps_total,
+    min_sample_size = start_min_sample_size,
+    max_sample_size = start_max_sample_size,
+    model = attr(model_function, "model", exact = TRUE)
+  )
 
   # Perform search using mlpwr
 
