@@ -68,7 +68,26 @@ simulate_continuous(
   sample size; defaults to `"calibration_slope"`. Metric identifiers use
   one canonical form throughout the package, such as
   `"calibration_slope"`, `"calibration_in_the_large"`, `"auc"`, `"r2"`,
-  and `"cindex"`.
+  `"cindex"`, and `"csse"`.
+
+  `"calibration_slope"` is the slope from regressing the observed
+  outcome on the model's linear predictor in held-out data; 1 indicates
+  perfect calibration, and values below 1 indicate overfitting. Note
+  that for the machine-learning models (`"lasso"`, `"ridge"`, `"rf"`,
+  `"xgboost"`) this is converted internally to the calibration slope
+  squared error for optimisation and translated back before results are
+  returned; you don't need to do anything, and `target_performance` is
+  still given on the calibration slope scale. Results derived this way
+  are marked with a dagger in the printed output.
+
+  `"csse"` is the calibration slope squared error, \\-(1 - s)^2\\ for a
+  calibration slope \\s\\, so that larger is better and 0 is perfect
+  calibration. It can be requested directly, which is mainly useful for
+  advanced use and for comparison against the internal conversion
+  described above. When requesting it directly you are responsible for
+  supplying `target_performance` on the CSSE scale: a calibration slope
+  target of `0.9` corresponds to a CSSE target of `-0.01`. No adjustment
+  is applied on your behalf, and results are reported on the CSSE scale.
 
 - target_performance:
 

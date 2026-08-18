@@ -134,7 +134,24 @@ experimental.</p></dd>
 <dd><p>Character string naming the performance metric used to assess
 the sample size; defaults to <code>"calibration_slope"</code>. Metric identifiers use
 one canonical form throughout the package, such as <code>"calibration_slope"</code>,
-<code>"calibration_in_the_large"</code>, <code>"auc"</code>, <code>"r2"</code>, and <code>"cindex"</code>.</p></dd>
+<code>"calibration_in_the_large"</code>, <code>"auc"</code>, <code>"r2"</code>, <code>"cindex"</code>, and <code>"csse"</code>.</p>
+<p><code>"calibration_slope"</code> is the slope from regressing the observed outcome on
+the model's linear predictor in held-out data; 1 indicates perfect
+calibration, and values below 1 indicate overfitting. Note that for the
+machine-learning models (<code>"lasso"</code>, <code>"ridge"</code>, <code>"rf"</code>, <code>"xgboost"</code>) this is
+converted internally to the calibration slope squared error for
+optimisation and translated back before results are returned; you don't
+need to do anything, and <code>target_performance</code> is still given on the
+calibration slope scale. Results derived this way are marked with a dagger
+in the printed output.</p>
+<p><code>"csse"</code> is the calibration slope squared error, \(-(1 - s)^2\) for a
+calibration slope \(s\), so that larger is better and 0 is perfect
+calibration. It can be requested directly, which is mainly useful for
+advanced use and for comparison against the internal conversion described
+above. When requesting it directly you are responsible for supplying
+<code>target_performance</code> on the CSSE scale: a calibration slope target of
+<code>0.9</code> corresponds to a CSSE target of <code>-0.01</code>. No adjustment is applied on
+your behalf, and results are reported on the CSSE scale.</p></dd>
 
 
 <dt id="arg-target-performance">target_performance<a class="anchor" aria-label="anchor" href="#arg-target-performance"></a></dt>
