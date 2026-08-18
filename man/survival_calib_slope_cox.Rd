@@ -48,3 +48,4 @@ Baselines come from the TRAINING data (the model's own \code{survfit}
 baseline for \code{coxph}; \code{x}/\code{y} at \code{lambda.min} for
 \code{glmnet}; a training-fitted \code{coxph} on the xgboost linear predictor).
 }
+\keyword{internal}

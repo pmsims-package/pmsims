@@ -132,8 +132,8 @@ test_that("print.pmsims footnotes an internally converted calibration slope", {
 
   output <- paste(capture.output(print(object)), collapse = "\n")
 
-  expect_match(output, "† derived from calibration slope squared error")
-  expect_match(output, "Calibration slope †", fixed = TRUE)
+  expect_match(output, "\u2020 derived from calibration slope squared error")
+  expect_match(output, "Calibration slope \u2020", fixed = TRUE)
 })
 
 test_that("print.pmsims omits the footnote when no conversion was applied", {
@@ -144,5 +144,5 @@ test_that("print.pmsims omits the footnote when no conversion was applied", {
 
   output <- paste(capture.output(print(object)), collapse = "\n")
 
-  expect_false(grepl("†", output, fixed = TRUE))
+  expect_false(grepl("\u2020", output, fixed = TRUE))
 })

@@ -114,7 +114,7 @@ print.pmsims <- function(x, ..., max_width = 80) {
   # Calibration slope obtained by searching on the CSSE scale internally is
   # flagged with a dagger and explained in a footnote, rather than announced.
   derived_from_csse <- isTRUE(x$internal_csse)
-  csse_mark <- if (derived_from_csse) " †" else ""
+  csse_mark <- if (derived_from_csse) " \u2020" else ""
 
   moa <- x$mean_or_assurance %||% "mean"
   model <- x$model %||% NA_character_
@@ -260,7 +260,7 @@ print.pmsims <- function(x, ..., max_width = 80) {
   if (derived_from_csse) {
     cat(
       "    ",
-      dimc(italic("† derived from calibration slope squared error")),
+      dimc(italic("\u2020 derived from calibration slope squared error")),
       "\n",
       sep = ""
     )
