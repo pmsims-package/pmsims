@@ -337,3 +337,215 @@ test_that("simulate_binary errors when maximum achievable AUC equals target", {
     fixed = TRUE
   )
 })
+
+test_that("machine learning wrappers search on the CSSE scale internally", {
+  skip_if_not_installed("glmnet")
+
+  captured <- NULL
+
+  local_mocked_bindings(
+    binary_tuning = function(...) c(mu_lp = 0, sigma_sq = 1, beta_signal = 0.3),
+    simulate_custom = function(...) {
+      captured <<- list(...)
+      mock_simulate_custom(...)
+    },
+    .package = "pmsims"
+  )
+
+  result <- simulate_binary(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    outcome_prevalence = 0.2,
+    maximum_achievable_cstatistic = 0.75,
+    model = "ridge",
+    metric = "calibration_slope",
+    target_performance = 0.9,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance"
+  )
+
+  # The search ran against CSSE with a converted target ...
+  expect_identical(attr(captured$metric_function, "metric"), "csse")
+  expect_equal(captured$target_performance, -0.01)
+
+  # ... but the user sees the calibration slope throughout.
+  expect_identical(result$metric, "calibration_slope")
+  expect_equal(result$target_performance, 0.9)
+  expect_equal(result$perf_n, 0.9)
+  expect_true(result$internal_csse)
+  expect_equal(result$csse_direction, "below")
+  expect_identical(result$metric_2, "auc")
+})
+
+test_that("non-machine-learning wrappers use the calibration slope directly", {
+  captured <- NULL
+
+  local_mocked_bindings(
+    binary_tuning = function(...) c(mu_lp = 0, sigma_sq = 1, beta_signal = 0.3),
+    simulate_custom = function(...) {
+      captured <<- list(...)
+      mock_simulate_custom(...)
+    },
+    .package = "pmsims"
+  )
+
+  result <- simulate_binary(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    outcome_prevalence = 0.2,
+    maximum_achievable_cstatistic = 0.75,
+    model = "glm",
+    metric = "calibration_slope",
+    target_performance = 0.9,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance"
+  )
+
+  expect_identical(
+    attr(captured$metric_function, "metric"),
+    "calibration_slope"
+  )
+  expect_equal(captured$target_performance, 0.9)
+  expect_null(result$internal_csse)
+})
+
+test_that("an explicit CSSE request is passed through unchanged", {
+  skip_if_not_installed("glmnet")
+
+  captured <- NULL
+
+  local_mocked_bindings(
+    binary_tuning = function(...) c(mu_lp = 0, sigma_sq = 1, beta_signal = 0.3),
+    simulate_custom = function(...) {
+      captured <<- list(...)
+      mock_simulate_custom(...)
+    },
+    .package = "pmsims"
+  )
+
+  result <- simulate_binary(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    outcome_prevalence = 0.2,
+    maximum_achievable_cstatistic = 0.75,
+    model = "ridge",
+    metric = "csse",
+    target_performance = -0.01,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance"
+  )
+
+  # The user's target is used as supplied, with no adjustment.
+  expect_identical(attr(captured$metric_function, "metric"), "csse")
+  expect_equal(captured$target_performance, -0.01)
+  expect_identical(result$metric, "csse")
+  expect_equal(result$target_performance, -0.01)
+  expect_equal(result$perf_n, -0.01)
+  expect_null(result$internal_csse)
+})
+
+test_that("simulate_continuous converts the calibration slope for ML models", {
+  skip_if_not_installed("glmnet")
+
+  captured <- NULL
+
+  local_mocked_bindings(
+    continuous_tuning = function(...) 0.25,
+    simulate_custom = function(...) {
+      captured <<- list(...)
+      mock_simulate_custom(...)
+    },
+    .package = "pmsims"
+  )
+
+  result <- simulate_continuous(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    maximum_achievable_rsquared = 0.5,
+    model = "ridge",
+    metric = "calibration_slope",
+    target_performance = 0.9,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance"
+  )
+
+  expect_identical(attr(captured$metric_function, "metric"), "csse")
+  expect_equal(captured$target_performance, -0.01)
+  expect_identical(result$metric, "calibration_slope")
+  expect_equal(result$target_performance, 0.9)
+  expect_equal(result$perf_n, 0.9)
+  expect_true(result$internal_csse)
+  expect_identical(result$metric_2, "r2")
+})
+
+test_that("simulate_survival converts the calibration slope for ML models", {
+  skip_if_not_installed("glmnet")
+
+  captured <- NULL
+
+  local_mocked_bindings(
+    survival_tuning = function(...) {
+      c(lambda_opt = 0.1, sigma_sq = 0.2, beta_signal = 0.3)
+    },
+    simulate_custom = function(...) {
+      captured <<- list(...)
+      mock_simulate_custom(...)
+    },
+    .package = "pmsims"
+  )
+
+  # The unmocked second-metric evaluation fits a Cox ridge, which emits glmnet
+  # tie-handling deprecation notices unrelated to this test.
+  result <- suppressWarnings(simulate_survival(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    maximum_achievable_cindex = 0.7,
+    baseline_hazard = 0.01,
+    censoring_rate = 0.3,
+    model = "ridge",
+    metric = "calibration_slope",
+    target_performance = 0.9,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance"
+  ))
+
+  expect_identical(attr(captured$metric_function, "metric"), "csse")
+  expect_equal(captured$target_performance, -0.01)
+  expect_identical(result$metric, "calibration_slope")
+  expect_equal(result$target_performance, 0.9)
+  expect_equal(result$perf_n, 0.9)
+  expect_true(result$internal_csse)
+  expect_identical(result$metric_2, "cindex")
+})
+
+test_that("a calibration slope target above 1 is restored above 1", {
+  skip_if_not_installed("glmnet")
+
+  local_mocked_bindings(
+    binary_tuning = function(...) c(mu_lp = 0, sigma_sq = 1, beta_signal = 0.3),
+    simulate_custom = mock_simulate_custom,
+    .package = "pmsims"
+  )
+
+  result <- simulate_binary(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    predictor_type = "continuous",
+    outcome_prevalence = 0.2,
+    maximum_achievable_cstatistic = 0.75,
+    model = "ridge",
+    metric = "calibration_slope",
+    target_performance = 1.1,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance"
+  )
+
+  expect_equal(result$csse_direction, "above")
+  expect_equal(result$target_performance, 1.1)
+  expect_equal(result$perf_n, 1.1)
+})
