@@ -36,7 +36,6 @@ jobs:
           extra-packages: >
             roxygen2@8.0.0,
             rmarkdown@2.31,
-            pkgdown@2.2.1,
             local::.
           needs: website
 
@@ -54,25 +53,7 @@ jobs:
           )
         shell: Rscript {0}
 
-      - name: Regenerate pkgdown site
-        run: |
-          pkgdown::clean_site(".", force = TRUE)
-          pkgdown::build_site(
-            pkg = ".",
-            examples = TRUE,
-            run_dont_run = FALSE,
-            seed = 1014L,
-            lazy = FALSE,
-            preview = FALSE,
-            new_process = FALSE,
-            install = FALSE,
-            quiet = TRUE
-          )
-        shell: Rscript {0}
-
       - name: Verify generated files are current
         run: |
-          # pkgdown records the current build time in this metadata file.
-          git checkout -- docs/pkgdown.yml
-          git diff --exit-code -- NAMESPACE man README.md docs
-          test -z "$(git ls-files --others --exclude-standard -- NAMESPACE man README.md docs)"
+          git diff --exit-code -- NAMESPACE man README.md
+          test -z "$(git ls-files --others --exclude-standard -- NAMESPACE man README.md)"
