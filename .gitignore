@@ -9,3 +9,7 @@ vignettes/.quarto/project-cache
 *.tar.gz
 .positai
 inst/doc
+
+# Rendered pkgdown site; published from gh-pages, built fresh by CI.
+# Build locally with pkgdown::build_site() when you want a preview.
+docs/
