@@ -30,10 +30,13 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          # Do not add an `any::` prefix to these: it silently discards the
+          # `@version` pin and installs the latest release instead, which is
+          # how roxygen2 8.1.0 crept in and started reformatting NAMESPACE.
           extra-packages: >
-            any::roxygen2@8.0.0,
-            any::rmarkdown@2.31,
-            any::pkgdown@2.2.1,
+            roxygen2@8.0.0,
+            rmarkdown@2.31,
+            pkgdown@2.2.1,
             local::.
           needs: website
 
