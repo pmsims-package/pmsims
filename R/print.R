@@ -90,7 +90,7 @@ print.pmsims <- function(x, ..., max_width = 80) {
     format(v, big.mark = ",", scientific = FALSE)
   }
 
-  pretty_metric <- function(metric) {
+  pretty_metric <- function(metric, mark = "") {
     if (!is_present(metric)) {
       return(NULL)
     }
@@ -108,8 +108,13 @@ print.pmsims <- function(x, ..., max_width = 80) {
         if (has_tools) tools::toTitleCase(label) else label
       }
     )
-    paste0(nice, " ", dimc(sprintf("('%s')", metric)))
+    paste0(nice, mark, " ", dimc(sprintf("('%s')", metric)))
   }
+
+  # Calibration slope obtained by searching on the CSSE scale internally is
+  # flagged with a dagger and explained in a footnote, rather than announced.
+  derived_from_csse <- isTRUE(x$internal_csse)
+  csse_mark <- if (derived_from_csse) " \u2020" else ""
 
   moa <- x$mean_or_assurance %||% "mean"
   model <- x$model %||% NA_character_
@@ -187,7 +192,7 @@ print.pmsims <- function(x, ..., max_width = 80) {
     "Estimated performance at N" = paste0(
       fmt_num(perf_at, 3),
       " (",
-      pretty_metric(metric),
+      pretty_metric(metric, mark = csse_mark),
       " = ",
       fmt_num(target, 3),
       ")"
@@ -251,6 +256,15 @@ print.pmsims <- function(x, ..., max_width = 80) {
     "\n",
     sep = ""
   )
+
+  if (derived_from_csse) {
+    cat(
+      "    ",
+      dimc(italic("\u2020 derived from calibration slope squared error")),
+      "\n",
+      sep = ""
+    )
+  }
 
   invisible(x)
 }

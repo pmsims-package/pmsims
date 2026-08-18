@@ -223,7 +223,26 @@ make_data_args <- function(
 #' @param metric Character string naming the performance metric used to assess
 #'   the sample size; defaults to `"calibration_slope"`. Metric identifiers use
 #'   one canonical form throughout the package, such as `"calibration_slope"`,
-#'   `"calibration_in_the_large"`, `"auc"`, `"r2"`, and `"cindex"`.
+#'   `"calibration_in_the_large"`, `"auc"`, `"r2"`, `"cindex"`, and `"csse"`.
+#'
+#'   `"calibration_slope"` is the slope from regressing the observed outcome on
+#'   the model's linear predictor in held-out data; 1 indicates perfect
+#'   calibration, and values below 1 indicate overfitting. Note that for the
+#'   machine-learning models (`"lasso"`, `"ridge"`, `"rf"`, `"xgboost"`) this is
+#'   converted internally to the calibration slope squared error for
+#'   optimisation and translated back before results are returned; you don't
+#'   need to do anything, and `target_performance` is still given on the
+#'   calibration slope scale. Results derived this way are marked with a dagger
+#'   in the printed output.
+#'
+#'   `"csse"` is the calibration slope squared error, \eqn{-(1 - s)^2} for a
+#'   calibration slope \eqn{s}, so that larger is better and 0 is perfect
+#'   calibration. It can be requested directly, which is mainly useful for
+#'   advanced use and for comparison against the internal conversion described
+#'   above. When requesting it directly you are responsible for supplying
+#'   `target_performance` on the CSSE scale: a calibration slope target of
+#'   `0.9` corresponds to a CSSE target of `-0.01`. No adjustment is applied on
+#'   your behalf, and results are reported on the CSSE scale.
 #' @param target_performance Numeric. Minimum acceptable value of the selected
 #'   performance metric \eqn{M^*}; the algorithm searches for the smallest
 #'   \eqn{n} meeting the chosen criterion with respect to this threshold.
@@ -285,6 +304,9 @@ simulate_binary <- function(
     target_performance = target_performance,
     maximum_achievable_performance = maximum_achievable_cstatistic
   )
+  # Machine learning models search on the CSSE scale internally; see
+  # R/csse_internal.R.
+  csse_plan <- plan_internal_csse(metric, model, target_performance)
   validate_complexity(complexity)
   validate_outcome_prevalence(outcome_prevalence)
   dc <- resolve_data_control(data_control, complexity)
@@ -326,8 +348,11 @@ simulate_binary <- function(
 
   simulate_custom_args <- utils::modifyList(
     list(
-      metric_function = default_metric_generator(metric, data_function),
-      target_performance = target_performance,
+      metric_function = default_metric_generator(
+        csse_plan$metric,
+        data_function
+      ),
+      target_performance = csse_plan$target_performance,
       c_statistic = maximum_achievable_cstatistic,
       data_function = data_function,
       model_function = model_function,
@@ -343,6 +368,9 @@ simulate_binary <- function(
   suppressWarnings(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
+
+  # Put any internally-converted results back on the calibration slope scale.
+  output <- restore_calibration_slope_scale(output, csse_plan)
 
   metric_2 <- if (metric %in% c("csse", "calibration_slope")) {
     "auc"
@@ -443,6 +471,9 @@ simulate_continuous <- function(
     target_performance = target_performance,
     maximum_achievable_performance = maximum_achievable_rsquared
   )
+  # Machine learning models search on the CSSE scale internally; see
+  # R/csse_internal.R.
+  csse_plan <- plan_internal_csse(metric, model, target_performance)
   validate_complexity(complexity)
   dc <- resolve_data_control(data_control, complexity)
 
@@ -478,8 +509,11 @@ simulate_continuous <- function(
 
   simulate_custom_args <- utils::modifyList(
     list(
-      metric_function = default_metric_generator(metric, data_function),
-      target_performance = target_performance,
+      metric_function = default_metric_generator(
+        csse_plan$metric,
+        data_function
+      ),
+      target_performance = csse_plan$target_performance,
       c_statistic = maximum_achievable_rsquared,
       data_function = data_function,
       model_function = model_function,
@@ -495,6 +529,9 @@ simulate_continuous <- function(
   suppressWarnings(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
+
+  # Put any internally-converted results back on the calibration slope scale.
+  output <- restore_calibration_slope_scale(output, csse_plan)
 
   metric_2 <- if (metric %in% c("csse", "calibration_slope")) {
     "r2"
@@ -605,6 +642,9 @@ simulate_survival <- function(
     target_performance = target_performance,
     maximum_achievable_performance = maximum_achievable_cindex
   )
+  # Machine learning models search on the CSSE scale internally; see
+  # R/csse_internal.R.
+  csse_plan <- plan_internal_csse(metric, model, target_performance)
   validate_complexity(complexity)
   dc <- resolve_data_control(data_control, complexity)
 
@@ -645,8 +685,11 @@ simulate_survival <- function(
 
   simulate_custom_args <- utils::modifyList(
     list(
-      metric_function = default_metric_generator(metric, data_function),
-      target_performance = target_performance,
+      metric_function = default_metric_generator(
+        csse_plan$metric,
+        data_function
+      ),
+      target_performance = csse_plan$target_performance,
       c_statistic = maximum_achievable_cindex,
       data_function = data_function,
       model_function = model_function,
@@ -662,6 +705,9 @@ simulate_survival <- function(
   suppressWarnings(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
+
+  # Put any internally-converted results back on the calibration slope scale.
+  output <- restore_calibration_slope_scale(output, csse_plan)
 
   metric_2 <- if (metric %in% c("csse", "calibration_slope")) {
     "cindex"
