@@ -93,7 +93,7 @@ default_models <- list(
       x <- d[, -1, drop = FALSE]
       y <- as.factor(d[, 1])
 
-      ranger::ranger(
+      fit_rf <- ranger::ranger(
         x = x,
         y = y,
         mtry = max(1, floor(ncol(x) / 3)),
@@ -102,6 +102,9 @@ default_models <- list(
         min.node.size = 15,
         num.threads = nthreads
       )
+
+      fit_rf$pmsims_train <- list(y = d[["y"]])
+      fit_rf
     },
     xgboost = function(
       d,
@@ -111,7 +114,7 @@ default_models <- list(
         eta = 0.05,
         max_depth = 4L,
         subsample = 0.8,
-        min_child_weight = 5L
+        min_child_weight = 15L
       )
     ) {
       # expects first column y (0/1), remaining columns predictors.
@@ -248,19 +251,31 @@ default_models <- list(
         "random-forest models"
       )
 
-      # ranger survival forest: formula interface with Surv()
-      ncores <- parallel::detectCores(logical = FALSE)
-      nthreads <- ncores - 2
-
+      # ranger survival forest via the x/y interface. The formula interface
+      # materialises a model frame that is prohibitively large at the sample
+      # sizes the search reaches, hence save.memory / keep.inbag = FALSE.
       stopifnot(all(c("time", "event") %in% colnames(d)))
-      formula <- stats::as.formula("survival::Surv(time, event) ~ .")
-      ranger::ranger(
-        formula,
-        data = d,
+
+      x <- d[, !(names(d) %in% c("time", "event")), drop = FALSE]
+      y <- survival::Surv(d$time, d$event)
+
+      fit_rf <- ranger::ranger(
+        x = x,
+        y = y,
         num.trees = 300,
-        min.node.size = 15,
-        num.threads = nthreads
+        min.node.size = 30,
+        mtry = max(1, floor(ncol(x) / 3)),
+        importance = "none",
+        save.memory = TRUE,
+        keep.inbag = FALSE,
+        num.threads = 2,
+        write.forest = TRUE
       )
+
+      # Carries the training outcome for the out-of-bag recalibration map
+      # fitted in rf_recal_survival() (see R/metric_generators.R).
+      fit_rf$pmsims_train <- list(time = d$time, event = d$event)
+      fit_rf
     },
     xgboost = function(
       d,
@@ -273,8 +288,8 @@ default_models <- list(
         min_child_weight = 15L
       )
     ) {
-      # XGBoost Cox objective: observed times as label, event indicator as
-      # sample weight (1 = event, 0 = censored) — a standard pragmatic approach.
+      # XGBoost Cox objective: censoring is encoded in the sign of the label
+      # (see below), which is the encoding survival:cox actually expects.
       # nrounds is selected via xgb.cv early stopping (see .xgb_cv_nrounds),
       # which prevents over-fitting the training hazard at small sample sizes
       # and stabilises the calibration slope toward 1 at moderate n.
@@ -284,12 +299,12 @@ default_models <- list(
         drop = FALSE
       ])
       label_time <- as.numeric(d$time)
-      event <- as.numeric(d$event)
-      dtrain <- xgboost::xgb.DMatrix(
-        data = x,
-        label = label_time,
-        weight = event
-      )
+      # survival:cox expects censoring encoded in the sign of the label:
+      # +t for an observed event, -t for a censored observation. The earlier
+      # label = time / weight = event encoding silently down-weighted censored
+      # rows to zero instead of treating them as censored.
+      lab <- ifelse(d$event == 1, label_time, -label_time)
+      dtrain <- xgboost::xgb.DMatrix(data = x, label = lab)
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
         params = params,

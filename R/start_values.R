@@ -529,7 +529,7 @@ compute_start_sample_sizes <- function(
         prevalence = 1 - censoring_rate,
         c_stat = target_performance,
         calibration_slope = NULL,
-        epv_value = 3 * (1 - censoring_rate),
+        epv_value = 5 * (1 - censoring_rate),
         outcome_type = "survival"
       )
 
