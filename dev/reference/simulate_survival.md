@@ -89,7 +89,7 @@ simulate_survival(
   squared error for optimisation and translated back before results are
   returned; you don't need to do anything, and `target_performance` is
   still given on the calibration slope scale. Results derived this way
-  are marked with a dagger in the printed output.
+  carry a footnote marker in the printed output.
 
   `"csse"` is the calibration slope squared error, \\-(1 - s)^2\\ for a
   calibration slope \\s\\, so that larger is better and 0 is perfect

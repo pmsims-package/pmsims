@@ -93,24 +93,37 @@ binary_example
     #>                     ┌────────────────────────────────────────┐
     #>                     │ pmsims: Sample size simulation summary │
     #>                     └────────────────────────────────────────┘
+    #> 
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
-    #>                                Outcome : binary
-    #>                      Signal predictors : 20
-    #>                       Noise predictors : 0
-    #>                         Predictor type : continuous
-    #>                     Outcome prevalence : 0.3
-    #>      Expected large-sample performance : C-statistic ('maximum_achievable_cstatistic') = 0.800
-    #>   Target for chosen performance metric : Calib Slope ('calib_slope') = 0.850
-    #>                                  Model : glm
-    #>                        Simulation reps : 1,000
+    #> 
+    #> Data-generating scenario
+    #>   Outcome                   Binary
+    #>   Prevalence                0.30
+    #>   Predictors                20 signal
+    #>   Predictor type            Continuous
+    #> 
+    #> Model and performance
+    #>   Model                     Logistic regression
+    #>   Large-sample C-statistic  0.800
+    #>   Sample-size criterion     Calib slope ≥ 0.850
+    #> 
+    #> Simulation
+    #>   Mode                      Assurance
+    #>   Replications              1,000
+    #> 
     #> ──────────────────────────────────── Results ───────────────────────────────────
-    #>              Final minimum sample size : 1,044
-    #>             Estimated performance at N : 0.849 (Calib Slope ('calib_slope') = 0.850)
-    #>            Estimated other metric at N : 0.782 (Auc ('auc'))
-    #>                                  Model : glm
-    #>                                   Mode : Assurance
-    #>                           Running time : 2 minutes 39 seconds
-    #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
+    #> 
+    #>   Minimum sample size       1,044
+    #> 
+    #>   Performance at N = 1,044
+    #>     Calib slope             0.849    (target ≥ 0.850)
+    #>     C-statistic             0.782
+    #> 
+    #>   Running time              2 minutes 39 seconds
+    #> 
+    #> ────────────────────────────────────────────────────────────────────────────────
+    #> Assurance mode selects N so that the target is achieved with high probability
+    #> across repeated datasets.
 
 Plot the estimated learning curve and identified sample size:
 
@@ -144,23 +157,36 @@ continuous_example
     #>                     ┌────────────────────────────────────────┐
     #>                     │ pmsims: Sample size simulation summary │
     #>                     └────────────────────────────────────────┘
+    #> 
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
-    #>                                Outcome : continuous
-    #>                      Signal predictors : 15
-    #>                       Noise predictors : 0
-    #>                         Predictor type : continuous
-    #>      Expected large-sample performance : R² ('maximum_achievable_rsquared') = 0.500
-    #>   Target for chosen performance metric : Calib Slope ('calib_slope') = 0.900
-    #>                                  Model : lm
-    #>                        Simulation reps : 1,000
+    #> 
+    #> Data-generating scenario
+    #>   Outcome                  Continuous
+    #>   Predictors               15 signal
+    #>   Predictor type           Continuous
+    #> 
+    #> Model and performance
+    #>   Model                    Linear regression
+    #>   Large-sample R²          0.500
+    #>   Sample-size criterion    Calib slope ≥ 0.900
+    #> 
+    #> Simulation
+    #>   Mode                     Assurance
+    #>   Replications             1,000
+    #> 
     #> ──────────────────────────────────── Results ───────────────────────────────────
-    #>              Final minimum sample size : 239
-    #>             Estimated performance at N : 0.900 (Calib Slope ('calib_slope') = 0.900)
-    #>            Estimated other metric at N : 0.486 (R2 ('r2'))
-    #>                                  Model : lm
-    #>                                   Mode : Assurance
-    #>                           Running time : 52 seconds
-    #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
+    #> 
+    #>   Minimum sample size      239
+    #> 
+    #>   Performance at N = 239
+    #>     Calib slope            0.900    (target ≥ 0.900)
+    #>     R²                     0.486
+    #> 
+    #>   Running time             52 seconds
+    #> 
+    #> ────────────────────────────────────────────────────────────────────────────────
+    #> Assurance mode selects N so that the target is achieved with high probability
+    #> across repeated datasets.
 
 ``` r
 

@@ -27,10 +27,12 @@
 <url><loc>https://pmsims-package.github.io/pmsims/dev/reference/parse_inputs.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/dev/reference/plot.pmsims.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/dev/reference/pmsims-package.html</loc></url>
+<url><loc>https://pmsims-package.github.io/pmsims/dev/reference/print.pmsims.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/dev/reference/simulate_continuous.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/dev/reference/simulate_survival.html</loc></url>
+<url><loc>https://pmsims-package.github.io/pmsims/dev/reference/summary.pmsims.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/dev/reference/survival_calib_slope_cox.html</loc></url>
 <url><loc>https://pmsims-package.github.io/pmsims/dev/reference/survival_tuning.html</loc></url>
 </urlset>
