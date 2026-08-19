@@ -549,3 +549,78 @@ test_that("a calibration slope target above 1 is restored above 1", {
   expect_equal(result$target_performance, 1.1)
   expect_equal(result$perf_n, 1.1)
 })
+
+test_that("resolve_data_control reports the configuration the generator uses", {
+  # Requested and effective values coincide when nothing is substituted.
+  plain <- resolve_data_control(list(predictor_distribution = "uniform"), 1)
+  expect_identical(plain$effective_distribution, "uniform")
+  expect_identical(plain$effective_nonlinear_strength, 0)
+
+  # Complexity 4 swaps a left-at-default "normal" for the Friedman-canonical
+  # "uniform", so the requested value would misdescribe the simulated data.
+  friedman <- resolve_data_control(NULL, 4)
+  expect_identical(friedman$predictor_distribution, "normal")
+  expect_identical(friedman$effective_distribution, "uniform")
+
+  # An explicit choice at complexity 4 is left alone.
+  explicit <- resolve_data_control(list(predictor_distribution = "t"), 4)
+  expect_identical(explicit$effective_distribution, "t")
+
+  # An unset nonlinear_strength picks up the per-complexity default.
+  expect_null(resolve_data_control(NULL, 2)$nonlinear_strength)
+  expect_identical(
+    resolve_data_control(NULL, 2)$effective_nonlinear_strength,
+    0.2
+  )
+  expect_identical(
+    resolve_data_control(NULL, 3)$effective_nonlinear_strength,
+    0.3
+  )
+
+  # An explicit nonlinear_strength is passed through.
+  explicit_ns <- resolve_data_control(list(nonlinear_strength = 0.45), 2)
+  expect_identical(explicit_ns$effective_nonlinear_strength, 0.45)
+})
+
+test_that("wrappers record the effective data-generating configuration", {
+  local_mocked_bindings(
+    binary_tuning = function(...) c(mu_lp = 0, sigma_sq = 1, beta_signal = 0.3),
+    simulate_custom = mock_simulate_custom,
+    .package = "pmsims"
+  )
+
+  # The mocked tuner returns a fixed beta_signal rather than one tuned for the
+  # Friedman signal, which makes the incidental metric_2 glm fit separate. That
+  # is an artefact of the mock, not of the configuration being asserted here.
+  result <- suppressWarnings(simulate_binary(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    complexity = 4,
+    outcome_prevalence = 0.2,
+    maximum_achievable_cstatistic = 0.75,
+    metric = "calibration_slope",
+    target_performance = 0.9,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance"
+  ))
+
+  expect_identical(result$complexity, 4)
+  # Not the requested "normal": complexity 4 draws uniform predictors.
+  expect_identical(result$predictor_distribution, "uniform")
+  expect_identical(result$correlation, 0.3)
+
+  quadratic <- suppressWarnings(simulate_binary(
+    signal_parameters = 10,
+    noise_parameters = 0,
+    complexity = 2,
+    outcome_prevalence = 0.2,
+    maximum_achievable_cstatistic = 0.75,
+    metric = "calibration_slope",
+    target_performance = 0.9,
+    n_reps_total = 40,
+    mean_or_assurance = "assurance"
+  ))
+
+  # Resolved from the complexity-level default rather than left NULL.
+  expect_identical(quadratic$nonlinear_strength, 0.2)
+})

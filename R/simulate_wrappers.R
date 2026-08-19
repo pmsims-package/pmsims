@@ -20,7 +20,14 @@
 #' @param complexity A single value in 1:4.
 #' @return A list with `nonlinear_strength`, `correlation`, `predictor_type`,
 #'   `distribution`, `binary_prevalence`, and the original
-#'   `predictor_distribution` (for reporting).
+#'   `predictor_distribution` (for reporting). Also returns the *effective*
+#'   values the generator will actually use — `effective_distribution` and
+#'   `effective_nonlinear_strength` — which differ from the requested ones
+#'   wherever the generator substitutes a complexity-level default (C4 swaps a
+#'   left-at-default `"normal"` for the Friedman-canonical `"uniform"`, and an
+#'   unset `nonlinear_strength` picks up the per-complexity default). These are
+#'   what the wrappers record and print, so that the reported configuration
+#'   describes the data that were simulated.
 #' @keywords internal
 #' @noRd
 resolve_data_control <- function(data_control, complexity) {
@@ -52,7 +59,19 @@ resolve_data_control <- function(data_control, complexity) {
     predictor_type = predictor_type,
     distribution = distribution,
     binary_prevalence = binary_prevalence,
-    predictor_distribution = ctrl$predictor_distribution
+    predictor_distribution = ctrl$predictor_distribution,
+    # Resolved through the same helpers the generator uses, so the reported
+    # configuration cannot drift from the simulated configuration.
+    effective_distribution = resolve_family(
+      complexity = complexity,
+      predictor_type = predictor_type,
+      distribution = distribution,
+      binary_prevalence = binary_prevalence
+    ),
+    effective_nonlinear_strength = resolve_nonlinear_strength(
+      nonlinear_strength = ctrl$nonlinear_strength,
+      complexity = complexity
+    )
   )
 }
 
@@ -392,9 +411,10 @@ simulate_binary <- function(
   output$signal_parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$complexity <- complexity
-  output$nonlinear_strength <- dc$nonlinear_strength
+  # Effective, not requested: see resolve_data_control().
+  output$nonlinear_strength <- dc$effective_nonlinear_strength
   output$correlation <- dc$correlation
-  output$predictor_distribution <- dc$predictor_distribution
+  output$predictor_distribution <- dc$effective_distribution
   output$predictor_type <- dc$predictor_type
   output$binary_predictor_prevalence <- dc$binary_prevalence
   output$outcome_prevalence <- outcome_prevalence
@@ -553,9 +573,10 @@ simulate_continuous <- function(
   output$signal_parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$complexity <- complexity
-  output$nonlinear_strength <- dc$nonlinear_strength
+  # Effective, not requested: see resolve_data_control().
+  output$nonlinear_strength <- dc$effective_nonlinear_strength
   output$correlation <- dc$correlation
-  output$predictor_distribution <- dc$predictor_distribution
+  output$predictor_distribution <- dc$effective_distribution
   output$predictor_type <- dc$predictor_type
   output$binary_predictor_prevalence <- dc$binary_prevalence
   output$maximum_achievable_rsquared <- maximum_achievable_rsquared
@@ -730,9 +751,10 @@ simulate_survival <- function(
   output$signal_parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$complexity <- complexity
-  output$nonlinear_strength <- dc$nonlinear_strength
+  # Effective, not requested: see resolve_data_control().
+  output$nonlinear_strength <- dc$effective_nonlinear_strength
   output$correlation <- dc$correlation
-  output$predictor_distribution <- dc$predictor_distribution
+  output$predictor_distribution <- dc$effective_distribution
   output$predictor_type <- dc$predictor_type
   output$binary_predictor_prevalence <- dc$binary_prevalence
   output$baseline_hazard <- baseline_hazard
