@@ -12,6 +12,20 @@
 - `metric = "csse"` remains available as an explicit choice for advanced
   use. Targets supplied that way must already be on the CSSE scale; no
   adjustment is applied.
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) now draws the
+  learning curve on the calibration slope scale for results that were
+  searched on the CSSE scale internally. Previously the curve was left
+  on the CSSE scale while the axis label, the target line and the min_n
+  marker had already been translated back, so the annotations sat far
+  off the data.
+- Printed results now report the data-generating configuration: signal
+  complexity, nonlinear strength (where it applies), predictor
+  distribution, predictor correlation, and binary predictor prevalence.
+  The values shown are the ones the generator actually used, so
+  complexity-level substitutions (such as complexity 4 drawing uniform
+  predictors) are visible rather than implied. The outcome prevalence
+  row is now labelled “Outcome prevalence” to distinguish it from the
+  predictor prevalence.
 - Long runs are now flagged up front: the adaptive first stage is timed
   and extrapolated, and runs estimated to exceed an hour warn before the
   main search begins.

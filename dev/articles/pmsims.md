@@ -95,10 +95,10 @@ binary_example
     #>                     └────────────────────────────────────────┘
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
     #>                                Outcome : binary
-    #>                         Predictor type : continuous
     #>                      Signal predictors : 20
     #>                       Noise predictors : 0
-    #>                             Prevalence : 0.3
+    #>                         Predictor type : continuous
+    #>                     Outcome prevalence : 0.3
     #>      Expected large-sample performance : C-statistic ('maximum_achievable_cstatistic') = 0.800
     #>   Target for chosen performance metric : Calib Slope ('calib_slope') = 0.850
     #>                                  Model : glm
@@ -146,9 +146,9 @@ continuous_example
     #>                     └────────────────────────────────────────┘
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
     #>                                Outcome : continuous
-    #>                         Predictor type : continuous
     #>                      Signal predictors : 15
     #>                       Noise predictors : 0
+    #>                         Predictor type : continuous
     #>      Expected large-sample performance : R² ('maximum_achievable_rsquared') = 0.500
     #>   Target for chosen performance metric : Calib Slope ('calib_slope') = 0.900
     #>                                  Model : lm
