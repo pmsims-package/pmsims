@@ -88,3 +88,66 @@ test_that("plot.pmsims draws without error for valid objects", {
 
   expect_no_error(pmsims:::plot.pmsims(object, plot = TRUE))
 })
+
+test_that("plot.pmsims converts a CSSE-scale curve back to calibration slope", {
+  # A calibration slope target with an ML model is searched on the CSSE scale,
+  # so the stored curve is CSSE while perf_n and the target have already been
+  # translated back. The plotted curve has to be translated too, or the target
+  # line and min_n marker float around 0.9 above the data.
+  object <- make_minimal_pmsims_object(metric = "calibration_slope")
+  object$internal_csse <- TRUE
+  object$csse_direction <- "below"
+  object$target_performance <- 0.9
+  object$perf_n <- 1 - sqrt(0.01)
+  object$mlpwr_ds$data <- list(
+    list(x = 50, y = c(-0.04, -0.02)),
+    list(x = 100, y = c(-0.02, -0.01))
+  )
+  object$mlpwr_ds$fit$fitfun <- function(n) -0.03
+
+  output <- pmsims:::plot.pmsims(object, plot = FALSE)
+
+  # Aggregation happens on the CSSE scale first: mean(-0.04, -0.02) = -0.03.
+  expect_equal(
+    output$observed_data$calibration_slope,
+    c(1 - sqrt(0.03), 1 - sqrt(0.015))
+  )
+  expect_true(all(output$predicted_data$calibration_slope == 1 - sqrt(0.03)))
+
+  # The curve now lives on the same scale as the annotations drawn over it.
+  expect_true(all(output$observed_data$calibration_slope > 0.5))
+})
+
+test_that("plot.pmsims honours the CSSE direction", {
+  object <- make_minimal_pmsims_object(metric = "calibration_slope")
+  object$internal_csse <- TRUE
+  object$csse_direction <- "above"
+  object$mlpwr_ds$data <- list(
+    list(x = 50, y = -0.04),
+    list(x = 100, y = -0.01)
+  )
+  object$mlpwr_ds$fit$fitfun <- function(n) -0.04
+
+  output <- pmsims:::plot.pmsims(object, plot = FALSE)
+
+  expect_equal(
+    output$observed_data$calibration_slope,
+    c(1 + sqrt(0.04), 1 + sqrt(0.01))
+  )
+})
+
+test_that("plot.pmsims leaves a directly-requested metric untouched", {
+  # metric = "csse" asked for explicitly is reported on the CSSE scale, and
+  # regression models never route through CSSE at all.
+  object <- make_minimal_pmsims_object(metric = "csse")
+  object$mlpwr_ds$data <- list(
+    list(x = 50, y = -0.04),
+    list(x = 100, y = -0.01)
+  )
+  object$mlpwr_ds$fit$fitfun <- function(n) -0.02
+
+  output <- pmsims:::plot.pmsims(object, plot = FALSE)
+
+  expect_equal(output$observed_data$csse, c(-0.04, -0.01))
+  expect_true(all(output$predicted_data$csse == -0.02))
+})
