@@ -130,10 +130,21 @@ test_that("print.pmsims footnotes an internally converted calibration slope", {
   object$model <- "rf"
   object$internal_csse <- TRUE
 
-  output <- paste(capture.output(print(object)), collapse = "\n")
+  output <- capture_pmsims_output(print(object))
 
-  expect_match(output, "\u2020 derived from calibration slope squared error")
-  expect_match(output, "Calibration slope \u2020", fixed = TRUE)
+  expect_match(
+    output,
+    paste0(
+      pmsims_footnote_marker(),
+      "Derived from the calibration-slope squared error"
+    ),
+    fixed = TRUE
+  )
+  expect_match(
+    output,
+    paste0("Calibration slope", pmsims_footnote_marker()),
+    fixed = TRUE
+  )
 })
 
 test_that("print.pmsims omits the footnote when no conversion was applied", {
@@ -142,7 +153,11 @@ test_that("print.pmsims omits the footnote when no conversion was applied", {
     target_performance = 0.9
   )
 
-  output <- paste(capture.output(print(object)), collapse = "\n")
+  output <- capture_pmsims_output(print(object))
 
-  expect_false(grepl("\u2020", output, fixed = TRUE))
+  expect_false(grepl(
+    "Derived from the calibration-slope",
+    output,
+    fixed = TRUE
+  ))
 })

@@ -145,6 +145,28 @@ make_metric_stub <- function(metric = "auc") {
   fn
 }
 
+# The printed summary is styled with cli, so strip any ANSI escapes before
+# matching on its text.
+capture_pmsims_output <- function(expr) {
+  cli::ansi_strip(paste(capture.output(expr), collapse = "\n"))
+}
+
+# The lines between the "Results" rule and the closing rule. cli draws rules
+# with "-" rather than a box-drawing character when unicode is unavailable, as
+# it is under testthat's reproducible output.
+pmsims_results_section <- function(output) {
+  lines <- strsplit(output, "\n", fixed = TRUE)[[1]]
+  start <- grep("Results", lines, fixed = TRUE)[1]
+  closing <- grep("^[-\u2500]+$", lines)
+  end <- closing[closing > start][1]
+  lines[seq(start + 1L, end - 1L)]
+}
+
+count_matches <- function(text, pattern) {
+  found <- gregexpr(pattern, text, fixed = TRUE)[[1]]
+  if (identical(as.integer(found), -1L)) 0L else length(found)
+}
+
 make_minimal_pmsims_object <- function(
   metric = "auc",
   target_performance = 0.8,

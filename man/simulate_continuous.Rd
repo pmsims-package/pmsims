@@ -52,7 +52,7 @@ machine-learning models (\code{"lasso"}, \code{"ridge"}, \code{"rf"}, \code{"xgb
 converted internally to the calibration slope squared error for
 optimisation and translated back before results are returned; you don't
 need to do anything, and \code{target_performance} is still given on the
-calibration slope scale. Results derived this way are marked with a dagger
+calibration slope scale. Results derived this way carry a footnote marker
 in the printed output.
 
 \code{"csse"} is the calibration slope squared error, \eqn{-(1 - s)^2} for a

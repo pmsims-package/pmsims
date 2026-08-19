@@ -6,19 +6,155 @@ test_that("print.pmsims rejects non-pmsims objects", {
   )
 })
 
-test_that("print.pmsims renders key fields and tolerates missing optional values", {
+test_that("print.pmsims groups the inputs and leads the results with N", {
   object <- make_minimal_pmsims_object()
   object$metric_2 <- NULL
   object$metric_2_at_n <- NULL
   object$simulation_time <- NA
 
-  output <- paste(capture.output(print(object)), collapse = "\n")
+  output <- capture_pmsims_output(print(object))
 
   expect_match(output, "pmsims: Sample size simulation summary", fixed = TRUE)
-  expect_match(output, "Final minimum sample size", fixed = TRUE)
-  expect_match(output, "Target for chosen performance metric", fixed = TRUE)
-  expect_match(output, "Signal predictors", fixed = TRUE)
-  expect_false(grepl("Number of predictors", output, fixed = TRUE))
+  expect_match(output, "Data-generating scenario", fixed = TRUE)
+  expect_match(output, "Model and performance", fixed = TRUE)
+  expect_match(output, "Sample-size criterion", fixed = TRUE)
+  expect_match(output, "Minimum sample size", fixed = TRUE)
+  expect_match(output, "Performance at N = 100", fixed = TRUE)
+  # An absent value drops its row rather than printing a placeholder.
+  expect_false(grepl("Running time", output, fixed = TRUE))
+  expect_false(grepl("Final minimum sample size", output, fixed = TRUE))
+})
+
+test_that("print.pmsims combines the predictor counts onto one line", {
+  object <- make_minimal_pmsims_object()
+
+  output <- capture_pmsims_output(print(object))
+
+  expect_match(output, "Predictors", fixed = TRUE)
+  expect_match(output, "5 signal + 2 noise", fixed = TRUE)
+  expect_false(grepl("Signal predictors", output, fixed = TRUE))
+  expect_false(grepl("Noise predictors", output, fixed = TRUE))
+})
+
+test_that("print.pmsims drops a zero predictor count", {
+  object <- make_minimal_pmsims_object()
+  object$noise_parameters <- 0L
+
+  output <- capture_pmsims_output(print(object))
+
+  expect_match(output, "5 signal", fixed = TRUE)
+  expect_false(grepl("0 noise", output, fixed = TRUE))
+})
+
+test_that("print.pmsims uses human-readable model names", {
+  logistic <- capture_pmsims_output(print(make_minimal_pmsims_object()))
+  expect_match(logistic, "Logistic regression", fixed = TRUE)
+
+  forest <- make_minimal_pmsims_object()
+  forest$model <- "rf"
+  expect_match(
+    capture_pmsims_output(print(forest)),
+    "Random forest",
+    fixed = TRUE
+  )
+
+  survival_forest <- make_minimal_pmsims_object()
+  survival_forest$model <- "rf"
+  survival_forest$outcome <- "survival"
+  expect_match(
+    capture_pmsims_output(print(survival_forest)),
+    "Random survival forest",
+    fixed = TRUE
+  )
+})
+
+test_that("print.pmsims hides internal identifiers unless asked for them", {
+  object <- make_minimal_pmsims_object(metric = "calibration_slope")
+  object$method <- "mlpwr"
+
+  output <- capture_pmsims_output(print(object))
+  expect_false(grepl("'calibration_slope'", output, fixed = TRUE))
+  expect_false(grepl("maximum_achievable_cstatistic", output, fixed = TRUE))
+  expect_false(grepl("'glm'", output, fixed = TRUE))
+
+  detailed <- capture_pmsims_output(print(object, verbose = TRUE))
+  expect_match(detailed, "'calibration_slope'", fixed = TRUE)
+  expect_match(detailed, "maximum_achievable_cstatistic", fixed = TRUE)
+  expect_match(detailed, "'glm'", fixed = TRUE)
+  expect_match(detailed, "Search method", fixed = TRUE)
+})
+
+test_that("print.pmsims states the criterion with the direction of improvement", {
+  slope_below <- make_minimal_pmsims_object(
+    metric = "calibration_slope",
+    target_performance = 0.9
+  )
+  expect_match(
+    capture_pmsims_output(print(slope_below)),
+    paste("Calibration slope", cli::symbol$geq, "0.900"),
+    fixed = TRUE
+  )
+
+  # Better means closer to 1, so a target above 1 reverses the operator.
+  slope_above <- make_minimal_pmsims_object(
+    metric = "calibration_slope",
+    target_performance = 1.1
+  )
+  expect_match(
+    capture_pmsims_output(print(slope_above)),
+    paste("Calibration slope", cli::symbol$leq, "1.100"),
+    fixed = TRUE
+  )
+
+  lower_is_better <- make_minimal_pmsims_object(
+    metric = "brier_score",
+    target_performance = 0.15
+  )
+  expect_match(
+    capture_pmsims_output(print(lower_is_better)),
+    paste("Brier score", cli::symbol$leq, "0.150"),
+    fixed = TRUE
+  )
+})
+
+test_that("print.pmsims shows the target alongside the achieved value", {
+  object <- make_minimal_pmsims_object(
+    metric = "calibration_slope",
+    target_performance = 0.9
+  )
+  object$perf_n <- 0.901
+
+  output <- capture_pmsims_output(print(object))
+
+  expect_match(output, "0.901", fixed = TRUE)
+  expect_match(
+    output,
+    paste0("(target ", cli::symbol$geq, " 0.900)"),
+    fixed = TRUE
+  )
+})
+
+test_that("print.pmsims names AUC and the C-statistic consistently", {
+  object <- make_minimal_pmsims_object(metric = "auc")
+  object$metric_2 <- NULL
+  object$metric_2_at_n <- NULL
+
+  output <- capture_pmsims_output(print(object))
+
+  expect_match(output, "Large-sample C-statistic", fixed = TRUE)
+  # The assumption, the criterion and the achieved value all use one name.
+  expect_equal(count_matches(output, "C-statistic"), 3L)
+  expect_false(grepl("AUC", output, fixed = TRUE))
+})
+
+test_that("print.pmsims does not repeat the model or the mode in the results", {
+  object <- make_minimal_pmsims_object()
+
+  results <- pmsims_results_section(capture_pmsims_output(print(object)))
+
+  expect_false(any(grepl("Logistic regression", results, fixed = TRUE)))
+  expect_false(any(grepl("Mode", results, fixed = TRUE)))
+  expect_true(any(grepl("Minimum sample size", results, fixed = TRUE)))
 })
 
 test_that("print.pmsims supports the legacy parameters field", {
@@ -26,10 +162,9 @@ test_that("print.pmsims supports the legacy parameters field", {
   object$parameters <- object$signal_parameters
   object$signal_parameters <- NULL
 
-  output <- paste(capture.output(print(object)), collapse = "\n")
+  output <- capture_pmsims_output(print(object))
 
-  expect_match(output, "Signal predictors", fixed = TRUE)
-  expect_false(grepl("Number of predictors", output, fixed = TRUE))
+  expect_match(output, "5 signal + 2 noise", fixed = TRUE)
 })
 
 test_that("print.pmsims supports legacy performance input fields", {
@@ -39,10 +174,10 @@ test_that("print.pmsims supports legacy performance input fields", {
   object$cstatistic <- object$maximum_achievable_cstatistic
   object$maximum_achievable_cstatistic <- NULL
 
-  output <- paste(capture.output(print(object)), collapse = "\n")
+  output <- capture_pmsims_output(print(object))
 
-  expect_match(output, "Outcome prevalence", fixed = TRUE)
-  expect_match(output, "C-statistic", fixed = TRUE)
+  expect_match(output, "Prevalence", fixed = TRUE)
+  expect_match(output, "Large-sample C-statistic", fixed = TRUE)
 })
 
 test_that("print.pmsims reports the data-generating configuration", {
@@ -52,12 +187,13 @@ test_that("print.pmsims reports the data-generating configuration", {
   object$predictor_distribution <- "normal"
   object$correlation <- 0.3
 
-  output <- paste(capture.output(print(object)), collapse = "\n")
+  output <- capture_pmsims_output(print(object))
 
-  expect_match(output, "Signal complexity", fixed = TRUE)
-  expect_match(output, "linear + quadratic", fixed = TRUE)
+  expect_match(output, "Signal form", fixed = TRUE)
+  expect_match(output, "Linear + quadratic", fixed = TRUE)
   expect_match(output, "Nonlinear strength", fixed = TRUE)
   expect_match(output, "Predictor distribution", fixed = TRUE)
+  expect_match(output, "Normal", fixed = TRUE)
   expect_match(output, "Predictor correlation", fixed = TRUE)
   # predictor_distribution supersedes the legacy predictor_type row.
   expect_false(grepl("Predictor type", output, fixed = TRUE))
@@ -73,9 +209,9 @@ test_that("print.pmsims omits nonlinear strength where it has no effect", {
     object$predictor_distribution <- "normal"
     object$correlation <- 0.3
 
-    output <- paste(capture.output(print(object)), collapse = "\n")
+    output <- capture_pmsims_output(print(object))
 
-    expect_match(output, "Signal complexity", fixed = TRUE)
+    expect_match(output, "Signal form", fixed = TRUE)
     expect_false(grepl("Nonlinear strength", output, fixed = TRUE))
   }
 })
@@ -88,7 +224,7 @@ test_that("print.pmsims reports predictor prevalence only for binary predictors"
   object$binary_predictor_prevalence <- 0.25
   object$correlation <- 0
 
-  output <- paste(capture.output(print(object)), collapse = "\n")
+  output <- capture_pmsims_output(print(object))
 
   expect_match(output, "Predictor prevalence", fixed = TRUE)
   expect_match(output, "0.25", fixed = TRUE)
@@ -101,10 +237,7 @@ test_that("print.pmsims reports predictor prevalence only for binary predictors"
   continuous$predictor_distribution <- "normal"
   continuous$binary_predictor_prevalence <- 0
 
-  continuous_output <- paste(
-    capture.output(print(continuous)),
-    collapse = "\n"
-  )
+  continuous_output <- capture_pmsims_output(print(continuous))
 
   expect_false(grepl("Predictor prevalence", continuous_output, fixed = TRUE))
 })
@@ -113,20 +246,83 @@ test_that("print.pmsims falls back to predictor type without a distribution", {
   # simulate_custom() results carry no data-generating configuration at all.
   object <- make_minimal_pmsims_object()
 
-  output <- paste(capture.output(print(object)), collapse = "\n")
+  output <- capture_pmsims_output(print(object))
 
   expect_match(output, "Predictor type", fixed = TRUE)
-  expect_false(grepl("Signal complexity", output, fixed = TRUE))
+  expect_match(output, "Continuous", fixed = TRUE)
+  expect_false(grepl("Signal form", output, fixed = TRUE))
   expect_false(grepl("Predictor correlation", output, fixed = TRUE))
 })
 
-test_that("summary.pmsims prints a compact summary", {
+test_that("print.pmsims footnotes a calibration slope derived from CSSE", {
+  object <- make_minimal_pmsims_object(metric = "calibration_slope")
+  object$internal_csse <- TRUE
+  object$csse_direction <- "below"
+  object$csse_perf_n <- -0.0098
+  object$csse_target_performance <- -0.01
+
+  output <- capture_pmsims_output(print(object))
+
+  expect_match(
+    output,
+    paste0("Calibration slope", pmsims_footnote_marker()),
+    fixed = TRUE
+  )
+  expect_match(
+    output,
+    paste0(pmsims_footnote_marker(), "Derived from the calibration-slope"),
+    fixed = TRUE
+  )
+
+  detailed <- capture_pmsims_output(print(object, verbose = TRUE))
+  expect_match(detailed, "Search scale ('csse')", fixed = TRUE)
+  expect_match(detailed, "-0.0098", fixed = TRUE)
+})
+
+test_that("print.pmsims closes with a note explaining the mode", {
+  assurance <- make_minimal_pmsims_object(mean_or_assurance = "assurance")
+  expect_match(
+    capture_pmsims_output(print(assurance)),
+    "Assurance mode selects N",
+    fixed = TRUE
+  )
+
+  average <- make_minimal_pmsims_object(mean_or_assurance = "mean")
+  expect_match(
+    capture_pmsims_output(print(average)),
+    "Mean mode selects N",
+    fixed = TRUE
+  )
+})
+
+test_that("print.pmsims reports an unreachable target without a performance block", {
+  object <- make_minimal_pmsims_object()
+  object$min_n <- "Not possible. Increase sample or lower performance"
+  object$perf_n <- object$min_n
+  object$metric_2 <- NULL
+  object$metric_2_at_n <- NULL
+
+  output <- capture_pmsims_output(print(object))
+
+  expect_match(output, "Not possible", fixed = TRUE)
+  expect_false(grepl("Performance at", output, fixed = TRUE))
+})
+
+test_that("summary.pmsims prints the detailed display", {
   object <- make_minimal_pmsims_object()
 
-  output <- paste(capture.output(summary(object)), collapse = "\n")
+  output <- capture_pmsims_output(summary(object))
 
-  expect_match(output, "Target performance", fixed = TRUE)
   expect_match(output, "Minimum sample size", fixed = TRUE)
+  expect_match(output, "Sample-size criterion", fixed = TRUE)
+  expect_match(output, "maximum_achievable_cstatistic", fixed = TRUE)
+  expect_match(output, "'auc'", fixed = TRUE)
+
+  expect_error(
+    pmsims:::summary.pmsims(list()),
+    "Object is not of class 'pmsims'",
+    fixed = TRUE
+  )
 })
 
 test_that("plot.pmsims returns plot data when plot is false", {
