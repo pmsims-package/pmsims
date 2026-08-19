@@ -41,8 +41,83 @@ test_that("print.pmsims supports legacy performance input fields", {
 
   output <- paste(capture.output(print(object)), collapse = "\n")
 
-  expect_match(output, "Prevalence", fixed = TRUE)
+  expect_match(output, "Outcome prevalence", fixed = TRUE)
   expect_match(output, "C-statistic", fixed = TRUE)
+})
+
+test_that("print.pmsims reports the data-generating configuration", {
+  object <- make_minimal_pmsims_object()
+  object$complexity <- 2
+  object$nonlinear_strength <- 0.2
+  object$predictor_distribution <- "normal"
+  object$correlation <- 0.3
+
+  output <- paste(capture.output(print(object)), collapse = "\n")
+
+  expect_match(output, "Signal complexity", fixed = TRUE)
+  expect_match(output, "linear + quadratic", fixed = TRUE)
+  expect_match(output, "Nonlinear strength", fixed = TRUE)
+  expect_match(output, "Predictor distribution", fixed = TRUE)
+  expect_match(output, "Predictor correlation", fixed = TRUE)
+  # predictor_distribution supersedes the legacy predictor_type row.
+  expect_false(grepl("Predictor type", output, fixed = TRUE))
+})
+
+test_that("print.pmsims omits nonlinear strength where it has no effect", {
+  # Complexity 1 is purely linear and complexity 4 is the canonical Friedman
+  # function; nonlinear_strength resolves to 0 and means nothing in both.
+  for (k in c(1, 4)) {
+    object <- make_minimal_pmsims_object()
+    object$complexity <- k
+    object$nonlinear_strength <- 0
+    object$predictor_distribution <- "normal"
+    object$correlation <- 0.3
+
+    output <- paste(capture.output(print(object)), collapse = "\n")
+
+    expect_match(output, "Signal complexity", fixed = TRUE)
+    expect_false(grepl("Nonlinear strength", output, fixed = TRUE))
+  }
+})
+
+test_that("print.pmsims reports predictor prevalence only for binary predictors", {
+  object <- make_minimal_pmsims_object()
+  object$complexity <- 1
+  object$predictor_type <- "binary"
+  object$predictor_distribution <- "binary"
+  object$binary_predictor_prevalence <- 0.25
+  object$correlation <- 0
+
+  output <- paste(capture.output(print(object)), collapse = "\n")
+
+  expect_match(output, "Predictor prevalence", fixed = TRUE)
+  expect_match(output, "0.25", fixed = TRUE)
+
+  # Continuous predictors carry a placeholder prevalence of 0, which would be
+  # meaningless to print.
+  continuous <- make_minimal_pmsims_object()
+  continuous$complexity <- 1
+  continuous$predictor_type <- "continuous"
+  continuous$predictor_distribution <- "normal"
+  continuous$binary_predictor_prevalence <- 0
+
+  continuous_output <- paste(
+    capture.output(print(continuous)),
+    collapse = "\n"
+  )
+
+  expect_false(grepl("Predictor prevalence", continuous_output, fixed = TRUE))
+})
+
+test_that("print.pmsims falls back to predictor type without a distribution", {
+  # simulate_custom() results carry no data-generating configuration at all.
+  object <- make_minimal_pmsims_object()
+
+  output <- paste(capture.output(print(object)), collapse = "\n")
+
+  expect_match(output, "Predictor type", fixed = TRUE)
+  expect_false(grepl("Signal complexity", output, fixed = TRUE))
+  expect_false(grepl("Predictor correlation", output, fixed = TRUE))
 })
 
 test_that("summary.pmsims prints a compact summary", {

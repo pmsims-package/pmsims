@@ -10,6 +10,13 @@
 - `metric = "csse"` remains available as an explicit choice for advanced use.
   Targets supplied that way must already be on the CSSE scale; no adjustment is
   applied.
+- Printed results now report the data-generating configuration: signal
+  complexity, nonlinear strength (where it applies), predictor distribution,
+  predictor correlation, and binary predictor prevalence. The values shown are
+  the ones the generator actually used, so complexity-level substitutions (such
+  as complexity 4 drawing uniform predictors) are visible rather than implied.
+  The outcome prevalence row is now labelled "Outcome prevalence" to
+  distinguish it from the predictor prevalence.
 - Long runs are now flagged up front: the adaptive first stage is timed and
   extrapolated, and runs estimated to exceed an hour warn before the main
   search begins.

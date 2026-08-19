@@ -89,6 +89,30 @@ print.pmsims <- function(x, ..., max_width = 80) {
     }
     format(v, big.mark = ",", scientific = FALSE)
   }
+  # fmt_num() renders absent values as "<NA>", which is_present() then treats as
+  # present. Use this for optional rows that should disappear entirely instead.
+  fmt_num_opt <- function(v, digits = 3) {
+    if (is_present(v)) fmt_num(v, digits) else NULL
+  }
+
+  complexity_label <- function(k) {
+    if (!is_present(k)) {
+      return(NULL)
+    }
+    structure_label <- switch(
+      as.character(k),
+      "1" = "linear",
+      "2" = "linear + quadratic",
+      "3" = "linear + quadratic + interaction",
+      "4" = "Friedman",
+      NULL
+    )
+    if (is.null(structure_label)) {
+      as.character(k)
+    } else {
+      paste0(k, " ", dimc(sprintf("(%s)", structure_label)))
+    }
+  }
 
   pretty_metric <- function(metric, mark = "") {
     if (!is_present(metric)) {
@@ -144,14 +168,33 @@ print.pmsims <- function(x, ..., max_width = 80) {
   }
   signal_parameters <- x$signal_parameters %||% x$parameters
   outcome_prevalence <- x$outcome_prevalence %||% x$prevalence
+  complexity <- x$complexity
+
+  # nonlinear_strength is resolved to 0 for complexity 1 and 4, where it has no
+  # effect, so only report it where it actually shapes the signal.
+  nonlinear_strength <- if (is_present(complexity) && complexity %in% c(2, 3)) {
+    fmt_num_opt(x$nonlinear_strength, 2)
+  }
+  # Objects from simulate_custom(), and those written before the 1.0 data
+  # generators, carry predictor_type but no distribution; fall back to it.
+  predictor_distribution <- x$predictor_distribution
+  predictor_type <- if (is.null(predictor_distribution)) x$predictor_type
+  predictor_prevalence <- if (identical(x$predictor_type, "binary")) {
+    fmt_num_opt(x$binary_predictor_prevalence, 2)
+  }
 
   # Inputs
   inputs <- list(
     "Outcome" = x$outcome,
-    "Predictor type" = x$predictor_type,
     "Signal predictors" = signal_parameters,
     "Noise predictors" = x$noise_parameters,
-    "Prevalence" = outcome_prevalence,
+    "Signal complexity" = complexity_label(complexity),
+    "Nonlinear strength" = nonlinear_strength,
+    "Predictor type" = predictor_type,
+    "Predictor distribution" = predictor_distribution,
+    "Predictor prevalence" = predictor_prevalence,
+    "Predictor correlation" = fmt_num_opt(x$correlation, 2),
+    "Outcome prevalence" = outcome_prevalence,
     "Baseline hazard" = x$baseline_hazard,
     "Censoring rate" = x$censoring_rate
   )
