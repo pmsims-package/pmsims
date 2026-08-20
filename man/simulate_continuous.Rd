@@ -37,8 +37,7 @@ data-generating mechanism and is not the minimum acceptable threshold.}
 
 \item{model}{Character string specifying the modelling algorithm. One of
 \code{"lm"} (linear regression), \code{"lasso"}, \code{"ridge"}, \code{"rf"} (random forest),
-or \code{"xgboost"} (gradient-boosted trees). The machine-learning options are
-experimental.}
+or \code{"xgboost"} (gradient-boosted trees).}
 
 \item{metric}{Character string naming the performance metric used to assess
 the sample size; defaults to \code{"calibration_slope"}. Metric identifiers use

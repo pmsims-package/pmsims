@@ -34,7 +34,8 @@ assurance**. Rather than relying on simple rules of thumb or closed‑form
 formulae, pmsims uses **simulation** to:
 
 -   Generate synthetic datasets that reflect your target setting
-    (outcome type, prevalence or $R^2$, signal vs. noise predictors);
+    (outcome type, prevalence or $R^2$, signal vs. noise predictors,
+    and how complex the underlying signal is);
 -   Fit a specified **model** (e.g., logistic regression or linear
     regression);
 -   Evaluate a chosen **performance metric** (e.g., calibration slope,
@@ -191,20 +192,36 @@ lists the key inputs.
     </tr>
 
     <tr class="arg-row" data-applies="all">
-      <td><code>predictor_type</code></td>
+      <td><code>complexity</code></td>
       <td>
-        <em>(chr)</em> Type of simulated predictors (<code>"continuous"</code> or <code>"binary"</code>).
+        <em>(int 1–4)</em> Signal structure of the data-generating mechanism:
+        <code>1</code> purely linear, <code>2</code> linear + quadratic,
+        <code>3</code> linear + quadratic + interaction, <code>4</code> the Friedman function.
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
-          <span class="badge badge--default">Default: <code>"continuous"</code></span>
+          <span class="badge badge--default">Default: <code>1</code></span>
         </div>
       </td>
     </tr>
 
     <tr class="arg-row" data-applies="all">
-      <td><code>binary_predictor_prevalence</code></td>
+      <td><code>data_control</code></td>
       <td>
-        <em>(num 0–1)</em> Prevalence for binary predictors (used only if <code>predictor_type = "binary"</code>).
+        <em>(list)</em> Optional list fine-tuning the predictors:
+        <ul>
+          <li><code>nonlinear_strength</code> <em>(num [0, 1))</em> — fraction of the
+            signal variance carried by the nonlinear, linearly-inaccessible component.
+            Complexity 2 and 3 only; ignored with a warning for 1 and 4.</li>
+          <li><code>correlation</code> <em>(num [-1, 1])</em> — pairwise correlation
+            among candidate predictors. Default <code>0.3</code>.</li>
+          <li><code>predictor_distribution</code> <em>(chr)</em> — one of
+            <code>"normal"</code>, <code>"uniform"</code>, <code>"binary"</code>,
+            <code>"exponential"</code>, <code>"lognormal"</code>, <code>"t"</code>,
+            <code>"laplace"</code>. Default <code>"normal"</code>.</li>
+          <li><code>binary_predictor_prevalence</code> <em>(num (0, 1))</em> — required
+            when <code>predictor_distribution = "binary"</code>, ignored otherwise.
+            Binary predictors are incompatible with complexity 2/3.</li>
+        </ul>
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: <code>NULL</code></span>
@@ -290,7 +307,10 @@ lists the key inputs.
     <tr class="arg-row" data-applies="all">
       <td><code>model</code></td>
       <td>
-        <em>(chr)</em> Model used for fitting (e.g. logistic, linear, or Cox).
+        <em>(chr)</em> Model used for fitting: <code>"glm"</code> / <code>"lm"</code> /
+        <code>"coxph"</code> depending on the outcome, or one of the experimental
+        machine-learning options <code>"lasso"</code>, <code>"ridge"</code>,
+        <code>"rf"</code>, <code>"xgboost"</code>.
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: <code>"glm"</code> / <code>"lm"</code> / <code>"coxph"</code></span>
@@ -301,7 +321,11 @@ lists the key inputs.
     <tr class="arg-row" data-applies="all">
       <td><code>metric</code></td>
       <td>
-        <em>(chr)</em> <strong>Performance metric</strong> used to estimate the minimum required sample size (e.g. calibration slope, R<sup>2</sup>, C-statistic).
+        <em>(chr)</em> <strong>Performance metric</strong> used to estimate the minimum
+        required sample size. Metric identifiers take one canonical form throughout the
+        package: <code>"calibration_slope"</code>, <code>"calibration_in_the_large"</code>,
+        <code>"auc"</code>, <code>"r2"</code>, <code>"cindex"</code>, and
+        <code>"csse"</code> (calibration slope squared error).
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: <code>"calibration_slope"</code></span>
@@ -395,6 +419,10 @@ lists the key inputs.
 >   effectively unlimited data and calibrates the data generator.
 > - `target_performance` is the minimum acceptable performance threshold used
 >   to determine the required sample size.
+> - `complexity` and `data_control` describe the data-generating mechanism, not
+>   the model you plan to fit. The same configuration is used both to calibrate
+>   the generator against `maximum_achievable_*` and to simulate the data, so a
+>   more complex signal generally implies a larger required sample size.
 > - For reproducibility, set a random seed (`set.seed()`).
 
 ## Installation
@@ -417,8 +445,8 @@ set.seed(123)
 binary_example <- simulate_binary(
   signal_parameters = 20,
   noise_parameters  = 0,
-  predictor_type = "continuous",
-  binary_predictor_prevalence = NULL,
+  complexity = 1,
+  data_control = list(correlation = 0.3),
   outcome_prevalence = 0.30,
   maximum_achievable_cstatistic = 0.80,
   model = "glm",
@@ -437,6 +465,11 @@ binary_example <- readRDS(file.path(vignette_data_dir, "binary.rds"))
 print(binary_example)
 ```
 
+The printed summary is a human-readable report. Implementation detail --- the
+internal metric identifiers, the engine settings used for the search, and any
+quantities recorded on an internal search scale --- is available through
+`summary(binary_example)` or, equivalently,
+`print(binary_example, verbose = TRUE)`.
 
 Plot the estimated learning curve and identified sample size:
 
@@ -452,7 +485,8 @@ plot(binary_example)
 continuous_example <- simulate_continuous(
   signal_parameters = 15,
   noise_parameters = 0,
-  predictor_type = "continuous",
+  complexity = 1,
+  data_control = list(correlation = 0.3),
   maximum_achievable_rsquared = 0.50,
   model = "lm",
   metric = "calibration_slope",

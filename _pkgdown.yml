@@ -30,7 +30,7 @@ navbar:
       menu:
         - text: dev
           href: https://pmsims-package.github.io/pmsims/dev/
-        - text: 0.5.0 (stable)
+        - text: 1.0.0 (stable)
           href: https://pmsims-package.github.io/pmsims/
     get-started:
       text: Get started
@@ -47,6 +47,8 @@ navbar:
       text: News
       menu:
         - text: Releases
+        - text: Version 1.0.0
+          href: articles/release-1-0-0.html
         - text: Version 0.5.0
           href: articles/release-0-5-0.html
         - text: "--------"
@@ -57,7 +59,7 @@ home:
   title: "pmsims"
   description: >
     Simulation-based sample size estimation for prediction modelling, with
-    experimental machine-learning extensions.
+    regression-based and machine-learning models.
   sidebar:
     structure: [links, license, community, citation, dev, authors]
 

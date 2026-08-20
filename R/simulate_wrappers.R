@@ -237,8 +237,7 @@ make_data_args <- function(
 #'   data-generating mechanism and is not the minimum acceptable threshold.
 #' @param model Character string specifying the modelling algorithm. One of
 #'   `"glm"` (logistic regression), `"lasso"`, `"ridge"`, `"rf"` (random
-#'   forest), or `"xgboost"` (gradient-boosted trees). The machine-learning
-#'   options are experimental.
+#'   forest), or `"xgboost"` (gradient-boosted trees).
 #' @param metric Character string naming the performance metric used to assess
 #'   the sample size; defaults to `"calibration_slope"`. Metric identifiers use
 #'   one canonical form throughout the package, such as `"calibration_slope"`,
@@ -447,8 +446,7 @@ simulate_binary <- function(
 #'   data-generating mechanism and is not the minimum acceptable threshold.
 #' @param model Character string specifying the modelling algorithm. One of
 #'   `"lm"` (linear regression), `"lasso"`, `"ridge"`, `"rf"` (random forest),
-#'   or `"xgboost"` (gradient-boosted trees). The machine-learning options are
-#'   experimental.
+#'   or `"xgboost"` (gradient-boosted trees).
 #'
 #' @return An object of class `"pmsims"` containing the estimated minimum sample
 #'   size and simulation diagnostics (inputs, fitted GP curve, intermediate
@@ -612,7 +610,6 @@ simulate_continuous <- function(
 #' @param model Character string specifying the modelling algorithm. One of
 #'   `"coxph"` (Cox proportional hazards), `"lasso"`, `"ridge"`, `"rf"` (random
 #'   survival forest), or `"xgboost"` (gradient boosting with a Cox objective).
-#'   The machine-learning options are experimental.
 #'
 #' @return An object of class `"pmsims"` containing the estimated minimum sample
 #'   size and simulation diagnostics (inputs, fitted GP curve, intermediate

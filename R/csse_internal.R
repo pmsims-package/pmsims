@@ -1,12 +1,16 @@
 # =============================================================================
 # Internal calibration-slope <-> CSSE conversion
 #
-# Optimising the calibration slope directly is unreliable for the machine
-# learning models: the search rarely settles on a usable sample size. The
-# calibration slope squared error (CSSE) behaves much better as a search
-# target, so when a user asks for `metric = "calibration_slope"` with an ML
-# model we run the search on the CSSE scale internally and translate the result
-# back before returning it.
+# The search minimises |M(n) - target|, so it needs a metric that improves
+# monotonically with n. The calibration slope qualifies for GLM / LM / Cox,
+# which overfit and approach 1 from below. It does not for the penalised and
+# tree-based learners: depending on how strongly the fit is shrunk their slope
+# can approach 1 from either side, so a one-sided slope target can be met at
+# more than one n and the search has no unique solution. CSSE is a squared
+# distance from perfect calibration and so improves monotonically whichever way
+# the miscalibration runs, which is why we run the search on the CSSE scale
+# internally when a user asks for `metric = "calibration_slope"` with an ML
+# model, and translate the result back before returning it.
 #
 # CSSE is defined as -(1 - slope)^2, i.e. negated squared error, so that larger
 # is better and the optimum is 0. Squaring discards the sign of (1 - slope), so

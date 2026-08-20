@@ -47,8 +47,7 @@ censoring). Higher values imply fewer observed events for a fixed \eqn{n}.}
 
 \item{model}{Character string specifying the modelling algorithm. One of
 \code{"coxph"} (Cox proportional hazards), \code{"lasso"}, \code{"ridge"}, \code{"rf"} (random
-survival forest), or \code{"xgboost"} (gradient boosting with a Cox objective).
-The machine-learning options are experimental.}
+survival forest), or \code{"xgboost"} (gradient boosting with a Cox objective).}
 
 \item{metric}{Character string naming the performance metric used to assess
 the sample size; defaults to \code{"calibration_slope"}. Metric identifiers use
