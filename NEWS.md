@@ -23,8 +23,12 @@
   The outcome prevalence row is now labelled "Outcome prevalence" to
   distinguish it from the predictor prevalence.
 - Long runs are now flagged up front: the adaptive first stage is timed and
-  extrapolated, and runs estimated to exceed an hour warn before the main
-  search begins.
+  extrapolated to the full search before it begins. Runs estimated to take more
+  than 30 minutes report the estimate; runs estimated to take more than two
+  hours also warn, and ask for confirmation before continuing. The prompt
+  appears only in interactive sessions, so scripts, CI and vignette builds run
+  unattended as before, and it can be switched off with
+  `options(pmsims.confirm_long_runs = FALSE)`.
 
 # pmsims 0.5.0
 

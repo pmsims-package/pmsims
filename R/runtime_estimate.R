@@ -5,7 +5,9 @@
 # -- are slow enough that a full run can take many hours. Rather than a blanket
 # "this model is slow" warning, the first (adaptive) stage is timed and used to
 # extrapolate the cost of the full run. Users are only told when the estimate
-# is genuinely long.
+# is genuinely long, and the strength of the message scales with it: a note for
+# a run measured in tens of minutes, a warning and a confirmation prompt for
+# one that will occupy the session for the rest of the afternoon.
 #
 # The extrapolation assumes fitting cost grows roughly linearly with the
 # training sample size, so stage-1 time is converted to a cost per unit of
@@ -13,8 +15,10 @@
 # sample sizes from the bounds stage 1 established.
 # =============================================================================
 
-# Runs estimated to exceed this many seconds trigger the warning.
-long_run_threshold_secs <- 3600
+# Runs estimated to exceed this many seconds get a brief note.
+long_run_notice_secs <- 30 * 60
+# Runs estimated to exceed this many seconds also ask the user to confirm.
+long_run_confirm_secs <- 2 * 60 * 60
 
 #' Estimate total runtime from the timed adaptive stage
 #'
@@ -85,10 +89,49 @@ estimate_total_runtime <- function(
   stage_1_secs + secs_per_unit * work_2
 }
 
-#' Warn when the estimated runtime is long
+#' Describe a duration in the largest unit that keeps it readable
+#'
+#' @param secs Numeric seconds.
+#' @return A single string such as `"45 minutes"` or `"3.2 hours"`.
+#' @keywords internal
+#' @noRd
+format_runtime <- function(secs) {
+  hours <- secs / 3600
+  if (hours < 1) {
+    sprintf("%.0f minutes", secs / 60)
+  } else if (hours < 48) {
+    sprintf("%.1f hours", hours)
+  } else {
+    sprintf("%.1f days", hours / 24)
+  }
+}
+
+#' Ask the user whether to continue with a very long run
+#'
+#' Only asks when there is somebody there to answer. Non-interactive sessions
+#' (scripts, CI, vignette builds) and users who have set
+#' `pmsims.confirm_long_runs` to `FALSE` continue without being prompted.
+#'
+#' @return `TRUE` to proceed, `FALSE` to cancel.
+#' @keywords internal
+#' @noRd
+confirm_long_run <- function() {
+  if (!interactive()) {
+    return(TRUE)
+  }
+  if (!isTRUE(getOption("pmsims.confirm_long_runs", TRUE))) {
+    return(TRUE)
+  }
+
+  utils::menu(c("Continue", "Cancel"), title = "Start this run?") == 1L
+}
+
+#' Tell the user when the estimated runtime is long
 #'
 #' Emits an immediate alert (not a deferred `warning()`, which the user would
-#' only see once the run they were being warned about had finished).
+#' only see once the run they were being warned about had finished). Runs past
+#' `long_run_notice_secs` get a note; runs past `long_run_confirm_secs` get a
+#' warning and, in an interactive session, a chance to cancel.
 #'
 #' @inheritParams estimate_total_runtime
 #' @param model Optional character model name, used in the message.
@@ -113,34 +156,37 @@ warn_if_long_run <- function(
     max_sample_size = max_sample_size
   )
 
-  if (!is.finite(estimated_secs) || estimated_secs <= long_run_threshold_secs) {
+  if (!is.finite(estimated_secs) || estimated_secs <= long_run_notice_secs) {
     return(invisible(estimated_secs))
   }
 
-  hours <- estimated_secs / 3600
-  duration <- if (hours >= 48) {
-    sprintf("%.1f days", hours / 24)
-  } else {
-    sprintf("%.1f hours", hours)
-  }
+  duration <- format_runtime(estimated_secs)
   model_label <- if (
     is.character(model) && length(model) == 1L && !is.na(model)
   ) {
-    sprintf(" ('%s')", model)
+    sprintf(" (model '%s')", model)
   } else {
     ""
   }
 
-  msg <- sprintf(
-    "This run is estimated to take approximately %s%s. Reduce 'n_reps_total' or use a faster model if that is too long.",
-    duration,
-    model_label
-  )
+  # Between the two thresholds a note is enough: long enough to be worth
+  # knowing about, not long enough to interrupt for.
+  if (estimated_secs <= long_run_confirm_secs) {
+    cli::cli_alert_info(
+      "This run is estimated to take about {duration}{model_label}."
+    )
+    return(invisible(estimated_secs))
+  }
 
-  if (requireNamespace("cli", quietly = TRUE)) {
-    cli::cli_alert_warning(msg)
-  } else {
-    message(msg)
+  cli::cli_alert_warning(
+    "This run is estimated to take about {duration}{model_label}."
+  )
+  cli::cli_bullets(c(
+    "i" = "Reduce {.arg n_reps_total}, narrow the sample size range, or choose a faster model to shorten it."
+  ))
+
+  if (!confirm_long_run()) {
+    cli::cli_abort("Run cancelled.", call = NULL)
   }
 
   invisible(estimated_secs)

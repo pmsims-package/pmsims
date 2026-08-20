@@ -584,6 +584,9 @@ calculate_mlpwr_bs <- function(
     mean_or_assurance = mean_or_assurance
   )
 
+  # Timed so the cost of the full run can be extrapolated from it, as in
+  # calculate_mlpwr() (see R/runtime_estimate.R).
+  stage_1_start <- Sys.time()
   start_values <- calculate_adaptive_bounds(
     data_function = data_function,
     model_function = model_function,
@@ -598,6 +601,11 @@ calculate_mlpwr_bs <- function(
     mean_or_assurance = mean_or_assurance,
     verbose = FALSE
   )
+  stage_1_secs <- as.numeric(difftime(
+    Sys.time(),
+    stage_1_start,
+    units = "secs"
+  ))
 
   prev_min_sample_size <- start_values$min_sample_size
   prev_max_sample_size <- start_values$max_sample_size
@@ -670,6 +678,18 @@ calculate_mlpwr_bs <- function(
   } else {
     ci <- NULL
   }
+
+  # Extrapolate the timed first stage to the full run and tell the user if it
+  # is going to be a long one. Done once the replication budget is settled.
+  warn_if_long_run(
+    stage_1_secs = stage_1_secs,
+    track = start_values$track,
+    n_reps_per = n_reps_per,
+    n_reps_total = n_reps_total,
+    min_sample_size = prev_min_sample_size,
+    max_sample_size = prev_max_sample_size,
+    model = attr(model_function, "model", exact = TRUE)
+  )
 
   # Perform search using mlpwr
   get_start_bounds <- adaptive_startvalues(

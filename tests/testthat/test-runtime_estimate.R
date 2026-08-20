@@ -70,7 +70,7 @@ test_that("a long estimated run warns the user", {
       max_sample_size = 4000,
       model = "rf"
     ),
-    "estimated to take approximately"
+    "estimated to take about"
   )
 })
 
@@ -90,6 +90,87 @@ test_that("the long-run warning names the model and reports hours", {
 
   expect_match(msg, "'rf'", fixed = TRUE)
   expect_match(msg, "hours", fixed = TRUE)
+})
+
+test_that("a moderately long run is noted but not confirmed", {
+  # 100s over 3,000 units of stage-1 work, extrapolated to 300 x 300 units of
+  # stage-2 work, gives ~52 minutes: past the notice threshold, short of the
+  # confirmation one.
+  called <- FALSE
+  testthat::local_mocked_bindings(
+    confirm_long_run = function() {
+      called <<- TRUE
+      TRUE
+    }
+  )
+
+  msg <- capture_messages(
+    warn_if_long_run(
+      stage_1_secs = 100,
+      track = make_track(c(100, 200)),
+      n_reps_per = 10,
+      n_reps_total = 300,
+      min_sample_size = 200,
+      max_sample_size = 400,
+      model = "glm"
+    )
+  )
+  msg <- paste(msg, collapse = "\n")
+
+  expect_match(msg, "estimated to take about")
+  # A note, not the warning's follow-up advice, and no prompt.
+  expect_no_match(msg, "n_reps_total", fixed = TRUE)
+  expect_false(called)
+})
+
+test_that("declining the confirmation stops the run", {
+  testthat::local_mocked_bindings(confirm_long_run = function() FALSE)
+
+  expect_error(
+    suppressMessages(warn_if_long_run(
+      stage_1_secs = 600,
+      track = make_track(c(1000, 2000)),
+      n_reps_per = 20,
+      n_reps_total = 1000,
+      min_sample_size = 2000,
+      max_sample_size = 4000,
+      model = "rf"
+    )),
+    "Run cancelled"
+  )
+})
+
+test_that("accepting the confirmation returns the estimate", {
+  testthat::local_mocked_bindings(confirm_long_run = function() TRUE)
+
+  estimated <- suppressMessages(warn_if_long_run(
+    stage_1_secs = 600,
+    track = make_track(c(1000, 2000)),
+    n_reps_per = 20,
+    n_reps_total = 1000,
+    min_sample_size = 2000,
+    max_sample_size = 4000,
+    model = "rf"
+  ))
+
+  expect_gt(estimated, long_run_confirm_secs)
+})
+
+test_that("non-interactive sessions are never prompted", {
+  # Tests always run non-interactively, so this is the path scripts, CI and
+  # vignette builds take.
+  expect_true(confirm_long_run())
+
+  withr_option <- getOption("pmsims.confirm_long_runs")
+  on.exit(options(pmsims.confirm_long_runs = withr_option), add = TRUE)
+  options(pmsims.confirm_long_runs = FALSE)
+  expect_true(confirm_long_run())
+})
+
+test_that("durations are described in readable units", {
+  expect_equal(format_runtime(45 * 60), "45 minutes")
+  expect_equal(format_runtime(3.5 * 3600), "3.5 hours")
+  expect_equal(format_runtime(72 * 3600), "3.0 days")
 })
 
 test_that("a short estimated run stays quiet", {
