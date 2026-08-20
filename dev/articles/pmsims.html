@@ -547,7 +547,7 @@ complex signal generally implies a larger required sample size.</li>
 <span><span class="co">#&gt;     Calibration slope       0.849    <span style="color: #555555;">(target ≥ 0.850)</span></span></span>
 <span><span class="co">#&gt;     C-statistic             0.794</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   <span style="color: #555555;">Running time</span>              <span style="color: #555555;">2 minutes 35 seconds</span></span></span>
+<span><span class="co">#&gt;   <span style="color: #555555;">Running time</span>              <span style="color: #555555;">2 minutes 43 seconds</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ────────────────────────────────────────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #555555; font-style: italic;">Assurance mode selects N so that the target is achieved with high probability</span></span></span>
@@ -574,7 +574,7 @@ available through <code>summary(binary_example)</code> or, equivalently,
 <span>  maximum_achievable_rsquared <span class="op">=</span> <span class="fl">0.50</span>,</span>
 <span>  model <span class="op">=</span> <span class="st">"lm"</span>,</span>
 <span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span>
-<span>  target_performance <span class="op">=</span> <span class="fl">0.90</span>,</span>
+<span>  target_performance <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span></span>
 <span><span class="op">)</span></span>
@@ -596,7 +596,7 @@ available through <code>summary(binary_example)</code> or, equivalently,
 <span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">Model and performance</span></span></span>
 <span><span class="co">#&gt;   Model                    Linear regression</span></span>
 <span><span class="co">#&gt;   Large-sample R²          0.500</span></span>
-<span><span class="co">#&gt;   Sample-size criterion    Calibration slope ≥ 0.900</span></span>
+<span><span class="co">#&gt;   Sample-size criterion    Calibration slope ≥ 0.950</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">Simulation</span></span></span>
 <span><span class="co">#&gt;   Mode                     Assurance</span></span>
@@ -604,13 +604,13 @@ available through <code>summary(binary_example)</code> or, equivalently,
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ──────────────────────────────────── Results ───────────────────────────────────</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   <span style="font-weight: bold;">Minimum sample size</span>      <span style="color: #0000BB; font-weight: bold;">201</span></span></span>
+<span><span class="co">#&gt;   <span style="font-weight: bold;">Minimum sample size</span>      <span style="color: #0000BB; font-weight: bold;">685</span></span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   <span style="font-weight: bold;">Performance at N = 201</span></span></span>
-<span><span class="co">#&gt;     Calibration slope      0.900    <span style="color: #555555;">(target ≥ 0.900)</span></span></span>
-<span><span class="co">#&gt;     R²                     0.465</span></span>
+<span><span class="co">#&gt;   <span style="font-weight: bold;">Performance at N = 685</span></span></span>
+<span><span class="co">#&gt;     Calibration slope      0.950    <span style="color: #555555;">(target ≥ 0.950)</span></span></span>
+<span><span class="co">#&gt;     R²                     0.488</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   <span style="color: #555555;">Running time</span>             <span style="color: #555555;">1 minute 58 seconds</span></span></span>
+<span><span class="co">#&gt;   <span style="color: #555555;">Running time</span>             <span style="color: #555555;">1 minute 51 seconds</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ────────────────────────────────────────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #555555; font-style: italic;">Assurance mode selects N so that the target is achieved with high probability</span></span></span>

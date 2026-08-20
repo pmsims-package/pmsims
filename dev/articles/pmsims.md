@@ -127,7 +127,7 @@ binary_example
     #>     Calibration slope       0.849    (target ≥ 0.850)
     #>     C-statistic             0.794
     #> 
-    #>   Running time              2 minutes 35 seconds
+    #>   Running time              2 minutes 43 seconds
     #> 
     #> ────────────────────────────────────────────────────────────────────────────────
     #> Assurance mode selects N so that the target is achieved with high probability
@@ -161,7 +161,7 @@ continuous_example <- simulate_continuous(
   maximum_achievable_rsquared = 0.50,
   model = "lm",
   metric = "calibration_slope",
-  target_performance = 0.90,
+  target_performance = 0.95,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )
@@ -185,7 +185,7 @@ continuous_example
     #> Model and performance
     #>   Model                    Linear regression
     #>   Large-sample R²          0.500
-    #>   Sample-size criterion    Calibration slope ≥ 0.900
+    #>   Sample-size criterion    Calibration slope ≥ 0.950
     #> 
     #> Simulation
     #>   Mode                     Assurance
@@ -193,13 +193,13 @@ continuous_example
     #> 
     #> ──────────────────────────────────── Results ───────────────────────────────────
     #> 
-    #>   Minimum sample size      201
+    #>   Minimum sample size      685
     #> 
-    #>   Performance at N = 201
-    #>     Calibration slope      0.900    (target ≥ 0.900)
-    #>     R²                     0.465
+    #>   Performance at N = 685
+    #>     Calibration slope      0.950    (target ≥ 0.950)
+    #>     R²                     0.488
     #> 
-    #>   Running time             1 minute 58 seconds
+    #>   Running time             1 minute 51 seconds
     #> 
     #> ────────────────────────────────────────────────────────────────────────────────
     #> Assurance mode selects N so that the target is achieved with high probability

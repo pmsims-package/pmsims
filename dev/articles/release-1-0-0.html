@@ -98,16 +98,15 @@
 The <a href="release-0-5-0.html">0.5.0 release</a> established the
 simulation-based framework for minimum sample size estimation; 1.0.0
 focuses on making the simulated data look more like the data researchers
-actually work with, and on making the sample-size search more dependable
-when it does.</p>
+actually work with, and on making the sample-size search more
+dependable.</p>
 <div class="section level2">
 <h2 id="more-realistic-data-generating-mechanisms">More realistic data-generating mechanisms<a class="anchor" aria-label="anchor" href="#more-realistic-data-generating-mechanisms"></a>
 </h2>
-<p>In 0.5.0 the simulated signal was linear. That is a reasonable
-starting point, but it flatters models that assume linearity and it
-understates how much data a flexible model needs. 1.0.0 adds four levels
-of signal complexity, selected with the new <code>complexity</code>
-argument:</p>
+<p>In 0.5.0 the simulated signal was always linear, which makes life
+easy for models that assume linearity and understates the sample size
+needed by more flexible models. 1.0.0 adds four levels of signal
+complexity, set with the new <code>complexity</code> argument:</p>
 <table class="table">
 <thead><tr class="header">
 <th><code>complexity</code></th>
@@ -139,50 +138,73 @@ linearly-inaccessible component), <code>correlation</code> between
 candidate predictors, the <code>predictor_distribution</code> (normal,
 uniform, binary, exponential, lognormal, t, or Laplace), and
 <code>binary_predictor_prevalence</code> for binary predictors.</p>
-<p>These options only work if the tuning step that calibrates the data
-generator against <code>maximum_achievable_cstatistic</code> (or
+<p>These options change the data, so the tuning step that calibrates the
+data generator against <code>maximum_achievable_cstatistic</code> (or
 <code>maximum_achievable_rsquared</code> /
-<code>maximum_achievable_cindex</code>) sees the same world as the
-simulation itself. The binary, continuous, and survival tuners have
-therefore been updated to build their unit linear predictor under the
-<em>same</em> data-generating configuration used for the sample-size
-simulation, so that the requested large-sample performance is the
-performance actually recovered.</p>
+<code>maximum_achievable_cindex</code>) has to take them into account as
+well. The binary, continuous, and survival tuners now build their unit
+linear predictor under the same data-generating configuration as the
+sample-size simulation, so that the simulation achieves the maximum
+achievable performance you asked for.</p>
 </div>
 <div class="section level2">
 <h2 id="models-and-metrics">Models and metrics<a class="anchor" aria-label="anchor" href="#models-and-metrics"></a>
 </h2>
-<p>Ridge regression joins lasso, random forest, and XGBoost as a model
-option across binary, continuous, and survival outcomes, and the
-random-forest defaults and XGBoost tuning have been refined. These sit
-alongside the regression-based models (linear, logistic, and Cox) as
-fully supported choices.</p>
+<p>Ridge regression is new in 1.0.0. The full set of models is now:</p>
+<table class="table">
+<thead><tr class="header">
+<th>Outcome</th>
+<th>
+<code>model</code> options</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Binary</td>
+<td>
+<code>"glm"</code>, <code>"lasso"</code>, <code>"ridge"</code>,
+<code>"rf"</code>, <code>"xgboost"</code>
+</td>
+</tr>
+<tr class="even">
+<td>Continuous</td>
+<td>
+<code>"lm"</code>, <code>"lasso"</code>, <code>"ridge"</code>,
+<code>"rf"</code>, <code>"xgboost"</code>
+</td>
+</tr>
+<tr class="odd">
+<td>Survival</td>
+<td>
+<code>"coxph"</code>, <code>"lasso"</code>, <code>"ridge"</code>,
+<code>"rf"</code>, <code>"xgboost"</code>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Random-forest defaults and XGBoost tuning have also been refined.</p>
 <p>There is also a new metric, calibration slope squared error
 (<code>"csse"</code>), defined as <span class="math inline">\(-(1 -
 s)^2\)</span> for a calibration slope <span class="math inline">\(s\)</span>, so that larger is better and
-<code>0</code> is perfect calibration. Unlike the calibration slope
-itself, it penalises slopes above 1 as well as below it, which matters
-for models that can under-fit as well as over-fit.</p>
-<p>The reason it exists is monotonicity. The search looks for the sample
-size at which performance <em>equals</em> the requested target, and that
-is only well defined when the metric improves monotonically with <span class="math inline">\(n\)</span>. The calibration slope behaves that way
-for classical regression models, which overfit at small <span class="math inline">\(n\)</span> and approach 1 from below. Penalised
-and tree-based learners are different: depending on how strongly the fit
-is shrunk, their slope can approach 1 from either side, so a one-sided
-slope target can be met at more than one sample size and the search has
-no unique solution. Because CSSE measures squared distance from perfect
-calibration, it improves monotonically whichever direction the
-miscalibration runs in, which restores a single well-defined
-crossing.</p>
-<p>You mostly do not need to think about this. When you ask for
-<code>metric = "calibration_slope"</code> with one of the
+<code>0</code> is perfect calibration. We added it because the search
+needs a metric that improves steadily as <span class="math inline">\(n\)</span> grows: it looks for the sample size at
+which performance <em>equals</em> the requested target, and that sample
+size is only unique if the metric moves in one direction. The
+calibration slope does this for classical regression models, which
+overfit at small <span class="math inline">\(n\)</span> and approach 1
+from below. Penalised and tree-based models can approach 1 from either
+side, depending on how strongly the fit is shrunk, so a one-sided slope
+target can be met at more than one sample size. CSSE measures squared
+distance from perfect calibration, so it improves whichever direction
+the miscalibration runs in.</p>
+<p>In most cases this is handled for you. With
+<code>metric = "calibration_slope"</code> and one of the
 machine-learning models, <code>pmsims</code> optimises on the CSSE scale
-internally and translates the answer back before returning it —
-<code>target_performance</code> is still given on the calibration slope
-scale, and results obtained this way are marked with a dagger in the
-printed output. <code>"csse"</code> can also be requested directly, in
-which case you supply <code>target_performance</code> on the CSSE scale
-(a slope target of <code>0.9</code> corresponds to a CSSE target of
+internally and converts the result back. <code>target_performance</code>
+is still supplied on the calibration slope scale, and results obtained
+this way are marked with a dagger in the printed output.</p>
+<p><code>"csse"</code> can also be requested directly. In that case
+<code>target_performance</code> is supplied on the CSSE scale (a slope
+target of <code>0.9</code> corresponds to a CSSE target of
 <code>-0.01</code>) and results are reported on that scale.</p>
 <p>Finally, metric identifiers now take one canonical form everywhere —
 wrapper inputs, metric generators, returned objects, and printed output
@@ -193,8 +215,8 @@ all use <code>"calibration_slope"</code>,
 <div class="section level2">
 <h2 id="a-more-robust-search">A more robust search<a class="anchor" aria-label="anchor" href="#a-more-robust-search"></a>
 </h2>
-<p>Several changes make the sample-size search less likely to fail or
-mislead: adaptive bounds have been improved, targets that appear to be
+<p>Several changes make the sample-size search less likely to fail:
+adaptive bounds have been improved, targets that appear to be
 unreachable are now detected and reported rather than searched for
 indefinitely, failed model fits and metric calculations fall back more
 gracefully, and the metadata returned by the wrappers has been expanded
@@ -202,13 +224,10 @@ and standardised so that printed summaries say more about what was
 actually run.</p>
 <p>Long runs are also flagged before they start. The adaptive first
 stage is timed and extrapolated to the full search, so you find out what
-you are committing to while it is still cheap to change your mind: a run
-expected to take more than 30 minutes reports the estimate, and one
-expected to take more than two hours also warns and asks for
-confirmation before continuing. The prompt only appears in interactive
-sessions, so scripts, CI and vignette builds are unaffected, and
-<code>options(pmsims.confirm_long_runs = FALSE)</code> switches it
-off.</p>
+you are committing to before running. The prompt only appears in
+interactive sessions, so scripts, CI and vignette builds are unaffected.
+It can be disabled with
+<code>options(pmsims.confirm_long_runs = FALSE)</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="upgrading-from-0-5-0">Upgrading from 0.5.0<a class="anchor" aria-label="anchor" href="#upgrading-from-0-5-0"></a>
@@ -247,7 +266,7 @@ would write:</p>
 <span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>One thing to watch when comparing against 0.5.0:
+<p>One thing to note when comparing against 0.5.0:
 <code>complexity</code> defaults to <code>1</code>, so the default
 signal structure is unchanged, but <code>data_control$correlation</code>
 defaults to <code>0.3</code>, whereas 0.5.0 generated independent
@@ -265,8 +284,10 @@ current interface in full.</p>
 <p>Version <code>1.0.0</code> is available from GitHub and is not yet a
 CRAN release.</p>
 <p>As with 0.5.0, the package and its validation work are described in
-two accompanying preprints: the overview paper by <a href="https://arxiv.org/abs/2602.23507" class="external-link">Shamsutdinova et al. (2026)</a>
-and the validation paper by <a href="https://arxiv.org/abs/2603.23688" class="external-link">Olaniran et al. (2026)</a>.</p>
+two accompanying papers: the overview paper by <a href="https://arxiv.org/abs/2602.23507" class="external-link">Shamsutdinova et al. (2026)</a>,
+currently a preprint, and the validation paper by <a href="https://doi.org/10.1186/s12874-026-02935-9" class="external-link">Olaniran et
+al. (2026)</a>, published in <em>BMC Medical Research
+Methodology</em>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
