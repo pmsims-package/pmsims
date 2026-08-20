@@ -181,9 +181,6 @@ warn_if_long_run <- function(
   cli::cli_alert_warning(
     "This run is estimated to take about {duration}{model_label}."
   )
-  cli::cli_bullets(c(
-    "i" = "Reduce {.arg n_reps_total}, narrow the sample size range, or choose a faster model to shorten it."
-  ))
 
   if (!confirm_long_run()) {
     cli::cli_abort("Run cancelled.", call = NULL)
