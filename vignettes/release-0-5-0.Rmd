@@ -22,10 +22,11 @@ knitr::opts_chunk$set(
 simulation-based framework for minimum sample size estimation in prediction
 model development, with support for continuous, binary, and time-to-event
 outcomes. The package and its validation work are described in two
-accompanying preprints: the overview paper by
-[Shamsutdinova et al. (2026)](https://arxiv.org/abs/2602.23507) and the
-validation paper by
-[Olaniran et al. (2026)](https://arxiv.org/abs/2603.23688).
+accompanying papers: the overview paper by
+[Shamsutdinova et al. (2026)](https://arxiv.org/abs/2602.23507), currently a
+preprint, and the validation paper by
+[Olaniran et al. (2026)](https://doi.org/10.1186/s12874-026-02935-9), published
+in *BMC Medical Research Methodology*.
 
 ## Why pmsims?
 
