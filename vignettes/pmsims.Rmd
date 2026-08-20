@@ -490,7 +490,7 @@ continuous_example <- simulate_continuous(
   maximum_achievable_rsquared = 0.50,
   model = "lm",
   metric = "calibration_slope",
-  target_performance = 0.90,
+  target_performance = 0.95,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )
