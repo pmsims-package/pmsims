@@ -59,8 +59,7 @@ simulate_continuous(
 
   Character string specifying the modelling algorithm. One of `"lm"`
   (linear regression), `"lasso"`, `"ridge"`, `"rf"` (random forest), or
-  `"xgboost"` (gradient-boosted trees). The machine-learning options are
-  experimental.
+  `"xgboost"` (gradient-boosted trees).
 
 - metric:
 

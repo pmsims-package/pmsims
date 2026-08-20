@@ -71,7 +71,7 @@ simulate_survival(
   Character string specifying the modelling algorithm. One of `"coxph"`
   (Cox proportional hazards), `"lasso"`, `"ridge"`, `"rf"` (random
   survival forest), or `"xgboost"` (gradient boosting with a Cox
-  objective). The machine-learning options are experimental.
+  objective).
 
 - metric:
 

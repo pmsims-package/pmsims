@@ -64,8 +64,7 @@ simulate_binary(
 
   Character string specifying the modelling algorithm. One of `"glm"`
   (logistic regression), `"lasso"`, `"ridge"`, `"rf"` (random forest),
-  or `"xgboost"` (gradient-boosted trees). The machine-learning options
-  are experimental.
+  or `"xgboost"` (gradient-boosted trees).
 
 - metric:
 

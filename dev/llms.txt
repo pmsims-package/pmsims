@@ -8,13 +8,10 @@ study planning and feasibility assessment.
 
 The package is fully model-agnostic: users can define how data are
 generated, how models are fitted, and how predictive performance is
-measured. It currently supports regression-based prediction models with
-continuous, binary, and time-to-event outcomes.
-
-`pmsims` also includes experimental machine-learning model options via
-regularised regression, random forest, and XGBoost. These options have
-not yet undergone the package’s main validation study and should be
-treated as experimental in `0.5.0`.
+measured. Built-in workflows cover continuous, binary, and time-to-event
+outcomes, with a choice of regression-based models (linear, logistic,
+and Cox) and machine-learning models (regularised regression, random
+forest, and XGBoost).
 
 Developed at [King’s College London](https://www.kcl.ac.uk/) (Department
 of Biostatistics & Health Informatics) with input from researchers,
@@ -24,12 +21,12 @@ details.
 
 ## Installation
 
-Install the stable `0.5.0` release from GitHub:
+Install the stable `1.0.0` release from GitHub:
 
 ``` r
 
 # install.packages("remotes")
-remotes::install_github("pmsims-package/pmsims", ref = "v0.5.0")
+remotes::install_github("pmsims-package/pmsims", ref = "v1.0.0")
 ```
 
 If you are interested in trying the development version, install from
@@ -154,5 +151,7 @@ of the NIHR or the Department of Health and Social Care.*
   pmsims](https://pmsims-package.github.io/pmsims/dev/articles/pmsims.md):
 - [pmsims 0.5.0: Initial
   release](https://pmsims-package.github.io/pmsims/dev/articles/release-0-5-0.md):
+- [pmsims 1.0.0: More flexible data
+  generation](https://pmsims-package.github.io/pmsims/dev/articles/release-1-0-0.md):
 - [Defining custom simulation
   workflows](https://pmsims-package.github.io/pmsims/dev/articles/simulate_custom.md):

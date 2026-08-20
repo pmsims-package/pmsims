@@ -23,9 +23,9 @@
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
 <meta property="og:title" content="pmsims">
-<meta name="description" content="Simulation-based sample size estimation for prediction modelling, with experimental machine-learning extensions.
+<meta name="description" content="Simulation-based sample size estimation for prediction modelling, with regression-based and machine-learning models.
 ">
-<meta property="og:description" content="Simulation-based sample size estimation for prediction modelling, with experimental machine-learning extensions.
+<meta property="og:description" content="Simulation-based sample size estimation for prediction modelling, with regression-based and machine-learning models.
 ">
 <meta property="og:image" content="https://pmsims-package.github.io/pmsims/logo.png">
 <meta name="robots" content="noindex">
@@ -38,7 +38,7 @@
 
     <a class="navbar-brand me-2" href="index.html">pmsims</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.5.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,6 +59,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="articles/release-1-0-0.html">Version 1.0.0</a></li>
     <li><a class="dropdown-item" href="articles/release-0-5-0.html">Version 0.5.0</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="news/index.html">Changelog</a></li>
@@ -70,7 +71,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-dev" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">dev</button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-dev">
 <li><a class="dropdown-item" href="https://pmsims-package.github.io/pmsims/dev/">dev</a></li>
-    <li><a class="dropdown-item" href="https://pmsims-package.github.io/pmsims/">0.5.0 (stable)</a></li>
+    <li><a class="dropdown-item" href="https://pmsims-package.github.io/pmsims/">1.0.0 (stable)</a></li>
   </ul>
 </li>
 <li class="nav-item"><form class="form-inline" role="search">
@@ -93,16 +94,15 @@
 <!-- badges: start -->
 
 <p><strong>pmsims</strong> is an R package for estimating how much data are needed to develop reliable and generalisable prediction models. It uses a <strong>simulation-based learning curve</strong> approach to quantify how model performance improves with increasing sample size, supporting principled study planning and feasibility assessment.</p>
-<p>The package is fully model-agnostic: users can define how data are generated, how models are fitted, and how predictive performance is measured. It currently supports regression-based prediction models with continuous, binary, and time-to-event outcomes.</p>
-<p><code>pmsims</code> also includes experimental machine-learning model options via regularised regression, random forest, and XGBoost. These options have not yet undergone the package’s main validation study and should be treated as experimental in <code>0.5.0</code>.</p>
+<p>The package is fully model-agnostic: users can define how data are generated, how models are fitted, and how predictive performance is measured. Built-in workflows cover continuous, binary, and time-to-event outcomes, with a choice of regression-based models (linear, logistic, and Cox) and machine-learning models (regularised regression, random forest, and XGBoost).</p>
 <p>Developed at <a href="https://www.kcl.ac.uk/" class="external-link">King’s College London</a> (Department of Biostatistics &amp; Health Informatics) with input from researchers, clinicians, and patient partners. See the <a href="https://pmsims-package.github.io/pmsims-website/">pmsims project site</a> for further details.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>Install the stable <code>0.5.0</code> release from GitHub:</p>
+<p>Install the stable <code>1.0.0</code> release from GitHub:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"pmsims-package/pmsims"</span>, ref <span class="op">=</span> <span class="st">"v0.5.0"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"pmsims-package/pmsims"</span>, ref <span class="op">=</span> <span class="st">"v1.0.0"</span><span class="op">)</span></span></code></pre></div>
 <p>If you are interested in trying the development version, install from the <code>dev</code> branch:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
