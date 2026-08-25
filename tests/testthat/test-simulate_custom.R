@@ -221,7 +221,9 @@ test_that("simulate_custom can suppress the mlpwr progress bar", {
   close(capture)
   output <- readLines(capture_path, warn = FALSE)
 
-  expect_true(any(grepl("Estimating first stage", output)))
+  # min_sample_size and max_sample_size define the search space, so the
+  # adaptive first stage is skipped (see test-engines.R).
+  expect_false(any(grepl("Estimating first stage", output)))
   expect_true(any(grepl("Estimating second stage", output)))
   expect_false(any(grepl("sims \\(", output)))
 })
