@@ -2,6 +2,22 @@ This is a new submission.
 
 ## Comments for the reviewer
 
+### NOTEs from the previous pre-test
+
+The pre-test for the initial submission reported two NOTEs.
+
+The first flagged possibly misspelled words in DESCRIPTION: "Olaniran",
+"Shamsutdinova", "et", "al" and "generalisable". These are the surnames of
+authors of the two cited papers, the standard abbreviation "et al.", and
+the British spelling of "generalisable", which is used consistently throughout
+the package. We believe no change is needed.
+
+The second flagged the non-standard top-level directory 'scripts'. This
+contained a helper script used when building the pkgdown site and should not
+have been included in the tarball. It is now listed in .Rbuildignore.
+
+### Use of \dontrun{} in examples
+
 The examples for the four exported functions (`simulate_binary()`,
 `simulate_continuous()`, `simulate_survival()` and `simulate_custom()`) are
 wrapped in `\dontrun{}` rather than `\donttest{}`.
