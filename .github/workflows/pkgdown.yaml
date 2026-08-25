@@ -41,7 +41,9 @@ jobs:
           needs: website
 
       - name: Configure site navigation
-        run: Rscript scripts/configure_pkgdown_versions.R _pkgdown.yml
+        env:
+          SITE_LABEL: ${{ github.base_ref == 'dev' && 'dev' || '1.0.0' }}
+        run: Rscript scripts/configure_pkgdown_versions.R _pkgdown.yml "${SITE_LABEL}"
 
       - name: Build site
         env:
@@ -103,7 +105,7 @@ jobs:
       - name: Configure site navigation
         run: >-
           Rscript scripts/configure_pkgdown_versions.R
-          .site-source/_pkgdown.yml
+          .site-source/_pkgdown.yml "${{ matrix.label }}"
 
       - name: Apply shared navbar styles
         run: |
@@ -131,12 +133,23 @@ jobs:
               paste0(">", version, "</small>"),
               paste0("title=\"", tooltip, "\""),
               "https://pmsims-package.github.io/pmsims/articles/release-1-0-0.html",
-              "https://pmsims-package.github.io/pmsims/0.5.0/articles/release-0-5-0.html",
-              ">Changelog</a>"
+              "https://pmsims-package.github.io/pmsims/articles/release-0-5-0.html",
+              "https://pmsims-package.github.io/pmsims/news/index.html\">Changelog</a>"
             )
             stopifnot(vapply(expected, grepl, logical(1), x = html, fixed = TRUE))
+            archived_release <- "https://pmsims-package.github.io/pmsims/0.5.0/articles/release-0-5-0.html"
+            stopifnot(!grepl(archived_release, html, fixed = TRUE))
             old_selector <- paste0(">", Sys.getenv("SITE_LABEL"), "</button>")
             stopifnot(!grepl(old_selector, html, fixed = TRUE))
+            if (identical(Sys.getenv("SITE_LABEL"), "0.5.0")) {
+              archive_expected <- c(
+                ">0.5.0 (archived)</small>",
+                "title=\"Archived documentation\"",
+                "You are viewing archived documentation for",
+                "https://pmsims-package.github.io/pmsims/\">View current 1.0.0 documentation</a>"
+              )
+              stopifnot(vapply(archive_expected, grepl, logical(1), x = html, fixed = TRUE))
+            }
           '
 
       - name: Prepare site artifact

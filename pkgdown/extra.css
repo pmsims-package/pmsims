@@ -2,6 +2,30 @@
   color: rgba(222, 226, 230, 0.75) !important;
 }
 
+.navbar small.nav-text:has(+ small.archive-version) {
+  display: none;
+}
+
+.archive-banner {
+  background-color: #fff7e6;
+  border-bottom: 1px solid rgba(5, 63, 69, 0.18);
+  color: #343a40;
+  padding: 0.65rem 0;
+}
+
+.archive-banner .container {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  justify-content: center;
+}
+
+.archive-banner a {
+  color: #067f8d;
+  font-weight: 600;
+}
+
 .navbar #dropdown-news + .dropdown-menu {
   --bs-dropdown-bg: #ffffff;
   --bs-dropdown-border-color: rgba(5, 63, 69, 0.18);

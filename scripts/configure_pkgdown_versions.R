@@ -1,13 +1,14 @@
 args <- commandArgs(trailingOnly = TRUE)
 
-if (length(args) != 1L) {
+if (length(args) != 2L) {
   stop(
-    "Usage: configure_pkgdown_versions.R <_pkgdown.yml>",
+    "Usage: configure_pkgdown_versions.R <_pkgdown.yml> <current-version>",
     call. = FALSE
   )
 }
 
 config_path <- args[[1L]]
+current_version <- args[[2L]]
 
 if (!file.exists(config_path)) {
   stop("pkgdown configuration not found: ", config_path, call. = FALSE)
@@ -39,7 +40,7 @@ config$navbar$components$news <- list(
     list(
       text = "Version 0.5.0",
       href = paste0(
-        "https://pmsims-package.github.io/pmsims/0.5.0/",
+        "https://pmsims-package.github.io/pmsims/",
         "articles/release-0-5-0.html"
       )
     ),
@@ -48,9 +49,31 @@ config$navbar$components$news <- list(
     ),
     list(
       text = "Changelog",
-      href = "news/index.html"
+      href = "https://pmsims-package.github.io/pmsims/news/index.html"
     )
   )
 )
+
+if (identical(current_version, "0.5.0")) {
+  if (is.null(config$template$includes)) {
+    config$template$includes <- list()
+  }
+
+  config$template$includes$before_body <- paste0(
+    '<aside class="archive-banner" role="note">',
+    '<div class="container">',
+    '<span>You are viewing archived documentation for ',
+    '<strong>pmsims 0.5.0</strong>.</span>',
+    '<a href="https://pmsims-package.github.io/pmsims/">',
+    'View current 1.0.0 documentation</a>',
+    '</div>',
+    '</aside>'
+  )
+  config$template$includes$before_navbar <- paste0(
+    '<small class="nav-text archive-version me-auto" ',
+    'data-bs-toggle="tooltip" data-bs-placement="bottom" ',
+    'title="Archived documentation">0.5.0 (archived)</small>'
+  )
+}
 
 yaml::write_yaml(config, config_path)
