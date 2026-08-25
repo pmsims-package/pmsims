@@ -1,52 +1,17 @@
 .navbar small.nav-text {
-  display: none;
+  color: rgba(222, 226, 230, 0.75) !important;
 }
 
-.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) {
-  align-items: center;
-  display: flex;
-}
-
-.navbar .navbar-nav:has(> .nav-item.dropdown .dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) {
-  align-items: center;
-}
-
-.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-toggle {
-  align-items: center;
-  background-color: #8edae2;
-  border-radius: 0.35rem;
-  color: #053f45;
-  display: inline-flex;
-  font-weight: 600;
-  gap: 0.15rem;
-  line-height: 1;
-  margin-bottom: 0;
-  margin-right: 1rem;
-  margin-top: 0;
-  min-height: 2.625rem;
-  padding: 0.35rem 0.65rem;
-}
-
-.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-toggle:hover,
-.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-toggle:focus {
-  background-color: #a6e3e9;
-  color: #053f45;
-}
-
-.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-menu {
-  border-color: rgba(5, 63, 69, 0.18);
+.navbar #dropdown-news + .dropdown-menu {
+  --bs-dropdown-bg: #ffffff;
+  --bs-dropdown-border-color: rgba(5, 63, 69, 0.18);
+  --bs-dropdown-color: #343a40;
+  --bs-dropdown-divider-bg: rgba(5, 63, 69, 0.14);
+  --bs-dropdown-header-color: #6c757d;
+  --bs-dropdown-link-color: #343a40;
+  --bs-dropdown-link-hover-bg: #e7f7f9;
+  --bs-dropdown-link-hover-color: #053f45;
   box-shadow: 0 0.5rem 1.25rem rgba(5, 63, 69, 0.16);
-  min-width: 10rem;
-  padding: 0.25rem 0;
-}
-
-.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-menu .dropdown-item {
-  padding: 0.55rem 1rem;
-}
-
-.navbar .navbar-nav > .nav-item.dropdown:has(.dropdown-item[href="https://pmsims-package.github.io/pmsims/dev/"]) > .dropdown-menu li:first-child .dropdown-item {
-  color: #067f8d;
-  font-weight: 700;
 }
 
 .navbar #search-input {

@@ -307,7 +307,7 @@ print(result)
     ##   Performance at N = 160
     ##     Performance            -0.168    (target ≥ -0.165)
     ## 
-    ##   Running time             1 minute 41 seconds
+    ##   Running time             1 minute 36 seconds
     ## 
     ## ────────────────────────────────────────────────────────────────────────────────
     ## Assurance mode selects N so that the target is achieved with high probability
