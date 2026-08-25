@@ -20,7 +20,8 @@ calculate_mlpwr(
   data_function,
   model_function,
   metric_function,
-  value_on_error
+  value_on_error,
+  ...
 )
 }
 \arguments{
@@ -39,7 +40,10 @@ candidate sample size.}
 search. If supplied, \code{max_sample_size} must also be supplied.}
 
 \item{max_sample_size}{Optional integer upper bound for the sample-size
-search. If supplied, \code{min_sample_size} must also be supplied.}
+search. If supplied, \code{min_sample_size} must also be supplied.
+Supplying both bounds defines the search space directly, so the adaptive
+starting-value search is skipped. Because the runtime estimate is
+extrapolated from that stage, no long-run warning is issued either.}
 
 \item{target_performance}{Numeric target value for the chosen performance
 metric. The search aims to find the smallest sample size \eqn{n} for which
@@ -74,6 +78,8 @@ single numeric fallback value to be returned if model fitting or metric
 evaluation fails during a simulation run.}
 
 \item{value_on_error}{Numeric fallback value used if model fitting or metric calculation fails.}
+
+\item{...}{Additional options passed to \code{\link[mlpwr:find.design]{mlpwr::find.design()}}.}
 }
 \description{
 mlpwr engine

@@ -46,7 +46,10 @@ evaluation fails during a simulation run.}
 search. If supplied, \code{max_sample_size} must also be supplied.}
 
 \item{max_sample_size}{Optional integer upper bound for the sample-size
-search. If supplied, \code{min_sample_size} must also be supplied.}
+search. If supplied, \code{min_sample_size} must also be supplied.
+Supplying both bounds defines the search space directly, so the adaptive
+starting-value search is skipped. Because the runtime estimate is
+extrapolated from that stage, no long-run warning is issued either.}
 
 \item{test_n}{Integer size of the test dataset used to evaluate model
 performance. This should usually be large enough that test-set variability

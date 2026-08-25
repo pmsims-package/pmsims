@@ -1,10 +1,13 @@
 ^pmsims\.Rproj$
+^\.git$
 ^\.Rproj\.user$
 ^\.github$
 ^codecov\.yml$
 ^LICENSE\.md$
 ^vignettes/articles$
 ^README\.Rmd$
+^\.positai$
+^\.claude$
 ^README\.html$
 ^_pkgdown\.yml$
 ^pkgdown$
@@ -21,5 +24,12 @@
 ^vignettes/pmsims\.html$
 ^vignettes/release-0-5-0\.Rmd$
 ^vignettes/release-0-5-0\.html$
+^vignettes/release-1-0-0\.Rmd$
+^vignettes/release-1-0-0\.html$
 ^vignettes/articles/simulate_custom\.html$
 ^vignettes/images/workflow\.afdesign$
+^.*\.Rcheck$
+^pmsims_.*\.tar\.gz$
+^man/figures/.*\.afdesign$
+^man/figures/.*\.acorn$
+^cran-comments\.md$

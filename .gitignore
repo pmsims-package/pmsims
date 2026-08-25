@@ -5,5 +5,11 @@
 pmsims.Rproj
 .DS_store
 vignettes/.quarto/project-cache
-..Rcheck
+*.Rcheck/
+*.tar.gz
+.positai
 inst/doc
+
+# Rendered pkgdown site; published from gh-pages, built fresh by CI.
+# Build locally with pkgdown::build_site() when you want a preview.
+docs/

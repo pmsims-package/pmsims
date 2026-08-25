@@ -34,6 +34,9 @@
 #'   search. If supplied, `max_sample_size` must also be supplied.
 #' @param max_sample_size Optional integer upper bound for the sample-size
 #'   search. If supplied, `min_sample_size` must also be supplied.
+#'   Supplying both bounds defines the search space directly, so the adaptive
+#'   starting-value search is skipped. Because the runtime estimate is
+#'   extrapolated from that stage, no long-run warning is issued either.
 #' @param n_reps_total Integer total number of simulation replications allocated
 #'   to the search. The search evaluates approximately
 #'   `n_reps_total / n_reps_per` candidate sample sizes.
@@ -113,7 +116,8 @@ simulate_custom <- function(
   verbose = FALSE,
   ...
 ) {
-  n_init <- 4 # fixing n_init at 4. This is the number of initial sample sizes calculated after the min max are established and before the main search algorithm begins.
+  # Evaluate four initial sample sizes after establishing the search bounds.
+  n_init <- 4
   se_final <- NULL # Reserved for internal engine use.
 
   if (is.null(data_function)) {
@@ -124,7 +128,7 @@ simulate_custom <- function(
     stop("'n_reps_total' must be specified.")
   }
 
-  # Checking min and max_sample_size inputs.
+  # Validate the optional sample-size bounds.
   if (
     (!is.null(min_sample_size) && is.null(max_sample_size)) ||
       (is.null(min_sample_size) && !is.null(max_sample_size))
@@ -152,67 +156,84 @@ simulate_custom <- function(
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
   }
 
-  # Define a default metric value if calculations fail; 0.5 for default
+  # Choose the metric-specific fallback used when a simulation fails.
   value_on_error <- resolve_value_on_error(metric_function)
   time_1 <- Sys.time()
 
   if (method == "mlpwr") {
-    output <- calculate_mlpwr(
-      test_n = test_n,
-      n_reps_total = n_reps_total,
-      n_reps_per = n_reps_per,
-      se_final = se_final,
-      min_sample_size = min_sample_size,
-      max_sample_size = max_sample_size,
-      target_performance = target_performance,
-      c_statistic = c_statistic,
-      mean_or_assurance,
-      n_init = n_init,
-      progress = progress,
-      verbose = verbose,
-      data_function = data_function,
-      model_function = model_function,
-      metric_function = metric_function,
-      value_on_error = value_on_error
+    output <- do.call(
+      calculate_mlpwr,
+      utils::modifyList(
+        list(
+          test_n = test_n,
+          n_reps_total = n_reps_total,
+          n_reps_per = n_reps_per,
+          se_final = se_final,
+          min_sample_size = min_sample_size,
+          max_sample_size = max_sample_size,
+          target_performance = target_performance,
+          c_statistic = c_statistic,
+          mean_or_assurance = mean_or_assurance,
+          n_init = n_init,
+          progress = progress,
+          verbose = verbose,
+          data_function = data_function,
+          model_function = model_function,
+          metric_function = metric_function,
+          value_on_error = value_on_error
+        ),
+        list(...)
+      )
     )
   } else if (method == "bisection") {
-    output <- calculate_bisection(
-      data_function = data_function,
-      model_function = model_function,
-      metric_function = metric_function,
-      value_on_error = value_on_error,
-      min_sample_size = min_sample_size,
-      max_sample_size = max_sample_size,
-      test_n = test_n,
-      n_reps_total = n_reps_total,
-      n_reps_per = n_reps_per,
-      target_performance = target_performance,
-      c_statistic = c_statistic,
-      mean_or_assurance = mean_or_assurance,
-      tol = 1e-3,
-      parallel = FALSE,
-      cores = 20,
-      verbose = verbose,
-      budget = TRUE,
-      ...
+    output <- do.call(
+      calculate_bisection,
+      utils::modifyList(
+        list(
+          data_function = data_function,
+          model_function = model_function,
+          metric_function = metric_function,
+          value_on_error = value_on_error,
+          min_sample_size = min_sample_size,
+          max_sample_size = max_sample_size,
+          test_n = test_n,
+          n_reps_total = n_reps_total,
+          n_reps_per = n_reps_per,
+          target_performance = target_performance,
+          c_statistic = c_statistic,
+          mean_or_assurance = mean_or_assurance,
+          tol = 1e-3,
+          parallel = FALSE,
+          cores = 20,
+          verbose = verbose,
+          budget = TRUE
+        ),
+        list(...)
+      )
     )
   } else if (method == "mlpwr-bs") {
-    output <- calculate_mlpwr_bs(
-      test_n = test_n,
-      n_reps_total = n_reps_total,
-      n_reps_per = n_reps_per,
-      se_final = se_final,
-      min_sample_size = min_sample_size,
-      max_sample_size = max_sample_size,
-      target_performance = target_performance,
-      c_statistic = c_statistic,
-      mean_or_assurance,
-      progress = progress,
-      verbose = verbose,
-      data_function = data_function,
-      model_function = model_function,
-      metric_function = metric_function,
-      value_on_error = value_on_error
+    output <- do.call(
+      calculate_mlpwr_bs,
+      utils::modifyList(
+        list(
+          test_n = test_n,
+          n_reps_total = n_reps_total,
+          n_reps_per = n_reps_per,
+          se_final = se_final,
+          min_sample_size = min_sample_size,
+          max_sample_size = max_sample_size,
+          target_performance = target_performance,
+          c_statistic = c_statistic,
+          mean_or_assurance = mean_or_assurance,
+          progress = progress,
+          verbose = verbose,
+          data_function = data_function,
+          model_function = model_function,
+          metric_function = metric_function,
+          value_on_error = value_on_error
+        ),
+        list(...)
+      )
     )
   } else {
     stop("Method not found")
@@ -268,8 +289,8 @@ resolve_value_on_error <- function(metric_function) {
     r2 = 0,
     brier_score_scaled = 0,
     brier_score = 1,
-    IBS = 1,
-    calib_slope = 0
+    ibs = 1,
+    calibration_slope = 0
   )
 
   if (!is.null(custom_value_on_error)) {
@@ -339,10 +360,7 @@ parse_inputs <- function(data_spec, metric, model) {
     model
   )
 
-  # Set a metric, based on outcome type
-  # TODO:
-  # Currently, we're selecting the first element in 'metric' only.
-  # In future, we will expand this to handle multiple metrics.
+  # The current interface uses the first requested metric.
   metric_function <- default_metric_generator(metric[[1]], data_function)
   return(list(
     data_function = data_function,

@@ -7,11 +7,11 @@
 simulate_binary(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = "continuous",
-  binary_predictor_prevalence = NULL,
+  complexity = 1,
+  data_control = NULL,
   outcome_prevalence,
   maximum_achievable_cstatistic,
-  model = "glm",
+  model = c("glm", "lasso", "ridge", "rf", "xgboost"),
   metric = "calibration_slope",
   target_performance,
   n_reps_total = 1000,
@@ -26,11 +26,11 @@ with the outcome (i.e., true signal features).}
 \item{noise_parameters}{Integer. Number of candidate predictors not
 associated with the outcome (noise features). Default is 0.}
 
-\item{predictor_type}{Character string, either \code{"continuous"} or \code{"binary"}.
-Specifies the type of simulated candidate predictors.}
+\item{complexity}{Integer in 1:4 selecting the data-generating signal
+structure (see \emph{Data control}). Default \code{1}.}
 
-\item{binary_predictor_prevalence}{Optional numeric in (0, 1). Prevalence of
-the binary predictors when \code{predictor_type = "binary"}. Ignored otherwise.}
+\item{data_control}{Optional named list controlling the predictors (see
+\emph{Data control}). Default \code{NULL} (generator defaults).}
 
 \item{outcome_prevalence}{Numeric in (0, 1). Target prevalence of the binary
 outcome in the intended modelling context.}
@@ -39,17 +39,33 @@ outcome in the intended modelling context.}
 C-statistic with effectively unlimited data. This is used to calibrate the
 data-generating mechanism and is not the minimum acceptable threshold.}
 
-\item{model}{Character string specifying the modelling algorithm. Supported
-values are \code{"glm"} (logistic regression), \code{"lasso"}
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} (regularised logistic regression),
-\code{"rf"} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} (random forest), and
-\code{"xgboost"} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} (gradient-boosted
-trees). The machine-learning options are experimental because they have not
-yet undergone the package's main validation study.}
+\item{model}{Character string specifying the modelling algorithm. One of
+\code{"glm"} (logistic regression), \code{"lasso"}, \code{"ridge"}, \code{"rf"} (random
+forest), or \code{"xgboost"} (gradient-boosted trees).}
 
 \item{metric}{Character string naming the performance metric used to assess
-the sample size; defaults to \code{"calibration_slope"}. (Internally mapped to
-the engine's metric identifiers.)}
+the sample size; defaults to \code{"calibration_slope"}. Metric identifiers use
+one canonical form throughout the package, such as \code{"calibration_slope"},
+\code{"calibration_in_the_large"}, \code{"auc"}, \code{"r2"}, \code{"cindex"}, and \code{"csse"}.
+
+\code{"calibration_slope"} is the slope from regressing the observed outcome on
+the model's linear predictor in held-out data; 1 indicates perfect
+calibration, and values below 1 indicate overfitting. Note that for the
+machine-learning models (\code{"lasso"}, \code{"ridge"}, \code{"rf"}, \code{"xgboost"}) this is
+converted internally to the calibration slope squared error for
+optimisation and translated back before results are returned; you don't
+need to do anything, and \code{target_performance} is still given on the
+calibration slope scale. Results derived this way carry a footnote marker
+in the printed output.
+
+\code{"csse"} is the calibration slope squared error, \eqn{-(1 - s)^2} for a
+calibration slope \eqn{s}, so that larger is better and 0 is perfect
+calibration. It can be requested directly, which is mainly useful for
+advanced use and for comparison against the internal conversion described
+above. When requesting it directly you are responsible for supplying
+\code{target_performance} on the CSSE scale: a calibration slope target of
+\code{0.9} corresponds to a CSSE target of \code{-0.01}. No adjustment is applied on
+your behalf, and results are reported on the CSSE scale.}
 
 \item{target_performance}{Numeric. Minimum acceptable value of the selected
 performance metric \eqn{M^*}; the algorithm searches for the smallest
@@ -99,14 +115,41 @@ criterion explicitly accounts for variability across training sets; models
 with higher variance typically require larger \eqn{n} to satisfy it.
 }
 
+\section{Data control}{
+
+\code{complexity} selects the signal structure of the data-generating mechanism:
+\code{1} purely linear, \code{2} linear + quadratic, \code{3} linear + quadratic +
+interaction, \code{4} the Friedman function. \code{data_control} is an optional list
+fine-tuning the predictors:
+\describe{
+\item{\code{nonlinear_strength}}{Numeric in \verb{[0, 1)}. Fraction of the signal
+variance carried by the nonlinear, linearly-inaccessible component.
+Applies to complexity 2 and 3 only; ignored (with a warning) for 1 and 4.
+If omitted, the generator's per-complexity default is used.}
+\item{\code{correlation}}{Numeric in \eqn{[-1, 1]}. Pairwise correlation among the
+candidate predictors. Default \code{0.3}.}
+\item{\code{predictor_distribution}}{One of \code{"normal"}, \code{"uniform"}, \code{"binary"},
+\code{"exponential"}, \code{"lognormal"}, \code{"t"}, \code{"laplace"}. \code{"binary"} selects
+0/1 predictors and requires \code{binary_predictor_prevalence}; any other
+value selects continuous predictors from that family. Default \code{"normal"}.}
+\item{\code{binary_predictor_prevalence}}{Numeric in \verb{(0, 1)}. Prevalence of the
+binary predictors; required when \code{predictor_distribution = "binary"},
+ignored (with a warning) otherwise. Note: binary predictors are
+incompatible with complexity 2/3 because squaring a 0/1 variable returns
+itself.}
+}
+}
+
 \examples{
 \dontrun{
 est <- simulate_binary(
   signal_parameters = 10,
   noise_parameters = 10,
-  predictor_type = "continuous",
+  complexity = 2,
+  data_control = list(nonlinear_strength = 0.4, correlation = 0.2),
   outcome_prevalence = 0.2,
   maximum_achievable_cstatistic = 0.75,
+  model = "glm",
   metric = "calibration_slope",
   target_performance = 0.9,
   n_reps_total = 1000,

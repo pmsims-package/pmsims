@@ -40,6 +40,14 @@ jobs:
           needs: website
 
       - name: Build site
+        # `development: mode: auto` in _pkgdown.yml keys off the version number,
+        # so a released version (e.g. 1.0.0) builds to docs/ and a dev version
+        # (e.g. 1.0.0.9000) builds to docs/dev. That makes the output directory
+        # depend on where DESCRIPTION happens to be in the release cycle, and
+        # the artifact step below needs docs/dev to exist on the dev branch.
+        # Pin the mode to the branch instead.
+        env:
+          PKGDOWN_DEV_MODE: ${{ github.ref_name == 'dev' && 'devel' || 'release' }}
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
 

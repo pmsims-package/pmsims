@@ -1,5 +1,5 @@
 citHeader(
-  "To cite pmsims, please cite the package and either or both accompanying preprints."
+  "To cite pmsims, please cite the package and either or both accompanying papers."
 )
 
 bibentry(
@@ -15,7 +15,7 @@ bibentry(
     person("Felix", "Zimmer")
   ),
   year = "2026",
-  note = "R package version 0.5.0",
+  note = sprintf("R package version %s", meta$Version),
   url = "https://pmsims-package.github.io/pmsims/"
 )
 
@@ -41,7 +41,7 @@ bibentry(
 
 bibentry(
   bibtype = "Article",
-  title = "Adaptive Gaussian Process Search for Simulation-Based Sample Size Estimation in Clinical Prediction Models: Validation of the pmsims R Package",
+  title = "Adaptive Gaussian process search for simulation-based sample size estimation in clinical prediction models: validation of the pmsims R package",
   author = c(
     person("Oyebayo Ridwan", "Olaniran"),
     person("Diana", "Shamsutdinova"),
@@ -52,13 +52,10 @@ bibentry(
     person("Ewan", "Carr")
   ),
   year = "2026",
-  journal = "arXiv",
-  volume = "arXiv:2603.23688",
-  doi = "10.48550/arXiv.2603.23688",
-  url = "https://arxiv.org/abs/2603.23688",
-  note = "Preprint"
+  journal = "BMC Medical Research Methodology",
+  doi = "10.1186/s12874-026-02935-9"
 )
 
 citFooter(
-  "For now, please cite either or both arXiv preprints. Once peer-reviewed articles are available, these citations should be updated to the published versions."
+  "The validation paper is published in BMC Medical Research Methodology. The overview paper is currently an arXiv preprint; that citation should be updated once the peer-reviewed article is available."
 )

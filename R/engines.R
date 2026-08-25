@@ -4,6 +4,7 @@
 #' @param progress Logical flag controlling whether the `mlpwr` progress bar is shown.
 #' @param verbose Logical flag passed to `mlpwr`; when `TRUE` verbose output is printed.
 #' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
+#' @param ... Additional options passed to [mlpwr::find.design()].
 #' @keywords internal
 calculate_mlpwr <- function(
   test_n,
@@ -21,82 +22,112 @@ calculate_mlpwr <- function(
   data_function,
   model_function,
   metric_function,
-  value_on_error
+  value_on_error,
+  ...
 ) {
-  # Determine initial start values
-  start_values <- tryCatch(
-    {
-      compute_start_sample_sizes(
-        data_function = data_function,
-        metric_function = metric_function,
-        target_performance = target_performance,
-        c_statistic = c_statistic,
-        mean_or_assurance = mean_or_assurance
-      )
-    },
-    error = function(e) {
-      stop(
-        paste("Error when computing start values:", e$message),
-        call. = FALSE
-      )
-    }
-  )
+  # A user-defined search space makes the adaptive stage redundant: any bounds
+  # it found would immediately be replaced by min_sample_size and
+  # max_sample_size, so the simulations behind them would be wasted.
+  bounds_supplied <- !is.null(min_sample_size) && !is.null(max_sample_size)
 
-  # Adaptive starting values search
-  cat("Estimating first stage... (Adaptive starting value search algorithm)\n")
-  start_values <- tryCatch(
-    {
-      calculate_adaptive_bounds(
-        data_function = data_function,
-        model_function = model_function,
-        metric_function = metric_function,
-        value_on_error = value_on_error,
-        start_n = start_values$start_min_sample_size,
-        test_n = test_n,
-        n_reps_per = n_reps_per,
-        n_reps_total = 500,
-        target_performance = target_performance,
-        threshold = 0.0001,
-        mean_or_assurance = mean_or_assurance,
-        verbose = FALSE
-      )
-    },
-    error = function(e) {
-      stop(
-        paste("Error during adaptive start value search:", e$message),
-        call. = FALSE
-      )
-    }
-  )
+  if (bounds_supplied) {
+    start_min_sample_size <- min_sample_size
+    start_max_sample_size <- max_sample_size
 
-  start_min_sample_size <- start_values$min_sample_size
-  start_max_sample_size <- start_values$max_sample_size
+    # Without a timed first stage there is nothing to extrapolate the runtime
+    # from, so the long-run check below is skipped (see R/runtime_estimate.R).
+    stage_1_secs <- NA_real_
+    stage_1_track <- NULL
+  } else {
+    # Determine initial start values
+    start_values <- tryCatch(
+      {
+        compute_start_sample_sizes(
+          data_function = data_function,
+          metric_function = metric_function,
+          target_performance = target_performance,
+          c_statistic = c_statistic,
+          mean_or_assurance = mean_or_assurance
+        )
+      },
+      error = function(e) {
+        stop(
+          paste("Error when computing start values:", e$message),
+          call. = FALSE
+        )
+      }
+    )
 
-  cat(
-    "Starting values determined: min sample size =",
-    start_min_sample_size,
-    "max sample size =",
-    start_max_sample_size,
-    "\n"
-  )
+    # Adaptive starting values search. This stage is timed so the cost of the
+    # full run can be extrapolated from it (see R/runtime_estimate.R).
+    cat(
+      "Estimating first stage... (Adaptive starting value search algorithm)\n"
+    )
+    stage_1_start <- Sys.time()
+    start_values <- tryCatch(
+      {
+        calculate_adaptive_bounds(
+          data_function = data_function,
+          model_function = model_function,
+          metric_function = metric_function,
+          value_on_error = value_on_error,
+          start_n = start_values$start_min_sample_size,
+          test_n = test_n,
+          n_reps_per = n_reps_per,
+          n_reps_total = 500,
+          target_performance = target_performance,
+          threshold = 0.0001,
+          mean_or_assurance = mean_or_assurance,
+          verbose = FALSE
+        )
+      },
+      error = function(e) {
+        stop(
+          paste("Error during adaptive start value search:", e$message),
+          call. = FALSE
+        )
+      }
+    )
 
-  # Calculate metrics for sample size n
+    stage_1_secs <- as.numeric(difftime(
+      Sys.time(),
+      stage_1_start,
+      units = "secs"
+    ))
+    stage_1_track <- start_values$track
 
-  # TODO: Explain this better
-  # processing final_estimate_se
-  # Auto-stopping or not
+    start_min_sample_size <- start_values$min_sample_size
+    start_max_sample_size <- start_values$max_sample_size
+
+    cat(
+      "Starting values determined: min sample size =",
+      start_min_sample_size,
+      "max sample size =",
+      start_max_sample_size,
+      "\n"
+    )
+  }
+
+  # When supplied, use the requested final standard error to control stopping.
+  # A deliberately high simulation budget ensures the CI criterion dominates.
   if (!(is.null(se_final))) {
     ci <- se_final * stats::qnorm(0.975) * 2
-    n_reps_total <- 10000 # setting large nreps so ci dominates.
+    n_reps_total <- 10000
   } else {
     ci <- NULL
   }
 
-  # Override adaptive min when provided
-  if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
-    start_min_sample_size <- min_sample_size
-    start_max_sample_size <- max_sample_size
-  }
+  # Extrapolate the timed first stage to the full run and tell the user if it
+  # is going to be a long one.
+  warn_if_long_run(
+    stage_1_secs = stage_1_secs,
+    track = stage_1_track,
+    n_reps_per = n_reps_per,
+    n_reps_total = n_reps_total,
+    min_sample_size = start_min_sample_size,
+    max_sample_size = start_max_sample_size,
+    model = attr(model_function, "model", exact = TRUE)
+  )
 
   # Perform search using mlpwr
 
@@ -233,18 +264,24 @@ calculate_mlpwr <- function(
 
   ds <- tryCatch(
     {
-      mlpwr::find.design(
-        simfun = mlpwr_simulation_function,
-        aggregate_fun = aggregate_fun,
-        noise_fun = noise_fun,
-        boundaries = c(start_min_sample_size, start_max_sample_size),
-        power = target_performance,
-        surrogate = "gpr",
-        setsize = n_reps_per,
-        evaluations = n_reps_total,
-        ci = ci,
-        n.startsets = n_init,
-        silent = !isTRUE(progress)
+      do.call(
+        mlpwr::find.design,
+        utils::modifyList(
+          list(
+            simfun = mlpwr_simulation_function,
+            aggregate_fun = aggregate_fun,
+            noise_fun = noise_fun,
+            boundaries = c(start_min_sample_size, start_max_sample_size),
+            power = target_performance,
+            surrogate = "gpr",
+            setsize = n_reps_per,
+            evaluations = n_reps_total,
+            ci = ci,
+            n.startsets = n_init,
+            silent = !isTRUE(progress)
+          ),
+          list(...)
+        )
       )
     },
     error = function(e) {
@@ -319,32 +356,39 @@ calculate_bisection <- function(
 ) {
   # get initial start values
 
-  # Determine start values
-  start_values <- compute_start_sample_sizes(
-    data_function = data_function,
-    metric_function = metric_function,
-    target_performance = target_performance,
-    c_statistic = c_statistic,
-    mean_or_assurance = mean_or_assurance
-  )
+  # As in calculate_mlpwr(), a user-defined search space makes the adaptive
+  # stage redundant: its bounds would only be replaced by the supplied ones.
+  if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
+    start_min_sample_size <- min_sample_size
+    start_max_sample_size <- max_sample_size
+  } else {
+    # Determine start values
+    start_values <- compute_start_sample_sizes(
+      data_function = data_function,
+      metric_function = metric_function,
+      target_performance = target_performance,
+      c_statistic = c_statistic,
+      mean_or_assurance = mean_or_assurance
+    )
 
-  start_values <- calculate_adaptive_bounds(
-    data_function = data_function,
-    model_function = model_function,
-    metric_function = metric_function,
-    value_on_error = value_on_error,
-    start_n = start_values$start_min_sample_size,
-    test_n = test_n,
-    n_reps_per = n_reps_per,
-    n_reps_total = 500,
-    target_performance = target_performance,
-    threshold = 0.0001,
-    mean_or_assurance = mean_or_assurance,
-    verbose = FALSE
-  )
+    start_values <- calculate_adaptive_bounds(
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      value_on_error = value_on_error,
+      start_n = start_values$start_min_sample_size,
+      test_n = test_n,
+      n_reps_per = n_reps_per,
+      n_reps_total = 500,
+      target_performance = target_performance,
+      threshold = 0.0001,
+      mean_or_assurance = mean_or_assurance,
+      verbose = FALSE
+    )
 
-  start_min_sample_size <- start_values$min_sample_size
-  start_max_sample_size <- start_values$max_sample_size
+    start_min_sample_size <- start_values$min_sample_size
+    start_max_sample_size <- start_values$max_sample_size
+  }
 
   max_iter <- round(n_reps_total / n_reps_per)
 
@@ -387,7 +431,7 @@ calculate_bisection <- function(
     for (e in envs) {
       if (!is.null(e)) {
         objs <- ls(envir = e, all.names = TRUE)
-        # avoid exporting names that are obviously internal to base packages (optional)
+        # Avoid exporting names that are internal to base packages.
         if (length(objs) > 0) {
           try(
             parallel::clusterExport(cl, varlist = objs, envir = e),
@@ -411,7 +455,7 @@ calculate_bisection <- function(
     )
   }
 
-  # Helper: run 1 simulation (kept as regular R function)
+  # Run one simulation.
   single_run <- function(n) {
     tryCatch(
       {
@@ -423,7 +467,7 @@ calculate_bisection <- function(
     )
   }
 
-  # Helper: summary of metric for n_reps_per repetitions
+  # Summarise the metric over n_reps_per simulations.
   summary_at_n <- function(n) {
     if (isTRUE(parallel) && registered_parallel) {
       vals <- foreach::`%dopar%`(
@@ -453,13 +497,6 @@ calculate_bisection <- function(
     } else {
       list(y_summary = s$quant20_performance, y = vals)
     }
-  }
-
-  # Override adaptive min when provided
-
-  if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
-    start_min_sample_size <- min_sample_size
-    start_max_sample_size <- max_sample_size
   }
 
   # Initial bounds
@@ -496,7 +533,7 @@ calculate_bisection <- function(
     iter <- iter + 1
   }
 
-  # stop cluster if not already stopped (on.exit covers normal exit, but ensure here as well)
+  # Stop the cluster now; on.exit remains a fallback for early exits.
   if (!is.null(cl)) {
     try(parallel::stopCluster(cl), silent = TRUE)
     try(doParallel::stopImplicitCluster(), silent = TRUE)
@@ -525,6 +562,7 @@ calculate_bisection <- function(
 #' @param progress Logical flag controlling whether the `mlpwr` progress bar is shown.
 #' @param verbose Logical flag passed to `mlpwr`; when `TRUE` verbose output is printed.
 #' @param value_on_error Numeric fallback value used if model fitting or metric calculation fails.
+#' @param ... Additional options passed to [mlpwr::find.design()].
 #'
 #' @return List containing the combined bisection and mlpwr results (`results`, `summaries`, `min_n`, `perf_n`, and `mlpwr_ds`).
 #' @keywords internal
@@ -543,45 +581,63 @@ calculate_mlpwr_bs <- function(
   data_function,
   model_function,
   metric_function,
-  value_on_error
+  value_on_error,
+  ...
 ) {
   # Calculate the first stage bisection
 
-  # Determine number of predictors (excluding outcome column)
-  # Determine start values
-  start_values <- compute_start_sample_sizes(
-    data_function = data_function,
-    metric_function = metric_function,
-    target_performance = target_performance,
-    c_statistic = c_statistic,
-    mean_or_assurance = mean_or_assurance
-  )
+  # A user-defined search space makes the adaptive stage redundant, as in
+  # calculate_mlpwr(). The stage-1 bisection below still runs, bounded by the
+  # supplied values.
+  bounds_supplied <- !is.null(min_sample_size) && !is.null(max_sample_size)
 
-  start_values <- calculate_adaptive_bounds(
-    data_function = data_function,
-    model_function = model_function,
-    metric_function = metric_function,
-    value_on_error = value_on_error,
-    start_n = start_values$start_min_sample_size,
-    test_n = test_n,
-    n_reps_per = n_reps_per,
-    n_reps_total = 500,
-    target_performance = target_performance,
-    threshold = 0.0001,
-    mean_or_assurance = mean_or_assurance,
-    verbose = FALSE
-  )
-
-  prev_min_sample_size <- start_values$min_sample_size
-  prev_max_sample_size <- start_values$max_sample_size
-
-  # Override adaptive min and max when provided at stage 1
-  if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
+  if (bounds_supplied) {
     prev_min_sample_size <- min_sample_size
     prev_max_sample_size <- max_sample_size
+
+    # Without a timed adaptive stage there is nothing to extrapolate the
+    # runtime from, so the long-run check below is skipped.
+    stage_1_secs <- NA_real_
+    stage_1_track <- NULL
+  } else {
+    # Determine number of predictors (excluding outcome column)
+    # Determine start values
+    start_values <- compute_start_sample_sizes(
+      data_function = data_function,
+      metric_function = metric_function,
+      target_performance = target_performance,
+      c_statistic = c_statistic,
+      mean_or_assurance = mean_or_assurance
+    )
+
+    # Timed so the cost of the full run can be extrapolated from it, as in
+    # calculate_mlpwr() (see R/runtime_estimate.R).
+    stage_1_start <- Sys.time()
+    start_values <- calculate_adaptive_bounds(
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      value_on_error = value_on_error,
+      start_n = start_values$start_min_sample_size,
+      test_n = test_n,
+      n_reps_per = n_reps_per,
+      n_reps_total = 500,
+      target_performance = target_performance,
+      threshold = 0.0001,
+      mean_or_assurance = mean_or_assurance,
+      verbose = FALSE
+    )
+    stage_1_secs <- as.numeric(difftime(
+      Sys.time(),
+      stage_1_start,
+      units = "secs"
+    ))
+    stage_1_track <- start_values$track
+
+    prev_min_sample_size <- start_values$min_sample_size
+    prev_max_sample_size <- start_values$max_sample_size
   }
 
-  #cat("Estimating first stage... (Bisection algorithm)\n")
   prev <- calculate_bisection(
     data_function = data_function,
     model_function = model_function,
@@ -636,15 +692,26 @@ calculate_mlpwr_bs <- function(
   # Calculate bootstrapped quantile variance
   noise_fun <- function(x) var_bootstrap(x$y)
 
-  # TODO Explain
-  # processing final_estimate_se
-  # Auto-stopping or not
+  # When supplied, use the requested final standard error to control stopping.
+  # A deliberately high simulation budget ensures the CI criterion dominates.
   if (!(is.null(se_final))) {
     ci <- se_final * stats::qnorm(0.975) * 2
-    n_reps_total <- 10000 # setting large nreps so ci dominates.
+    n_reps_total <- 10000
   } else {
     ci <- NULL
   }
+
+  # Extrapolate the timed first stage to the full run and tell the user if it
+  # is going to be a long one. Done once the replication budget is settled.
+  warn_if_long_run(
+    stage_1_secs = stage_1_secs,
+    track = stage_1_track,
+    n_reps_per = n_reps_per,
+    n_reps_total = n_reps_total,
+    min_sample_size = prev_min_sample_size,
+    max_sample_size = prev_max_sample_size,
+    model = attr(model_function, "model", exact = TRUE)
+  )
 
   # Perform search using mlpwr
   get_start_bounds <- adaptive_startvalues(
@@ -674,20 +741,25 @@ calculate_mlpwr_bs <- function(
     mlpwrbs_max_sample_size <- max_sample_size
   }
 
-  ds <-
-    mlpwr::find.design(
-      simfun = mlpwr_simulation_function,
-      aggregate_fun = aggregate_fun,
-      noise_fun = noise_fun,
-      boundaries = c(mlpwrbs_min_sample_size, mlpwrbs_max_sample_size),
-      power = target_performance,
-      surrogate = "gpr",
-      setsize = n_reps_per,
-      evaluations = n_reps_total,
-      ci = ci,
-      n.startsets = 4,
-      silent = !isTRUE(progress)
+  ds <- do.call(
+    mlpwr::find.design,
+    utils::modifyList(
+      list(
+        simfun = mlpwr_simulation_function,
+        aggregate_fun = aggregate_fun,
+        noise_fun = noise_fun,
+        boundaries = c(mlpwrbs_min_sample_size, mlpwrbs_max_sample_size),
+        power = target_performance,
+        surrogate = "gpr",
+        setsize = n_reps_per,
+        evaluations = n_reps_total,
+        ci = ci,
+        n.startsets = 4,
+        silent = !isTRUE(progress)
+      ),
+      list(...)
     )
+  )
 
   # Process results from mlpwr
   perfs <- ds$dat
