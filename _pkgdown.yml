@@ -2,7 +2,6 @@ url: https://pmsims-package.github.io/pmsims/
 
 development:
   mode: auto
-  version_tooltip: "Documentation for the development version of pmsims"
 
 template:
   bootstrap: 5
@@ -23,19 +22,8 @@ extra_files:
 navbar:
   structure:
     left: [get-started, reference, articles, news]
-    right: [versions, search, github, lightswitch]
+    right: [search, github, lightswitch]
   components:
-    versions:
-      # CI replaces this with the label for each published site. Keeping dev
-      # here makes direct builds from the development branch read correctly.
-      text: dev
-      menu:
-        - text: dev
-          href: https://pmsims-package.github.io/pmsims/dev/
-        - text: 1.0.0 (stable)
-          href: https://pmsims-package.github.io/pmsims/
-        - text: 0.5.0
-          href: https://pmsims-package.github.io/pmsims/0.5.0/
     get-started:
       text: Get started
       href: articles/pmsims.html
