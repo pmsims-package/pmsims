@@ -21,7 +21,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  pkgdown:
+  check-site:
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -39,55 +40,145 @@ jobs:
           extra-packages: any::pkgdown, local::.
           needs: website
 
-      - name: Build site
-        # `development: mode: auto` in _pkgdown.yml keys off the version number,
-        # so a released version (e.g. 1.0.0) builds to docs/ and a dev version
-        # (e.g. 1.0.0.9000) builds to docs/dev. That makes the output directory
-        # depend on where DESCRIPTION happens to be in the release cycle, and
-        # the artifact step below needs docs/dev to exist on the dev branch.
-        # Pin the mode to the branch instead.
+      - name: Configure version selector
         env:
-          PKGDOWN_DEV_MODE: ${{ github.ref_name == 'dev' && 'devel' || 'release' }}
+          SITE_LABEL: ${{ github.base_ref == 'dev' && 'dev' || '1.0.0' }}
+        run: Rscript scripts/configure_pkgdown_versions.R _pkgdown.yml "${SITE_LABEL}"
+
+      - name: Build site
+        env:
+          PKGDOWN_DEV_MODE: ${{ github.base_ref == 'dev' && 'devel' || 'release' }}
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
 
-      - name: Checkout existing published site
-        if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/checkout@v4
+  build-versioned-sites:
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - source_ref: main
+            artifact: stable
+            label: 1.0.0
+            mode: release
+            output: docs
+            extra_packages: any::pkgdown, local::.
+          - source_ref: dev
+            artifact: dev
+            label: dev
+            mode: devel
+            output: docs/dev
+            extra_packages: any::pkgdown, local::.
+          - source_ref: v0.5.0
+            artifact: 0.5.0
+            label: 0.5.0
+            mode: release
+            output: docs
+            # The Pima dataset used by the 0.5.0 vignette was removed from
+            # newer mlbench releases.
+            extra_packages: any::pkgdown, mlbench@2.1-8, local::.
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # Keep the workflow's helper script available while checking out each
+      # package version into its own directory.
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
         with:
-          ref: gh-pages
-          path: .published-site
+          ref: ${{ matrix.source_ref }}
+          path: .site-source
 
-      - name: Prepare Pages artifact
-        if: ${{ github.event_name != 'pull_request' }}
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: .site-source
+          extra-packages: ${{ matrix.extra_packages }}
+          needs: website
+
+      - name: Configure version selector
+        run: >-
+          Rscript scripts/configure_pkgdown_versions.R
+          .site-source/_pkgdown.yml "${{ matrix.label }}"
+
+      - name: Build site
+        env:
+          PKGDOWN_DEV_MODE: ${{ matrix.mode }}
+        run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+        shell: Rscript {0}
+        working-directory: .site-source
+
+      - name: Verify version selector
+        env:
+          SITE_LABEL: ${{ matrix.label }}
+          SITE_OUTPUT: ${{ matrix.output }}
         run: |
-          rm -rf .pages
-          cp -a .published-site .pages
-          rm -rf .pages/.git
+          Rscript -e '
+            html <- paste(readLines(file.path(".site-source", Sys.getenv("SITE_OUTPUT"), "index.html")), collapse = "\n")
+            expected <- c(
+              paste0(">", Sys.getenv("SITE_LABEL"), "</button>"),
+              "https://pmsims-package.github.io/pmsims/dev/",
+              "https://pmsims-package.github.io/pmsims/\">1.0.0 (stable)",
+              "https://pmsims-package.github.io/pmsims/0.5.0/"
+            )
+            stopifnot(vapply(expected, grepl, logical(1), x = html, fixed = TRUE))
+          '
 
-          if [ "${GITHUB_REF_NAME}" = "dev" ]; then
-            rm -rf .pages/dev
-            cp -a docs/dev .pages/dev
-          else
-            find .pages -mindepth 1 -maxdepth 1 ! -name dev -exec rm -rf {} +
-            cp -a docs/. .pages/
-          fi
+      - name: Prepare site artifact
+        env:
+          SITE_OUTPUT: ${{ matrix.output }}
+        run: |
+          mkdir .site-artifact
+          cp -a ".site-source/${SITE_OUTPUT}/." .site-artifact/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pkgdown-${{ matrix.artifact }}
+          path: .site-artifact
+          include-hidden-files: true
+          retention-days: 1
+
+  deploy:
+    if: ${{ github.event_name != 'pull_request' }}
+    needs: build-versioned-sites
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pkgdown-stable
+          path: .pages
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: pkgdown-dev
+          path: .pages/dev
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: pkgdown-0.5.0
+          path: .pages/0.5.0
 
       - name: Mirror Pages artifact to gh-pages
-        if: ${{ github.event_name != 'pull_request' }}
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: .pages
 
       - name: Upload Pages artifact
-        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: .pages
 
       - name: Deploy to GitHub Pages
-        if: ${{ github.event_name != 'pull_request' }}
         id: deployment
         uses: actions/deploy-pages@v4
         with:
