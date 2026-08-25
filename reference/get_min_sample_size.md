@@ -10,7 +10,7 @@ get_min_sample_size(
   npar,
   prevalence = NULL,
   c_stat = NULL,
-  calib_slope = NULL,
+  calibration_slope = NULL,
   epv_value = NULL,
   outcome_type = c("binary", "survival", "continuous")
 )
@@ -32,7 +32,7 @@ get_min_sample_size(
   Numeric in (0.5, 1\]; anticipated discrimination (C-statistic). Lower
   values inflate the heuristic.
 
-- calib_slope:
+- calibration_slope:
 
   Numeric; anticipated calibration slope. Values below 1 trigger a
   modest inflation.

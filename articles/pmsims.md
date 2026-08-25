@@ -8,7 +8,8 @@ assurance**. Rather than relying on simple rules of thumb or closed‑form
 formulae, pmsims uses **simulation** to:
 
 - Generate synthetic datasets that reflect your target setting (outcome
-  type, prevalence or \\R^2\\, signal vs. noise predictors);
+  type, prevalence or \\R^2\\, signal vs. noise predictors, and how
+  complex the underlying signal is);
 - Fit a specified **model** (e.g., logistic regression or linear
   regression);
 - Evaluate a chosen **performance metric** (e.g., calibration slope,
@@ -53,6 +54,11 @@ Survival
 >   with effectively unlimited data and calibrates the data generator.
 > - `target_performance` is the minimum acceptable performance threshold
 >   used to determine the required sample size.
+> - `complexity` and `data_control` describe the data-generating
+>   mechanism, not the model you plan to fit. The same configuration is
+>   used both to calibrate the generator against `maximum_achievable_*`
+>   and to simulate the data, so a more complex signal generally implies
+>   a larger required sample size.
 > - For reproducibility, set a random seed
 >   ([`set.seed()`](https://rdrr.io/r/base/Random.html)).
 
@@ -76,8 +82,8 @@ set.seed(123)
 binary_example <- simulate_binary(
   signal_parameters = 20,
   noise_parameters  = 0,
-  predictor_type = "continuous",
-  binary_predictor_prevalence = NULL,
+  complexity = 1,
+  data_control = list(correlation = 0.3),
   outcome_prevalence = 0.30,
   maximum_achievable_cstatistic = 0.80,
   model = "glm",
@@ -93,24 +99,45 @@ binary_example
     #>                     ┌────────────────────────────────────────┐
     #>                     │ pmsims: Sample size simulation summary │
     #>                     └────────────────────────────────────────┘
+    #> 
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
-    #>                                Outcome : binary
-    #>                         Predictor type : continuous
-    #>                   Number of predictors : 20
-    #>                       Noise predictors : 0
-    #>                             Prevalence : 0.3
-    #>      Expected large-sample performance : C-statistic ('cstatistic') = 0.800
-    #>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.850
-    #>                                  Model : glm
-    #>                        Simulation reps : 1,000
+    #> 
+    #> Data-generating scenario
+    #>   Outcome                   Binary
+    #>   Prevalence                0.30
+    #>   Predictors                20 signal
+    #>   Predictor distribution    Normal
+    #>   Predictor correlation     0.30
+    #>   Signal form               Linear
+    #> 
+    #> Model and performance
+    #>   Model                     Logistic regression
+    #>   Large-sample C-statistic  0.800
+    #>   Sample-size criterion     Calibration slope ≥ 0.850
+    #> 
+    #> Simulation
+    #>   Mode                      Assurance
+    #>   Replications              1,000
+    #> 
     #> ──────────────────────────────────── Results ───────────────────────────────────
-    #>              Final minimum sample size : 1,044
-    #>             Estimated performance at N : 0.849 (Calibration slope ('calib_slope') = 0.850)
-    #>            Estimated other metric at N : 0.782 (Auc ('auc'))
-    #>                                  Model : glm
-    #>                                   Mode : Assurance
-    #>                           Running time : 2 minutes 39 seconds
-    #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
+    #> 
+    #>   Minimum sample size       985
+    #> 
+    #>   Performance at N = 985
+    #>     Calibration slope       0.849    (target ≥ 0.850)
+    #>     C-statistic             0.794
+    #> 
+    #>   Running time              2 minutes 43 seconds
+    #> 
+    #> ────────────────────────────────────────────────────────────────────────────────
+    #> Assurance mode selects N so that the target is achieved with high probability
+    #> across repeated datasets.
+
+The printed summary is a human-readable report. Implementation detail —
+the internal metric identifiers, the engine settings used for the
+search, and any quantities recorded on an internal search scale — is
+available through `summary(binary_example)` or, equivalently,
+`print(binary_example, verbose = TRUE)`.
 
 Plot the estimated learning curve and identified sample size:
 
@@ -129,11 +156,12 @@ outcome](pmsims_files/figure-html/unnamed-chunk-3-1.png)
 continuous_example <- simulate_continuous(
   signal_parameters = 15,
   noise_parameters = 0,
-  predictor_type = "continuous",
+  complexity = 1,
+  data_control = list(correlation = 0.3),
   maximum_achievable_rsquared = 0.50,
   model = "lm",
   metric = "calibration_slope",
-  target_performance = 0.90,
+  target_performance = 0.95,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )
@@ -144,23 +172,38 @@ continuous_example
     #>                     ┌────────────────────────────────────────┐
     #>                     │ pmsims: Sample size simulation summary │
     #>                     └────────────────────────────────────────┘
+    #> 
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
-    #>                                Outcome : continuous
-    #>                         Predictor type : continuous
-    #>                   Number of predictors : 15
-    #>                       Noise predictors : 0
-    #>      Expected large-sample performance : R² ('r2') = 0.500
-    #>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.900
-    #>                                  Model : lm
-    #>                        Simulation reps : 1,000
+    #> 
+    #> Data-generating scenario
+    #>   Outcome                  Continuous
+    #>   Predictors               15 signal
+    #>   Predictor distribution   Normal
+    #>   Predictor correlation    0.30
+    #>   Signal form              Linear
+    #> 
+    #> Model and performance
+    #>   Model                    Linear regression
+    #>   Large-sample R²          0.500
+    #>   Sample-size criterion    Calibration slope ≥ 0.950
+    #> 
+    #> Simulation
+    #>   Mode                     Assurance
+    #>   Replications             1,000
+    #> 
     #> ──────────────────────────────────── Results ───────────────────────────────────
-    #>              Final minimum sample size : 239
-    #>             Estimated performance at N : 0.900 (Calibration slope ('calib_slope') = 0.900)
-    #>            Estimated other metric at N : 0.486 (R2 ('r2'))
-    #>                                  Model : lm
-    #>                                   Mode : Assurance
-    #>                           Running time : 52 seconds
-    #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
+    #> 
+    #>   Minimum sample size      685
+    #> 
+    #>   Performance at N = 685
+    #>     Calibration slope      0.950    (target ≥ 0.950)
+    #>     R²                     0.488
+    #> 
+    #>   Running time             1 minute 51 seconds
+    #> 
+    #> ────────────────────────────────────────────────────────────────────────────────
+    #> Assurance mode selects N so that the target is achieved with high probability
+    #> across repeated datasets.
 
 ``` r
 
@@ -169,46 +212,3 @@ plot(continuous_example)
 
 ![Plot showing learning curve for continuous
 outcome](pmsims_files/figure-html/unnamed-chunk-6-1.png)
-
-## Session info
-
-``` r
-
-sessionInfo()
-#> R version 4.6.0 (2026-04-24)
-#> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.4 LTS
-#> 
-#> Matrix products: default
-#> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
-#> 
-#> locale:
-#>  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
-#>  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   
-#>  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
-#> [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
-#> 
-#> time zone: UTC
-#> tzcode source: system (glibc)
-#> 
-#> attached base packages:
-#> [1] stats     graphics  grDevices utils     datasets  methods   base     
-#> 
-#> other attached packages:
-#> [1] pmsims_0.5.0
-#> 
-#> loaded via a namespace (and not attached):
-#>  [1] Matrix_1.7-5       gtable_0.3.6       jsonlite_2.0.0     compiler_4.6.0    
-#>  [5] crayon_1.5.3       jquerylib_0.1.4    splines_4.6.0      systemfonts_1.3.2 
-#>  [9] scales_1.4.0       textshaping_1.0.5  yaml_2.3.12        fastmap_1.2.0     
-#> [13] lattice_0.22-9     ggplot2_4.0.3      R6_2.6.1           labeling_0.4.3    
-#> [17] knitr_1.51         htmlwidgets_1.6.4  desc_1.4.3         bslib_0.11.0      
-#> [21] RColorBrewer_1.1-3 rlang_1.2.0        cachem_1.1.0       xfun_0.58         
-#> [25] fs_2.1.0           DiceKriging_1.6.1  sass_0.4.10        S7_0.2.2          
-#> [29] otel_0.2.0         cli_3.6.6          pkgdown_2.2.0      withr_3.0.2       
-#> [33] digest_0.6.39      grid_4.6.0         lifecycle_1.0.5    mlpwr_1.1.1       
-#> [37] vctrs_0.7.3        evaluate_1.0.5     glue_1.8.1         farver_2.1.2      
-#> [41] ragg_1.5.2         survival_3.8-6     rmarkdown_2.31     tools_4.6.0       
-#> [45] htmltools_0.5.9
-```

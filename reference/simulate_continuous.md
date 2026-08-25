@@ -15,10 +15,10 @@ smallest \\n\\ meeting the chosen criterion.
 simulate_continuous(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = "continuous",
-  binary_predictor_prevalence = NULL,
+  complexity = 1,
+  data_control = NULL,
   maximum_achievable_rsquared,
-  model = "lm",
+  model = c("lm", "lasso", "ridge", "rf", "xgboost"),
   metric = "calibration_slope",
   target_performance,
   n_reps_total = 1000,
@@ -39,15 +39,15 @@ simulate_continuous(
   Integer. Number of candidate predictors not associated with the
   outcome (noise features). Default is 0.
 
-- predictor_type:
+- complexity:
 
-  Character string, either `"continuous"` or `"binary"`. Specifies the
-  type of simulated candidate predictors.
+  Integer in 1:4 selecting the data-generating signal structure (see
+  *Data control*). Default `1`.
 
-- binary_predictor_prevalence:
+- data_control:
 
-  Optional numeric in (0, 1). Prevalence of the binary predictors when
-  `predictor_type = "binary"`. Ignored otherwise.
+  Optional named list controlling the predictors (see *Data control*).
+  Default `NULL` (generator defaults).
 
 - maximum_achievable_rsquared:
 
@@ -57,18 +57,36 @@ simulate_continuous(
 
 - model:
 
-  Character string specifying the modelling algorithm. Supported values
-  are `"lm"` (linear regression), `"lasso"` **\[experimental\]**
-  (regularised linear regression), `"rf"` **\[experimental\]** (random
-  forest), and `"xgboost"` **\[experimental\]** (gradient-boosted
-  trees). The machine-learning options are experimental because they
-  have not yet undergone the package's main validation study.
+  Character string specifying the modelling algorithm. One of `"lm"`
+  (linear regression), `"lasso"`, `"ridge"`, `"rf"` (random forest), or
+  `"xgboost"` (gradient-boosted trees).
 
 - metric:
 
   Character string naming the performance metric used to assess the
-  sample size; defaults to `"calibration_slope"`. (Internally mapped to
-  the engine's metric identifiers.)
+  sample size; defaults to `"calibration_slope"`. Metric identifiers use
+  one canonical form throughout the package, such as
+  `"calibration_slope"`, `"calibration_in_the_large"`, `"auc"`, `"r2"`,
+  `"cindex"`, and `"csse"`.
+
+  `"calibration_slope"` is the slope from regressing the observed
+  outcome on the model's linear predictor in held-out data; 1 indicates
+  perfect calibration, and values below 1 indicate overfitting. Note
+  that for the machine-learning models (`"lasso"`, `"ridge"`, `"rf"`,
+  `"xgboost"`) this is converted internally to the calibration slope
+  squared error for optimisation and translated back before results are
+  returned; you don't need to do anything, and `target_performance` is
+  still given on the calibration slope scale. Results derived this way
+  carry a footnote marker in the printed output.
+
+  `"csse"` is the calibration slope squared error, \\-(1 - s)^2\\ for a
+  calibration slope \\s\\, so that larger is better and 0 is perfect
+  calibration. It can be requested directly, which is mainly useful for
+  advanced use and for comparison against the internal conversion
+  described above. When requesting it directly you are responsible for
+  supplying `target_performance` on the CSSE scale: a calibration slope
+  target of `0.9` corresponds to a CSSE target of `-0.01`. No adjustment
+  is applied on your behalf, and results are reported on the CSSE scale.
 
 - target_performance:
 
@@ -119,6 +137,39 @@ size \\n\\. The assurance criterion explicitly accounts for variability
 across training sets; models with higher variance typically require
 larger \\n\\ to satisfy it.
 
+## Data control
+
+`complexity` selects the signal structure of the data-generating
+mechanism: `1` purely linear, `2` linear + quadratic, `3` linear +
+quadratic + interaction, `4` the Friedman function. `data_control` is an
+optional list fine-tuning the predictors:
+
+- `nonlinear_strength`:
+
+  Numeric in `[0, 1)`. Fraction of the signal variance carried by the
+  nonlinear, linearly-inaccessible component. Applies to complexity 2
+  and 3 only; ignored (with a warning) for 1 and 4. If omitted, the
+  generator's per-complexity default is used.
+
+- `correlation`:
+
+  Numeric in \\\[-1, 1\]\\. Pairwise correlation among the candidate
+  predictors. Default `0.3`.
+
+- `predictor_distribution`:
+
+  One of `"normal"`, `"uniform"`, `"binary"`, `"exponential"`,
+  `"lognormal"`, `"t"`, `"laplace"`. `"binary"` selects 0/1 predictors
+  and requires `binary_predictor_prevalence`; any other value selects
+  continuous predictors from that family. Default `"normal"`.
+
+- `binary_predictor_prevalence`:
+
+  Numeric in `(0, 1)`. Prevalence of the binary predictors; required
+  when `predictor_distribution = "binary"`, ignored (with a warning)
+  otherwise. Note: binary predictors are incompatible with complexity
+  2/3 because squaring a 0/1 variable returns itself.
+
 ## See also
 
 [`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md),
@@ -132,8 +183,9 @@ if (FALSE) { # \dontrun{
 est <- simulate_continuous(
   signal_parameters = 8,
   noise_parameters = 8,
-  predictor_type = "continuous",
+  complexity = 3,
   maximum_achievable_rsquared = 0.50,
+  model = "lm",
   metric = "calibration_slope",
   target_performance = 0.9,
   n_reps_total = 1000,

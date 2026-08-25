@@ -15,16 +15,15 @@ under the hood.
 For this vignette, we’ll use five packages:
 
 1.  `pmsims`
-2.  `mlbench` package, which will provide the `PimaIndiansDiabetes`
-    dataset
+2.  `mlbench`, which provides the `BreastCancer` dataset
 3.  `synthpop` package, which will allow us to generate a large
-    synthetic dataset based on the `PimaIndiansDiabetes` dataset.
+    synthetic dataset based on the `BreastCancer` dataset.
 4.  `glmnet` for the elastic net modelling function.
 5.  `DescTools`, which provides the Brier score function used to assess
     model performance.
 
-We will try to estimate the minimum sample size required for a
-prediction model to predict `diabetes`.
+We will estimate the minimum sample size required for a prediction model
+to distinguish malignant from benign samples.
 
 ``` r
 
@@ -52,53 +51,75 @@ squared error.
 
 ### Defining the data generator
 
-For this example we will use the `PimaIndiansDiabetes` data set from the
-`mlbench` package. The dataset consists of diabetes test results. For
-more details, see the [help
-page](https://search.r-project.org/CRAN/refmans/mlbench/html/PimaIndiansDiabetes.html).
-We will use the `synthpop` package to generate a very large synthetic
-dataset. We will then sample from this dataset to obtain a dataset of
-any required size.
+For this example we use the `BreastCancer` dataset from the `mlbench`
+package. It contains cytological characteristics of benign and malignant
+samples. For more details, see the [help
+page](https://search.r-project.org/CRAN/refmans/mlbench/html/BreastCancer.html).
+We use `synthpop` to create a synthetic population and then sample
+datasets of the required size from it.
 
 ``` r
 
 set.seed(1234)
-data("PimaIndiansDiabetes", package = "mlbench")
-real_data <- PimaIndiansDiabetes
-real_data$diabetes <- ifelse(real_data$diabetes == "pos", 1, 0)
+data("BreastCancer", package = "mlbench")
+real_data <- stats::na.omit(BreastCancer)
+real_data$Id <- NULL
+real_data$Class <- as.integer(real_data$Class == "malignant")
+real_data[] <- lapply(
+  real_data,
+  function(x) if (is.factor(x)) as.numeric(as.character(x)) else x
+)
 
 synthetic_data <- synthpop::syn(
   real_data,
-  k = 1000000,
+  k = 5000,
   print.flag = FALSE,
   minnumlevels = 2
 )
 ```
 
     ## 
-    ## Variable(s): diabetes numeric but with only 2 or fewer distinct values turned into factor(s) for synthesis.
+    ## Variable(s): Class numeric but with only 2 or fewer distinct values turned into factor(s) for synthesis.
 
 ``` r
 
-my_data_generator <- function(n, data = synthetic_data$syn) {
-  data[sample(seq_len(nrow(data)), n, replace = FALSE), ]
+synthetic_data$syn$Class <- as.integer(as.character(synthetic_data$syn$Class))
+
+my_data_generator <- function(
+  n,
+  n_signal_parameters = 9,
+  noise_parameters = 0,
+  data = synthetic_data$syn
+) {
+  data[sample(seq_len(nrow(data)), n, replace = TRUE), ]
 }
 
 example_data <- my_data_generator(n = 10)
 print(example_data)
 ```
 
-    ##        pregnant glucose pressure triceps insulin mass pedigree age diabetes
-    ## 979690       10     125       70      37     122 33.1    0.647  43        1
-    ## 501265        2      92       64      42     207 39.4    0.395  24        0
-    ## 99101        13     106       70       0       0 34.2    0.297  63        0
-    ## 840015        2     100       68      20      54 18.2    0.832  27        0
-    ## 72928         1     144       58      20      83 26.2    0.529  33        0
-    ## 625267        0     127       80      31       0 35.8    0.218  23        0
-    ## 817900       12     140       88      33       0 32.0    0.244  51        0
-    ## 829506        1      95       80      31      18 39.5    0.236  21        0
-    ## 826615        2     100       68      15      84 24.6    0.154  28        0
-    ## 665137        6      87       66       0       0 23.5    0.342  31        0
+    ##      Cl.thickness Cell.size Cell.shape Marg.adhesion Epith.c.size Bare.nuclei
+    ## 4886            8         6          3             2            5          10
+    ## 2481            5         1          2             1            2           1
+    ## 4038            1         1          1             3            1           1
+    ## 3096           10         7          8            10            6          10
+    ## 1199           10         8          7             3            4          10
+    ## 2347            2         3          4             5            3           5
+    ## 2764            3         1          1             1            2           1
+    ## 3485            9         5          6             2            2          10
+    ## 3207            1         1          1             1            2           1
+    ## 3991            3         1          1             1            2           1
+    ##      Bl.cromatin Normal.nucleoli Mitoses Class
+    ## 4886           4               5       1     1
+    ## 2481           1               1       1     0
+    ## 4038           2               1       1     0
+    ## 3096           7               6       1     1
+    ## 1199           4               5       1     1
+    ## 2347           5               3       3     0
+    ## 2764           2               1       1     0
+    ## 3485           4               1       2     1
+    ## 3207           2               1       1     0
+    ## 3991           3               1       1     0
 
 ### Defining the model function
 
@@ -108,14 +129,14 @@ return a fitted model object that can be used with our metric function.
 
 We will use the `glmnet` package to fit an elastic net regression model,
 setting the elastic net mixing parameter to 0.5. For this function, the
-data must be in the form of a matrix. We aim to predict `diabetes` using
+data must be in the form of a matrix. We aim to predict `Class` using
 the remaining columns in the dataset.
 
 ``` r
 
 my_model_function <- function(data) {
   data_matrix <- as.matrix(data)
-  outcome <- "diabetes"
+  outcome <- "Class"
   x <- data_matrix[, colnames(data_matrix) != outcome, drop = FALSE]
   y <- data_matrix[, outcome]
 
@@ -124,7 +145,7 @@ my_model_function <- function(data) {
     y,
     family = "binomial",
     alpha = 0.5,
-    nfolds = 10
+    nfolds = 5
   )
 }
 
@@ -157,7 +178,7 @@ fallback value returned for failed simulation runs.
 
 my_metric <- function(test_data, fitted_model, model_name) {
   test_data_matrix <- as.matrix(test_data)
-  y <- which(names(test_data) == "diabetes")
+  y <- which(names(test_data) == "Class")
   x_test <- test_data_matrix[, -y]
   y_test <- test_data_matrix[, y]
   predictions <- predict(
@@ -170,12 +191,14 @@ my_metric <- function(test_data, fitted_model, model_name) {
   brier_score <- DescTools::BrierScore(y_test, pred = predictions)
   return(-brier_score)
 }
+attr(my_metric, "metric") <- "brier_score"
+attr(my_metric, "value_on_error") <- -1
 
-test_data <- my_data_generator(n = 1000)
+test_data <- my_data_generator(n = 500)
 my_metric(test_data, example_fitted_model, "elastic net regression")
 ```
 
-    ## [1] -0.1664593
+    ## [1] -0.04277218
 
 ### What is the maximum achievable performance?
 
@@ -197,7 +220,7 @@ acceptable threshold. This threshold is passed through
 performance. The gap between these two quantities will influence the
 minimum sample size returned.
 
-In this example, we use a training sample of 10,000 to approximate the
+In this example, we use a training sample of 3,000 to approximate the
 maximum achievable performance. For some machine learning models,
 particularly XGBoost, this may be insufficient, and larger samples may
 be needed.
@@ -205,8 +228,8 @@ be needed.
 ``` r
 
 set.seed(1234)
-maximum_achievable_data <- my_data_generator(n = 10000)
-test_data <- my_data_generator(n = 30000)
+maximum_achievable_data <- my_data_generator(n = 3000)
+test_data <- my_data_generator(n = 1000)
 test_model <- my_model_function(maximum_achievable_data)
 maximum_achievable_performance <- my_metric(
   test_data,
@@ -216,7 +239,7 @@ maximum_achievable_performance <- my_metric(
 print(maximum_achievable_performance)
 ```
 
-    ## [1] -0.1529583
+    ## [1] -0.03029851
 
 We will also look at small-sample performance, which reflects what
 happens when we have limited data. We run this a few times because
@@ -225,10 +248,10 @@ small-sample performance can be highly variable.
 ``` r
 
 set.seed(1234)
-small_sample_performance <- rep(NA, 10)
-for(i in 1:10) {
+small_sample_performance <- rep(NA, 5)
+for (i in seq_along(small_sample_performance)) {
   small_sample_data <- my_data_generator(n = 50)
-  test_data <- my_data_generator(n = 30000)
+  test_data <- my_data_generator(n = 1000)
   test_model <- my_model_function(small_sample_data)
   small_sample_performance[i] <- my_metric(
     test_data,
@@ -240,29 +263,25 @@ for(i in 1:10) {
 print(small_sample_performance)
 ```
 
-    ##  [1] -0.2266960 -0.1725650 -0.1743998 -0.1844464 -0.1731943 -0.1978301
-    ##  [7] -0.1789102 -0.1864845 -0.1856546 -0.1898357
+    ## [1] -0.07020165 -0.05314556 -0.03743018 -0.04255960 -0.07313804
 
 ``` r
 
 mean(small_sample_performance)
 ```
 
-    ## [1] -0.1870017
+    ## [1] -0.05529501
 
 ## Running `simulate_custom()`
 
 We are now ready to run
 [`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md).
-We decide that a Brier score of -0.165 is the minimum acceptable
-performance, allowing some degradation from the estimated maximum
-achievable performance. This target is approximately halfway between
-`maximum_achievable_performance` and the small-sample performance. For
-the Brier score there are no established criteria for choosing the
-target, so it may be useful to explore how the estimated minimum sample
-size changes across different values of `target_performance`. For speed,
-we will set the total number of replications to 1000. We use default
-arguments for all other parameters.
+For illustration, we set the minimum acceptable performance slightly
+below the estimated maximum. There are no universal criteria for
+choosing a Brier-score target, so it is useful to explore how the
+estimated minimum sample size changes across target values. The small
+simulation budget below keeps the vignette quick; use larger values for
+an analysis.
 
 ``` r
 
@@ -271,41 +290,39 @@ result <- simulate_custom(
   data_function = my_data_generator,
   model_function = my_model_function,
   metric_function = my_metric,
-  target_performance = -0.165,
-  n_reps_total = 1000,
+  target_performance = maximum_achievable_performance - 0.02,
+  mean_or_assurance = "mean",
+  test_n = 500,
+  min_sample_size = 50,
+  max_sample_size = 300,
+  n_reps_total = 20,
+  n_reps_per = 5,
+  method = "bisection",
   progress = FALSE
 )
 ```
 
-    ## Estimating first stage... (Adaptive starting value search algorithm)
-    ## Starting values determined: min sample size = 160 max sample size = 320 
-    ## Estimating second stage... (Gaussian process algorithm)
+    ## Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
 
 ``` r
 
-print(result)
+result[c("min_n", "perf_n", "target_performance")]
 ```
 
-    ##                     ┌────────────────────────────────────────┐
-    ##                     │ pmsims: Sample size simulation summary │
-    ##                     └────────────────────────────────────────┘
-    ## ──────────────────────────────────── Inputs ────────────────────────────────────
-    ##   Target for chosen performance metric :  = -0.165
-    ##                        Simulation reps : 1,000
-    ## ──────────────────────────────────── Results ───────────────────────────────────
-    ##              Final minimum sample size : 207
-    ##             Estimated performance at N : -0.165 ( = -0.165)
-    ##            Estimated other metric at N : <NA> ()
-    ##                                   Mode : Assurance
-    ##                           Running time : 1 minute 15 seconds
-    ##     Assurance mode ensures the target metric is met with high probability across repeated datasets.
+    ## $min_n
+    ## [1] 81
+    ## 
+    ## $perf_n
+    ## logical(0)
+    ## 
+    ## $target_performance
+    ## [1] -0.05029851
 
 ### Interpretation
 
-The results show a minimum sample size of 207. This is calculated using
-the assurance criterion, which means that we would expect 80% of models
-developed on samples of this size to have a negative Brier score of
--0.165 or better.
+The results show a minimum sample size of 81. This is calculated using
+the mean criterion: the average negative Brier score across repeated
+training samples meets the selected target.
 
 Note that this is the minimum sample size required for the Brier score;
 other performance metrics may require larger sample sizes to achieve

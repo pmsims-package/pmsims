@@ -32,7 +32,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">pmsims</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,6 +53,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-news" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">News</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-news">
 <li><h6 class="dropdown-header" data-toc-skip>Releases</h6></li>
+    <li><a class="dropdown-item" href="../articles/release-1-0-0.html">Version 1.0.0</a></li>
     <li><a class="dropdown-item" href="../articles/release-0-5-0.html">Version 0.5.0</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../news/index.html">Changelog</a></li>
@@ -61,10 +62,10 @@
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown--" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">0.5.0</button>
-  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown--">
-<li><a class="dropdown-item" href="https://pmsims-package.github.io/pmsims/">0.5.0 (stable)</a></li>
-    <li><a class="dropdown-item" href="https://pmsims-package.github.io/pmsims/dev/">dev</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-dev" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">dev</button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-dev">
+<li><a class="dropdown-item" href="https://pmsims-package.github.io/pmsims/dev/">dev</a></li>
+    <li><a class="dropdown-item" href="https://pmsims-package.github.io/pmsims/">1.0.0 (stable)</a></li>
   </ul>
 </li>
 <li class="nav-item"><form class="form-inline" role="search">
@@ -103,7 +104,8 @@ relying on simple rules of thumb or closed‑form formulae, pmsims uses
 <ul>
 <li>Generate synthetic datasets that reflect your target setting
 (outcome type, prevalence or <span class="math inline">\(R^2\)</span>,
-signal vs. noise predictors);</li>
+signal vs. noise predictors, and how complex the underlying signal
+is);</li>
 <li>Fit a specified <strong>model</strong> (e.g., logistic regression or
 linear regression);</li>
 <li>Evaluate a chosen <strong>performance metric</strong> (e.g.,
@@ -253,20 +255,40 @@ lists the key inputs.</p>
       </td>
     </tr>
 <tr class="arg-row" data-applies="all">
-<td><code>predictor_type</code></td>
+<td><code>complexity</code></td>
       <td>
-        <em>(chr)</em> Type of simulated predictors (<code>"continuous"</code> or <code>"binary"</code>).
+        <em>(int 1–4)</em> Signal structure of the data-generating mechanism:
+        <code>1</code> purely linear, <code>2</code> linear + quadratic,
+        <code>3</code> linear + quadratic + interaction, <code>4</code> the Friedman function.
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
-          <span class="badge badge--default">Default: <code>"continuous"</code></span>
+          <span class="badge badge--default">Default: <code>1</code></span>
         </div>
       </td>
     </tr>
 <tr class="arg-row" data-applies="all">
-<td><code>binary_predictor_prevalence</code></td>
+<td><code>data_control</code></td>
       <td>
-        <em>(num 0–1)</em> Prevalence for binary predictors (used only if <code>predictor_type = "binary"</code>).
-        <div class="meta">
+        <em>(list)</em> Optional list fine-tuning the predictors:
+        <ul>
+<li>
+<code>nonlinear_strength</code> <em>(num [0, 1))</em> — fraction of the
+            signal variance carried by the nonlinear, linearly-inaccessible component.
+            Complexity 2 and 3 only; ignored with a warning for 1 and 4.</li>
+          <li>
+<code>correlation</code> <em>(num [-1, 1])</em> — pairwise correlation
+            among candidate predictors. Default <code>0.3</code>.</li>
+          <li>
+<code>predictor_distribution</code> <em>(chr)</em> — one of
+            <code>"normal"</code>, <code>"uniform"</code>, <code>"binary"</code>,
+            <code>"exponential"</code>, <code>"lognormal"</code>, <code>"t"</code>,
+            <code>"laplace"</code>. Default <code>"normal"</code>.</li>
+          <li>
+<code>binary_predictor_prevalence</code> <em>(num (0, 1))</em> — required
+            when <code>predictor_distribution = "binary"</code>, ignored otherwise.
+            Binary predictors are incompatible with complexity 2/3.</li>
+        </ul>
+<div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: <code>NULL</code></span>
         </div>
@@ -344,7 +366,10 @@ lists the key inputs.</p>
 <tr class="arg-row" data-applies="all">
 <td><code>model</code></td>
       <td>
-        <em>(chr)</em> Model used for fitting (e.g. logistic, linear, or Cox).
+        <em>(chr)</em> Model used for fitting: <code>"glm"</code> / <code>"lm"</code> /
+        <code>"coxph"</code> depending on the outcome, or one of the experimental
+        machine-learning options <code>"lasso"</code>, <code>"ridge"</code>,
+        <code>"rf"</code>, <code>"xgboost"</code>.
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: <code>"glm"</code> / <code>"lm"</code> / <code>"coxph"</code></span>
@@ -354,7 +379,11 @@ lists the key inputs.</p>
 <tr class="arg-row" data-applies="all">
 <td><code>metric</code></td>
       <td>
-        <em>(chr)</em> <strong>Performance metric</strong> used to estimate the minimum required sample size (e.g. calibration slope, R<sup>2</sup>, C-statistic).
+        <em>(chr)</em> <strong>Performance metric</strong> used to estimate the minimum
+        required sample size. Metric identifiers take one canonical form throughout the
+        package: <code>"calibration_slope"</code>, <code>"calibration_in_the_large"</code>,
+        <code>"auc"</code>, <code>"r2"</code>, <code>"cindex"</code>, and
+        <code>"csse"</code> (calibration slope squared error).
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: <code>"calibration_slope"</code></span>
@@ -444,6 +473,12 @@ generator.</li>
 <li>
 <code>target_performance</code> is the minimum acceptable
 performance threshold used to determine the required sample size.</li>
+<li>
+<code>complexity</code> and <code>data_control</code> describe the
+data-generating mechanism, not the model you plan to fit. The same
+configuration is used both to calibrate the generator against
+<code>maximum_achievable_*</code> and to simulate the data, so a more
+complex signal generally implies a larger required sample size.</li>
 <li>For reproducibility, set a random seed
 (<code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code>).</li>
 </ul>
@@ -468,8 +503,8 @@ performance threshold used to determine the required sample size.</li>
 <span><span class="va">binary_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_binary.html">simulate_binary</a></span><span class="op">(</span></span>
 <span>  signal_parameters <span class="op">=</span> <span class="fl">20</span>,</span>
 <span>  noise_parameters  <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span>
-<span>  binary_predictor_prevalence <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  complexity <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  data_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>correlation <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span>,</span>
 <span>  outcome_prevalence <span class="op">=</span> <span class="fl">0.30</span>,</span>
 <span>  maximum_achievable_cstatistic <span class="op">=</span> <span class="fl">0.80</span>,</span>
 <span>  model <span class="op">=</span> <span class="st">"glm"</span>,</span>
@@ -483,24 +518,44 @@ performance threshold used to determine the required sample size.</li>
 <pre><code><span><span class="co">#&gt;                     ┌────────────────────────────────────────┐</span></span>
 <span><span class="co">#&gt;                     │<span style="font-weight: bold;"> pmsims: Sample size simulation summary </span>│</span></span>
 <span><span class="co">#&gt;                     └────────────────────────────────────────┘</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ──────────────────────────────────── Inputs ────────────────────────────────────</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                             Outcome</span> : binary</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                      Predictor type</span> : continuous</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                Number of predictors</span> : 20</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                    Noise predictors</span> : 0</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                          Prevalence</span> : 0.3</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">   Expected large-sample performance</span> : C-statistic ('cstatistic') = 0.800</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">Target for chosen performance metric</span> : Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.850</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                               Model</span> : glm</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                     Simulation reps</span> : 1,000</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">Data-generating scenario</span></span></span>
+<span><span class="co">#&gt;   Outcome                   Binary</span></span>
+<span><span class="co">#&gt;   Prevalence                0.30</span></span>
+<span><span class="co">#&gt;   Predictors                20 signal</span></span>
+<span><span class="co">#&gt;   Predictor distribution    Normal</span></span>
+<span><span class="co">#&gt;   Predictor correlation     0.30</span></span>
+<span><span class="co">#&gt;   Signal form               Linear</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">Model and performance</span></span></span>
+<span><span class="co">#&gt;   Model                     Logistic regression</span></span>
+<span><span class="co">#&gt;   Large-sample C-statistic  0.800</span></span>
+<span><span class="co">#&gt;   Sample-size criterion     Calibration slope ≥ 0.850</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">Simulation</span></span></span>
+<span><span class="co">#&gt;   Mode                      Assurance</span></span>
+<span><span class="co">#&gt;   Replications              1,000</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ──────────────────────────────────── Results ───────────────────────────────────</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">           Final minimum sample size</span> : <span style="font-weight: bold;">1,044</span></span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">          Estimated performance at N</span> : 0.849 (Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.850)</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">         Estimated other metric at N</span> : 0.782 (Auc <span style="color: #555555;">('auc')</span>)</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">                               Model</span> : glm</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">                                Mode</span> : Assurance</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">                        Running time</span> : 2 minutes 39 seconds</span></span>
-<span><span class="co">#&gt;     <span style="color: #555555; font-style: italic;">Assurance mode ensures the target metric is met with high probability across repeated datasets.</span></span></span></code></pre>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   <span style="font-weight: bold;">Minimum sample size</span>       <span style="color: #0000BB; font-weight: bold;">985</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   <span style="font-weight: bold;">Performance at N = 985</span></span></span>
+<span><span class="co">#&gt;     Calibration slope       0.849    <span style="color: #555555;">(target ≥ 0.850)</span></span></span>
+<span><span class="co">#&gt;     C-statistic             0.794</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   <span style="color: #555555;">Running time</span>              <span style="color: #555555;">2 minutes 43 seconds</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ────────────────────────────────────────────────────────────────────────────────</span></span>
+<span><span class="co">#&gt; <span style="color: #555555; font-style: italic;">Assurance mode selects N so that the target is achieved with high probability</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555; font-style: italic;">across repeated datasets.</span></span></span></code></pre>
+<p>The printed summary is a human-readable report. Implementation detail
+— the internal metric identifiers, the engine settings used for the
+search, and any quantities recorded on an internal search scale — is
+available through <code>summary(binary_example)</code> or, equivalently,
+<code>print(binary_example, verbose = TRUE)</code>.</p>
 <p>Plot the estimated learning curve and identified sample size:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">binary_example</span><span class="op">)</span></span></code></pre></div>
@@ -513,11 +568,12 @@ performance threshold used to determine the required sample size.</li>
 <code class="sourceCode R"><span><span class="va">continuous_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_continuous.html">simulate_continuous</a></span><span class="op">(</span></span>
 <span>  signal_parameters <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>  noise_parameters <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  predictor_type <span class="op">=</span> <span class="st">"continuous"</span>,</span>
+<span>  complexity <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  data_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>correlation <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span>,</span>
 <span>  maximum_achievable_rsquared <span class="op">=</span> <span class="fl">0.50</span>,</span>
 <span>  model <span class="op">=</span> <span class="st">"lm"</span>,</span>
 <span>  metric <span class="op">=</span> <span class="st">"calibration_slope"</span>,</span>
-<span>  target_performance <span class="op">=</span> <span class="fl">0.90</span>,</span>
+<span>  target_performance <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  mean_or_assurance <span class="op">=</span> <span class="st">"assurance"</span></span>
 <span><span class="op">)</span></span>
@@ -526,68 +582,41 @@ performance threshold used to determine the required sample size.</li>
 <pre><code><span><span class="co">#&gt;                     ┌────────────────────────────────────────┐</span></span>
 <span><span class="co">#&gt;                     │<span style="font-weight: bold;"> pmsims: Sample size simulation summary </span>│</span></span>
 <span><span class="co">#&gt;                     └────────────────────────────────────────┘</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ──────────────────────────────────── Inputs ────────────────────────────────────</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                             Outcome</span> : continuous</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                      Predictor type</span> : continuous</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                Number of predictors</span> : 15</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                    Noise predictors</span> : 0</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">   Expected large-sample performance</span> : R² ('r2') = 0.500</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">Target for chosen performance metric</span> : Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.900</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                               Model</span> : lm</span></span>
-<span><span class="co">#&gt;   <span style="color: #00BBBB;">                     Simulation reps</span> : 1,000</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">Data-generating scenario</span></span></span>
+<span><span class="co">#&gt;   Outcome                  Continuous</span></span>
+<span><span class="co">#&gt;   Predictors               15 signal</span></span>
+<span><span class="co">#&gt;   Predictor distribution   Normal</span></span>
+<span><span class="co">#&gt;   Predictor correlation    0.30</span></span>
+<span><span class="co">#&gt;   Signal form              Linear</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">Model and performance</span></span></span>
+<span><span class="co">#&gt;   Model                    Linear regression</span></span>
+<span><span class="co">#&gt;   Large-sample R²          0.500</span></span>
+<span><span class="co">#&gt;   Sample-size criterion    Calibration slope ≥ 0.950</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">Simulation</span></span></span>
+<span><span class="co">#&gt;   Mode                     Assurance</span></span>
+<span><span class="co">#&gt;   Replications             1,000</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ──────────────────────────────────── Results ───────────────────────────────────</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">           Final minimum sample size</span> : <span style="font-weight: bold;">239</span></span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">          Estimated performance at N</span> : 0.900 (Calibration slope <span style="color: #555555;">('calib_slope')</span> = 0.900)</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">         Estimated other metric at N</span> : 0.486 (R2 <span style="color: #555555;">('r2')</span>)</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">                               Model</span> : lm</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">                                Mode</span> : Assurance</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB;">                        Running time</span> : 52 seconds</span></span>
-<span><span class="co">#&gt;     <span style="color: #555555; font-style: italic;">Assurance mode ensures the target metric is met with high probability across repeated datasets.</span></span></span></code></pre>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   <span style="font-weight: bold;">Minimum sample size</span>      <span style="color: #0000BB; font-weight: bold;">685</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   <span style="font-weight: bold;">Performance at N = 685</span></span></span>
+<span><span class="co">#&gt;     Calibration slope      0.950    <span style="color: #555555;">(target ≥ 0.950)</span></span></span>
+<span><span class="co">#&gt;     R²                     0.488</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   <span style="color: #555555;">Running time</span>             <span style="color: #555555;">1 minute 51 seconds</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ────────────────────────────────────────────────────────────────────────────────</span></span>
+<span><span class="co">#&gt; <span style="color: #555555; font-style: italic;">Assurance mode selects N so that the target is achieved with high probability</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555; font-style: italic;">across repeated datasets.</span></span></span></code></pre>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">continuous_example</span><span class="op">)</span></span></code></pre></div>
 <p><img src="pmsims_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="Plot showing learning curve for continuous outcome" width="576"></p>
-</div>
-<div class="section level2">
-<h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
-</h2>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.6.0 (2026-04-24)</span></span>
-<span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 24.04.4 LTS</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Matrix products: default</span></span>
-<span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
-<span><span class="co">#&gt; LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; locale:</span></span>
-<span><span class="co">#&gt;  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       </span></span>
-<span><span class="co">#&gt;  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   </span></span>
-<span><span class="co">#&gt;  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          </span></span>
-<span><span class="co">#&gt; [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; time zone: UTC</span></span>
-<span><span class="co">#&gt; tzcode source: system (glibc)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; attached base packages:</span></span>
-<span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] pmsims_0.5.0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] Matrix_1.7-5       gtable_0.3.6       jsonlite_2.0.0     compiler_4.6.0    </span></span>
-<span><span class="co">#&gt;  [5] crayon_1.5.3       jquerylib_0.1.4    splines_4.6.0      systemfonts_1.3.2 </span></span>
-<span><span class="co">#&gt;  [9] scales_1.4.0       textshaping_1.0.5  yaml_2.3.12        fastmap_1.2.0     </span></span>
-<span><span class="co">#&gt; [13] lattice_0.22-9     ggplot2_4.0.3      R6_2.6.1           labeling_0.4.3    </span></span>
-<span><span class="co">#&gt; [17] knitr_1.51         htmlwidgets_1.6.4  desc_1.4.3         bslib_0.11.0      </span></span>
-<span><span class="co">#&gt; [21] RColorBrewer_1.1-3 rlang_1.2.0        cachem_1.1.0       xfun_0.58         </span></span>
-<span><span class="co">#&gt; [25] fs_2.1.0           DiceKriging_1.6.1  sass_0.4.10        S7_0.2.2          </span></span>
-<span><span class="co">#&gt; [29] otel_0.2.0         cli_3.6.6          pkgdown_2.2.0      withr_3.0.2       </span></span>
-<span><span class="co">#&gt; [33] digest_0.6.39      grid_4.6.0         lifecycle_1.0.5    mlpwr_1.1.1       </span></span>
-<span><span class="co">#&gt; [37] vctrs_0.7.3        evaluate_1.0.5     glue_1.8.1         farver_2.1.2      </span></span>
-<span><span class="co">#&gt; [41] ragg_1.5.2         survival_3.8-6     rmarkdown_2.31     tools_4.6.0       </span></span>
-<span><span class="co">#&gt; [45] htmltools_0.5.9</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -600,7 +629,7 @@ performance threshold used to determine the required sample size.</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

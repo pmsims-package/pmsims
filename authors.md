@@ -25,14 +25,14 @@ Source:
 
 Carr E, Forbes G, Olaniran R, Shamsutdinova D, Stahl D, Markham S,
 Zimmer F (2026). *pmsims: Simulation-based Sample Size Tools for
-Prediction Models*. R package version 0.5.0,
+Prediction Models*. R package version 1.0.0,
 <https://pmsims-package.github.io/pmsims/>.
 
     @Manual{,
       title = {pmsims: Simulation-based Sample Size Tools for Prediction Models},
       author = {Ewan Carr and Gordon Forbes and Ridwan Olaniran and Diana Shamsutdinova and Daniel Stahl and Sarah Markham and Felix Zimmer},
       year = {2026},
-      note = {R package version 0.5.0},
+      note = {R package version 1.0.0},
       url = {https://pmsims-package.github.io/pmsims/},
     }
 
@@ -55,19 +55,15 @@ Preprint, <https://arxiv.org/abs/2602.23507>.
     }
 
 Olaniran O, Shamsutdinova D, Markham S, Zimmer F, Stahl D, Forbes G,
-Carr E (2026). “Adaptive Gaussian Process Search for Simulation-Based
-Sample Size Estimation in Clinical Prediction Models: Validation of the
-pmsims R Package.” *arXiv*, **arXiv:2603.23688**.
-[doi:10.48550/arXiv.2603.23688](https://doi.org/10.48550/arXiv.2603.23688).
-Preprint, <https://arxiv.org/abs/2603.23688>.
+Carr E (2026). “Adaptive Gaussian process search for simulation-based
+sample size estimation in clinical prediction models: validation of the
+pmsims R package.” *BMC Medical Research Methodology*.
+[doi:10.1186/s12874-026-02935-9](https://doi.org/10.1186/s12874-026-02935-9).
 
     @Article{,
-      title = {Adaptive Gaussian Process Search for Simulation-Based Sample Size Estimation in Clinical Prediction Models: Validation of the pmsims R Package},
+      title = {Adaptive Gaussian process search for simulation-based sample size estimation in clinical prediction models: validation of the pmsims R package},
       author = {Oyebayo Ridwan Olaniran and Diana Shamsutdinova and Sarah Markham and Felix Zimmer and Daniel Stahl and Gordon Forbes and Ewan Carr},
       year = {2026},
-      journal = {arXiv},
-      volume = {arXiv:2603.23688},
-      doi = {10.48550/arXiv.2603.23688},
-      url = {https://arxiv.org/abs/2603.23688},
-      note = {Preprint},
+      journal = {BMC Medical Research Methodology},
+      doi = {10.1186/s12874-026-02935-9},
     }
