@@ -33,3 +33,4 @@
 ^man/figures/.*\.afdesign$
 ^man/figures/.*\.acorn$
 ^cran-comments\.md$
+^scripts$
