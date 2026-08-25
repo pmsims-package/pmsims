@@ -20,7 +20,10 @@ config <- yaml::read_yaml(config_path)
 # supplied by the build matrix so a release page never identifies itself as
 # the development site (and vice versa).
 config$navbar$structure$right <- c(
-  "versions", "search", "github", "lightswitch"
+  "versions",
+  "search",
+  "github",
+  "lightswitch"
 )
 config$navbar$components$versions <- list(
   text = current_version,
