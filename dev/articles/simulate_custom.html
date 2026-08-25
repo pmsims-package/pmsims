@@ -232,7 +232,7 @@ dataset.</p>
 <span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="va">data_matrix</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">data_matrix</span><span class="op">)</span> <span class="op">!=</span> <span class="va">outcome</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
 <span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="va">data_matrix</span><span class="op">[</span>, <span class="va">outcome</span><span class="op">]</span></span>
 <span></span>
-<span>  <span class="fu">glmnet</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmnet/man/cv.glmnet.html" class="external-link">cv.glmnet</a></span><span class="op">(</span></span>
+<span>  <span class="fu">glmnet</span><span class="fu">::</span><span class="fu"><a href="https://glmnet.stanford.edu/reference/cv.glmnet.html" class="external-link">cv.glmnet</a></span><span class="op">(</span></span>
 <span>    <span class="va">x</span>,</span>
 <span>    <span class="va">y</span>,</span>
 <span>    family <span class="op">=</span> <span class="st">"binomial"</span>,</span>
@@ -381,7 +381,7 @@ below keeps the vignette quick; use larger values for an analysis.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"min_n"</span>, <span class="st">"perf_n"</span>, <span class="st">"target_performance"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">## $min_n</span></span>
-<span><span class="co">## [1] 96</span></span>
+<span><span class="co">## [1] 81</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $perf_n</span></span>
 <span><span class="co">## logical(0)</span></span>
@@ -391,7 +391,7 @@ below keeps the vignette quick; use larger values for an analysis.</p>
 <div class="section level3">
 <h3 id="interpretation">Interpretation<a class="anchor" aria-label="anchor" href="#interpretation"></a>
 </h3>
-<p>The results show a minimum sample size of 96. This is calculated
+<p>The results show a minimum sample size of 81. This is calculated
 using the mean criterion: the average negative Brier score across
 repeated training samples meets the selected target.</p>
 <p>Note that this is the minimum sample size required for the Brier

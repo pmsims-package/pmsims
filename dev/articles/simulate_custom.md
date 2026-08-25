@@ -310,7 +310,7 @@ result[c("min_n", "perf_n", "target_performance")]
 ```
 
     ## $min_n
-    ## [1] 96
+    ## [1] 81
     ## 
     ## $perf_n
     ## logical(0)
@@ -320,7 +320,7 @@ result[c("min_n", "perf_n", "target_performance")]
 
 ### Interpretation
 
-The results show a minimum sample size of 96. This is calculated using
+The results show a minimum sample size of 81. This is calculated using
 the mean criterion: the average negative Brier score across repeated
 training samples meets the selected target.
 

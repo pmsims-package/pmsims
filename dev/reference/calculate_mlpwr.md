@@ -53,7 +53,10 @@ calculate_mlpwr(
 - max_sample_size:
 
   Optional integer upper bound for the sample-size search. If supplied,
-  `min_sample_size` must also be supplied.
+  `min_sample_size` must also be supplied. Supplying both bounds defines
+  the search space directly, so the adaptive starting-value search is
+  skipped. Because the runtime estimate is extrapolated from that stage,
+  no long-run warning is issued either.
 
 - target_performance:
 

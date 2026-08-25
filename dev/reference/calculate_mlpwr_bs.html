@@ -109,7 +109,10 @@ search. If supplied, <code>max_sample_size</code> must also be supplied.</p></dd
 
 <dt id="arg-max-sample-size">max_sample_size<a class="anchor" aria-label="anchor" href="#arg-max-sample-size"></a></dt>
 <dd><p>Optional integer upper bound for the sample-size
-search. If supplied, <code>min_sample_size</code> must also be supplied.</p></dd>
+search. If supplied, <code>min_sample_size</code> must also be supplied.
+Supplying both bounds defines the search space directly, so the adaptive
+starting-value search is skipped. Because the runtime estimate is
+extrapolated from that stage, no long-run warning is issued either.</p></dd>
 
 
 <dt id="arg-target-performance">target_performance<a class="anchor" aria-label="anchor" href="#arg-target-performance"></a></dt>
