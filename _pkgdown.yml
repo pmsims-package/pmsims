@@ -26,12 +26,16 @@ navbar:
     right: [versions, search, github, lightswitch]
   components:
     versions:
+      # CI replaces this with the label for each published site. Keeping dev
+      # here makes direct builds from the development branch read correctly.
       text: dev
       menu:
         - text: dev
           href: https://pmsims-package.github.io/pmsims/dev/
         - text: 1.0.0 (stable)
           href: https://pmsims-package.github.io/pmsims/
+        - text: 0.5.0
+          href: https://pmsims-package.github.io/pmsims/0.5.0/
     get-started:
       text: Get started
       href: articles/pmsims.html
