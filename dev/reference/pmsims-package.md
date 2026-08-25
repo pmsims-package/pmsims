@@ -3,12 +3,16 @@
 Provides a flexible, simulation-based toolkit for exploring how much
 data are needed to develop reliable prediction models. It works by
 repeatedly generating data, fitting models, and evaluating performance
-to show how sample size affects stability, accuracy, and overfitting.
-The package supports continuous, binary, and time-to-event outcomes and
-can be used with both regression-based modelling approaches and
-machine-learning methods. It is designed to help researchers plan
+to show how sample size affects predictive accuracy, calibration, and
+overfitting. The package supports continuous, binary, and time-to-event
+outcomes and can be used with both regression-based modelling approaches
+and machine-learning methods. It is designed to help researchers plan
 studies, assess feasibility, and build more robust and generalisable
-models.
+models. The methods are described in Olaniran et al. (2026)
+[doi:10.1186/s12874-026-02935-9](https://doi.org/10.1186/s12874-026-02935-9)
+and Shamsutdinova et al. (2026)
+[doi:10.48550/arXiv.2602.23507](https://doi.org/10.48550/arXiv.2602.23507)
+.
 
 ## See also
 
