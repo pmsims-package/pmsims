@@ -28,8 +28,7 @@ forest, and XGBoost).
 Developed at [King’s College London](https://www.kcl.ac.uk/) (Department
 of Biostatistics & Health Informatics) with input from researchers,
 clinicians, and patient partners. See the [pmsims project
-site](https://pmsims-package.github.io/pmsims-website/) for further
-details.
+site](https://pmsims.com/) for further details.
 
 ## Installation
 

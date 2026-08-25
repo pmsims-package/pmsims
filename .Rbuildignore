@@ -30,3 +30,6 @@
 ^vignettes/images/workflow\.afdesign$
 ^.*\.Rcheck$
 ^pmsims_.*\.tar\.gz$
+^man/figures/.*\.afdesign$
+^man/figures/.*\.acorn$
+^cran-comments\.md$
