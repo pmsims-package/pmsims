@@ -145,6 +145,14 @@ of the NIHR or the Department of Health and Social Care.*
 - [`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md)
   : Minimum sample size for custom simulation workflows
 
+## Example results
+
+- [`binary_example`](https://pmsims-package.github.io/pmsims/reference/precomputed.md)
+  [`continuous_example`](https://pmsims-package.github.io/pmsims/reference/precomputed.md)
+  [`survival_example`](https://pmsims-package.github.io/pmsims/reference/precomputed.md)
+  [`custom_example`](https://pmsims-package.github.io/pmsims/reference/precomputed.md)
+  : Precomputed sample-size simulations
+
 # Articles
 
 ### All vignettes

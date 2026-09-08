@@ -344,40 +344,28 @@ parameters.</p>
 <span>  n_reps_total <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  progress <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Estimating first stage... (Adaptive starting value search algorithm)</span></span></code></pre>
-<pre><code><span><span class="co">## Starting values determined: min sample size = 80 max sample size = 160 </span></span>
+<pre><code><span><span class="co">## Estimating first stage... (Adaptive starting value search algorithm)</span></span>
+<span><span class="co">## Starting values determined: min sample size = 160 max sample size = 320 </span></span>
 <span><span class="co">## Estimating second stage... (Gaussian process algorithm)</span></span></code></pre>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##                     ┌────────────────────────────────────────┐</span></span>
 <span><span class="co">##                     │<span style="font-weight: bold;"> pmsims: Sample size simulation summary </span>│</span></span>
 <span><span class="co">##                     └────────────────────────────────────────┘</span></span>
-<span><span class="co">## </span></span>
 <span><span class="co">## ──────────────────────────────────── Inputs ────────────────────────────────────</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## <span style="color: #00BBBB; font-weight: bold;">Model and performance</span></span></span>
-<span><span class="co">##   Sample-size criterion    Performance ≥ -0.165</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## <span style="color: #00BBBB; font-weight: bold;">Simulation</span></span></span>
-<span><span class="co">##   Mode                     Assurance</span></span>
-<span><span class="co">##   Replications             1,000</span></span>
-<span><span class="co">## </span></span>
+<span><span class="co">##   <span style="color: #00BBBB;">Target for chosen performance metric</span> :  = -0.165</span></span>
+<span><span class="co">##   <span style="color: #00BBBB;">                     Simulation reps</span> : 1,000</span></span>
 <span><span class="co">## ──────────────────────────────────── Results ───────────────────────────────────</span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">##   <span style="font-weight: bold;">Minimum sample size</span>      <span style="color: #0000BB; font-weight: bold;">160</span></span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">##   <span style="font-weight: bold;">Performance at N = 160</span></span></span>
-<span><span class="co">##     Performance            -0.168    <span style="color: #555555;">(target ≥ -0.165)</span></span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">##   <span style="color: #555555;">Running time</span>             <span style="color: #555555;">1 minute 41 seconds</span></span></span>
-<span><span class="co">## </span></span>
-<span><span class="co">## ────────────────────────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">## <span style="color: #555555; font-style: italic;">Assurance mode selects N so that the target is achieved with high probability</span></span></span>
-<span><span class="co">## <span style="color: #555555; font-style: italic;">across repeated datasets.</span></span></span></code></pre>
+<span><span class="co">##   <span style="color: #0000BB;">           Final minimum sample size</span> : <span style="font-weight: bold;">208</span></span></span>
+<span><span class="co">##   <span style="color: #0000BB;">          Estimated performance at N</span> : -0.165 ( = -0.165)</span></span>
+<span><span class="co">##   <span style="color: #0000BB;">         Estimated other metric at N</span> : &lt;NA&gt; ()</span></span>
+<span><span class="co">##   <span style="color: #0000BB;">                                Mode</span> : Assurance</span></span>
+<span><span class="co">##   <span style="color: #0000BB;">                        Running time</span> : 1 minute 50 seconds</span></span>
+<span><span class="co">##     <span style="color: #555555; font-style: italic;">Assurance mode ensures the target metric is met with high probability across repeated datasets.</span></span></span></code></pre>
 <div class="section level3">
 <h3 id="interpretation">Interpretation<a class="anchor" aria-label="anchor" href="#interpretation"></a>
 </h3>
-<p>The results show a minimum sample size of 160. This is calculated
+<p>The results show a minimum sample size of 208. This is calculated
 using the assurance criterion, which means that we would expect 80% of
 models developed on samples of this size to have a negative Brier score
 of -0.165 or better.</p>

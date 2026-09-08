@@ -127,7 +127,7 @@ binary_example
     #>     Calibration slope       0.849    (target ≥ 0.850)
     #>     C-statistic             0.794
     #> 
-    #>   Running time              2 minutes 43 seconds
+    #>   Running time              3 minutes 58 seconds
     #> 
     #> ────────────────────────────────────────────────────────────────────────────────
     #> Assurance mode selects N so that the target is achieved with high probability
@@ -199,7 +199,7 @@ continuous_example
     #>     Calibration slope      0.950    (target ≥ 0.950)
     #>     R²                     0.488
     #> 
-    #>   Running time             1 minute 51 seconds
+    #>   Running time             2 minutes 36 seconds
     #> 
     #> ────────────────────────────────────────────────────────────────────────────────
     #> Assurance mode selects N so that the target is achieved with high probability

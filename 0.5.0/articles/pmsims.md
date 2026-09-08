@@ -93,37 +93,24 @@ binary_example
     #>                     ┌────────────────────────────────────────┐
     #>                     │ pmsims: Sample size simulation summary │
     #>                     └────────────────────────────────────────┘
-    #> 
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
-    #> 
-    #> Data-generating scenario
-    #>   Outcome                   Binary
-    #>   Prevalence                0.30
-    #>   Predictors                20 signal
-    #>   Predictor type            Continuous
-    #> 
-    #> Model and performance
-    #>   Model                     Logistic regression
-    #>   Large-sample C-statistic  0.800
-    #>   Sample-size criterion     Calib slope ≥ 0.850
-    #> 
-    #> Simulation
-    #>   Mode                      Assurance
-    #>   Replications              1,000
-    #> 
+    #>                                Outcome : binary
+    #>                         Predictor type : continuous
+    #>                   Number of predictors : 20
+    #>                       Noise predictors : 0
+    #>                             Prevalence : 0.3
+    #>      Expected large-sample performance : C-statistic ('cstatistic') = 0.800
+    #>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.850
+    #>                                  Model : glm
+    #>                        Simulation reps : 1,000
     #> ──────────────────────────────────── Results ───────────────────────────────────
-    #> 
-    #>   Minimum sample size       1,044
-    #> 
-    #>   Performance at N = 1,044
-    #>     Calib slope             0.849    (target ≥ 0.850)
-    #>     C-statistic             0.782
-    #> 
-    #>   Running time              2 minutes 39 seconds
-    #> 
-    #> ────────────────────────────────────────────────────────────────────────────────
-    #> Assurance mode selects N so that the target is achieved with high probability
-    #> across repeated datasets.
+    #>              Final minimum sample size : 1,044
+    #>             Estimated performance at N : 0.849 (Calibration slope ('calib_slope') = 0.850)
+    #>            Estimated other metric at N : 0.782 (Auc ('auc'))
+    #>                                  Model : glm
+    #>                                   Mode : Assurance
+    #>                           Running time : 2 minutes 39 seconds
+    #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 Plot the estimated learning curve and identified sample size:
 
@@ -157,36 +144,23 @@ continuous_example
     #>                     ┌────────────────────────────────────────┐
     #>                     │ pmsims: Sample size simulation summary │
     #>                     └────────────────────────────────────────┘
-    #> 
     #> ──────────────────────────────────── Inputs ────────────────────────────────────
-    #> 
-    #> Data-generating scenario
-    #>   Outcome                  Continuous
-    #>   Predictors               15 signal
-    #>   Predictor type           Continuous
-    #> 
-    #> Model and performance
-    #>   Model                    Linear regression
-    #>   Large-sample R²          0.500
-    #>   Sample-size criterion    Calib slope ≥ 0.900
-    #> 
-    #> Simulation
-    #>   Mode                     Assurance
-    #>   Replications             1,000
-    #> 
+    #>                                Outcome : continuous
+    #>                         Predictor type : continuous
+    #>                   Number of predictors : 15
+    #>                       Noise predictors : 0
+    #>      Expected large-sample performance : R² ('r2') = 0.500
+    #>   Target for chosen performance metric : Calibration slope ('calib_slope') = 0.900
+    #>                                  Model : lm
+    #>                        Simulation reps : 1,000
     #> ──────────────────────────────────── Results ───────────────────────────────────
-    #> 
-    #>   Minimum sample size      239
-    #> 
-    #>   Performance at N = 239
-    #>     Calib slope            0.900    (target ≥ 0.900)
-    #>     R²                     0.486
-    #> 
-    #>   Running time             52 seconds
-    #> 
-    #> ────────────────────────────────────────────────────────────────────────────────
-    #> Assurance mode selects N so that the target is achieved with high probability
-    #> across repeated datasets.
+    #>              Final minimum sample size : 239
+    #>             Estimated performance at N : 0.900 (Calibration slope ('calib_slope') = 0.900)
+    #>            Estimated other metric at N : 0.486 (R2 ('r2'))
+    #>                                  Model : lm
+    #>                                   Mode : Assurance
+    #>                           Running time : 52 seconds
+    #>     Assurance mode ensures the target metric is met with high probability across repeated datasets.
 
 ``` r
 
@@ -203,7 +177,7 @@ outcome](pmsims_files/figure-html/unnamed-chunk-6-1.png)
 sessionInfo()
 #> R version 4.6.1 (2026-06-24)
 #> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.4 LTS
+#> Running under: Ubuntu 24.04.5 LTS
 #> 
 #> Matrix products: default
 #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -222,20 +196,20 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] pmsims_1.0.0
+#> [1] pmsims_0.5.0
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] Matrix_1.7-5       gtable_0.3.6       jsonlite_2.0.0     dplyr_1.2.1       
-#>  [5] compiler_4.6.1     tidyselect_1.2.1   jquerylib_0.1.4    splines_4.6.1     
-#>  [9] systemfonts_1.3.2  scales_1.4.0       textshaping_1.0.5  yaml_2.3.12       
-#> [13] fastmap_1.2.0      lattice_0.22-9     ggplot2_4.0.3      R6_2.6.1          
-#> [17] labeling_0.4.3     generics_0.1.4     knitr_1.51         htmlwidgets_1.6.4 
-#> [21] tibble_3.3.1       desc_1.4.3         pillar_1.11.1      bslib_0.12.0      
-#> [25] RColorBrewer_1.1-3 rlang_1.3.0        cachem_1.1.0       xfun_0.60         
-#> [29] fs_2.1.0           DiceKriging_1.6.1  sass_0.4.10        S7_0.2.2          
-#> [33] otel_0.2.0         cli_3.6.6          withr_3.0.3        magrittr_2.0.5    
-#> [37] pkgdown_2.2.1      digest_0.6.39      grid_4.6.1         lifecycle_1.0.5   
-#> [41] mlpwr_1.1.1        vctrs_0.7.3        evaluate_1.0.5     glue_1.8.1        
-#> [45] farver_2.1.2       ragg_1.5.2         survival_3.8-6     rmarkdown_2.31    
-#> [49] pkgconfig_2.0.3    tools_4.6.1        htmltools_0.5.9
+#>  [5] compiler_4.6.1     crayon_1.5.3       tidyselect_1.2.1   jquerylib_0.1.4   
+#>  [9] splines_4.6.1      systemfonts_1.3.2  scales_1.4.0       textshaping_1.0.5 
+#> [13] yaml_2.3.12        fastmap_1.2.0      lattice_0.22-9     ggplot2_4.0.3     
+#> [17] R6_2.6.1           labeling_0.4.3     generics_0.1.4     knitr_1.52        
+#> [21] htmlwidgets_1.6.4  tibble_3.3.1       desc_1.4.3         pillar_1.11.1     
+#> [25] bslib_0.12.0       RColorBrewer_1.1-3 rlang_1.3.0        cachem_1.1.0      
+#> [29] xfun_0.60          fs_2.1.0           DiceKriging_1.6.1  sass_0.4.10       
+#> [33] S7_0.2.2           otel_0.2.0         cli_3.6.6          withr_3.0.3       
+#> [37] magrittr_2.0.5     pkgdown_2.2.1      digest_0.6.39      grid_4.6.1        
+#> [41] lifecycle_1.0.5    mlpwr_1.1.1        vctrs_0.7.3        evaluate_1.0.5    
+#> [45] glue_1.8.1         farver_2.1.2       ragg_1.5.2         survival_3.8-6    
+#> [49] rmarkdown_2.32     pkgconfig_2.0.3    tools_4.6.1        htmltools_0.5.9
 ```

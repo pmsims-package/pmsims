@@ -184,20 +184,67 @@ optional list fine-tuning the predictors:
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
+set.seed(123)
 est <- simulate_binary(
-  signal_parameters = 10,
-  noise_parameters = 10,
-  complexity = 2,
-  data_control = list(nonlinear_strength = 0.4, correlation = 0.2),
-  outcome_prevalence = 0.2,
-  maximum_achievable_cstatistic = 0.75,
+  signal_parameters = 3,
+  noise_parameters = 0,
+  complexity = 1,
+  data_control = list(correlation = 0),
+  outcome_prevalence = 0.50,
+  maximum_achievable_cstatistic = 0.80,
   model = "glm",
   metric = "calibration_slope",
   target_performance = 0.9,
+  mean_or_assurance = "assurance",
+  min_sample_size = 50,
+  max_sample_size = 1000,
   n_reps_total = 1000,
-  mean_or_assurance = "assurance"
+  test_n = 30000,
+  progress = FALSE
 )
+#> ℹ Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
+#> ℹ Estimating second stage... (Gaussian process algorithm)
 est
-} # }
+#>                     ┌────────────────────────────────────────┐
+#>                     │ pmsims: Sample size simulation summary │
+#>                     └────────────────────────────────────────┘
+#> 
+#> ──────────────────────────────────── Inputs ────────────────────────────────────
+#> 
+#> Data-generating scenario
+#>   Outcome                   Binary
+#>   Prevalence                0.50
+#>   Predictors                3 signal
+#>   Predictor distribution    Normal
+#>   Predictor correlation     0.00
+#>   Signal form               Linear
+#> 
+#> Model and performance
+#>   Model                     Logistic regression
+#>   Large-sample C-statistic  0.800
+#>   Sample-size criterion     Calibration slope ≥ 0.900
+#> 
+#> Simulation
+#>   Mode                      Assurance
+#>   Replications              1,000
+#> 
+#> ──────────────────────────────────── Results ───────────────────────────────────
+#> 
+#>   Minimum sample size       487
+#> 
+#>   Performance at N = 487
+#>     Calibration slope       0.899    (target ≥ 0.900)
+#>     C-statistic             0.804
+#> 
+#>   Running time              1 minute 37 seconds
+#> 
+#> ────────────────────────────────────────────────────────────────────────────────
+#> Assurance mode selects N so that the target is achieved with high probability
+#> across repeated datasets.
+est$min_n
+#> [1] 487
+plot(est)
+
+# }
 ```

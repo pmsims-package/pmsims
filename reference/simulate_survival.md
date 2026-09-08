@@ -191,21 +191,69 @@ optional list fine-tuning the predictors:
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
+set.seed(123)
 est <- simulate_survival(
-  signal_parameters = 10,
-  noise_parameters = 10,
-  complexity = 2,
-  data_control = list(nonlinear_strength = 0.5),
+  signal_parameters = 1,
+  noise_parameters = 0,
+  complexity = 1,
+  data_control = list(correlation = 0),
   maximum_achievable_cindex = 0.70,
   baseline_hazard = 0.01,
   censoring_rate = 0.30,
   model = "coxph",
   metric = "calibration_slope",
   target_performance = 0.9,
+  mean_or_assurance = "assurance",
+  min_sample_size = 25,
+  max_sample_size = 500,
   n_reps_total = 1000,
-  mean_or_assurance = "assurance"
+  test_n = 30000,
+  progress = FALSE
 )
+#> ℹ Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
+#> ℹ Estimating second stage... (Gaussian process algorithm)
 est
-} # }
+#>                     ┌────────────────────────────────────────┐
+#>                     │ pmsims: Sample size simulation summary │
+#>                     └────────────────────────────────────────┘
+#> 
+#> ──────────────────────────────────── Inputs ────────────────────────────────────
+#> 
+#> Data-generating scenario
+#>   Outcome                  Time-to-event
+#>   Baseline hazard          0.01
+#>   Censoring rate           0.30
+#>   Predictors               1 signal
+#>   Predictor distribution   Normal
+#>   Predictor correlation    0.00
+#>   Signal form              Linear
+#> 
+#> Model and performance
+#>   Model                    Cox proportional hazards
+#>   Large-sample C-index     0.700
+#>   Sample-size criterion    Calibration slope ≥ 0.900
+#> 
+#> Simulation
+#>   Mode                     Assurance
+#>   Replications             1,000
+#> 
+#> ──────────────────────────────────── Results ───────────────────────────────────
+#> 
+#>   Minimum sample size      146
+#> 
+#>   Performance at N = 146
+#>     Calibration slope      0.899    (target ≥ 0.900)
+#>     C-index                0.698
+#> 
+#>   Running time             6 minutes 55 seconds
+#> 
+#> ────────────────────────────────────────────────────────────────────────────────
+#> Assurance mode selects N so that the target is achieved with high probability
+#> across repeated datasets.
+est$min_n
+#> [1] 146
+plot(est)
+
+# }
 ```
