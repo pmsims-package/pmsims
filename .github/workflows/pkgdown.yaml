@@ -40,6 +40,9 @@ jobs:
           extra-packages: any::pkgdown
           needs: website
 
+      - name: Install package
+        run: R CMD INSTALL .
+
       - name: Configure site navigation
         env:
           SITE_LABEL: ${{ github.base_ref == 'dev' && 'dev' || '1.0.0' }}
@@ -101,6 +104,11 @@ jobs:
           working-directory: .site-source
           extra-packages: ${{ matrix.extra_packages }}
           needs: website
+
+      # Avoid pak's failing local-source packaging step for the nested checkout.
+      - name: Install package
+        run: R CMD INSTALL .
+        working-directory: .site-source
 
       - name: Configure site navigation
         run: >-

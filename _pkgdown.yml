@@ -71,3 +71,7 @@ reference:
       - simulate_continuous
       - simulate_survival
       - simulate_custom
+
+  - title: Example results
+    contents:
+      - precomputed
