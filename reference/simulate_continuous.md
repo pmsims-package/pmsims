@@ -224,19 +224,19 @@ est
 #> 
 #> ──────────────────────────────────── Results ───────────────────────────────────
 #> 
-#>   Minimum sample size      84
+#>   Minimum sample size      83
 #> 
-#>   Performance at N = 84
+#>   Performance at N = 83
 #>     Calibration slope      0.900    (target ≥ 0.900)
-#>     R²                     0.447
+#>     R²                     0.494
 #> 
-#>   Running time             33 seconds
+#>   Running time             26 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability
 #> across repeated datasets.
 est$min_n
-#> [1] 84
+#> [1] 83
 plot(est)
 
 # }
