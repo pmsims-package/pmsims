@@ -197,21 +197,25 @@ test_that("simulate_custom can suppress the mlpwr progress bar", {
     add = TRUE
   )
 
-  suppressWarnings(
-    simulate_custom(
-      data_function = data_function,
-      model_function = model_function,
-      metric_function = metric_function,
-      target_performance = 0.73,
-      c_statistic = 0.8,
-      test_n = 2000,
-      min_sample_size = 75,
-      max_sample_size = 200,
-      n_reps_total = 40,
-      n_reps_per = 10,
-      method = "mlpwr",
-      progress = FALSE,
-      verbose = FALSE
+  # Status updates are signalled as messages (stderr) so that they can be
+  # suppressed; the progress bar is written to stdout.
+  messages <- capture_messages(
+    suppressWarnings(
+      simulate_custom(
+        data_function = data_function,
+        model_function = model_function,
+        metric_function = metric_function,
+        target_performance = 0.73,
+        c_statistic = 0.8,
+        test_n = 2000,
+        min_sample_size = 75,
+        max_sample_size = 200,
+        n_reps_total = 40,
+        n_reps_per = 10,
+        method = "mlpwr",
+        progress = FALSE,
+        verbose = FALSE
+      )
     )
   )
 
@@ -223,8 +227,8 @@ test_that("simulate_custom can suppress the mlpwr progress bar", {
 
   # min_sample_size and max_sample_size define the search space, so the
   # adaptive first stage is skipped (see test-engines.R).
-  expect_false(any(grepl("Estimating first stage", output)))
-  expect_true(any(grepl("Estimating second stage", output)))
+  expect_false(any(grepl("Estimating first stage", messages)))
+  expect_true(any(grepl("Estimating second stage", messages)))
   expect_false(any(grepl("sims \\(", output)))
 })
 

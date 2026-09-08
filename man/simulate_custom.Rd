@@ -93,47 +93,43 @@ and the chosen search engine estimates the smallest \eqn{n} meeting the
 selected performance criterion.
 }
 \examples{
-\dontrun{
-set.seed(1234)
-
+# Three independent predictors with a population R-squared of 0.5.
 data_fun <- function(n) {
   x1 <- rnorm(n)
   x2 <- rnorm(n)
   x3 <- rnorm(n)
-  x4 <- rnorm(n)
-  x5 <- rnorm(n)
-  y <- 0.35 * x1 - 0.3 * x2 + 0.2 * x3 + 0.1 * x4 - 0.1 * x5 +
-    rnorm(n, sd = 1)
-  data.frame(y = y, x1 = x1, x2 = x2, x3 = x3, x4 = x4, x5 = x5)
+  y <- (x1 + x2 + x3) / sqrt(3) + rnorm(n)
+  data.frame(y = y, x1 = x1, x2 = x2, x3 = x3)
 }
 
 model_fun <- function(dat) {
   stats::lm(y ~ ., data = dat)
 }
 
+# Calibration slope evaluated on independent test data.
 metric_fun <- function(test_data, fit, model) {
   preds <- stats::predict(fit, newdata = test_data)
-  1 - sum((test_data$y - preds)^2) /
-    sum((test_data$y - mean(test_data$y))^2)
+  unname(stats::coef(stats::lm(test_data$y ~ preds))[2])
 }
-attr(metric_fun, "metric") <- "r2"
+attr(metric_fun, "metric") <- "calibration_slope"
 
-maximum_achievable_data <- data_fun(100000)
-test_data <- data_fun(50000)
-maximum_achievable_fit <- model_fun(maximum_achievable_data)
-maximum_achievable_performance <- metric_fun(
-  test_data,
-  maximum_achievable_fit,
-  "lm"
-)
-
+\donttest{
+set.seed(123)
 est <- simulate_custom(
   data_function = data_fun,
   model_function = model_fun,
   metric_function = metric_fun,
-  target_performance = maximum_achievable_performance - 0.02
+  target_performance = 0.9,
+  mean_or_assurance = "assurance",
+  min_sample_size = 25,
+  max_sample_size = 1000,
+  n_reps_total = 1000,
+  test_n = 30000,
+  progress = FALSE
 )
 est
+est$min_n
+plot(est)
 }
 }
 \seealso{

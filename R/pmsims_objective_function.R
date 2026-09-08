@@ -21,7 +21,6 @@
 #' @keywords internal
 #'
 #' @examples
-#' # \dontrun{
 #' # Example usage (assuming helper functions exist):
 #' # objective_function(
 #' #   n = 500,
@@ -31,7 +30,6 @@
 #' #   max_sample_size = 5000,
 #' #   value_on_error = Inf
 #' # )
-#' # }
 
 objective_function <- function(
   n,

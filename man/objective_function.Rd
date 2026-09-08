@@ -47,7 +47,6 @@ target performance, \eqn{C(n)} is a cost term increasing with \eqn{n}, and
 \eqn{\lambda} (set via \code{penalty_weight}) controls the penalty on large samples.
 }
 \examples{
-# \dontrun{
 # Example usage (assuming helper functions exist):
 # objective_function(
 #   n = 500,
@@ -57,6 +56,5 @@ target performance, \eqn{C(n)} is a cost term increasing with \eqn{n}, and
 #   max_sample_size = 5000,
 #   value_on_error = Inf
 # )
-# }
 }
 \keyword{internal}
