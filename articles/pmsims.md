@@ -64,10 +64,12 @@ Survival
 
 ## Installation
 
+Install the stable release from
+[CRAN](https://CRAN.R-project.org/package=pmsims):
+
 ``` r
 
-# install.packages("remotes")
-# remotes::install_github("pmsims-package/pmsims")
+# install.packages("pmsims")
 library(pmsims)
 ```
 
