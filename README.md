@@ -5,6 +5,8 @@
 
 <!-- badges: start -->
 
+[![CRAN
+status](https://www.r-pkg.org/badges/version/pmsims)](https://CRAN.R-project.org/package=pmsims)
 [![GitHub
 release](https://img.shields.io/github/v/release/pmsims-package/pmsims?display_name=release)](https://github.com/pmsims-package/pmsims/releases)
 [![R-CMD-check](https://github.com/pmsims-package/pmsims/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pmsims-package/pmsims/actions/workflows/R-CMD-check.yaml)
@@ -32,11 +34,11 @@ site](https://pmsims.com/) for further details.
 
 ## Installation
 
-Install the stable `1.0.0` release from GitHub:
+Install the stable `1.0.0` release from
+[CRAN](https://CRAN.R-project.org/package=pmsims):
 
 ``` r
-# install.packages("remotes")
-remotes::install_github("pmsims-package/pmsims", ref = "v1.0.0")
+install.packages("pmsims")
 ```
 
 If you are interested in trying the development version, install from
