@@ -1,0 +1,4 @@
+"test_n","replicates","test_draw","equivalent_slope","ci_low","ci_high","raw_slope"
+30000,1,"baseline_fixed_seed47",0.930729968767975,NA,NA,1.06927003123203
+30000,1000,"independent_oracle",0.960376395903154,0.958082712552722,0.96237746338208,NA
+120000,1000,"independent_oracle",0.980839068218372,0.979795712596743,0.981864098115238,NA

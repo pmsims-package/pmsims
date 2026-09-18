@@ -1,0 +1,2 @@
+"seed","mode","gp_budget","gp_reps_used","min_n","predicted_slope","lower_bound","upper_bound","stage_reps","stage_stop_reason","seconds"
+1,"full",1000,1000,80000,0.955263891894605,80000,160000,160,"target_reached",295.729

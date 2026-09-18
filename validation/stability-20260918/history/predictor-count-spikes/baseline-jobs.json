@@ -1,0 +1,50 @@
+[
+  {
+    "name": "p10-seed1077-baseline",
+    "script": "run-search.R",
+    "args": [
+      "p10-seed1077",
+      "baseline"
+    ]
+  },
+  {
+    "name": "p15-seed1725-baseline",
+    "script": "run-search.R",
+    "args": [
+      "p15-seed1725",
+      "baseline"
+    ]
+  },
+  {
+    "name": "p20-seed2373-baseline",
+    "script": "run-search.R",
+    "args": [
+      "p20-seed2373",
+      "baseline"
+    ]
+  },
+  {
+    "name": "p10-seed48-baseline",
+    "script": "run-search.R",
+    "args": [
+      "p10-seed48",
+      "baseline"
+    ]
+  },
+  {
+    "name": "p15-seed48-baseline",
+    "script": "run-search.R",
+    "args": [
+      "p15-seed48",
+      "baseline"
+    ]
+  },
+  {
+    "name": "p20-seed48-baseline",
+    "script": "run-search.R",
+    "args": [
+      "p20-seed48",
+      "baseline"
+    ]
+  }
+]

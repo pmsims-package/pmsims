@@ -1,0 +1,10 @@
+"trace","same_bounds_and_stop_reason","same_evaluation_order","same_batches","original_reason","replay_reason","replay_lower","replay_upper"
+"continuous_control-seed47-fixed-stage1.rds",TRUE,TRUE,TRUE,"target_bracketed","target_bracketed",16,512
+"continuous_control-seed48-fixed-stage1.rds",TRUE,TRUE,TRUE,"target_bracketed","target_bracketed",16,512
+"glm_control-seed47-fixed-stage1.rds",TRUE,TRUE,TRUE,"target_bracketed","target_bracketed",333,1332
+"glm_control-seed48-fixed-stage1.rds",TRUE,TRUE,TRUE,"target_bracketed","target_bracketed",333,2664
+"lasso_control-seed47-fixed-stage1.rds",TRUE,TRUE,TRUE,"target_bracketed","target_bracketed",333,2664
+"lasso_control-seed48-fixed-stage1.rds",TRUE,TRUE,TRUE,"target_bracketed","target_bracketed",333,5328
+"lasso_rare-seed47-fixed-stage1.rds",TRUE,TRUE,TRUE,"plateau_without_bracket","plateau_without_bracket",NA,NA
+"ridge_reported-seed47-fixed-stage1.rds",TRUE,TRUE,TRUE,"target_bracketed","target_bracketed",667,5336
+"ridge_reported-seed48-fixed-stage1.rds",TRUE,TRUE,TRUE,"target_bracketed","target_bracketed",667,5336

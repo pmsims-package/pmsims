@@ -1,0 +1,2 @@
+"id","mode","n","reps","mean_raw_slope","raw_slope_q20","fraction_in_09_11_band","fraction_below_09","fraction_above_11","fraction_lambda_at_grid_min"
+"p20-seed48","baseline",2080,1000,1.0609620706297,1.00959747973431,0.734,0.001,0.265,0.084

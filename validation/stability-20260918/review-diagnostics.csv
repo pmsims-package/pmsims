@@ -1,0 +1,2 @@
+"diagnostic","stop_reason","lower","upper","upper_perf","observed_above","reps_used"
+"constant_below_target","plateau",80,160,NA,FALSE,80

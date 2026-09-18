@@ -1,0 +1,2 @@
+"id","mode","n","validation_seed","errors","seconds","reps","internal_target","internal_q20","internal_ci_low","internal_ci_high","equivalent_slope","slope_ci_low","slope_ci_high","evidence"
+"p20-seed48","common-bounds",2144,8151000,0,349.865,1000,-0.01,-0.0122784967833201,-0.0140500905308626,-0.0109582421592472,0.889191621330695,0.881466922207923,0.895318377165583,"below"

@@ -1,0 +1,40 @@
+[
+  [
+    {
+      "name": "p15-seed1725-common-bounds",
+      "script": "run-search.R",
+      "args": [
+        "p15-seed1725",
+        "common-bounds"
+      ]
+    },
+    {
+      "name": "p15-seed1725-common-bounds-heldout",
+      "script": "run-check.R",
+      "args": [
+        "p15-seed1725",
+        "common-bounds",
+        8121000
+      ]
+    }
+  ],
+  [
+    {
+      "name": "p15-seed48-common-bounds",
+      "script": "run-search.R",
+      "args": [
+        "p15-seed48",
+        "common-bounds"
+      ]
+    },
+    {
+      "name": "p15-seed48-common-bounds-heldout",
+      "script": "run-check.R",
+      "args": [
+        "p15-seed48",
+        "common-bounds",
+        8131000
+      ]
+    }
+  ]
+]

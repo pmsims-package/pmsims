@@ -1,0 +1,2 @@
+"scenario","seed","gp_reps","min_n","perf_n","gp_original_n","gp_predicted_equivalent_slope","confirmation_reps","actual_evaluations","lower","upper","seconds","validation_reps","independent_equivalent_slope","independent_ci_low","independent_ci_high","target_compatible"
+"ridge_reported",47,1000,3002,0.911851131774296,3002,0.902701726905661,1000,1000,667,5336,633.933312892914,1000,0.91202431016271,0.908819700615215,0.916403867444866,TRUE

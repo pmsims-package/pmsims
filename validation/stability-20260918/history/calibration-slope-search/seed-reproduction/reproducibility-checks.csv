@@ -1,0 +1,7 @@
+check,passed,detail
+seed1_repeat_full_search,True,Both 1000-rep original-code searches returned N=80000 and predicted slope=0.955263891894605; all summary fields except runtime matched exactly.
+seed1_repeat_preliminary_trace,True,CSV traces from both full searches matched byte for byte.
+stage_only_preserves_original_trace,True,Seed-1 stage-only CLI run completed successfully and its trace matched the full-search preliminary trace byte for byte.
+seed298_reproduces_cached_gp_interval,True,"Fresh original preliminary search returned [5120000,10240000], exactly the historical GP range."
+seed298_plateau_without_crossing,True,Final preliminary percentiles 0.90365091 and 0.90424751 are both below 0.95; original stopping reason is plateau.
+explicit_rng_preserves_preliminary_trace,True,Final standalone CLI with explicit standard RNG kind matched the original seed-1 stage trace byte for byte.

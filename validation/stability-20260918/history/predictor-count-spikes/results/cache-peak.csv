@@ -1,0 +1,4 @@
+"signal_parameters","outcome_prevalence","maximum_achievable_cstatistic","target_performance","model","cache_seed","key","cached_n","cached_equivalent_slope"
+10,0.25,0.85,0.9,"ridge",1077,"p10_prev0.25_cstat0.85_target0.90_mridge",1288,0.8990231
+15,0.25,0.85,0.9,"ridge",1725,"p15_prev0.25_cstat0.85_target0.90_mridge",10672,0.91058009
+20,0.25,0.85,0.9,"ridge",2373,"p20_prev0.25_cstat0.85_target0.90_mridge",1764,0.88910031

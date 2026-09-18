@@ -1,0 +1,226 @@
+[
+  {
+    "id": "binary_ridge_reported_p5",
+    "slice": "binary_ridge_reported",
+    "outcome": "binary",
+    "model": "ridge",
+    "inputs": {
+      "outcome_prevalence": 0.25,
+      "maximum_achievable_cstatistic": 0.85,
+      "target_performance": 0.9,
+      "signal_parameters": 5
+    },
+    "cache_key": "p5_prev0.25_cstat0.85_target0.90_mridge",
+    "cache_seed": 429,
+    "cached_n": 7075,
+    "cached_status": "ok"
+  },
+  {
+    "id": "binary_ridge_reported_p10",
+    "slice": "binary_ridge_reported",
+    "outcome": "binary",
+    "model": "ridge",
+    "inputs": {
+      "outcome_prevalence": 0.25,
+      "maximum_achievable_cstatistic": 0.85,
+      "target_performance": 0.9,
+      "signal_parameters": 10
+    },
+    "cache_key": "p10_prev0.25_cstat0.85_target0.90_mridge",
+    "cache_seed": 1077,
+    "cached_n": 1288,
+    "cached_status": "ok"
+  },
+  {
+    "id": "binary_ridge_reported_p15",
+    "slice": "binary_ridge_reported",
+    "outcome": "binary",
+    "model": "ridge",
+    "inputs": {
+      "outcome_prevalence": 0.25,
+      "maximum_achievable_cstatistic": 0.85,
+      "target_performance": 0.9,
+      "signal_parameters": 15
+    },
+    "cache_key": "p15_prev0.25_cstat0.85_target0.90_mridge",
+    "cache_seed": 1725,
+    "cached_n": 10672,
+    "cached_status": "ok"
+  },
+  {
+    "id": "binary_ridge_reported_p20",
+    "slice": "binary_ridge_reported",
+    "outcome": "binary",
+    "model": "ridge",
+    "inputs": {
+      "outcome_prevalence": 0.25,
+      "maximum_achievable_cstatistic": 0.85,
+      "target_performance": 0.9,
+      "signal_parameters": 20
+    },
+    "cache_key": "p20_prev0.25_cstat0.85_target0.90_mridge",
+    "cache_seed": 2373,
+    "cached_n": 1764,
+    "cached_status": "ok"
+  },
+  {
+    "id": "binary_ridge_dip_p5",
+    "slice": "binary_ridge_dip",
+    "outcome": "binary",
+    "model": "ridge",
+    "inputs": {
+      "outcome_prevalence": 0.5,
+      "maximum_achievable_cstatistic": 0.8,
+      "target_performance": 0.95,
+      "signal_parameters": 5
+    },
+    "cache_key": "p5_prev0.50_cstat0.80_target0.95_mridge",
+    "cache_seed": 636,
+    "cached_n": 13440,
+    "cached_status": "ok"
+  },
+  {
+    "id": "binary_ridge_dip_p10",
+    "slice": "binary_ridge_dip",
+    "outcome": "binary",
+    "model": "ridge",
+    "inputs": {
+      "outcome_prevalence": 0.5,
+      "maximum_achievable_cstatistic": 0.8,
+      "target_performance": 0.95,
+      "signal_parameters": 10
+    },
+    "cache_key": "p10_prev0.50_cstat0.80_target0.95_mridge",
+    "cache_seed": 1284,
+    "cached_n": 1688,
+    "cached_status": "ok"
+  },
+  {
+    "id": "binary_ridge_dip_p15",
+    "slice": "binary_ridge_dip",
+    "outcome": "binary",
+    "model": "ridge",
+    "inputs": {
+      "outcome_prevalence": 0.5,
+      "maximum_achievable_cstatistic": 0.8,
+      "target_performance": 0.95,
+      "signal_parameters": 15
+    },
+    "cache_key": "p15_prev0.50_cstat0.80_target0.95_mridge",
+    "cache_seed": 1932,
+    "cached_n": 10112,
+    "cached_status": "ok"
+  },
+  {
+    "id": "continuous_lasso_peak_p5",
+    "slice": "continuous_lasso_peak",
+    "outcome": "continuous",
+    "model": "lasso",
+    "inputs": {
+      "maximum_achievable_rsquared": 0.1,
+      "target_performance": 0.95,
+      "signal_parameters": 5
+    },
+    "cache_key": "p5_r20.10_target0.95_mlasso",
+    "cache_seed": 11,
+    "cached_n": 4861,
+    "cached_status": "ok"
+  },
+  {
+    "id": "continuous_lasso_peak_p10",
+    "slice": "continuous_lasso_peak",
+    "outcome": "continuous",
+    "model": "lasso",
+    "inputs": {
+      "maximum_achievable_rsquared": 0.1,
+      "target_performance": 0.95,
+      "signal_parameters": 10
+    },
+    "cache_key": "p10_r20.10_target0.95_mlasso",
+    "cache_seed": 83,
+    "cached_n": 32768,
+    "cached_status": "ok"
+  },
+  {
+    "id": "continuous_lasso_peak_p15",
+    "slice": "continuous_lasso_peak",
+    "outcome": "continuous",
+    "model": "lasso",
+    "inputs": {
+      "maximum_achievable_rsquared": 0.1,
+      "target_performance": 0.95,
+      "signal_parameters": 15
+    },
+    "cache_key": "p15_r20.10_target0.95_mlasso",
+    "cache_seed": 155,
+    "cached_n": 6402,
+    "cached_status": "ok"
+  },
+  {
+    "id": "survival_lasso_peak_p5",
+    "slice": "survival_lasso_peak",
+    "outcome": "survival",
+    "model": "lasso",
+    "inputs": {
+      "maximum_achievable_cindex": 0.75,
+      "baseline_hazard": 0.5,
+      "censoring_rate": 0.1,
+      "target_performance": 0.95,
+      "signal_parameters": 5
+    },
+    "cache_key": "p5_cindex0.75_hazard0.50_censor0.10_target0.95_mlasso",
+    "cache_seed": 47,
+    "cached_n": 600,
+    "cached_status": "ok"
+  },
+  {
+    "id": "survival_lasso_peak_p10",
+    "slice": "survival_lasso_peak",
+    "outcome": "survival",
+    "model": "lasso",
+    "inputs": {
+      "maximum_achievable_cindex": 0.75,
+      "baseline_hazard": 0.5,
+      "censoring_rate": 0.1,
+      "target_performance": 0.95,
+      "signal_parameters": 10
+    },
+    "cache_key": "p10_cindex0.75_hazard0.50_censor0.10_target0.95_mlasso",
+    "cache_seed": 695,
+    "cached_n": 2368,
+    "cached_status": "ok"
+  },
+  {
+    "id": "survival_lasso_peak_p15",
+    "slice": "survival_lasso_peak",
+    "outcome": "survival",
+    "model": "lasso",
+    "inputs": {
+      "maximum_achievable_cindex": 0.75,
+      "baseline_hazard": 0.5,
+      "censoring_rate": 0.1,
+      "target_performance": 0.95,
+      "signal_parameters": 15
+    },
+    "cache_key": "p15_cindex0.75_hazard0.50_censor0.10_target0.95_mlasso",
+    "cache_seed": 1343,
+    "cached_n": 866,
+    "cached_status": "ok"
+  },
+  {
+    "id": "binary_glm_seed_failure_p5",
+    "slice": "binary_glm_seed_failure",
+    "outcome": "binary",
+    "model": "glm",
+    "inputs": {
+      "outcome_prevalence": 0.2,
+      "maximum_achievable_cstatistic": 0.6,
+      "target_performance": 0.95,
+      "signal_parameters": 5
+    },
+    "cache_key": "p5_prev0.20_cstat0.60_target0.95_mglm",
+    "cache_seed": 298,
+    "cached_n": 5120000,
+    "cached_status": "ok"
+  }
+]

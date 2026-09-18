@@ -1,0 +1,13 @@
+Full suite: Rscript -e 'devtools::test(reporter="summary")'
+PASS; one optional-dependency skip (tuneRanger not installed).
+Final added delayed-crossing regression: test_file(test-adaptive-crossing.R) PASS.
+Build: R CMD build --no-build-vignettes --no-manual .
+Check: _R_CHECK_CRAN_INCOMING_REMOTE_=false _R_CHECK_FORCE_SUGGESTS_=false R CMD check --no-manual --no-build-vignettes --ignore-vignettes pmsims_1.0.0.tar.gz
+Status: OK
+Built package includes the final delayed-crossing regression; package tests PASS.
+Package check excludes manuals and vignettes. Research artifacts excluded via .Rbuildignore.
+
+After correcting pooled-replicate runtime accounting:
+Full suite rerun with stop_on_failure=TRUE: PASS, one optional-dependency skip.
+Rebuilt package and repeated the same R CMD check: Status: OK.
+Confirmed that the runtime alert does not consume RNG; sampling and GP outputs unaffected.

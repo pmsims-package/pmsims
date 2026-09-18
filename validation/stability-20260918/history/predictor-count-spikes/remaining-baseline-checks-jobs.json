@@ -1,0 +1,29 @@
+[
+  {
+    "name": "p15-seed48-baseline-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p15-seed48",
+      "baseline",
+      8130000
+    ]
+  },
+  {
+    "name": "p20-seed2373-baseline-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p20-seed2373",
+      "baseline",
+      8140000
+    ]
+  },
+  {
+    "name": "p20-seed48-baseline-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p20-seed48",
+      "baseline",
+      8150000
+    ]
+  }
+]

@@ -1,0 +1,399 @@
+---
+title: "How a random seed can inflate a calibration-slope sample-size search"
+subtitle: "The original algorithm, one scenario, and the five-million-participant example"
+format:
+  html:
+    embed-resources: true
+    toc: true
+    toc-depth: 2
+    code-fold: false
+    code-copy: true
+    theme: cosmo
+    highlight-style: github
+    code-overflow: wrap
+execute:
+  echo: true
+  warning: false
+  message: false
+params:
+  rerun_small: false
+  rerun_large_stage: false
+  rerun_large_full: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+source("reproduce.R")
+repo <- normalizePath("../../..", mustWork = TRUE)
+out_dir <- "runs"
+if (params$rerun_small || params$rerun_large_stage || params$rerun_large_full) {
+  checkout <- load_original_pmsims(repo)
+}
+if (params$rerun_small) {
+  run_original(1L, out_dir)
+  validate_original_result(1L, out_dir)
+}
+if (params$rerun_large_stage) run_original(298L, out_dir, stage_only = TRUE)
+if (params$rerun_large_full) run_original(298L, out_dir)
+if (params$rerun_small || params$rerun_large_stage || params$rerun_large_full) {
+  refresh_fixed_test <- function() {
+    previous_dir <- setwd(repo)
+    on.exit(setwd(previous_dir), add = TRUE)
+    source("validation/calibration-slope-search/seed-reproduction/diagnose-fixed-test.R",
+      local = new.env(parent = globalenv()))
+    source("validation/calibration-slope-search/seed-reproduction/validate-seed298-at-small-n.R",
+      local = new.env(parent = globalenv()))
+  }
+  refresh_fixed_test()
+}
+small <- read.csv(file.path(out_dir, "seed1-full-summary.csv"))
+large_full_file <- file.path(out_dir, "seed298-full-summary.csv")
+has_large_full <- file.exists(large_full_file)
+large_full <- if (has_large_full) read.csv(large_full_file) else NULL
+large_mode <- if (has_large_full) "full" else "stage1"
+large_stage <- read.csv(file.path(out_dir, paste0("seed298-", large_mode, "-summary.csv")))
+small_trace <- read.csv(file.path(out_dir, "seed1-full-trace.csv"))
+large_trace <- read.csv(file.path(out_dir, paste0("seed298-", large_mode, "-trace.csv")))
+large_curve <- read.csv("historical-large-curve.csv")
+validation <- rbind(
+  read.csv(file.path(out_dir, "seed1-full-validation.csv")),
+  read.csv(file.path(out_dir, "seed298-at-seed1-n-validation.csv"))
+)
+fixed_test <- read.csv("fixed-test-diagnostic.csv")
+fmt <- function(n) format(round(n), big.mark = ",", scientific = FALSE, trim = TRUE)
+```
+
+## What went wrong?
+
+The original program reported **5,120,000 participants** for a binary prediction
+model with five predictors, 20% outcome prevalence, achievable C-statistic 0.60,
+and target calibration slope 0.95. With exactly the same scenario and a different
+seed, a fresh run of the original code reports **`r fmt(small$min_n)` participants**:
+a **`r round(5120000 / small$min_n, 1)`-fold difference**.
+
+Changing a seed changes the simulated data, not the scientific question. The
+problem is that the preliminary search reuses one randomly generated test dataset
+at every sample size. Its noisy trajectory can keep doubling N without finding
+the target. When that search stops, the original algorithm can still return the
+last two sample sizes as apparently usable bounds. The second-stage Gaussian
+process (GP) search is confined to those bounds and cannot look below them.
+
+**This is a failure to establish a reliable search interval, followed by a search
+that cannot escape it.** The five-million number is a search output, not evidence
+that five million participants are necessary.
+
+::: {.callout-important}
+The smaller result is **not automatically the correct answer** either. This
+document demonstrates seed sensitivity and its mechanism. Establishing a minimum
+sample size requires independent performance evaluation and a search that can
+refine both sides of the crossing.
+:::
+
+## The same inputs; only the seed changes
+
+Both examples use ordinary logistic regression (`model = "glm"`). This example
+therefore does not depend on the squared-error transformation used for ridge and
+lasso. Assurance mode aggregates the 20th percentile of replicate slopes.
+
+```{r}
+#| label: comparison
+#| echo: false
+comparison <- data.frame(
+  Seed = c(298L, 1L),
+  `Reported N` = c(fmt(5120000), fmt(small$min_n)),
+  `Evidence for reported N` = c("Historical original cache", "Fresh local original-code search"),
+  `Fresh stage-1 lower bound` = fmt(c(large_stage$lower_bound, small$lower_bound)),
+  `Fresh stage-1 upper bound` = fmt(c(large_stage$upper_bound, small$upper_bound)),
+  check.names = FALSE
+)
+if (has_large_full) {
+  comparison <- rbind(comparison, data.frame(
+    Seed = 298L,
+    `Reported N` = fmt(large_full$min_n),
+    `Evidence for reported N` = "Fresh local original-code search",
+    `Fresh stage-1 lower bound` = fmt(large_full$lower_bound),
+    `Fresh stage-1 upper bound` = fmt(large_full$upper_bound),
+    check.names = FALSE
+  ))
+}
+knitr::kable(comparison, align = c("r", "r", "l", "r", "r"))
+```
+
+The original cache's full five-million search was configured with **1,000 GP
+replicates**. The fresh seed-1 search also requested 1,000 and actually used
+**`r small$gp_reps_used`**. The original preliminary algorithm has its own fixed
+budget of 500 replicates, in batches of 20; these settings are preserved to
+reproduce the original behavior. `r if (has_large_full) paste0("A fresh full seed-298 search is also included above; it actually used ", large_full$gp_reps_used, " GP replicates.") else "The fresh large-seed run stops **after stage 1**; its bounds are not being passed off as a freshly rerun full-search answer."`
+
+Locally, the fresh seed-298 preliminary stage alone took approximately
+**`r round(large_stage$seconds / 60, 1)` minutes**. The full seed-1 search took
+approximately **`r round(small$seconds / 60, 1)` minutes**. Repeating seed 1 returned
+the same N, predicted slope and preliminary trace.
+
+### The preliminary trajectories
+
+```{r}
+#| label: fig-trajectories
+#| echo: false
+#| fig-cap: "Fresh runs of the original preliminary search. Each point summarizes 20 training replicates evaluated against the same fixed test dataset within that run. The dashed line is the target slope, 0.95."
+#| fig-width: 9
+#| fig-height: 4.8
+par(mar = c(4.5, 4.5, 1, 1), las = 1)
+xlim <- range(c(small_trace$n, large_trace$n))
+ylim <- range(c(small_trace$performance, large_trace$performance, 0.95))
+plot(NA, xlim = xlim, ylim = ylim, log = "x", xaxt = "n",
+  xlab = "Training sample size (log scale)",
+  ylab = "Stage-1 20th-percentile calibration slope")
+ticks <- c(1250, 10000, 80000, 640000, 5120000, 10240000)
+ticks <- ticks[ticks >= xlim[1] & ticks <= xlim[2]]
+axis(1, at = ticks, cex.axis = 0.85, gap.axis = 0,
+  labels = c("1,250", "10,000", "80,000", "640,000", "5.12m", "10.24m")[
+    c(1250, 10000, 80000, 640000, 5120000, 10240000) %in% ticks])
+abline(h = 0.95, lty = 2, col = "#555555")
+lines(large_trace$n, large_trace$performance, type = "b", pch = 17, col = "#b43a2e", lwd = 2)
+lines(small_trace$n, small_trace$performance, type = "b", pch = 19, col = "#17689b", lwd = 2)
+legend("bottomright", c("Seed 298", "Seed 1", "Target = 0.95"),
+  col = c("#b43a2e", "#17689b", "#555555"), pch = c(17, 19, NA),
+  lty = c(1, 1, 2), lwd = c(2, 2, 1), bty = "n")
+```
+
+The seed-298 preliminary search stops with reason
+**`r large_stage$stage_stop_reason`** after **`r large_stage$stage_reps` replicates**.
+It returns **[`r fmt(large_stage$lower_bound)`, `r fmt(large_stage$upper_bound)`]**
+as the interval for stage 2. Compare the final values in the trace to the target:
+
+```{r}
+#| echo: false
+knitr::kable(tail(large_trace, 5), digits = 5,
+  col.names = c("N", "Stage-1 percentile", "Training reps"))
+```
+
+These bounds must be understood as outputs of the original stopping/fallback
+logic. They are not an independently verified interval containing the minimum N.
+
+`r if (large_stage$stage_stop_reason == "plateau") "In this run the program explicitly stops for a plateau, rather than an established target crossing. Its plateau branch assigns the last two sample sizes to the bounds anyway:" else "In this run the stopping reason differs from a plateau. The interval is still based on the single fixed-test trajectory, whereas the GP and independent check use new test draws. The original plateau branch below illustrates the separate unsupported-bounds defect; it should not be mistaken for this run's actual stopping reason."`
+
+```{r}
+#| eval: false
+# Original calculate_adaptive_bounds(), plateau branch:
+stop_reason <- "plateau"
+upper_n <- last$n
+upper_perf <- last$performance
+lower_n <- previous$n
+lower_perf <- previous$performance
+```
+
+### Where the historical GP was allowed to look
+
+The historical cache retains mean-slope summaries at the following sample sizes.
+It contains no points below 5,120,000. The reported N is exactly that lower edge.
+These cached means illustrate the sampled range; they are **not** the 20th
+percentiles used by the assurance search.
+
+```{r}
+#| echo: false
+knitr::kable(data.frame(
+  N = fmt(large_curve$n),
+  `Cached mean calibration slope` = round(large_curve$performance, 5),
+  check.names = FALSE
+))
+```
+
+The GP uses fresh test draws, so its observations are not the same as the
+preliminary curve evaluated on one fixed test draw. A high-performing GP result
+inside this large interval does not establish that a smaller N would fail.
+
+### A well-calibrated predictor looks bad on the unlucky fixed test draw
+
+For this linear logistic scenario, the **true data-generating linear predictor**
+has population calibration slope 1. We can evaluate that predictor on the exact
+single test dataset drawn by the original preliminary stage, immediately after
+its tuning and initial-size calculation:
+
+```{r}
+#| echo: false
+knitr::kable(data.frame(
+  Seed = fixed_test$seed,
+  `Fixed test size` = fixed_test$fixed_test_n,
+  `Tuned coefficient` = round(fixed_test$tuned_beta, 7),
+  `True-LP slope on fixed test` = round(fixed_test$true_lp_slope_on_fixed_test, 5),
+  `Population true-LP slope` = fixed_test$population_true_lp_slope,
+  check.names = FALSE
+))
+```
+
+On seed 298's test draw, even this population-calibrated reference has measured
+slope **`r round(fixed_test$true_lp_slope_on_fixed_test[fixed_test$seed == 298], 5)`**,
+below the 0.95 target. At large training N the correctly specified GLM approaches
+the true predictor, so this test-set error can persist while the preliminary
+search keeps increasing training N. More training replicates on that **same** test
+dataset do not average away its random error.
+
+These are diagnostics of the two original single test draws, **not one-replicate
+population validation studies**, and the reference is not a universal ceiling
+for every fitted model. The public call also repeats stochastic tuning when the
+seed changes; the small difference in tuned coefficients is recorded above.
+All user-supplied scenario inputs remain identical. The diagnostic can be rerun
+with `Rscript validation/calibration-slope-search/seed-reproduction/diagnose-fixed-test.R`.
+
+### Independent checks at the smaller N
+
+The seed-1 result was evaluated using **1,000 new training/test draws** at its
+reported N, with a separate validation RNG stream. We also evaluate that same N
+with **1,000 draws from seed 298's tuned generator**, so the comparison does not
+rely on the small tuning difference between seeds. The test size remains 30,000
+per replicate. These checks do not reuse the search's observations:
+
+```{r}
+#| echo: false
+knitr::kable(data.frame(
+  `Tuning seed` = validation$seed,
+  N = fmt(validation$n),
+  `Independent reps` = validation$reps,
+  `Empirical 20th percentile` = round(validation$empirical_q20, 5),
+  `95% interval: lower` = round(validation$ci_low, 5),
+  `95% interval: upper` = round(validation$ci_high, 5),
+  Target = validation$target,
+  `Interval relative to target` = ifelse(validation$ci_low > validation$target,
+    "Above", ifelse(validation$ci_high < validation$target, "Below", "Overlaps")),
+  check.names = FALSE
+))
+```
+
+The interval is a pointwise binomial order-statistic interval for the population
+20th percentile of the simulated **finite-test slopes**. The empirical percentile
+uses `type = 1`; the original search
+itself retains its original interpolated percentile. This independently checks
+performance at one N. It does **not** identify the minimum N or validate the fix.
+
+`r if (all(validation$ci_low > validation$target)) paste0("Here both independent intervals are entirely above 0.95, supporting target attainment under these simulation settings at ", fmt(small$min_n), " participants with either tuned generator—far below five million. This still does not establish how much smaller N could be.") else paste0("Read the two checks separately: a lower bound above 0.95 supports attainment at ", fmt(small$min_n), "; an interval overlapping 0.95 leaves attainment unresolved. A different search output alone is not validation, and the smaller N is not established as a minimum.")`
+
+## Runnable R reproduction
+
+Run from the **pmsims repository root**, with its dependencies and `pkgload`
+installed (`testthat` is also needed for the fixed-test diagnostic). The supplied
+`reproduce.R` extracts and loads the **entire pre-fix
+package** at commit `a88e7011c9998bf02f7518d5cc4ead9d35b86fbb` into a temporary
+directory. It leaves the current branch intact. Using the current fixed package
+would test different behavior.
+
+The following code is sufficient to load the original package from this
+repository and call it. It does not require the companion script:
+
+```{r}
+#| eval: false
+original_commit <- "a88e7011c9998bf02f7518d5cc4ead9d35b86fbb"
+checkout <- tempfile("pmsims-original-")
+dir.create(checkout)
+archive <- tempfile(fileext = ".tar")
+status <- system2("git", c("archive", original_commit), stdout = archive)
+stopifnot(status == 0L)
+utils::untar(archive, exdir = checkout)
+unlink(archive)
+pkgload::load_all(checkout, quiet = TRUE)
+RNGkind("Mersenne-Twister", "Inversion", "Rejection")
+
+original_search <- function(seed) {
+  set.seed(seed)                         # The only input that changes
+  pmsims::simulate_binary(
+    signal_parameters = 5L,
+    noise_parameters = 0L,
+    complexity = 1L,
+    outcome_prevalence = 0.20,
+    maximum_achievable_cstatistic = 0.60,
+    model = "glm",
+    metric = "calibration_slope",
+    target_performance = 0.95,
+    n_reps_total = 1000L,
+    mean_or_assurance = "assurance",
+    progress = FALSE
+  )
+}
+
+options(pmsims.confirm_long_runs = FALSE)
+small_result <- original_search(1L)
+large_result <- original_search(298L)   # Expensive: millions of rows per fit
+c(seed_1 = small_result$min_n, seed_298 = large_result$min_n)
+```
+
+To save the results, preliminary traces, runtime and session information, use the
+companion script instead. It records stage 1 with an exit hook that consumes no
+random numbers and changes no calculations. The `--stage-only` option terminates
+after the original preliminary algorithm has finished.
+
+```{bash}
+#| eval: false
+# Fresh full search for the smaller example (1,000 GP reps).
+Rscript validation/calibration-slope-search/seed-reproduction/reproduce.R --seeds=1
+
+# Reproduce the large preliminary bounds without running the expensive GP.
+Rscript validation/calibration-slope-search/seed-reproduction/reproduce.R --seeds=298 --stage-only
+
+# Full original searches for BOTH seeds, with the same 1,000-rep GP budget.
+Rscript validation/calibration-slope-search/seed-reproduction/reproduce.R --seeds=1,298
+
+# Optional: add 1,000 independent performance-validation draws to seed 1.
+Rscript validation/calibration-slope-search/seed-reproduction/reproduce.R --seeds=1 --validate
+
+# Check the smaller N with seed 298's OWN tuned generator (1,000 draws).
+Rscript validation/calibration-slope-search/seed-reproduction/validate-seed298-at-small-n.R
+```
+
+::: {.callout-warning}
+The full seed-298 search fits models to millions of rows repeatedly. It can take
+hours and require substantial memory. The supplied HTML uses saved observations;
+ordinary rendering does not launch either search. Exact GP outputs can vary with
+R and dependency versions, even when a seed is fixed.
+:::
+
+## Render and share
+
+From the repository root:
+
+```{bash}
+#| eval: false
+quarto render validation/calibration-slope-search/seed-reproduction/seed-instability.qmd
+```
+
+The generated `seed-instability.html` embeds its plot and resources. Share that
+single HTML file with colleagues. For a deliberate fresh rerun during rendering,
+set one or more parameters explicitly:
+
+```{bash}
+#| eval: false
+quarto render validation/calibration-slope-search/seed-reproduction/seed-instability.qmd -P rerun_small:true
+quarto render validation/calibration-slope-search/seed-reproduction/seed-instability.qmd -P rerun_large_stage:true
+quarto render validation/calibration-slope-search/seed-reproduction/seed-instability.qmd -P rerun_large_full:true
+```
+
+## Provenance and limits
+
+- **Historical large result:** key
+  `p5_prev0.20_cstat0.60_target0.95_mglm` in
+  `pmsims-chatbot/cache/versions/cache-1f-create-20260827-161720.json`.
+  A compact extract and source-file SHA-256 are in `historical-large-result.json`.
+  The cache reports N = 5,120,000 and a predicted slope of 0.9669278. This is not
+  an independent validation estimate.
+- **Seed:** the phase-1f binary grid has predictor count, prevalence, C-statistic,
+  target and model in that order. The last dimension varies fastest. This scenario
+  is row 298, and `cache_lib.R` sets the binary seed to its row index.
+- **Fresh observations:** seed 1 is a full original-code run; seed 298 is an
+  original-code `r if (has_large_full) "full search" else "stage-1 run"`. Their traces, summaries and exact local R/dependency
+  versions are supplied in `runs/`. Raw fitted objects are retained locally.
+- **Source version:** the fresh runs use the pinned pre-fix commit above. The
+  historical cache used package version 1.0.0; its exact commit and dependency
+  versions are not established by the cache record.
+  `r if (large_stage$lower_bound == min(large_curve$n) && large_stage$upper_bound == max(large_curve$n)) "The fresh large preliminary bounds exactly match the historical GP range, directly reproducing the mechanism locally." else "The fresh large preliminary bounds differ from the historical GP range; the historical five-million output should not be read as a fresh reproduction under these dependencies."`
+  `r if (!has_large_full) "The full five-million GP output remains explicitly historical." else "The fresh full-search output and the historical output are labeled separately above."`
+- **Scope:** this is a deliberately selected counterexample, not a representative
+  survey of seeds, a proof that all large sample sizes are wrong, or validation of
+  the proposed fix.
+
+```{r}
+#| echo: false
+#| results: asis
+cat("<details><summary>Fresh seed-1 session information</summary>\n\n")
+cat("```text\n", paste(readLines(file.path(out_dir, "seed1-full-session.txt")), collapse = "\n"), "\n```\n\n", sep = "")
+cat("</details>\n")
+```

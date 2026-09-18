@@ -1,0 +1,150 @@
+
+══ Testing test-start_values.R ═════════════════════════════════════════════════
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 1 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 2 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 3 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 4 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 5 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 6 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 7 ]
+[ FAIL 0 | WARN 1 | SKIP 0 | PASS 7 ]
+[ FAIL 0 | WARN 1 | SKIP 0 | PASS 8 ]
+[ FAIL 0 | WARN 1 | SKIP 0 | PASS 9 ]
+[ FAIL 0 | WARN 1 | SKIP 0 | PASS 10 ]
+[ FAIL 0 | WARN 2 | SKIP 0 | PASS 10 ]
+[ FAIL 0 | WARN 2 | SKIP 0 | PASS 11 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 11 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 12 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 13 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 14 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 15 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 16 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 17 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 18 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 19 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 20 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 21 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 22 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 23 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 24 ]
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 25 ]
+
+── Warning ('test-start_values.R:70:3'): calculate_adaptive_bounds finds bounds in mean mode ──
+test_n = 10 is small for the adaptive start-value search. The test set is drawn once and reused at every sample size, so its own sampling error shifts the whole performance curve and is not reduced by n_reps_per. Values below ~5000 make the search bounds noticeably run-dependent, particularly for the calibration slope.
+Backtrace:
+    ▆
+ 1. └─pmsims:::calculate_adaptive_bounds(...) at test-start_values.R:70:3
+
+── Warning ('test-start_values.R:102:3'): calculate_adaptive_bounds uses the fallback value on repeated errors ──
+test_n = 10 is small for the adaptive start-value search. The test set is drawn once and reused at every sample size, so its own sampling error shifts the whole performance curve and is not reduced by n_reps_per. Values below ~5000 make the search bounds noticeably run-dependent, particularly for the calibration slope.
+Backtrace:
+    ▆
+ 1. └─pmsims:::calculate_adaptive_bounds(...) at test-start_values.R:102:3
+
+── Warning ('test-start_values.R:132:3'): calculate_adaptive_bounds errors clearly on non-finite summaries ──
+test_n = 10 is small for the adaptive start-value search. The test set is drawn once and reused at every sample size, so its own sampling error shifts the whole performance curve and is not reduced by n_reps_per. Values below ~5000 make the search bounds noticeably run-dependent, particularly for the calibration slope.
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_error(...) at test-start_values.R:132:3
+ 2. │ └─testthat:::expect_condition_matching_(...)
+ 3. │   └─testthat:::quasi_capture(...)
+ 4. │     ├─testthat (local) .capture(...)
+ 5. │     │ └─base::withCallingHandlers(...)
+ 6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo))
+ 7. └─pmsims:::calculate_adaptive_bounds(...)
+
+[ FAIL 0 | WARN 3 | SKIP 0 | PASS 25 ]
+
+══ Testing test-engines.R ══════════════════════════════════════════════════════
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 0 ]i Estimating second stage... (Gaussian process algorithm)
+
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 1 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 2 ]i Estimating second stage... (Gaussian process algorithm)
+
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 3 ]i Estimating second stage... (Gaussian process algorithm)
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 4 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 5 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 6 ] Updates: 1, Evaluations: 25, Time: 0.1 Updates: 2, Evaluations: 30, Time: 0.1 Updates: 3, Evaluations: 35, Time: 0.2 Updates: 4, Evaluations: 40, Time: 0.2
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 7 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 8 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 9 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 10 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 11 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 12 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 13 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 14 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 15 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 16 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 17 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 18 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 19 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 20 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 21 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 22 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 23 ] Done!
+
+══ Testing test-simulate_custom.R ══════════════════════════════════════════════
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 0 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 1 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 2 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 3 ]Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
+i Estimating second stage... (Gaussian process algorithm)
+
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 4 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 5 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 6 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 7 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 8 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 9 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 10 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 11 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 12 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 13 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 14 ]
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 15 ]Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
+
+[ FAIL 1 | WARN 0 | SKIP 0 | PASS 15 ]Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
+
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 15 ]
+
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 16 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 17 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 18 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 19 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 20 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 21 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 22 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 23 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 24 ]
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 25 ]
+
+── Error ('test-simulate_custom.R:106:3'): simulate_custom ─────────────────────
+Error in `(function (simfun, boundaries, power = NULL, evaluations = 4000, ci = NULL, ci_perc = 0.95, time = NULL, costfun = NULL, cost = NULL, surrogate = NULL, n.startsets = 4, init.perc = 0.2, setsize = NULL, continue = NULL, dat = NULL, silent = FALSE, autosave_dir = NULL, control = list(), goodvals = "high", aggregate_fun = mean, noise_fun = "bernoulli", integer = TRUE, use_noise = TRUE)  {     seed <- .Random.seed     time_temp <- timer()     if (!is.null(continue)) {         simfun <- continue$simfun         costfun <- continue$costfun         boundaries <- continue$boundaries         power <- continue$power         cost <- continue$cost         dat <- continue$dat         surrogate <- ifelse(!is.null(surrogate) && surrogate != continue$surrogate, surrogate, continue$surrogate)     }     if (is.null(costfun))          costfun <- function(x) sum(x)     if (!is.list(boundaries)) {         boundaries <- list(boundaries)         names(boundaries) <- names(as.list(args(simfun)))[1]     }     n.points <- n.startsets * length(boundaries)     if (is.null(setsize) & !is.null(evaluations))          setsize <- ceiling(evaluations * init.perc/n.points)     if (!is.null(dat)) {         evaluations <- usedevaluations(dat) + evaluations     }     simfun <- fix.argtype(simfun, boundaries)     costfun <- fix.argtype(costfun, boundaries)     if (is.null(dat)) {         points <- initpoints(boundaries = boundaries, n.points = n.points, integer = integer)         dat <- addval(simfun = simfun, points = points, each = setsize, autosave_dir = autosave_dir)     }     if (is.null(surrogate)) {         if (length(boundaries) == 1)              surrogate <- "logreg"         if (length(boundaries) > 1)              surrogate <- "gpr"     }     if (surrogate == "svr" && !requireNamespace("WeightSVM", quietly = TRUE)) {         message("Package WeightSVM is not installed. Please install it to use this surrogate.")     }     if (!is.null(ci) && surrogate != "gpr")          message("Additionally fitting a GPR each update for calculating the SE. Consider switchting to GPR to speed up the estimation")     if (is.null(power) & is.null(cost))          stop("Either the power or cost argument must be supplied")     if (!is.null(power) & !is.null(cost))          stop("Only one of power or cost argument can be supplied")     if (!is.null(cost))          task <- "costthreshold"     if (!is.null(power))          task <- "desiredpower"     repeat {         if (exists("fit")) {             lastfit <- fit         }         else {             lastfit <- NULL         }         fit <- fit.surrogate(dat = dat, surrogate = surrogate, lastfit = lastfit, control = control, aggregate_fun = aggregate_fun, use_noise = use_noise, noise_fun = noise_fun)         if (fit$badfit)              n.bad.fits <- ifelse(exists("n.bad.fits"), n.bad.fits + 1, 1)         pred <- get.pred(fit = fit, dat = dat, power = power, costfun = costfun, cost = cost, boundaries = boundaries, task = task, aggregate_fun = aggregate_fun, integer = integer, use_noise = use_noise)         if (pred$badprediction)              n.bad.predictions <- ifelse(exists("n.bad.predictions"), n.bad.predictions + 1, 1)         if (pred$edgeprediction) {             n.edgepredictions <- ifelse(exists("n.edgepredictions"), n.edgepredictions + 1, 1)             if (n.edgepredictions == 5)                  warning("The predicted value consistently lies at the edge of the parameter space. Consider adjusting the boundaries.")         }         is.terminate <- check.term(evaluations = evaluations, ci = ci, time = time, dat = dat, time_temp = time_temp, fit = fit, pred = pred, ci_perc = ci_perc)         if (is.terminate)              break         dat <- addval(simfun = simfun, dat = dat, points = pred$points, each = max(ceiling(setsize/nrow(pred$points)), 1), autosave_dir = autosave_dir)         n_updates <- ifelse(exists("n_updates"), n_updates + 1, 1)         if (!silent)              print_progress(n_updates = n_updates, evaluations_used = usedevaluations(dat), time_used = timer(time_temp))     }     cat("\n")     if (pred$badprediction | fit$badfit) {         pred$points <- pred$bad.points         warning("No good design found after the final update.")     }     noresult = pred$badprediction & !pred$edgeprediction     if (!noresult) {         power_final = fit$fitfun(as.numeric(pred$points))         cost_final = costfun(as.numeric(pred$points))     }     else {         power_final = NA         cost_final = NA     }     if (!noresult && use_noise && is.null(fit$fitfun.sd))          fit$fitfun.sd <- fit.surrogate(dat = dat, surrogate = "gpr", aggregate_fun = aggregate_fun, use_noise = use_noise, noise_fun = noise_fun)$fitfun.sd     if (!noresult & use_noise)          final_se = fit$fitfun.sd(as.numeric(pred$points))     else final_se = NA     time_used <- timer(time_temp)     final <- list(design = pred$points, power = power_final, cost = cost_final, se = final_se)     names(final$design) <- names(boundaries)     re <- list(final = final, dat = dat, evaluations_used = usedevaluations(dat), surrogate = surrogate, fit = fit, time_used = time_used, n_updates = ifelse(exists("n_updates"), n_updates, 0), n.bad.predictions = ifelse(exists("n.bad.predictions"), n.bad.predictions, 0), n.bad.fits = ifelse(exists("n.bad.fits"), n.bad.fits, 0), call = match.call(), seed = seed, costfun = costfun, boundaries = boundaries, simfun = simfun, cost = cost, power = power, aggregate_fun = aggregate_fun)     class(re) <- "designresult"     return(re) })(simfun = function (n)  {     tryCatch({         train_data <- data_function(n)         fit <- model_function(train_data)         model <- attr(model_function, "model")         metric_function(test_data, fit, model)     }, error = function(e) {         return(value_on_error)     }) }, aggregate_fun = function (x)  stats::quantile(x, probs = 0.2, na.rm = TRUE), noise_fun = function (x)  var_bootstrap(x$y), boundaries = c(75, 200), power = 0.73, surrogate = "gpr", setsize = 10, evaluations = 40, ci = NULL, n.startsets = 4, silent = FALSE, adaptive_seed = 20240101L)`: unused argument (adaptive_seed = 20240101)
+Backtrace:
+    ▆
+ 1. ├─base::suppressWarnings(...) at test-simulate_custom.R:106:3
+ 2. │ └─base::withCallingHandlers(...)
+ 3. └─pmsims::simulate_custom(...)
+ 4.   ├─base::do.call(...) at pmsims/R/simulate_custom.R:222:5
+ 5.   └─pmsims (local) `<fn>`(...)
+ 6.     └─base::do.call(...) at pmsims/R/engines.R:743:3
+
+── Error ('test-simulate_custom.R:144:3'): simulate_custom returns bisection history when verbose is TRUE ──
+Error in `(function (data_function = data_function, model_function = model_function, metric_function = metric_function, value_on_error = value_on_error, min_sample_size = min_sample_size, max_sample_size = max_sample_size, test_n = test_n, n_reps_total = n_reps_total, n_reps_per = n_reps_per, target_performance = target_performance, c_statistic, mean_or_assurance = mean_or_assurance, tol = 0.001, parallel = FALSE, cores = 20, verbose = FALSE, budget = TRUE)  {     if (!is.null(min_sample_size) && !is.null(max_sample_size)) {         start_min_sample_size <- min_sample_size         start_max_sample_size <- max_sample_size     }     else {         start_values <- compute_start_sample_sizes(data_function = data_function, metric_function = metric_function, target_performance = target_performance, c_statistic = c_statistic, mean_or_assurance = mean_or_assurance)         start_values <- calculate_adaptive_bounds(data_function = data_function, model_function = model_function, metric_function = metric_function, value_on_error = value_on_error, start_n = start_values$start_min_sample_size, test_n = test_n, n_reps_per = n_reps_per, n_reps_total = 500, target_performance = target_performance, threshold = 1e-04, mean_or_assurance = mean_or_assurance, verbose = FALSE)         start_min_sample_size <- start_values$min_sample_size         start_max_sample_size <- start_values$max_sample_size     }     max_iter <- round(n_reps_total/n_reps_per)     test_data <- data_function(test_n)     cl <- NULL     registered_parallel <- FALSE     if (isTRUE(parallel)) {         require_optional_packages(c("doParallel", "foreach"), "parallel bisection simulations")         if (is.null(cores) || !is.numeric(cores) || cores < 1) {             cores <- parallel::detectCores(logical = FALSE)         }         cores_to_use <- min(cores, parallel::detectCores())         cl <- parallel::makeCluster(cores_to_use)         core_names <- c("data_function", "model_function", "metric_function", "value_on_error", "test_data")         parallel::clusterExport(cl, varlist = core_names, envir = environment())         envs <- unique(list(environment(data_function), environment(model_function), environment(metric_function)))         for (e in envs) {             if (!is.null(e)) {                 objs <- ls(envir = e, all.names = TRUE)                 if (length(objs) > 0) {                   try(parallel::clusterExport(cl, varlist = objs, envir = e), silent = TRUE)                 }             }         }         doParallel::registerDoParallel(cl)         registered_parallel <- TRUE         on.exit({             try(parallel::stopCluster(cl), silent = TRUE)             try(doParallel::stopImplicitCluster(), silent = TRUE)         }, add = TRUE)     }     single_run <- function(n) {         tryCatch({             dat <- data_function(n)             fit <- model_function(dat)             metric_function(test_data, fit, attr(model_function, "model"))         }, error = function(e) value_on_error)     }     summary_at_n <- function(n) {         if (isTRUE(parallel) && registered_parallel) {             vals <- foreach::`%dopar%`(foreach::foreach(i = seq_len(n_reps_per), .combine = c), {                 tryCatch({                   dat <- data_function(n)                   fit <- model_function(dat)                   metric_function(test_data, fit, attr(model_function, "model"))                 }, error = function(e) value_on_error)             })         }         else {             vals <- vapply(seq_len(n_reps_per), function(i) single_run(n), FUN.VALUE = numeric(1))         }         s <- get_summaries(matrix(vals, nrow = 1))         if (mean_or_assurance == "mean") {             list(y_summary = s$mean_performance, y = vals)         }         else {             list(y_summary = s$quant20_performance, y = vals)         }     }     p_lo <- summary_at_n(start_min_sample_size)$y_summary     p_hi <- summary_at_n(start_max_sample_size)$y_summary     iter <- 0     history <- list()     track_bisection <- list()     while ((budget && iter < max_iter) || (!budget && (p_hi - p_lo) >= tol && iter < max_iter)) {         mid <- floor((start_min_sample_size + start_max_sample_size)/2)         mid_result <- summary_at_n(mid)         p_mid <- mid_result$y_summary         track_bisection[[iter + 1]] <- list(x = mid, y = mid_result$y)         if (verbose) {             history[[iter + 1]] <- list(iter = iter + 1, mid = mid, p_mid = p_mid)         }         if (p_mid >= target_performance) {             start_max_sample_size <- mid             p_hi <- p_mid         }         else {             start_min_sample_size <- mid             p_lo <- p_mid         }         iter <- iter + 1     }     if (!is.null(cl)) {         try(parallel::stopCluster(cl), silent = TRUE)         try(doParallel::stopImplicitCluster(), silent = TRUE)     }     result <- list(min_n = start_max_sample_size, performance = p_hi, min_sample_size_bound = start_min_sample_size, min_sample_size_perf = p_lo, max_sample_size_bound = start_max_sample_size, max_sample_size_perf = p_hi, iterations = iter, track_bisection = track_bisection)     if (verbose) {         result$history <- history     }     return(result) })(data_function = structure(function (n, n_signal_parameters = 5, noise_parameters = 0, beta_signal = 0.5, complexity = 1, nonlinear_strength = NULL, predictor_type = "continuous", binary_prevalence = 0, correlation = 0.3, distribution = "normal", mu_lp = -1.38629436111989, baseline_prob = 0.2)  {     X <- generate_predictors(n, n_signal_parameters, noise_parameters, complexity, predictor_type, binary_prevalence, correlation, distribution)     lp <- generate_linear_predictor(X, n_signal_parameters, noise_parameters, intercept = mu_lp, beta_signal, complexity, nonlinear_strength)     y <- stats::rbinom(n, 1, stats::plogis(lp))     return(as.data.frame(cbind(y, X))) }, outcome = "binary"), model_function = structure(function (d)  {     stats::glm("y ~ .", data = d, family = "binomial") }, model = "glm"), metric_function = structure(function (data, fit, model)  {     y <- data[, "y"]     x <- data[, names(data) != "y", drop = FALSE]     y_hat <- predict_custom(x, y, fit, model, type = "response")     auc <- pROC::auc(y, as.numeric(y_hat), quiet = TRUE)     return(auc[1]) }, metric = "auc"), value_on_error = 0.5, min_sample_size = 75, max_sample_size = 200, test_n = 2000, n_reps_total = 40, n_reps_per = 10, target_performance = 0.73, c_statistic = 0.8, mean_or_assurance = "assurance", tol = 0.001, parallel = FALSE, cores = 20, verbose = TRUE, budget = TRUE, adaptive_seed = 20240101L)`: unused argument (adaptive_seed = 20240101)
+Backtrace:
+    ▆
+ 1. ├─base::suppressWarnings(...) at test-simulate_custom.R:144:3
+ 2. │ └─base::withCallingHandlers(...)
+ 3. └─pmsims::simulate_custom(...)
+ 4.   └─base::do.call(...) at pmsims/R/simulate_custom.R:195:5
+
+[ FAIL 2 | WARN 0 | SKIP 0 | PASS 25 ]

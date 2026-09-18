@@ -1,0 +1,40 @@
+Source commit: 99afbc4f5144c873b101d8df0fdcaf71ff46aa65
+Final study collected UTC: 2026-09-16 13:15:07
+Baseline start_values: a88e701. Preliminary budget 500; GP budget 1000; independent confirmation 1000 per candidate, up to 5 candidates.
+Ordinary seeds 47,48; GP RNG 10000+seed; saved-GP confirmation RNG 6000000+seed.
+Final control validation: 1000 independent draws per point; per-replicate RNG 4000000+10000*seed+1000*factor_n+i.
+Public API seed 47; normal RNG continuation; validation RNG 3000000+i. Oracle 1000 draws per test size; RNG 2000000+test_n.
+R CMD check: --no-manual, _R_CHECK_FORCE_SUGGESTS_=false; 0 errors, 0 warnings, 0 notes. One optional tuneRanger test skipped.
+                  R/start_values.R                        R/engines.R
+"c049346169b31960609352acc47249c8" "8854d077fe36d6bf846de4164ce802e7"
+           R/search_confirmation.R               R/surrogate_models.R
+"109bd4fd5273370fb6e19aec90ee8c2d" "bc448f8e908f080298956b57398904e8"
+R version 4.6.0 (2026-04-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Tahoe 26.6.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: Europe/London
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base
+
+loaded via a namespace (and not attached):
+[1] compiler_4.6.0 tools_4.6.0
+
+Dependency versions:
+ pmsims 0.5.0.9000
+glmnet 5.0
+mlpwr 1.1.1
+pkgload 1.5.2
+testthat 3.3.2
+roxygen2 8.0.0
+
+Measured GP evaluations: 1000 in seven ordinary runs; 1012 in continuous seed 47 (rounded final batch). All confirmation and holdout batches: exactly 1000.

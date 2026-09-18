@@ -1,0 +1,7 @@
+"id","independent_below","independent_above","crossing_supported"
+"p10-seed1077",8000,NA,FALSE
+"p10-seed48",8000,NA,FALSE
+"p15-seed1725",1000,4000,TRUE
+"p15-seed48",1000,4000,TRUE
+"p20-seed2373",2000,4000,TRUE
+"p20-seed48",1000,4000,TRUE

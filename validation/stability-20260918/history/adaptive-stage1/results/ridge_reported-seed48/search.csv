@@ -1,0 +1,2 @@
+"scenario","seed","status","stage1_stop","stage1_reps","lower","upper","n","predicted_slope","actual_gp_reps","seconds"
+"ridge_reported",48,"estimated","target_bracketed",280,1334,5336,1619,0.898640310610774,1000,336.980695962906

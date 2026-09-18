@@ -35,3 +35,4 @@
 ^cran-comments\.md$
 ^scripts$
 ^Rplots\.pdf$
+^validation$

@@ -1,0 +1,9 @@
+scenario,seed,version,gp_reps,stage1_reused,status,stop_reason,lower,upper,min_n,perf_n,seconds
+ridge_reported,47,fixed,1000,TRUE,estimated,target_bracketed,667,5336,2016,0.899234896021224,254.59370803833
+glm_control,47,fixed,1000,TRUE,estimated,target_bracketed,333,1332,1272,0.899597679698945,58.6671240329742
+lasso_control,47,fixed,1000,TRUE,estimated,target_bracketed,333,2664,1597,0.899074979010589,116.177363872528
+continuous_control,47,fixed,1000,TRUE,estimated,target_bracketed,16,512,150,0.892201351273463,66.3321430683136
+ridge_reported,48,fixed,1000,TRUE,estimated,target_bracketed,667,5336,2017,0.899179715525998,262.402261018753
+glm_control,48,fixed,1000,TRUE,estimated,target_bracketed,333,2664,1205,0.898881878504275,58.2282710075378
+lasso_control,48,fixed,1000,TRUE,estimated,target_bracketed,333,5328,1324,0.898332205885448,119.257169961929
+continuous_control,48,fixed,1000,TRUE,estimated,target_bracketed,16,512,254,0.899735292093883,65.7045910358429

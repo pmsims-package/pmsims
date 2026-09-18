@@ -1,0 +1,23 @@
+[
+  {
+    "file": "test-start_values.R",
+    "fail": 0,
+    "warn": 3,
+    "skip": 0,
+    "passed": 25
+  },
+  {
+    "file": "test-engines.R",
+    "fail": 0,
+    "warn": 0,
+    "skip": 0,
+    "passed": 23
+  },
+  {
+    "file": "test-simulate_custom.R",
+    "fail": 2,
+    "warn": 0,
+    "skip": 0,
+    "passed": 25
+  }
+]

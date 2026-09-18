@@ -1,0 +1,137 @@
+[
+  {
+    "name": "p10-seed1077-grid-n1000",
+    "script": "run-grid.R",
+    "args": [
+      "p10-seed1077",
+      1000,
+      7211000
+    ]
+  },
+  {
+    "name": "p10-seed1077-grid-n2000",
+    "script": "run-grid.R",
+    "args": [
+      "p10-seed1077",
+      2000,
+      7212000
+    ]
+  },
+  {
+    "name": "p10-seed1077-grid-n4000",
+    "script": "run-grid.R",
+    "args": [
+      "p10-seed1077",
+      4000,
+      7214000
+    ]
+  },
+  {
+    "name": "p10-seed48-grid-n1000",
+    "script": "run-grid.R",
+    "args": [
+      "p10-seed48",
+      1000,
+      7221000
+    ]
+  },
+  {
+    "name": "p10-seed48-grid-n4000",
+    "script": "run-grid.R",
+    "args": [
+      "p10-seed48",
+      4000,
+      7224000
+    ]
+  },
+  {
+    "name": "p15-seed1725-grid-n1000",
+    "script": "run-grid.R",
+    "args": [
+      "p15-seed1725",
+      1000,
+      7231000
+    ]
+  },
+  {
+    "name": "p15-seed1725-grid-n2000",
+    "script": "run-grid.R",
+    "args": [
+      "p15-seed1725",
+      2000,
+      7200002
+    ]
+  },
+  {
+    "name": "p15-seed1725-grid-n4000",
+    "script": "run-grid.R",
+    "args": [
+      "p15-seed1725",
+      4000,
+      7234000
+    ]
+  },
+  {
+    "name": "p15-seed48-grid-n1000",
+    "script": "run-grid.R",
+    "args": [
+      "p15-seed48",
+      1000,
+      7241000
+    ]
+  },
+  {
+    "name": "p15-seed48-grid-n4000",
+    "script": "run-grid.R",
+    "args": [
+      "p15-seed48",
+      4000,
+      7244000
+    ]
+  },
+  {
+    "name": "p20-seed2373-grid-n1000",
+    "script": "run-grid.R",
+    "args": [
+      "p20-seed2373",
+      1000,
+      7251000
+    ]
+  },
+  {
+    "name": "p20-seed2373-grid-n2000",
+    "script": "run-grid.R",
+    "args": [
+      "p20-seed2373",
+      2000,
+      7252000
+    ]
+  },
+  {
+    "name": "p20-seed2373-grid-n4000",
+    "script": "run-grid.R",
+    "args": [
+      "p20-seed2373",
+      4000,
+      7254000
+    ]
+  },
+  {
+    "name": "p20-seed48-grid-n1000",
+    "script": "run-grid.R",
+    "args": [
+      "p20-seed48",
+      1000,
+      7261000
+    ]
+  },
+  {
+    "name": "p20-seed48-grid-n4000",
+    "script": "run-grid.R",
+    "args": [
+      "p20-seed48",
+      4000,
+      7264000
+    ]
+  }
+]

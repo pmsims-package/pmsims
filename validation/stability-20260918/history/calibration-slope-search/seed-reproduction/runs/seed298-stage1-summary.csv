@@ -1,0 +1,2 @@
+"seed","mode","gp_budget","gp_reps_used","min_n","predicted_slope","lower_bound","upper_bound","stage_reps","stage_stop_reason","seconds"
+298,"stage1",1000,NA,NA,NA,5120000,10240000,280,"plateau",2802.644

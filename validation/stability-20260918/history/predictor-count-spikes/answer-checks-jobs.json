@@ -1,0 +1,110 @@
+[
+  {
+    "name": "p10-seed1077-baseline-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p10-seed1077",
+      "baseline",
+      8100000
+    ]
+  },
+  {
+    "name": "p10-seed1077-common-bounds-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p10-seed1077",
+      "common-bounds",
+      8101000
+    ]
+  },
+  {
+    "name": "p10-seed48-baseline-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p10-seed48",
+      "baseline",
+      8110000
+    ]
+  },
+  {
+    "name": "p10-seed48-common-bounds-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p10-seed48",
+      "common-bounds",
+      8111000
+    ]
+  },
+  {
+    "name": "p15-seed1725-baseline-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p15-seed1725",
+      "baseline",
+      8120000
+    ]
+  },
+  {
+    "name": "p15-seed1725-common-bounds-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p15-seed1725",
+      "common-bounds",
+      8121000
+    ]
+  },
+  {
+    "name": "p15-seed48-baseline-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p15-seed48",
+      "baseline",
+      8130000
+    ]
+  },
+  {
+    "name": "p15-seed48-common-bounds-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p15-seed48",
+      "common-bounds",
+      8131000
+    ]
+  },
+  {
+    "name": "p20-seed2373-baseline-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p20-seed2373",
+      "baseline",
+      8140000
+    ]
+  },
+  {
+    "name": "p20-seed2373-common-bounds-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p20-seed2373",
+      "common-bounds",
+      8141000
+    ]
+  },
+  {
+    "name": "p20-seed48-baseline-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p20-seed48",
+      "baseline",
+      8150000
+    ]
+  },
+  {
+    "name": "p20-seed48-common-bounds-heldout",
+    "script": "run-check.R",
+    "args": [
+      "p20-seed48",
+      "common-bounds",
+      8151000
+    ]
+  }
+]

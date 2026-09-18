@@ -1,0 +1,142 @@
+[
+  {
+    "id": "binary_ridge_reported_p5",
+    "seed": 429,
+    "role": "cache"
+  },
+  {
+    "id": "binary_ridge_reported_p5",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "binary_ridge_reported_p10",
+    "seed": 1077,
+    "role": "cache"
+  },
+  {
+    "id": "binary_ridge_reported_p10",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "binary_ridge_reported_p15",
+    "seed": 1725,
+    "role": "cache"
+  },
+  {
+    "id": "binary_ridge_reported_p15",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "binary_ridge_reported_p20",
+    "seed": 2373,
+    "role": "cache"
+  },
+  {
+    "id": "binary_ridge_reported_p20",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "binary_ridge_dip_p5",
+    "seed": 636,
+    "role": "cache"
+  },
+  {
+    "id": "binary_ridge_dip_p5",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "binary_ridge_dip_p10",
+    "seed": 1284,
+    "role": "cache"
+  },
+  {
+    "id": "binary_ridge_dip_p10",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "binary_ridge_dip_p15",
+    "seed": 1932,
+    "role": "cache"
+  },
+  {
+    "id": "binary_ridge_dip_p15",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "continuous_lasso_peak_p5",
+    "seed": 11,
+    "role": "cache"
+  },
+  {
+    "id": "continuous_lasso_peak_p5",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "continuous_lasso_peak_p10",
+    "seed": 83,
+    "role": "cache"
+  },
+  {
+    "id": "continuous_lasso_peak_p10",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "continuous_lasso_peak_p15",
+    "seed": 155,
+    "role": "cache"
+  },
+  {
+    "id": "continuous_lasso_peak_p15",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "survival_lasso_peak_p5",
+    "seed": 47,
+    "role": "cache"
+  },
+  {
+    "id": "survival_lasso_peak_p5",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "survival_lasso_peak_p10",
+    "seed": 695,
+    "role": "cache"
+  },
+  {
+    "id": "survival_lasso_peak_p10",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "survival_lasso_peak_p15",
+    "seed": 1343,
+    "role": "cache"
+  },
+  {
+    "id": "survival_lasso_peak_p15",
+    "seed": 48,
+    "role": "shared"
+  },
+  {
+    "id": "binary_glm_seed_failure_p5",
+    "seed": 298,
+    "role": "cache"
+  },
+  {
+    "id": "binary_glm_seed_failure_p5",
+    "seed": 1,
+    "role": "shared"
+  }
+]

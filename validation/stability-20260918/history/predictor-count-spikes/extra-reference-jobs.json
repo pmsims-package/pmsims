@@ -1,0 +1,20 @@
+[
+  {
+    "name": "p10-seed1077-grid-n8000",
+    "script": "run-grid.R",
+    "args": [
+      "p10-seed1077",
+      8000,
+      7300000
+    ]
+  },
+  {
+    "name": "p10-seed48-grid-n8000",
+    "script": "run-grid.R",
+    "args": [
+      "p10-seed48",
+      8000,
+      7310000
+    ]
+  }
+]

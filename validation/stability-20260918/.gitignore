@@ -1,0 +1,4 @@
+# Raw package closures, draws and progress logs stay local; CSV summaries are committed.
+results/**/*.rds
+logs/
+*.rds

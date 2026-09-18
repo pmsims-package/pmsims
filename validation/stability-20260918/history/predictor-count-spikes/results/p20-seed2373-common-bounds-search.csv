@@ -1,0 +1,2 @@
+"id","mode","status","lower","upper","stage1_stop","stage1_reps","n","predicted_equivalent_slope","gp_reps","at_lower","at_upper","seconds"
+"p20-seed2373","common-bounds","estimated",444,21344,"bypassed",0,2306,0.89915225384941,1002,FALSE,FALSE,430.319

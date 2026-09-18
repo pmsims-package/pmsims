@@ -1,0 +1,4 @@
+"check","stop_reason","largest_evaluated_n","returned_lower","returned_upper","returned_n","known_crossing_n","replicates_per_candidate"
+"default_plateau","plateau_without_bracket",80,NA,NA,NA,6693,1000
+"same_curve_plateau_disabled","target_bracketed",10240,10,10240,NA,6693,1000
+"excessive_gp_candidate","target_compatible",10000,NA,NA,10000,300,1000

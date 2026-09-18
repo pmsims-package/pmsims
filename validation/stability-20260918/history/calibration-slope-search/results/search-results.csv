@@ -1,0 +1,11 @@
+"scenario","seed","version","status","stop_reason","lower","upper","min_n","perf_n","seconds","gp_reps","stage1_reused","gp_original_n","confirmation_reps","confirmation_seconds","actual_gp_evaluations"
+"lasso_rare",47,"baseline","baseline_stage1_complete","plateau",341248,682496,NA,NA,576.713966846466,NA,NA,NA,NA,NA,NA
+"lasso_rare",47,"fixed","Adaptive search did not establish a target crossing (plateau_without_bracket). No sample-size estimate was produced. Inspect the target and model, or supply independently validated min_sample_size and max_sample_size.","plateau_without_bracket",NA,NA,NA,NA,64.6878221035004,NA,FALSE,NA,NA,NA,NA
+"ridge_reported",47,"fixed","estimated","target_bracketed",667,5336,2016,0.898514801041103,504.929008960724,1000,TRUE,2016,1000,250.335300922394,1000
+"glm_control",47,"fixed","estimated","target_bracketed",333,1332,1272,0.905588842922841,111.10399389267,1000,TRUE,1272,1000,52.4368698596954,1000
+"lasso_control",47,"fixed","estimated","target_bracketed",333,2664,1597,0.896488437358595,204.251148939133,1000,TRUE,1597,1000,88.0737850666046,1000
+"continuous_control",47,"fixed","estimated","target_bracketed",16,512,338,0.921611934424357,237.65827703476,1000,TRUE,150,3000,171.326133966446,1012
+"ridge_reported",48,"fixed","estimated","target_bracketed",667,5336,2017,0.903035128813406,510.933686971664,1000,TRUE,2017,1000,248.531425952911,1000
+"glm_control",48,"fixed","estimated","target_bracketed",333,2664,1808,0.921951842306575,174.763163089752,1000,TRUE,1205,2000,116.534892082214,1000
+"lasso_control",48,"fixed","estimated","target_bracketed",333,5328,1986,0.908425814721613,300.01436305046,1000,TRUE,1324,2000,180.757193088531,1000
+"continuous_control",48,"fixed","estimated","target_bracketed",16,512,254,0.904698233175542,135.196990013123,1000,TRUE,254,1000,69.4923989772797,1000

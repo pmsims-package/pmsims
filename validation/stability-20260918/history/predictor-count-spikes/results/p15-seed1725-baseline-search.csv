@@ -1,0 +1,2 @@
+"id","mode","status","lower","upper","stage1_stop","stage1_reps","n","predicted_equivalent_slope","gp_reps","at_lower","at_upper","seconds"
+"p15-seed1725","baseline","estimated",10672,21344,"target_reached",120,10672,0.911106088137388,1000,TRUE,FALSE,958.615

@@ -1,0 +1,2 @@
+"id","mode","n","reps","mean_raw_slope","raw_slope_q20","fraction_in_09_11_band","fraction_below_09","fraction_above_11","fraction_lambda_at_grid_min"
+"p10-seed48","common-bounds",6974,1000,1.08476121657155,1.06106316880351,0.706,0,0.294,1

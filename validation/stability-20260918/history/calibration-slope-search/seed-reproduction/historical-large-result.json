@@ -1,0 +1,39 @@
+{
+  "source_file": "../pmsims-chatbot/cache/versions/cache-1f-create-20260827-161720.json",
+  "sha256": "361dd344458f871d7df4b48f6c67d27e3bf2765cac5b2bb08b46faeef9dcc762",
+  "key": "p5_prev0.20_cstat0.60_target0.95_mglm",
+  "seed": 298,
+  "seed_provenance": "Phase 1f binary grid row 298; seed = row index (offset 0). Verified against scenarios_grid.R and cache_lib.R.",
+  "gp_budget": 1000,
+  "gp_budget_provenance": "FIXED_PARAMS$n_reps_total in cache/scenarios_grid.R; raw per-replicate cache data not retained.",
+  "original_commit": "a88e7011c9998bf02f7518d5cc4ead9d35b86fbb",
+  "original_commit_note": "Local pre-fix baseline. Historical cache reports version 1.0.0; its exact source commit/dependency versions are not recorded here.",
+  "inputs": {
+    "signal_parameters": 5,
+    "outcome_prevalence": 0.2,
+    "maximum_achievable_cstatistic": 0.6,
+    "target_performance": 0.95
+  },
+  "model": "glm",
+  "minimum_sample_size": 5120000,
+  "calibration_slope_at_n": 0.9669278,
+  "learning_curve_statistic": "Mean replicate calibration slope, extracted by cache_lib.R from summaries$mean_performance; not the assurance percentile.",
+  "learning_curve": [
+    {
+      "n": 5120000,
+      "performance": 1.00116314
+    },
+    {
+      "n": 6400000,
+      "performance": 0.99277636
+    },
+    {
+      "n": 7680000,
+      "performance": 0.98940238
+    },
+    {
+      "n": 10240000,
+      "performance": 0.99967123
+    }
+  ]
+}

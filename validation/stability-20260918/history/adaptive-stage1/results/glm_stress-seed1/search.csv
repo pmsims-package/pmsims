@@ -1,0 +1,2 @@
+"scenario","seed","status","stage1_stop","stage1_reps","lower","upper","n","predicted_slope","actual_gp_reps","seconds"
+"glm_stress",1,"estimated","target_bracketed",460,20000,320000,30452,0.949133530002724,1000,264.856405973434
