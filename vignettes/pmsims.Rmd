@@ -1,5 +1,10 @@
 ---
 title: "Getting started with pmsims"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with pmsims}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r}
@@ -12,7 +17,6 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE
 )
-use_cache <- TRUE
 ```
 
 ## What pmsims does
@@ -23,7 +27,8 @@ assurance**. Rather than relying on simple rules of thumb or closed‑form
 formulae, pmsims uses **simulation** to:
 
 -   Generate synthetic datasets that reflect your target setting
-    (outcome type, prevalence or $R^2$, signal vs. noise predictors);
+    (outcome type, prevalence or $R^2$, signal vs. noise predictors,
+    and how complex the underlying signal is);
 -   Fit a specified **model** (e.g., logistic regression or linear
     regression);
 -   Evaluate a chosen **performance metric** (e.g., calibration slope,
@@ -55,6 +60,43 @@ lists the key inputs.
 ```{=html}
 <style>
 /* Compact, readable argument table */
+.arg-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px 0;
+  flex-wrap: wrap;
+}
+.arg-filter__label {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.arg-filter__tabs {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.arg-filter__tab {
+  appearance: none;
+  border: 1px solid #d8d8e0;
+  background: #fff;
+  color: #444;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.92rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.arg-filter__tab:hover {
+  border-color: #bfc6d4;
+  background: #f7f9fc;
+}
+.arg-filter__tab.is-active {
+  background: #1f4b99;
+  border-color: #1f4b99;
+  color: #fff;
+}
 .arg-table {
   width: 100%;
   border-collapse: collapse;
@@ -95,6 +137,21 @@ lists the key inputs.
 }
 </style>
 
+<div class="arg-filter">
+  <div class="arg-filter__label">Select wrapper</div>
+  <div class="arg-filter__tabs" role="tablist" aria-label="Select outcome type">
+    <button class="arg-filter__tab is-active" type="button" data-outcome="binary" role="tab" aria-selected="true">
+      Binary
+    </button>
+    <button class="arg-filter__tab" type="button" data-outcome="continuous" role="tab" aria-selected="false">
+      Continuous
+    </button>
+    <button class="arg-filter__tab" type="button" data-outcome="survival" role="tab" aria-selected="false">
+      Survival
+    </button>
+  </div>
+</div>
+
 <table class="arg-table">
   <thead>
     <tr>
@@ -104,7 +161,7 @@ lists the key inputs.
   </thead>
   <tbody>
 
-    <tr>
+    <tr class="arg-row" data-applies="all">
       <td><strong><code>signal_parameters</code></strong></td>
       <td>
         <em>(int)</em> Number of <strong>true signal</strong> predictors associated with the outcome.
@@ -116,7 +173,7 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="all">
       <td><code>noise_parameters</code></td>
       <td>
         <em>(int)</em> Number of <strong>noise</strong> predictors unrelated to the outcome.
@@ -127,21 +184,37 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
-      <td><code>predictor_type</code></td>
+    <tr class="arg-row" data-applies="all">
+      <td><code>complexity</code></td>
       <td>
-        <em>(chr)</em> Type of simulated predictors (<code>"continuous"</code> or <code>"binary"</code>).
+        <em>(int 1–4)</em> Signal structure of the data-generating mechanism:
+        <code>1</code> purely linear, <code>2</code> linear + quadratic,
+        <code>3</code> linear + quadratic + interaction, <code>4</code> the Friedman function.
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
-          <span class="badge badge--default">Default: <code>"continuous"</code></span>
+          <span class="badge badge--default">Default: <code>1</code></span>
         </div>
       </td>
     </tr>
 
-    <tr>
-      <td><code>binary_predictor_prevalence</code></td>
+    <tr class="arg-row" data-applies="all">
+      <td><code>data_control</code></td>
       <td>
-        <em>(num 0–1)</em> Prevalence for binary predictors (used only if <code>predictor_type = "binary"</code>).
+        <em>(list)</em> Optional list fine-tuning the predictors:
+        <ul>
+          <li><code>nonlinear_strength</code> <em>(num [0, 1))</em> — fraction of the
+            signal variance carried by the nonlinear, linearly-inaccessible component.
+            Complexity 2 and 3 only; ignored with a warning for 1 and 4.</li>
+          <li><code>correlation</code> <em>(num [-1, 1])</em> — pairwise correlation
+            among candidate predictors. Default <code>0.3</code>.</li>
+          <li><code>predictor_distribution</code> <em>(chr)</em> — one of
+            <code>"normal"</code>, <code>"uniform"</code>, <code>"binary"</code>,
+            <code>"exponential"</code>, <code>"lognormal"</code>, <code>"t"</code>,
+            <code>"laplace"</code>. Default <code>"normal"</code>.</li>
+          <li><code>binary_predictor_prevalence</code> <em>(num (0, 1))</em> — required
+            when <code>predictor_distribution = "binary"</code>, ignored otherwise.
+            Binary predictors are incompatible with complexity 2/3.</li>
+        </ul>
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: <code>NULL</code></span>
@@ -149,7 +222,7 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="binary">
       <td><strong><code>outcome_prevalence</code></strong></td>
       <td>
         <em>(num 0–1)</em> Target prevalence of the binary outcome.
@@ -161,10 +234,11 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
-      <td><strong><code>large_sample_cstatistic</code></strong></td>
+    <tr class="arg-row" data-applies="binary">
+      <td><strong><code>maximum_achievable_cstatistic</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Expected <strong>C-statistic</strong> for a very large training sample.
+        <em>(num 0–1)</em> Maximum achievable <strong>C-statistic</strong> with effectively unlimited data.
+        This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: binary only</span>
           <span class="badge badge--default">Default: —</span>
@@ -173,10 +247,11 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
-      <td><strong><code>large_sample_rsquared</code></strong></td>
+    <tr class="arg-row" data-applies="continuous">
+      <td><strong><code>maximum_achievable_rsquared</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Expected R<sup>2</sup> for a very large training sample.
+        <em>(num 0–1)</em> Maximum achievable R<sup>2</sup> with effectively unlimited data.
+        This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: continuous only</span>
           <span class="badge badge--default">Default: —</span>
@@ -185,10 +260,11 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
-      <td><strong><code>large_sample_cindex</code></strong></td>
+    <tr class="arg-row" data-applies="survival">
+      <td><strong><code>maximum_achievable_cindex</code></strong></td>
       <td>
-        <em>(num 0–1)</em> Expected <strong>concordance index</strong> for a very large training sample.
+        <em>(num 0–1)</em> Maximum achievable <strong>concordance index</strong> with effectively unlimited data.
+        This calibrates the data generator and is not the minimum acceptable threshold.
         <div class="meta">
           <span class="badge badge--scope">Applies: survival only</span>
           <span class="badge badge--default">Default: —</span>
@@ -197,10 +273,37 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="survival">
+      <td><code>baseline_hazard</code></td>
+      <td>
+        <em>(num &gt; 0)</em> Baseline hazard used by the survival data-generating mechanism.
+        Larger values imply shorter event times, all else equal.
+        <div class="meta">
+          <span class="badge badge--scope">Applies: survival only</span>
+          <span class="badge badge--default">Default: <code>1</code></span>
+        </div>
+      </td>
+    </tr>
+
+    <tr class="arg-row" data-applies="survival">
+      <td><strong><code>censoring_rate</code></strong></td>
+      <td>
+        <em>(num 0–1)</em> Proportion of individuals expected to be censored in the simulated survival datasets.
+        <div class="meta">
+          <span class="badge badge--scope">Applies: survival only</span>
+          <span class="badge badge--default">Default: —</span>
+          <span class="badge badge--req">Required</span>
+        </div>
+      </td>
+    </tr>
+
+    <tr class="arg-row" data-applies="all">
       <td><code>model</code></td>
       <td>
-        <em>(chr)</em> Model used for fitting (e.g. logistic, linear, or Cox).
+        <em>(chr)</em> Model used for fitting: <code>"glm"</code> / <code>"lm"</code> /
+        <code>"coxph"</code> depending on the outcome, or one of the experimental
+        machine-learning options <code>"lasso"</code>, <code>"ridge"</code>,
+        <code>"rf"</code>, <code>"xgboost"</code>.
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: <code>"glm"</code> / <code>"lm"</code> / <code>"coxph"</code></span>
@@ -208,10 +311,14 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="all">
       <td><code>metric</code></td>
       <td>
-        <em>(chr)</em> <strong>Performance metric</strong> used to estimate the minimum required sample size (e.g. calibration slope, R<sup>2</sup>, C-statistic).
+        <em>(chr)</em> <strong>Performance metric</strong> used to estimate the minimum
+        required sample size. Metric identifiers take one canonical form throughout the
+        package: <code>"calibration_slope"</code>, <code>"calibration_in_the_large"</code>,
+        <code>"auc"</code>, <code>"r2"</code>, <code>"cindex"</code>, and
+        <code>"csse"</code> (calibration slope squared error).
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: <code>"calibration_slope"</code></span>
@@ -219,10 +326,11 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
-      <td><strong><code>minimum_acceptable_performance</code></strong></td>
+    <tr class="arg-row" data-applies="all">
+      <td><strong><code>target_performance</code></strong></td>
       <td>
-        <em>(num)</em> <strong>Minimum acceptable performance</strong> in the units of the chosen metric (e.g. calibration slope ≥ 0.9).
+        <em>(num)</em> <strong>Minimum acceptable performance</strong> in the units of the chosen metric (e.g. calibration slope ≥ 0.9),
+        used as the threshold for selecting the required sample size.
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: —</span>
@@ -231,7 +339,7 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="all">
       <td><strong><code>n_reps_total</code></strong></td>
       <td>
         <em>(int)</em> Total number of simulation replications.
@@ -243,7 +351,7 @@ lists the key inputs.
       </td>
     </tr>
 
-    <tr>
+    <tr class="arg-row" data-applies="all">
       <td><code>mean_or_assurance</code></td>
       <td>
         <em>(chr)</em> Criterion for summarising results; <code>"assurance"</code> recommended.
@@ -256,20 +364,66 @@ lists the key inputs.
 
   </tbody>
 </table>
+
+<script>
+(function() {
+  function applyOutcomeFilter(value) {
+    document.querySelectorAll(".arg-row").forEach(function(row) {
+      var applies = row.getAttribute("data-applies");
+      row.hidden = !(applies === "all" || applies === value);
+    });
+  }
+
+  function setActiveTab(activeTab) {
+    document.querySelectorAll(".arg-filter__tab").forEach(function(tab) {
+      var isActive = tab === activeTab;
+      tab.classList.toggle("is-active", isActive);
+      tab.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+  }
+
+  function initOutcomeFilter() {
+    var tabs = document.querySelectorAll(".arg-filter__tab");
+    if (!tabs.length) return;
+
+    tabs.forEach(function(tab) {
+      tab.addEventListener("click", function() {
+        setActiveTab(tab);
+        applyOutcomeFilter(tab.getAttribute("data-outcome"));
+      });
+    });
+
+    setActiveTab(tabs[0]);
+    applyOutcomeFilter(tabs[0].getAttribute("data-outcome"));
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initOutcomeFilter);
+  } else {
+    initOutcomeFilter();
+  }
+})();
+</script>
 ```
 
 > Notes:
 >
-> - The engine automatically tunes the data generator so the
->   chosen model reaches the specified **large‑sample performance**
->   (C‑statistic or $R^2$) on very large samples.
+> - `maximum_achievable_*` represents the best plausible performance with
+>   effectively unlimited data and calibrates the data generator.
+> - `target_performance` is the minimum acceptable performance threshold used
+>   to determine the required sample size.
+> - `complexity` and `data_control` describe the data-generating mechanism, not
+>   the model you plan to fit. The same configuration is used both to calibrate
+>   the generator against `maximum_achievable_*` and to simulate the data, so a
+>   more complex signal generally implies a larger required sample size.
 > - For reproducibility, set a random seed (`set.seed()`).
 
 ## Installation
 
+Install the stable release from [CRAN](https://CRAN.R-project.org/package=pmsims):
+
 ```{r}
-# install.packages("remotes")
-# remotes::install_github("pmsims-package/pmsims")
+# install.packages("pmsims")
 library(pmsims)
 ```
 
@@ -285,13 +439,13 @@ set.seed(123)
 binary_example <- simulate_binary(
   signal_parameters = 20,
   noise_parameters  = 0,
-  predictor_type = "continuous",
-  binary_predictor_prevalence = NULL,
+  complexity = 1,
+  data_control = list(correlation = 0.3),
   outcome_prevalence = 0.30,
-  large_sample_cstatistic = 0.80,
+  maximum_achievable_cstatistic = 0.80,
   model = "glm",
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.85,
+  target_performance = 0.85,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )
@@ -301,29 +455,15 @@ binary_example
 
 ```{r Run binary}
 #| echo: false
-if (use_cache) {
-  binary_example <- readRDS(".cache/binary.rds")
-} else {
-  set.seed(123)
-  binary_example <- simulate_binary(
-    signal_parameters = 20,
-    noise_parameters  = 0,
-    predictor_type = "continuous",
-    binary_predictor_prevalence = NULL,
-    outcome_prevalence = 0.30,
-    large_sample_cstatistic = 0.80,
-    model = "glm",
-    metric = "calibration_slope",
-    minimum_acceptable_performance = 0.85,
-    n_reps_total = 1000,
-    mean_or_assurance = "assurance"
-  )
-  saveRDS(binary_example, file = ".cache/binary.rds")
-}
-
+# `binary_example` is the result of the call above, shipped with the package.
 print(binary_example)
 ```
 
+The printed summary is a human-readable report. Implementation detail --- the
+internal metric identifiers, the engine settings used for the search, and any
+quantities recorded on an internal search scale --- is available through
+`summary(binary_example)` or, equivalently,
+`print(binary_example, verbose = TRUE)`.
 
 Plot the estimated learning curve and identified sample size:
 
@@ -339,11 +479,12 @@ plot(binary_example)
 continuous_example <- simulate_continuous(
   signal_parameters = 15,
   noise_parameters = 0,
-  predictor_type = "continuous",
-  large_sample_rsquared = 0.50,
+  complexity = 1,
+  data_control = list(correlation = 0.3),
+  maximum_achievable_rsquared = 0.50,
   model = "lm",
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.90,
+  target_performance = 0.95,
   n_reps_total = 1000,
   mean_or_assurance = "assurance"
 )
@@ -353,33 +494,10 @@ continuous_example
 
 ```{r}
 #| echo: false
-if (use_cache) {
-  continuous_example <- readRDS(".cache/continuous.rds")
-} else {
-  set.seed(123)
-  continuous_example <- simulate_continuous(
-    signal_parameters = 15,
-    noise_parameters = 0,
-    predictor_type = "continuous",
-    large_sample_rsquared = 0.50,
-    model = "lm",
-    metric = "calibration_slope",
-    minimum_acceptable_performance = 0.90,
-    n_reps_total = 1000,
-    mean_or_assurance = "assurance"
-  )
-  saveRDS(continuous_example, file = ".cache/continuous.rds")
-}
-
+# `continuous_example` is the result of the call above, shipped with the package.
 print(continuous_example)
 ```
 
 ```{r, fig.alt="Plot showing learning curve for continuous outcome"}
 plot(continuous_example)
-```
-
-## Session info
-
-```{r}
-sessionInfo()
 ```

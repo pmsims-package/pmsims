@@ -7,14 +7,14 @@
 simulate_continuous(
   signal_parameters,
   noise_parameters = 0,
-  predictor_type = c("continuous"),
-  binary_predictor_prevalence = NULL,
-  large_sample_rsquared,
-  model = c("lm"),
-  metric = c("calibration_slope", "r2"),
-  minimum_acceptable_performance,
+  complexity = 1,
+  data_control = NULL,
+  maximum_achievable_rsquared,
+  model = c("lm", "lasso", "ridge", "rf", "xgboost"),
+  metric = "calibration_slope",
+  target_performance,
   n_reps_total = 1000,
-  mean_or_assurance = c("assurance", "mean"),
+  mean_or_assurance = "assurance",
   ...
 )
 }
@@ -25,26 +25,47 @@ with the outcome (i.e., true signal features).}
 \item{noise_parameters}{Integer. Number of candidate predictors not
 associated with the outcome (noise features). Default is 0.}
 
-\item{predictor_type}{Character string, currently only \code{"continuous"} supported, which is the default option.
-Specifies the type of simulated candidate predictors.}
+\item{complexity}{Integer in 1:4 selecting the data-generating signal
+structure (see \emph{Data control}). Default \code{1}.}
 
-\item{binary_predictor_prevalence}{Optional numeric in (0, 1). Prevalence of
-the binary predictors when \code{predictor_type = "binary"}. Ignored otherwise.}
+\item{data_control}{Optional named list controlling the predictors (see
+\emph{Data control}). Default \code{NULL} (generator defaults).}
 
-\item{large_sample_rsquared}{Numeric in (0, 1). Expected large-sample
-\eqn{R^2} for the model (used to tune the data-generating mechanism so that
-the model attains this performance for very large \eqn{n}).}
+\item{maximum_achievable_rsquared}{Numeric in (0, 1). Maximum achievable
+\eqn{R^2} with effectively unlimited data. This is used to calibrate the
+data-generating mechanism and is not the minimum acceptable threshold.}
 
-\item{model}{Character string specifying the modelling algorithm (e.g.,
-\code{"glm"}). Passed to the internal model generator.}
+\item{model}{Character string specifying the modelling algorithm. One of
+\code{"lm"} (linear regression), \code{"lasso"}, \code{"ridge"}, \code{"rf"} (random forest),
+or \code{"xgboost"} (gradient-boosted trees).}
 
 \item{metric}{Character string naming the performance metric used to assess
-the sample size; defaults to \code{"calibration_slope"}. (Internally mapped to
-the engine's metric identifiers.).}
+the sample size; defaults to \code{"calibration_slope"}. Metric identifiers use
+one canonical form throughout the package, such as \code{"calibration_slope"},
+\code{"calibration_in_the_large"}, \code{"auc"}, \code{"r2"}, \code{"cindex"}, and \code{"csse"}.
 
-\item{minimum_acceptable_performance}{Numeric. The target threshold
-\eqn{M^\\*}; the algorithm searches for the smallest \eqn{n} meeting the
-chosen criterion with respect to this threshold.}
+\code{"calibration_slope"} is the slope from regressing the observed outcome on
+the model's linear predictor in held-out data; 1 indicates perfect
+calibration, and values below 1 indicate overfitting. Note that for the
+machine-learning models (\code{"lasso"}, \code{"ridge"}, \code{"rf"}, \code{"xgboost"}) this is
+converted internally to the calibration slope squared error for
+optimisation and translated back before results are returned; you don't
+need to do anything, and \code{target_performance} is still given on the
+calibration slope scale. Results derived this way carry a footnote marker
+in the printed output.
+
+\code{"csse"} is the calibration slope squared error, \eqn{-(1 - s)^2} for a
+calibration slope \eqn{s}, so that larger is better and 0 is perfect
+calibration. It can be requested directly, which is mainly useful for
+advanced use and for comparison against the internal conversion described
+above. When requesting it directly you are responsible for supplying
+\code{target_performance} on the CSSE scale: a calibration slope target of
+\code{0.9} corresponds to a CSSE target of \code{-0.01}. No adjustment is applied on
+your behalf, and results are reported on the CSSE scale.}
+
+\item{target_performance}{Numeric. Minimum acceptable value of the selected
+performance metric \eqn{M^*}; the algorithm searches for the smallest
+\eqn{n} meeting the chosen criterion with respect to this threshold.}
 
 \item{n_reps_total}{Integer. Total number of simulation replications used by
 the engine across the search.}
@@ -52,7 +73,7 @@ the engine across the search.}
 \item{mean_or_assurance}{Character string, either \code{"mean"} or \code{"assurance"}.
 Controls whether the minimum \eqn{n} is defined by the mean-based criterion
 or the assurance-based criterion (with the assurance level \eqn{\delta}
-controlled by the engine's defaults or additional arguments in \code{...}). Defaults to \code{"assurance"}.}
+controlled by the engine's defaults or additional arguments in \code{...}).}
 
 \item{...}{Additional options passed to \code{\link[=simulate_custom]{simulate_custom()}} (e.g., assurance
 level \eqn{\delta}, per-iteration settings).}
@@ -66,8 +87,8 @@ evaluations, and summary metrics).
 Compute the minimum sample size required to develop a prediction model with a
 \strong{continuous} outcome. This wraps the same simulation engine as
 \code{\link[=simulate_binary]{simulate_binary()}}, combining bisection search with Gaussian-process
-learning-curve modelling. From user inputs (expected large-sample
-performance, minimum acceptable performance, etc.) it constructs a
+learning-curve modelling. From user inputs (maximum achievable performance, target
+performance, etc.) it constructs a
 data-generating function, model-fitting function, and metric function, then
 searches for the smallest \eqn{n} meeting the chosen criterion.
 }
@@ -90,19 +111,53 @@ criterion explicitly accounts for variability across training sets; models
 with higher variance typically require larger \eqn{n} to satisfy it.
 }
 
+\section{Data control}{
+
+\code{complexity} selects the signal structure of the data-generating mechanism:
+\code{1} purely linear, \code{2} linear + quadratic, \code{3} linear + quadratic +
+interaction, \code{4} the Friedman function. \code{data_control} is an optional list
+fine-tuning the predictors:
+\describe{
+\item{\code{nonlinear_strength}}{Numeric in \verb{[0, 1)}. Fraction of the signal
+variance carried by the nonlinear, linearly-inaccessible component.
+Applies to complexity 2 and 3 only; ignored (with a warning) for 1 and 4.
+If omitted, the generator's per-complexity default is used.}
+\item{\code{correlation}}{Numeric in \eqn{[-1, 1]}. Pairwise correlation among the
+candidate predictors. Default \code{0.3}.}
+\item{\code{predictor_distribution}}{One of \code{"normal"}, \code{"uniform"}, \code{"binary"},
+\code{"exponential"}, \code{"lognormal"}, \code{"t"}, \code{"laplace"}. \code{"binary"} selects
+0/1 predictors and requires \code{binary_predictor_prevalence}; any other
+value selects continuous predictors from that family. Default \code{"normal"}.}
+\item{\code{binary_predictor_prevalence}}{Numeric in \verb{(0, 1)}. Prevalence of the
+binary predictors; required when \code{predictor_distribution = "binary"},
+ignored (with a warning) otherwise. Note: binary predictors are
+incompatible with complexity 2/3 because squaring a 0/1 variable returns
+itself.}
+}
+}
+
 \examples{
-\dontrun{
+\donttest{
+set.seed(123)
 est <- simulate_continuous(
-  signal_parameters = 8,
-  noise_parameters = 8,
-  predictor_type = "continuous",
-  large_sample_rsquared = 0.50,
+  signal_parameters = 3,
+  noise_parameters = 0,
+  complexity = 1,
+  data_control = list(correlation = 0),
+  maximum_achievable_rsquared = 0.50,
+  model = "lm",
   metric = "calibration_slope",
-  minimum_acceptable_performance = 0.9,
+  target_performance = 0.9,
+  mean_or_assurance = "assurance",
+  min_sample_size = 50,
+  max_sample_size = 1000,
   n_reps_total = 1000,
-  mean_or_assurance = "assurance"
+  test_n = 30000,
+  progress = FALSE
 )
 est
+est$min_n
+plot(est)
 }
 }
 \seealso{

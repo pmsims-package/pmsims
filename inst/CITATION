@@ -1,0 +1,61 @@
+citHeader(
+  "To cite pmsims, please cite the package and either or both accompanying papers."
+)
+
+bibentry(
+  bibtype = "Manual",
+  title = "pmsims: Simulation-based Sample Size Tools for Prediction Models",
+  author = c(
+    person("Ewan", "Carr"),
+    person("Gordon", "Forbes"),
+    person("Ridwan", "Olaniran"),
+    person("Diana", "Shamsutdinova"),
+    person("Daniel", "Stahl"),
+    person("Sarah", "Markham"),
+    person("Felix", "Zimmer")
+  ),
+  year = "2026",
+  note = sprintf("R package version %s", meta$Version),
+  url = "https://pmsims-package.github.io/pmsims/"
+)
+
+bibentry(
+  bibtype = "Article",
+  title = "Sample Size Calculations for Developing Clinical Prediction Models: Overview and pmsims R package",
+  author = c(
+    person("Diana", "Shamsutdinova"),
+    person("Felix", "Zimmer"),
+    person("Oyebayo Ridwan", "Olaniran"),
+    person("Sarah", "Markham"),
+    person("Daniel", "Stahl"),
+    person("Gordon", "Forbes"),
+    person("Ewan", "Carr")
+  ),
+  year = "2026",
+  journal = "arXiv",
+  volume = "arXiv:2602.23507",
+  doi = "10.48550/arXiv.2602.23507",
+  url = "https://arxiv.org/abs/2602.23507",
+  note = "Preprint"
+)
+
+bibentry(
+  bibtype = "Article",
+  title = "Adaptive Gaussian process search for simulation-based sample size estimation in clinical prediction models: validation of the pmsims R package",
+  author = c(
+    person("Oyebayo Ridwan", "Olaniran"),
+    person("Diana", "Shamsutdinova"),
+    person("Sarah", "Markham"),
+    person("Felix", "Zimmer"),
+    person("Daniel", "Stahl"),
+    person("Gordon", "Forbes"),
+    person("Ewan", "Carr")
+  ),
+  year = "2026",
+  journal = "BMC Medical Research Methodology",
+  doi = "10.1186/s12874-026-02935-9"
+)
+
+citFooter(
+  "The validation paper is published in BMC Medical Research Methodology. The overview paper is currently an arXiv preprint; that citation should be updated once the peer-reviewed article is available."
+)
