@@ -23,6 +23,7 @@ calculate_mlpwr <- function(
   model_function,
   metric_function,
   value_on_error,
+  adaptive_seed = 20240101L,
   ...
 ) {
   # A user-defined search space makes the adaptive stage redundant: any bounds
@@ -78,6 +79,7 @@ calculate_mlpwr <- function(
           target_performance = target_performance,
           threshold = 0.0001,
           mean_or_assurance = mean_or_assurance,
+          seed = adaptive_seed,
           verbose = FALSE
         )
       },
