@@ -20,12 +20,12 @@ site](https://pmsims.com/) for further details.
 
 ## Installation
 
-Install the stable `1.0.0` release from GitHub:
+Install the stable `1.0.0` release from
+[CRAN](https://CRAN.R-project.org/package=pmsims):
 
 ``` r
 
-# install.packages("remotes")
-remotes::install_github("pmsims-package/pmsims", ref = "v1.0.0")
+install.packages("pmsims")
 ```
 
 If you are interested in trying the development version, install from
@@ -144,6 +144,14 @@ of the NIHR or the Department of Health and Social Care.*
   : Minimum sample size for survival‐outcome prediction models
 - [`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
   : Minimum sample size for custom simulation workflows
+
+## Example results
+
+- [`binary_example`](https://pmsims-package.github.io/pmsims/dev/reference/precomputed.md)
+  [`continuous_example`](https://pmsims-package.github.io/pmsims/dev/reference/precomputed.md)
+  [`survival_example`](https://pmsims-package.github.io/pmsims/dev/reference/precomputed.md)
+  [`custom_example`](https://pmsims-package.github.io/pmsims/dev/reference/precomputed.md)
+  : Precomputed sample-size simulations
 
 # Articles
 

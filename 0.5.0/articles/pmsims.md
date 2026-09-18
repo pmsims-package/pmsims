@@ -199,16 +199,17 @@ sessionInfo()
 #> [1] pmsims_0.5.0
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] Matrix_1.7-5       gtable_0.3.6       jsonlite_2.0.0     compiler_4.6.1    
-#>  [5] crayon_1.5.3       jquerylib_0.1.4    splines_4.6.1      systemfonts_1.3.2 
-#>  [9] scales_1.4.0       textshaping_1.0.5  yaml_2.3.12        fastmap_1.2.0     
-#> [13] lattice_0.22-9     ggplot2_4.0.3      R6_2.6.1           labeling_0.4.3    
-#> [17] knitr_1.52         htmlwidgets_1.6.4  desc_1.4.3         bslib_0.12.0      
-#> [21] RColorBrewer_1.1-3 rlang_1.3.0        cachem_1.1.0       xfun_0.61         
-#> [25] fs_2.1.0           DiceKriging_1.6.1  sass_0.4.10        S7_0.2.2          
-#> [29] otel_0.2.0         cli_3.6.6          pkgdown_2.2.1      withr_3.0.3       
-#> [33] digest_0.6.39      grid_4.6.1         lifecycle_1.0.5    mlpwr_1.1.1       
-#> [37] vctrs_0.7.3        evaluate_1.0.5     glue_1.8.1         farver_2.1.2      
-#> [41] ragg_1.5.2         survival_3.8-6     rmarkdown_2.32     tools_4.6.1       
-#> [45] htmltools_0.5.9
+#>  [1] Matrix_1.7-5       gtable_0.3.6       jsonlite_2.0.0     dplyr_1.2.1       
+#>  [5] compiler_4.6.1     crayon_1.5.3       tidyselect_1.2.1   jquerylib_0.1.4   
+#>  [9] splines_4.6.1      systemfonts_1.3.2  scales_1.4.0       textshaping_1.0.5 
+#> [13] yaml_2.3.12        fastmap_1.2.0      lattice_0.22-9     ggplot2_4.0.3     
+#> [17] R6_2.6.1           labeling_0.4.3     generics_0.1.4     knitr_1.52        
+#> [21] htmlwidgets_1.6.4  tibble_3.3.1       desc_1.4.3         pillar_1.11.1     
+#> [25] bslib_0.12.0       RColorBrewer_1.1-3 rlang_1.3.0        cachem_1.1.0      
+#> [29] xfun_0.61          fs_2.1.0           DiceKriging_1.6.1  sass_0.4.10       
+#> [33] S7_0.2.2           otel_0.2.0         cli_3.6.6          withr_3.0.3       
+#> [37] magrittr_2.0.5     pkgdown_2.2.1      digest_0.6.39      grid_4.6.1        
+#> [41] lifecycle_1.0.5    mlpwr_1.1.1        vctrs_0.7.3        evaluate_1.0.5    
+#> [45] glue_1.8.1         farver_2.1.2       ragg_1.5.2         survival_3.8-6    
+#> [49] rmarkdown_2.32     pkgconfig_2.0.3    tools_4.6.1        htmltools_0.5.9
 ```

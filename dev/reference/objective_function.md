@@ -71,7 +71,6 @@ A single numeric: the objective value at \\n\\.
 ## Examples
 
 ``` r
-# \dontrun{
 # Example usage (assuming helper functions exist):
 # objective_function(
 #   n = 500,
@@ -81,5 +80,4 @@ A single numeric: the objective value at \\n\\.
 #   max_sample_size = 5000,
 #   value_on_error = Inf
 # )
-# }
 ```

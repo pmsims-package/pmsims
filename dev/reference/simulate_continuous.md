@@ -179,18 +179,65 @@ optional list fine-tuning the predictors:
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
+set.seed(123)
 est <- simulate_continuous(
-  signal_parameters = 8,
-  noise_parameters = 8,
-  complexity = 3,
+  signal_parameters = 3,
+  noise_parameters = 0,
+  complexity = 1,
+  data_control = list(correlation = 0),
   maximum_achievable_rsquared = 0.50,
   model = "lm",
   metric = "calibration_slope",
   target_performance = 0.9,
+  mean_or_assurance = "assurance",
+  min_sample_size = 50,
+  max_sample_size = 1000,
   n_reps_total = 1000,
-  mean_or_assurance = "assurance"
+  test_n = 30000,
+  progress = FALSE
 )
+#> ℹ Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
+#> ℹ Estimating second stage... (Gaussian process algorithm)
 est
-} # }
+#>                     ┌────────────────────────────────────────┐
+#>                     │ pmsims: Sample size simulation summary │
+#>                     └────────────────────────────────────────┘
+#> 
+#> ──────────────────────────────────── Inputs ────────────────────────────────────
+#> 
+#> Data-generating scenario
+#>   Outcome                  Continuous
+#>   Predictors               3 signal
+#>   Predictor distribution   Normal
+#>   Predictor correlation    0.00
+#>   Signal form              Linear
+#> 
+#> Model and performance
+#>   Model                    Linear regression
+#>   Large-sample R²          0.500
+#>   Sample-size criterion    Calibration slope ≥ 0.900
+#> 
+#> Simulation
+#>   Mode                     Assurance
+#>   Replications             1,000
+#> 
+#> ──────────────────────────────────── Results ───────────────────────────────────
+#> 
+#>   Minimum sample size      84
+#> 
+#>   Performance at N = 84
+#>     Calibration slope      0.900    (target ≥ 0.900)
+#>     R²                     0.447
+#> 
+#>   Running time             32 seconds
+#> 
+#> ────────────────────────────────────────────────────────────────────────────────
+#> Assurance mode selects N so that the target is achieved with high probability
+#> across repeated datasets.
+est$min_n
+#> [1] 84
+plot(est)
+
+# }
 ```

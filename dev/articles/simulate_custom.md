@@ -300,12 +300,6 @@ result <- simulate_custom(
   method = "bisection",
   progress = FALSE
 )
-```
-
-    ## Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
-
-``` r
-
 result[c("min_n", "perf_n", "target_performance")]
 ```
 

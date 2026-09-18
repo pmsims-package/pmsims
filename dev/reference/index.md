@@ -10,3 +10,11 @@
   : Minimum sample size for survival‐outcome prediction models
 - [`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
   : Minimum sample size for custom simulation workflows
+
+## Example results
+
+- [`binary_example`](https://pmsims-package.github.io/pmsims/dev/reference/precomputed.md)
+  [`continuous_example`](https://pmsims-package.github.io/pmsims/dev/reference/precomputed.md)
+  [`survival_example`](https://pmsims-package.github.io/pmsims/dev/reference/precomputed.md)
+  [`custom_example`](https://pmsims-package.github.io/pmsims/dev/reference/precomputed.md)
+  : Precomputed sample-size simulations

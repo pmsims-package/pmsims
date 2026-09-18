@@ -26,12 +26,12 @@ Useful links:
 
 ## Author
 
-**Maintainer**: Ewan Carr <pmsims@kcl.ac.uk>
+**Maintainer**: Ewan Carr <ewan.carr@kcl.ac.uk>
 ([ORCID](https://orcid.org/0000-0002-1146-4922))
 
 Authors:
 
-- Ewan Carr <pmsims@kcl.ac.uk>
+- Ewan Carr <ewan.carr@kcl.ac.uk>
   ([ORCID](https://orcid.org/0000-0002-1146-4922))
 
 - Gordon Forbes ([ORCID](https://orcid.org/0000-0001-8662-3636))
