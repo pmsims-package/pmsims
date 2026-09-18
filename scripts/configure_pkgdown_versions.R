@@ -16,28 +16,64 @@ if (!file.exists(config_path)) {
 
 config <- yaml::read_yaml(config_path)
 
-# Every published version uses the same absolute destinations. The label is
-# supplied by the build matrix so a release page never identifies itself as
-# the development site (and vice versa).
+# pkgdown renders the package version beside the navbar brand. Keep release
+# notes consistent across every published site.
 config$navbar$structure$right <- c(
-  "versions", "search", "github", "lightswitch"
+  "search",
+  "github",
+  "lightswitch"
 )
-config$navbar$components$versions <- list(
-  text = current_version,
+config$navbar$components$versions <- NULL
+config$navbar$components$news <- list(
+  text = "News",
   menu = list(
     list(
-      text = "dev",
-      href = "https://pmsims-package.github.io/pmsims/dev/"
+      text = "Releases"
     ),
     list(
-      text = "1.0.0 (stable)",
-      href = "https://pmsims-package.github.io/pmsims/"
+      text = "Version 1.0.0",
+      href = paste0(
+        "https://pmsims-package.github.io/pmsims/",
+        "articles/release-1-0-0.html"
+      )
     ),
     list(
-      text = "0.5.0",
-      href = "https://pmsims-package.github.io/pmsims/0.5.0/"
+      text = "Version 0.5.0",
+      href = paste0(
+        "https://pmsims-package.github.io/pmsims/",
+        "articles/release-0-5-0.html"
+      )
+    ),
+    list(
+      text = "--------"
+    ),
+    list(
+      text = "Changelog",
+      href = "https://pmsims-package.github.io/pmsims/news/index.html"
     )
   )
 )
+
+if (identical(current_version, "0.5.0")) {
+  if (is.null(config$template$includes)) {
+    config$template$includes <- list()
+  }
+
+  config$template$includes$before_body <- paste0(
+    '<aside class="archive-banner" role="note">',
+    '<div class="container">',
+    '<span>You are viewing archived documentation for ',
+    '<strong>pmsims 0.5.0</strong>.</span>',
+    '<a href="https://pmsims-package.github.io/pmsims/">',
+    'View current 1.0.0 documentation</a>',
+    '</div>',
+    '</aside>'
+  )
+  config$template$includes$before_navbar <- paste0(
+    '<small class="nav-text archive-version me-auto" ',
+    'data-bs-toggle="tooltip" data-bs-placement="bottom" ',
+    'title="Archived documentation">0.5.0 (archived)</small>'
+  )
+}
 
 yaml::write_yaml(config, config_path)

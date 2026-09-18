@@ -54,8 +54,9 @@ test_that("cheap model generators fit expected model classes", {
 
 test_that("cv.ranger_tune reports missing optional dependencies clearly", {
   required <- c("tuneRanger", "mlr", "ranger")
-  installed <- rownames(utils::installed.packages())
-  missing <- setdiff(required, installed)
+  missing <- required[
+    !vapply(required, requireNamespace, logical(1), quietly = TRUE)
+  ]
 
   if (length(missing) == 0) {
     skip(

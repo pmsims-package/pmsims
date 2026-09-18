@@ -15,6 +15,7 @@ knitr::opts_chunk$set(
 # pmsims: Simulation-based Sample Size Tools for Prediction Models <a href="https://pmsims-package.github.io/pmsims/"><img src="man/figures/logo.png" align="right" height="138" /></a>
 
 <!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/pmsims)](https://CRAN.R-project.org/package=pmsims)
 [![GitHub release](https://img.shields.io/github/v/release/pmsims-package/pmsims?display_name=release)](https://github.com/pmsims-package/pmsims/releases)
 [![R-CMD-check](https://github.com/pmsims-package/pmsims/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pmsims-package/pmsims/actions/workflows/R-CMD-check.yaml)
 [![Codecov test coverage](https://codecov.io/gh/pmsims-package/pmsims/graph/badge.svg)](https://app.codecov.io/gh/pmsims-package/pmsims)
@@ -40,11 +41,10 @@ further details.
 
 ## Installation
 
-Install the stable `1.0.0` release from GitHub:
+Install the stable `1.0.0` release from [CRAN](https://CRAN.R-project.org/package=pmsims):
 
 ```r
-# install.packages("remotes")
-remotes::install_github("pmsims-package/pmsims", ref = "v1.0.0")
+install.packages("pmsims")
 ```
 
 If you are interested in trying the development version, install from the

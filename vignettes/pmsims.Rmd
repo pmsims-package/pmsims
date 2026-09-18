@@ -17,13 +17,6 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE
 )
-vignette_data_dir <- file.path(
-  dirname(knitr::current_input(dir = TRUE)),
-  "precomputed"
-)
-if (!dir.exists(vignette_data_dir)) {
-  stop("Could not locate precomputed vignette data: ", vignette_data_dir)
-}
 ```
 
 ## What pmsims does
@@ -427,9 +420,10 @@ lists the key inputs.
 
 ## Installation
 
+Install the stable release from [CRAN](https://CRAN.R-project.org/package=pmsims):
+
 ```{r}
-# install.packages("remotes")
-# remotes::install_github("pmsims-package/pmsims")
+# install.packages("pmsims")
 library(pmsims)
 ```
 
@@ -461,7 +455,7 @@ binary_example
 
 ```{r Run binary}
 #| echo: false
-binary_example <- readRDS(file.path(vignette_data_dir, "binary.rds"))
+# `binary_example` is the result of the call above, shipped with the package.
 print(binary_example)
 ```
 
@@ -500,7 +494,7 @@ continuous_example
 
 ```{r}
 #| echo: false
-continuous_example <- readRDS(file.path(vignette_data_dir, "continuous.rds"))
+# `continuous_example` is the result of the call above, shipped with the package.
 print(continuous_example)
 ```
 

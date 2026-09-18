@@ -37,10 +37,13 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::.
+          extra-packages: any::pkgdown
           needs: website
 
-      - name: Configure version selector
+      - name: Install package
+        run: R CMD INSTALL .
+
+      - name: Configure site navigation
         env:
           SITE_LABEL: ${{ github.base_ref == 'dev' && 'dev' || '1.0.0' }}
         run: Rscript scripts/configure_pkgdown_versions.R _pkgdown.yml "${SITE_LABEL}"
@@ -63,13 +66,13 @@ jobs:
             label: 1.0.0
             mode: release
             output: docs
-            extra_packages: any::pkgdown, local::.
+            extra_packages: any::pkgdown
           - source_ref: dev
             artifact: dev
             label: dev
             mode: devel
             output: docs/dev
-            extra_packages: any::pkgdown, local::.
+            extra_packages: any::pkgdown
           - source_ref: v0.5.0
             artifact: 0.5.0
             label: 0.5.0
@@ -77,12 +80,12 @@ jobs:
             output: docs
             # The Pima dataset used by the 0.5.0 vignette was removed from
             # newer mlbench releases.
-            extra_packages: any::pkgdown, mlbench@2.1-8, local::.
+            extra_packages: any::pkgdown, mlbench@2.1-8
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      # Keep the workflow's helper script available while checking out each
-      # package version into its own directory.
+      # Keep the workflow's helper script and shared styles available while
+      # checking out each package version into its own directory.
       - uses: actions/checkout@v4
 
       - uses: actions/checkout@v4
@@ -102,10 +105,20 @@ jobs:
           extra-packages: ${{ matrix.extra_packages }}
           needs: website
 
-      - name: Configure version selector
+      # Avoid pak's failing local-source packaging step for the nested checkout.
+      - name: Install package
+        run: R CMD INSTALL .
+        working-directory: .site-source
+
+      - name: Configure site navigation
         run: >-
           Rscript scripts/configure_pkgdown_versions.R
           .site-source/_pkgdown.yml "${{ matrix.label }}"
+
+      - name: Apply shared navbar styles
+        run: |
+          mkdir -p .site-source/pkgdown
+          cp pkgdown/extra.css .site-source/pkgdown/extra.css
 
       - name: Build site
         env:
@@ -114,20 +127,37 @@ jobs:
         shell: Rscript {0}
         working-directory: .site-source
 
-      - name: Verify version selector
+      - name: Verify site navigation
         env:
           SITE_LABEL: ${{ matrix.label }}
           SITE_OUTPUT: ${{ matrix.output }}
         run: |
           Rscript -e '
             html <- paste(readLines(file.path(".site-source", Sys.getenv("SITE_OUTPUT"), "index.html")), collapse = "\n")
+            description <- read.dcf(".site-source/DESCRIPTION")
+            version <- unname(description[1L, "Version"])
+            tooltip <- if (identical(Sys.getenv("SITE_LABEL"), "dev")) "In-development version" else "Released version"
             expected <- c(
-              paste0(">", Sys.getenv("SITE_LABEL"), "</button>"),
-              "https://pmsims-package.github.io/pmsims/dev/",
-              "https://pmsims-package.github.io/pmsims/\">1.0.0 (stable)",
-              "https://pmsims-package.github.io/pmsims/0.5.0/"
+              paste0(">", version, "</small>"),
+              paste0("title=\"", tooltip, "\""),
+              "https://pmsims-package.github.io/pmsims/articles/release-1-0-0.html",
+              "https://pmsims-package.github.io/pmsims/articles/release-0-5-0.html",
+              "https://pmsims-package.github.io/pmsims/news/index.html\">Changelog</a>"
             )
             stopifnot(vapply(expected, grepl, logical(1), x = html, fixed = TRUE))
+            archived_release <- "https://pmsims-package.github.io/pmsims/0.5.0/articles/release-0-5-0.html"
+            stopifnot(!grepl(archived_release, html, fixed = TRUE))
+            old_selector <- paste0(">", Sys.getenv("SITE_LABEL"), "</button>")
+            stopifnot(!grepl(old_selector, html, fixed = TRUE))
+            if (identical(Sys.getenv("SITE_LABEL"), "0.5.0")) {
+              archive_expected <- c(
+                ">0.5.0 (archived)</small>",
+                "title=\"Archived documentation\"",
+                "You are viewing archived documentation for",
+                "https://pmsims-package.github.io/pmsims/\">View current 1.0.0 documentation</a>"
+              )
+              stopifnot(vapply(archive_expected, grepl, logical(1), x = html, fixed = TRUE))
+            }
           '
 
       - name: Prepare site artifact

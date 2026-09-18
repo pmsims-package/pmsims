@@ -141,21 +141,28 @@ itself.}
 }
 
 \examples{
-\dontrun{
+\donttest{
+set.seed(123)
 est <- simulate_binary(
-  signal_parameters = 10,
-  noise_parameters = 10,
-  complexity = 2,
-  data_control = list(nonlinear_strength = 0.4, correlation = 0.2),
-  outcome_prevalence = 0.2,
-  maximum_achievable_cstatistic = 0.75,
+  signal_parameters = 3,
+  noise_parameters = 0,
+  complexity = 1,
+  data_control = list(correlation = 0),
+  outcome_prevalence = 0.50,
+  maximum_achievable_cstatistic = 0.80,
   model = "glm",
   metric = "calibration_slope",
   target_performance = 0.9,
+  mean_or_assurance = "assurance",
+  min_sample_size = 50,
+  max_sample_size = 1000,
   n_reps_total = 1000,
-  mean_or_assurance = "assurance"
+  test_n = 30000,
+  progress = FALSE
 )
 est
+est$min_n
+plot(est)
 }
 }
 \seealso{

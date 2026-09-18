@@ -160,11 +160,10 @@ full.
 ## Install
 
 ```r
-# install.packages("remotes")
-remotes::install_github("pmsims-package/pmsims", ref = "v1.0.0")
+install.packages("pmsims")
 ```
 
-Version `1.0.0` is available from GitHub and is not yet a CRAN release.
+Version `1.0.0` is now available from [CRAN](https://CRAN.R-project.org/package=pmsims).
 
 As with 0.5.0, the package and its validation work are described in two
 accompanying papers: the overview paper by

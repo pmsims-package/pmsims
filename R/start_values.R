@@ -252,7 +252,7 @@ calculate_adaptive_bounds <- function(
     all(abs(gains) < tol)
   }
 
-  vcat <- function(...) if (verbose) message(sprintf(...))
+  vmsg <- function(...) if (verbose) message(sprintf(...))
 
   # Initialise the search state.
   iter <- 0L
@@ -273,7 +273,7 @@ calculate_adaptive_bounds <- function(
       large_n <- start_n * 2L^max(1L, max_iter - 1L)
     }
 
-    vcat("Large-n pre-check at n = %d", large_n)
+    vmsg("Large-n pre-check at n = %d", large_n)
 
     res_large <- summary_at_n(large_n)
     perf_large <- res_large$y_summary
@@ -284,7 +284,7 @@ calculate_adaptive_bounds <- function(
       raw = res_large$y
     )
 
-    vcat(
+    vmsg(
       "Iter %d | n = %d (large-n probe) | perf = %.4f",
       iter,
       large_n,
@@ -302,7 +302,7 @@ calculate_adaptive_bounds <- function(
       lower_n <- large_n
       lower_perf <- perf_large
 
-      vcat(
+      vmsg(
         paste0(
           "Performance at large n (%.4f) is still %.4f below target (%.4f); ",
           "gap exceeds large_n_tol (%.4f). Truncating."
@@ -333,7 +333,7 @@ calculate_adaptive_bounds <- function(
       upper_perf <- perf_large
       direction <- "down"
       n_current <- large_n
-      vcat(
+      vmsg(
         "Large-n probe meets target. Searching downward from n = %d.",
         large_n
       )
@@ -344,7 +344,7 @@ calculate_adaptive_bounds <- function(
       lower_perf <- perf_large
       direction <- "up"
       n_current <- large_n
-      vcat(
+      vmsg(
         "Large-n probe close to target. Searching upward from n = %d.",
         large_n
       )
@@ -356,7 +356,7 @@ calculate_adaptive_bounds <- function(
     perf <- res$y_summary
     track[[iter]] <- list(n = start_n, performance = perf, raw = res$y)
 
-    vcat("Iter %d | n = %d | perf = %.4f", iter, start_n, perf)
+    vmsg("Iter %d | n = %d | perf = %.4f", iter, start_n, perf)
 
     if (perf < target_performance) {
       direction <- "up"
@@ -385,7 +385,7 @@ calculate_adaptive_bounds <- function(
 
     if (n_new == n_current) {
       stop_reason <- "no_movement"
-      vcat("No movement in n. Stopping.")
+      vmsg("No movement in n. Stopping.")
       break
     }
 
@@ -393,7 +393,7 @@ calculate_adaptive_bounds <- function(
     perf <- res$y_summary
     track[[iter]] <- list(n = n_new, performance = perf, raw = res$y)
 
-    vcat("Iter %d | n = %d | perf = %.4f", iter, n_new, perf)
+    vmsg("Iter %d | n = %d | perf = %.4f", iter, n_new, perf)
 
     # -- Update brackets -----------------------------------------------------
     if (direction == "up") {
@@ -401,7 +401,7 @@ calculate_adaptive_bounds <- function(
         upper_n <- n_new
         upper_perf <- perf
         stop_reason <- "target_reached"
-        vcat("Target reached. Upper bracket = %d", upper_n)
+        vmsg("Target reached. Upper bracket = %d", upper_n)
         break
       } else {
         lower_n <- n_new
@@ -412,7 +412,7 @@ calculate_adaptive_bounds <- function(
         lower_n <- n_new
         lower_perf <- perf
         stop_reason <- "target_reached"
-        vcat("Target reached. Lower bracket = %d", lower_n)
+        vmsg("Target reached. Lower bracket = %d", lower_n)
         break
       } else {
         upper_n <- n_new
@@ -422,7 +422,7 @@ calculate_adaptive_bounds <- function(
 
     # -- Plateau check -------------------------------------------------------
     if (has_plateaued(track, k = plateau_k, tol = plateau_tol)) {
-      vcat(
+      vmsg(
         paste(
           "Performance plateaued over last %d iterations",
           "(all gains < %.4f). Target unreachable. Stopping."

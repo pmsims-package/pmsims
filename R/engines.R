@@ -60,8 +60,8 @@ calculate_mlpwr <- function(
 
     # Adaptive starting values search. This stage is timed so the cost of the
     # full run can be extrapolated from it (see R/runtime_estimate.R).
-    cat(
-      "Estimating first stage... (Adaptive starting value search algorithm)\n"
+    cli::cli_alert_info(
+      "Estimating first stage... (Adaptive starting value search algorithm)"
     )
     stage_1_start <- Sys.time()
     start_values <- tryCatch(
@@ -99,12 +99,9 @@ calculate_mlpwr <- function(
     start_min_sample_size <- start_values$min_sample_size
     start_max_sample_size <- start_values$max_sample_size
 
-    cat(
-      "Starting values determined: min sample size =",
-      start_min_sample_size,
-      "max sample size =",
-      start_max_sample_size,
-      "\n"
+    cli::cli_alert_info(
+      "Starting values determined: min sample size = {start_min_sample_size}, \\
+       max sample size = {start_max_sample_size}"
     )
   }
 
@@ -131,7 +128,7 @@ calculate_mlpwr <- function(
 
   # Perform search using mlpwr
 
-  cat("Estimating second stage... (Gaussian process algorithm)\n")
+  cli::cli_alert_info("Estimating second stage... (Gaussian process algorithm)")
   # Progress bar
   orig_print_progress <- NULL
   pb_id <- NULL

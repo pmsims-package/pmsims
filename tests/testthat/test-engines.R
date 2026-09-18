@@ -222,7 +222,8 @@ test_that("calculate_mlpwr skips the adaptive stage when bounds are supplied", {
   attr(model_function, "model") <- "glm"
   attr(metric_function, "metric") <- "auc"
 
-  printed <- capture.output(
+  # Status updates are signalled as messages so that they can be suppressed.
+  printed <- capture_messages(
     calculate_mlpwr(
       test_n = 100,
       n_reps_total = 20,
@@ -276,7 +277,8 @@ test_that("calculate_mlpwr still runs the adaptive stage without bounds", {
   attr(model_function, "model") <- "glm"
   attr(metric_function, "metric") <- "auc"
 
-  printed <- capture.output(
+  # Status updates are signalled as messages so that they can be suppressed.
+  printed <- capture_messages(
     calculate_mlpwr(
       test_n = 100,
       n_reps_total = 20,
