@@ -1,0 +1,2 @@
+"id","slice","outcome","model","p","seed","role","cache_key","cached_n","target","status","stage1_stop","lower","upper","lower_perf","upper_perf","stage1_reps","n","predicted_slope","actual_gp_reps","search_fit_errors","seconds"
+"binary_ridge_reported_p5","binary_ridge_reported","binary","ridge",5,429,"cache","p5_prev0.25_cstat0.85_target0.90_mridge",7075,0.9,"estimated","plateau",3552,7104,-0.0267275585918668,NA,160,3552,0.847212072287381,1000,0,200.529

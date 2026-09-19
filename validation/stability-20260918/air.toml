@@ -1,0 +1,4 @@
+[format]
+skip = ["tribble"]
+# Historical source files are immutable evidence with recorded SHA-256 checksums.
+exclude = ["history"]

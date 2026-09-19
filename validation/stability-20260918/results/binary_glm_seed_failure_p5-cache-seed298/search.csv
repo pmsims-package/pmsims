@@ -1,0 +1,2 @@
+"id","slice","outcome","model","p","seed","role","cache_key","cached_n","target","status","stage1_stop","lower","upper","lower_perf","upper_perf","stage1_reps","n","predicted_slope","actual_gp_reps","search_fit_errors","seconds"
+"binary_glm_seed_failure_p5","binary_glm_seed_failure","binary","glm",5,298,"cache","p5_prev0.20_cstat0.60_target0.95_mglm",5120000,0.95,"estimated","plateau",10000,80000,0.914742078519378,NA,320,28282,0.949695616486274,1000,0,131.454

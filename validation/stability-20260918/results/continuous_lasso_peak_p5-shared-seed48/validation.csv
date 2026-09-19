@@ -1,0 +1,2 @@
+"id","seed","role","label","n","reps","finite","fit_errors","metric","internal_target","q20","ci_low","ci_high","slope","slope_ci_low","slope_ci_high","evidence","validation_seed","seconds"
+"continuous_lasso_peak_p5",48,"shared","reported_n",512,1000,1000,0,"csse",-0.0025,-0.0320948221838593,-0.0348978029270068,-0.0294830254819539,0.820849721786821,0.813190463500905,0.828293781469762,"below",10800482,49.767

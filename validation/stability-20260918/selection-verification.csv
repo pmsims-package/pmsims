@@ -1,0 +1,15 @@
+"id","cache_seed","grid_seed","matched"
+"binary_ridge_reported_p5",429,429,TRUE
+"binary_ridge_reported_p10",1077,1077,TRUE
+"binary_ridge_reported_p15",1725,1725,TRUE
+"binary_ridge_reported_p20",2373,2373,TRUE
+"binary_ridge_dip_p5",636,636,TRUE
+"binary_ridge_dip_p10",1284,1284,TRUE
+"binary_ridge_dip_p15",1932,1932,TRUE
+"continuous_lasso_peak_p5",11,11,TRUE
+"continuous_lasso_peak_p10",83,83,TRUE
+"continuous_lasso_peak_p15",155,155,TRUE
+"survival_lasso_peak_p5",47,47,TRUE
+"survival_lasso_peak_p10",695,695,TRUE
+"survival_lasso_peak_p15",1343,1343,TRUE
+"binary_glm_seed_failure_p5",298,298,TRUE

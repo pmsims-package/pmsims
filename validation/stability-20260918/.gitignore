@@ -2,3 +2,4 @@
 results/**/*.rds
 logs/
 *.rds
+locks/

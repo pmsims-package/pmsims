@@ -1,0 +1,2 @@
+"id","slice","outcome","model","p","seed","role","cache_key","cached_n","target","status","stage1_stop","lower","upper","lower_perf","upper_perf","stage1_reps","n","predicted_slope","actual_gp_reps","search_fit_errors","seconds"
+"continuous_lasso_peak_p5","continuous_lasso_peak","continuous","lasso",5,11,"cache","p5_r20.10_target0.95_mlasso",4861,0.95,"estimated","plateau",256,512,-0.0791943626032814,NA,160,512,0.827786049168041,1000,0,59.134

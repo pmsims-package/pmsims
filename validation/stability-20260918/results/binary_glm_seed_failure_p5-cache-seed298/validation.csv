@@ -1,0 +1,4 @@
+"id","seed","role","label","n","reps","finite","fit_errors","metric","internal_target","q20","ci_low","ci_high","slope","slope_ci_low","slope_ci_high","evidence","validation_seed","seconds"
+"binary_glm_seed_failure_p5",298,"cache","half_n",14141,1000,1000,0,"calibration_slope",0.95,0.925417035738144,0.91959780167219,0.930738909901143,0.925417035738144,0.91959780167219,0.930738909901143,"below",11402981,77.45
+"binary_glm_seed_failure_p5",298,"cache","reported_n",28282,1000,1000,0,"calibration_slope",0.95,0.942190633530796,0.937577473518895,0.948166390083336,0.942190633530796,0.937577473518895,0.948166390083336,"below",11402982,104.082
+"binary_glm_seed_failure_p5",298,"cache","upper_bound",80000,1000,1000,0,"calibration_slope",0.95,0.959508197940454,0.955522562067994,0.963399056514887,0.959508197940454,0.955522562067994,0.963399056514887,"above",11402983,230.095

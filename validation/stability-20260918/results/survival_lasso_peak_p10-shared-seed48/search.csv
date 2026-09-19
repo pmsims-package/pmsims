@@ -1,0 +1,2 @@
+"id","slice","outcome","model","p","seed","role","cache_key","cached_n","target","status","stage1_stop","lower","upper","lower_perf","upper_perf","stage1_reps","n","predicted_slope","actual_gp_reps","search_fit_errors","seconds"
+"survival_lasso_peak_p10","survival_lasso_peak","survival","lasso",10,48,"shared","p10_cindex0.75_hazard0.50_censor0.10_target0.95_mlasso",2368,0.95,"estimated","plateau",592,2368,-0.00616197431221923,NA,160,931,0.94948426991508,1000,0,211.737

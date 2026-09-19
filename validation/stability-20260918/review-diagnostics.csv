@@ -1,2 +1,3 @@
-"diagnostic","stop_reason","lower","upper","upper_perf","observed_above","reps_used"
-"constant_below_target","plateau",80,160,NA,FALSE,80
+"stop_reason","lower","upper","upper_perf","observed_above","reps_used","diagnostic","known_later_above_n","known_later_performance"
+"plateau",80,160,NA,FALSE,80,"constant_below_target",NA,NA
+"plateau",80,160,NA,FALSE,80,"monotone_reachable_small_gains",640,-0.002

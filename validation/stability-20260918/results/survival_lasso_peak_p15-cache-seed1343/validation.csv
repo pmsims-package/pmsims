@@ -1,0 +1,2 @@
+"id","seed","role","label","n","reps","finite","fit_errors","metric","internal_target","q20","ci_low","ci_high","slope","slope_ci_low","slope_ci_high","evidence","validation_seed","seconds"
+"survival_lasso_peak_p15",1343,"cache","reported_n",1028,1000,1000,0,"csse",-0.0025,-0.00246784321551098,-0.0026643741904144,-0.00222861136063592,0.95032260860803,0.948382423629016,0.952791829513993,"overlaps",11313432,245.947

@@ -1,0 +1,2 @@
+"id","seed","role","label","n","reps","finite","fit_errors","metric","internal_target","q20","ci_low","ci_high","slope","slope_ci_low","slope_ci_high","evidence","validation_seed","seconds"
+"binary_ridge_dip_p10",48,"shared","reported_n",11816,1000,1000,0,"csse",-0.0025,-0.00615263210124919,-0.00654549178283833,-0.00590696795683098,0.921561284423767,0.919095786371547,0.923143198369754,"below",10600482,777.21
