@@ -237,7 +237,7 @@ est
 #>     Calibration slope       0.899    (target ≥ 0.900)
 #>     C-statistic             0.804
 #> 
-#>   Running time              1 minute 22 seconds
+#>   Running time              1 minute 29 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability
