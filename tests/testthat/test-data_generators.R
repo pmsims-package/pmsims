@@ -149,3 +149,20 @@ test_that("default_data_generators", {
   expect_equal(ncol(data), 11)
   expect_equal(attr(f, "outcome"), "continuous")
 })
+
+test_that("generate_predictors induces a common pairwise correlation", {
+  set.seed(1)
+  for (dist in c("normal", "uniform")) {
+    X <- generate_predictors(
+      20000,
+      n_signal_parameters = 20,
+      noise_parameters = 0,
+      correlation = 0.3,
+      distribution = dist
+    )
+    off_diag <- stats::cor(X)[upper.tri(diag(20))]
+    # Every pair, not just the average, should sit near the target.
+    expect_lt(max(abs(off_diag - mean(off_diag))), 0.05)
+    expect_equal(mean(off_diag), 0.3, tolerance = 0.05)
+  }
+})

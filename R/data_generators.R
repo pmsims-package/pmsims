@@ -473,7 +473,7 @@ apply_correlation <- function(X, rho) {
 
   L <- chol(cor_mat)
   U <- apply(X, 2, function(col) rank(col, ties.method = "average") / (n + 1))
-  Z_corr <- stats::qnorm(U) %*% t(L)
+  Z_corr <- stats::qnorm(U) %*% L
 
   X_corr <- X
   for (j in seq_len(p)) {
