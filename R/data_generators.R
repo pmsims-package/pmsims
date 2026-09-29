@@ -162,8 +162,10 @@ default_data_generators <- function(opts) {
 #' @param binary_prevalence  Scalar in (0, 1]. Bernoulli probability applied to
 #'   all predictors when \code{predictor_type = "binary"}. Default = 0.
 #' @param correlation        Scalar in \eqn{[-1, 1]}. Common pairwise correlation
-#'   applied via a Gaussian copula (equicorrelation, rank-based Cholesky).
-#'   Default = 0.3. Set to 0 for independence.
+#'   applied via a Gaussian copula: \code{correlation} is the correlation of
+#'   the underlying normal variables, which equals the Pearson correlation of
+#'   the predictors only when they are normal. Default = 0.3. Set to 0 for
+#'   independence.
 #' @param distribution       Distribution family for \emph{all} continuous
 #'   predictors. Default = \code{"normal"}. For complexity 4, if left at
 #'   \code{"normal"} the framework uses \code{"uniform"} (Friedman canonical).
@@ -432,20 +434,70 @@ resolve_family <- function(
 }
 
 # -----------------------------------------------------------------------------
-# apply_correlation
+# normal_to_family
 #
-# Induces a common pairwise correlation rho across all p columns via a
-# Gaussian copula (equicorrelation matrix, rank-based Cholesky). The marginal
-# distribution of every column is preserved exactly.
+# Transforms a matrix of standard normal values Z, column by column, to the
+# chosen family using the quantile transform F^{-1}(pnorm(Z)). The families and
+# their parameters match draw_predictors(). Where the family allows, the
+# transform is computed from the normal tail probabilities directly so that it
+# stays finite and precise for extreme Z (pnorm(z) rounds to 1 for z > 8.3).
 # -----------------------------------------------------------------------------
-apply_correlation <- function(X, rho) {
-  n <- nrow(X)
-  p <- ncol(X)
+normal_to_family <- function(Z, family, binary_prevalence = 0) {
+  vals <- switch(
+    family,
 
-  if (rho == 0) {
-    return(X)
-  }
+    normal = Z,
 
+    uniform = stats::pnorm(Z),
+
+    # -log(1 - pnorm(Z)), via the upper tail.
+    exponential = -stats::pnorm(Z, lower.tail = FALSE, log.p = TRUE),
+
+    lognormal = exp(Z),
+
+    # Symmetric, so work from the lower tail of -|Z| and restore the sign.
+    t = -sign(Z) * stats::qt(stats::pnorm(-abs(Z)), df = 5),
+
+    # Standard Laplace quantile, again from the lower tail of -|Z|.
+    laplace = -sign(Z) *
+      (log(2) + stats::pnorm(-abs(Z), log.p = TRUE)),
+
+    # 1 when pnorm(Z) > 1 - prevalence, i.e. Z > qnorm(1 - prevalence).
+    binary = (Z > stats::qnorm(1 - binary_prevalence)) * 1,
+
+    stop(sprintf(
+      paste0(
+        'Unknown distribution "%s". ',
+        'Supported: "normal", "uniform", "exponential", ',
+        '"lognormal", "t", "laplace".'
+      ),
+      family
+    ))
+  )
+
+  matrix(vals, nrow = nrow(Z), ncol = ncol(Z))
+}
+
+# -----------------------------------------------------------------------------
+# draw_correlated_predictors
+#
+# Draws an n x p matrix from the chosen family with a common pairwise
+# correlation rho, via a Gaussian copula: equicorrelated standard normals
+# (Z %*% chol(R)) are transformed to the family with normal_to_family(). The
+# marginal distribution of every column is exactly the family's.
+#
+# rho is the correlation of the underlying normals. For normal predictors it is
+# also the Pearson correlation of the result. For other families the Pearson
+# correlation is lower (e.g. about 0.18 for binary predictors with prevalence
+# 0.3 when rho = 0.3), while the rank dependence is the same for every family.
+# -----------------------------------------------------------------------------
+draw_correlated_predictors <- function(
+  n,
+  p,
+  family,
+  rho,
+  binary_prevalence = 0
+) {
   min_rho <- if (p > 1) -1 / (p - 1) else -1
   if (rho < min_rho) {
     warning(sprintf(
@@ -471,22 +523,10 @@ apply_correlation <- function(X, rho) {
     ))
   }
 
-  L <- chol(cor_mat)
-  U <- apply(X, 2, function(col) rank(col, ties.method = "average") / (n + 1))
-  Z_corr <- stats::qnorm(U) %*% t(L)
-
-  X_corr <- X
-  for (j in seq_len(p)) {
-    orig_sorted <- sort(X[, j])
-    new_ranks_int <- pmax(
-      1L,
-      pmin(n, round(rank(Z_corr[, j], ties.method = "average")))
-    )
-    X_corr[, j] <- orig_sorted[new_ranks_int]
-  }
-
-  colnames(X_corr) <- colnames(X)
-  return(X_corr)
+  # Rows of Z %*% U, with U = chol(R) upper triangular, have covariance
+  # t(U) %*% U = R.
+  Z <- matrix(stats::rnorm(n * p), nrow = n, ncol = p) %*% chol(cor_mat)
+  normal_to_family(Z, family, binary_prevalence)
 }
 
 # =============================================================================
@@ -495,8 +535,9 @@ apply_correlation <- function(X, rho) {
 
 #' Generate the n x p predictor matrix
 #'
-#' Draws all predictors from a single global distribution family, then
-#' optionally applies an equicorrelation structure via a Gaussian copula.
+#' Draws all predictors from a single global distribution family. With a
+#' non-zero \code{correlation}, they are drawn through a Gaussian copula with a
+#' common pairwise correlation.
 #'
 #' @param n                Sample size.
 #' @param n_signal_parameters Number of signal predictors.
@@ -560,12 +601,11 @@ generate_predictors <- function(
   )
 
   # ---- draw all predictors from the global family ----------------------------
-  X <- draw_predictors(n, p, family, binary_prevalence)
-  colnames(X) <- col_names
-
-  # ---- apply equicorrelation if requested ------------------------------------
-  if (correlation != 0) {
-    X <- apply_correlation(X, correlation)
+  # With a non-zero correlation, draw through the Gaussian copula instead.
+  X <- if (correlation == 0) {
+    draw_predictors(n, p, family, binary_prevalence)
+  } else {
+    draw_correlated_predictors(n, p, family, correlation, binary_prevalence)
   }
 
   colnames(X) <- col_names

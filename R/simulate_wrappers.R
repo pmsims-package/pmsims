@@ -210,7 +210,12 @@ make_data_args <- function(
 #'     Applies to complexity 2 and 3 only; ignored (with a warning) for 1 and 4.
 #'     If omitted, the generator's per-complexity default is used.}
 #'   \item{`correlation`}{Numeric in \eqn{[-1, 1]}. Pairwise correlation among the
-#'     candidate predictors. Default `0.3`.}
+#'     candidate predictors, induced through a Gaussian copula. Default `0.3`.
+#'     This is the correlation of the underlying normal variables: for
+#'     `"normal"` predictors it is also the observed correlation, but for other
+#'     distributions the observed correlation is lower. For example, binary
+#'     predictors with prevalence 0.3 correlate at about 0.18 when
+#'     `correlation = 0.3`.}
 #'   \item{`predictor_distribution`}{One of `"normal"`, `"uniform"`, `"binary"`,
 #'     `"exponential"`, `"lognormal"`, `"t"`, `"laplace"`. `"binary"` selects
 #'     0/1 predictors and requires `binary_predictor_prevalence`; any other

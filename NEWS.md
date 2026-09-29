@@ -1,3 +1,23 @@
+# pmsims (development version)
+
+## Bug fixes
+
+- Fixed predictor correlation. The Gaussian copula applied the Cholesky factor
+  transposed, so predictors did not share the requested pairwise correlation:
+  with 80 predictors and `correlation = 0.3`, pairwise correlations ranged from
+  about 0 to 0.88 (mean 0.09). Binary predictors were affected further, because
+  ranking 0/1 values discards most of the dependence; they were close to
+  uncorrelated at low prevalence. Results for scenarios with a non-zero
+  `correlation` (the default is 0.3) will change.
+
+## Performance
+
+- Correlated predictors are now drawn directly: equicorrelated normals are
+  transformed to the chosen distribution by its quantile function, replacing
+  the rank-and-sort copula. This is 3-7 times faster for most distributions and
+  dominated runtime for linear models (for example, about 85% of a continuous
+  `lm` run with 80 predictors).
+
 # pmsims 1.0.0
 
 ## Data-generating mechanisms
