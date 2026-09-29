@@ -1,3 +1,18 @@
+# pmsims (development version)
+
+## Bug fixes
+
+- Correlated predictors now have the requested pairwise correlation. Results
+  for scenarios with a non-zero `correlation` (the default is 0.3) will change.
+
+## Performance
+
+- Correlated predictors are now drawn directly: equicorrelated normals are
+  transformed to the chosen distribution by its quantile function, replacing
+  the rank-and-sort copula. This is 3-7 times faster for most distributions and
+  dominated runtime for linear models (for example, about 85% of a continuous
+  `lm` run with 80 predictors).
+
 # pmsims 1.0.0
 
 ## Data-generating mechanisms
