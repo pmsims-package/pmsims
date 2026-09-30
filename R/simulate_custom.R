@@ -298,7 +298,11 @@ resolve_value_on_error <- function(metric_function) {
     brier_score_scaled = 0,
     brier_score = 1,
     ibs = 1,
-    calibration_slope = 0
+    calibration_slope = 0,
+    # CSSE of a calibration slope of 0, matching calibration_slope above. CSSE
+    # is <= 0 with 0 perfect, so the generic 0.5 fallback would score a failed
+    # fit as better than perfect calibration.
+    csse = -1
   )
   
   if (!is.null(custom_value_on_error)) {
@@ -324,6 +328,19 @@ resolve_value_on_error <- function(metric_function) {
   }
   
   0.5
+}
+
+# Fallback for a metric value that is not a single finite number. Metrics can
+# fail without raising an error, e.g. a lasso that selects no predictors gives
+# constant predictions and an NA calibration slope. Those replicates must count
+# as failures, like errors do; otherwise na.rm = TRUE in the summaries drops
+# them and the remaining replicates overstate performance.
+metric_or_fallback <- function(value, value_on_error) {
+  if (is.numeric(value) && length(value) == 1L && is.finite(value)) {
+    value
+  } else {
+    value_on_error
+  }
 }
 
 #' Parse and validate input specifications

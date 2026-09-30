@@ -117,6 +117,49 @@ test_that("calculate_adaptive_bounds uses the fallback value on repeated errors"
   expect_equal(output$track[[1]]$performance, 0.1)
 })
 
+test_that("calculate_adaptive_bounds uses the fallback value for non-finite metrics", {
+  data_function <- function(n) {
+    data.frame(y = seq_len(n))
+  }
+  model_function <- function(data) {
+    list(n = nrow(data))
+  }
+  attr(model_function, "model") <- "glm"
+  # Fails without raising an error, like a calibration slope on constant
+  # predictions. Returning NA must not drop the replicate from the summary.
+  metric_function <- function(data, fit, model) {
+    NA_real_
+  }
+
+  output <- calculate_adaptive_bounds(
+    data_function = data_function,
+    model_function = model_function,
+    metric_function = metric_function,
+    value_on_error = 0.1,
+    start_n = 10,
+    test_n = 10,
+    n_reps_per = 2,
+    n_reps_total = 4,
+    target_performance = 0.5,
+    threshold = 0,
+    mean_or_assurance = "assurance",
+    verbose = FALSE
+  )
+
+  expect_equal(output$track[[1]]$performance, 0.1)
+  expect_equal(output$track[[1]]$raw, c(0.1, 0.1))
+})
+
+test_that("metric_or_fallback keeps single finite values only", {
+  expect_identical(metric_or_fallback(0.8, -1), 0.8)
+  expect_identical(metric_or_fallback(NA_real_, -1), -1)
+  expect_identical(metric_or_fallback(NaN, -1), -1)
+  expect_identical(metric_or_fallback(Inf, -1), -1)
+  expect_identical(metric_or_fallback(numeric(0), -1), -1)
+  expect_identical(metric_or_fallback(c(0.1, 0.2), -1), -1)
+  expect_identical(metric_or_fallback(NULL, -1), -1)
+})
+
 test_that("calculate_adaptive_bounds errors clearly on non-finite summaries", {
   data_function <- function(n) {
     data.frame(y = seq_len(n))
