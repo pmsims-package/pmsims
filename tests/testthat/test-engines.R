@@ -381,3 +381,54 @@ test_that("calculate_mlpwr_bs skips the adaptive stage but keeps its bisection",
   expect_identical(adaptive_calls, 0L)
   expect_identical(store$boundaries, c(50, 200))
 })
+
+gp_failure <- function() {
+  stop("no applicable method for `@` applied to an object of class \"NULL\"")
+}
+
+test_that("find_design_with_restarts restarts after a GP surrogate failure", {
+  calls <- 0L
+  local_mocked_bindings(run_find_design = function(args) {
+    calls <<- calls + 1L
+    if (calls == 1L) gp_failure()
+    list(final = list(design = 123))
+  })
+  expect_message(
+    out <- find_design_with_restarts(list()),
+    "restarting the search \\(attempt 2 of 3\\)"
+  )
+  expect_equal(calls, 2L)
+  expect_equal(out$final$design, 123)
+  expect_equal(attr(out, "gp_restarts"), 1L)
+})
+
+test_that("find_design_with_restarts does not retry other errors", {
+  calls <- 0L
+  local_mocked_bindings(run_find_design = function(args) {
+    calls <<- calls + 1L
+    stop("boundaries must be increasing")
+  })
+  expect_error(
+    find_design_with_restarts(list()),
+    "^mlpwr::find.design failed with error: boundaries must be increasing$"
+  )
+  expect_equal(calls, 1L)
+})
+
+test_that("find_design_with_restarts gives up after max_attempts", {
+  calls <- 0L
+  local_mocked_bindings(run_find_design = function(args) {
+    calls <<- calls + 1L
+    gp_failure()
+  })
+  expect_error(
+    suppressMessages(find_design_with_restarts(list(), max_attempts = 3L)),
+    "after 3 attempts"
+  )
+  expect_equal(calls, 3L)
+})
+
+test_that("a successful first search records zero restarts", {
+  local_mocked_bindings(run_find_design = function(args) list(final = list(design = 1)))
+  expect_equal(attr(find_design_with_restarts(list()), "gp_restarts"), 0L)
+})
