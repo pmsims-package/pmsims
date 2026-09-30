@@ -261,34 +261,23 @@ calculate_mlpwr <- function(
   # Calculate bootstrapped quantile variance
   noise_fun <- function(x) var_bootstrap(x$y)
 
-  ds <- tryCatch(
-    {
-      do.call(
-        mlpwr::find.design,
-        utils::modifyList(
-          list(
-            simfun = mlpwr_simulation_function,
-            aggregate_fun = aggregate_fun,
-            noise_fun = noise_fun,
-            boundaries = c(start_min_sample_size, start_max_sample_size),
-            power = target_performance,
-            surrogate = "gpr",
-            setsize = n_reps_per,
-            evaluations = n_reps_total,
-            ci = ci,
-            n.startsets = n_init,
-            silent = !isTRUE(progress)
-          ),
-          list(...)
-        )
-      )
-    },
-    error = function(e) {
-      stop(
-        paste("mlpwr::find.design failed with error:", e$message),
-        call. = FALSE
-      )
-    }
+  ds <- find_design_with_restarts(
+    utils::modifyList(
+      list(
+        simfun = mlpwr_simulation_function,
+        aggregate_fun = aggregate_fun,
+        noise_fun = noise_fun,
+        boundaries = c(start_min_sample_size, start_max_sample_size),
+        power = target_performance,
+        surrogate = "gpr",
+        setsize = n_reps_per,
+        evaluations = n_reps_total,
+        ci = ci,
+        n.startsets = n_init,
+        silent = !isTRUE(progress)
+      ),
+      list(...)
+    )
   )
 
   # Process results from mlpwr
@@ -314,7 +303,8 @@ calculate_mlpwr <- function(
       boundaries = ds$boundaries,
       final = ds$final,
       aggregate_fun = ds$aggregate_fun
-    )
+    ),
+    gp_restarts = attr(ds, "gp_restarts")
   ))
 }
 
@@ -750,8 +740,7 @@ calculate_mlpwr_bs <- function(
     mlpwrbs_max_sample_size <- max_sample_size
   }
 
-  ds <- do.call(
-    mlpwr::find.design,
+  ds <- find_design_with_restarts(
     utils::modifyList(
       list(
         simfun = mlpwr_simulation_function,
@@ -793,6 +782,63 @@ calculate_mlpwr_bs <- function(
       boundaries = ds$boundaries,
       final = ds$final,
       aggregate_fun = ds$aggregate_fun
-    )
+    ),
+    gp_restarts = attr(ds, "gp_restarts")
   ))
 }
+
+
+#' Run mlpwr::find.design(), restarting the search if the GP surrogate fails
+#'
+#' mlpwr fits its Gaussian-process surrogate with up to 100 attempts of
+#' `DiceKriging::km()`, discarding fits that are close to a plane. When the
+#' learning curve is nearly linear across the search range, every fit is
+#' discarded, many attempts fail inside the optimiser, and if the final attempt
+#' fails, mlpwr keeps a `NULL` model and later stops with "no applicable method
+#' for `@` applied to an object of class "NULL"". Whether this happens depends
+#' on the random state, so restarting the search from the current RNG state
+#' usually succeeds. The run stays reproducible for a given seed.
+#'
+#' Only this surrogate failure is retried; any other error stops immediately,
+#' as before.
+#'
+#' @param args Named list of arguments for [mlpwr::find.design()].
+#' @param max_attempts Total number of searches to try.
+#' @return The [mlpwr::find.design()] result, with attribute `gp_restarts`
+#'   giving the number of restarts that were needed.
+#' @keywords internal
+#' @noRd
+find_design_with_restarts <- function(args, max_attempts = 3L) {
+  for (attempt in seq_len(max_attempts)) {
+    result <- tryCatch(run_find_design(args), error = function(e) e)
+    if (!inherits(result, "error")) {
+      attr(result, "gp_restarts") <- attempt - 1L
+      return(result)
+    }
+    if (!is_gp_surrogate_failure(result) || attempt == max_attempts) {
+      msg <- paste("mlpwr::find.design failed with error:", conditionMessage(result))
+      if (is_gp_surrogate_failure(result)) {
+        msg <- sprintf("%s (after %d attempts)", msg, attempt)
+      }
+      stop(msg, call. = FALSE)
+    }
+    cli::cli_alert_warning(
+      "The Gaussian process surrogate could not be fitted; restarting the \\
+       search (attempt {attempt + 1} of {max_attempts})."
+    )
+  }
+}
+
+# Separate so tests can replace it.
+run_find_design <- function(args) {
+  do.call(mlpwr::find.design, args)
+}
+
+is_gp_surrogate_failure <- function(e) {
+  grepl(
+    "applied to an object of class \"NULL\"",
+    conditionMessage(e),
+    fixed = TRUE
+  )
+}
+
