@@ -268,6 +268,8 @@ simulate_custom <- function(
     progress = progress,
     verbose = verbose,
     simulation_time = difftime(time_2, time_1, units = "secs"),
+    # Searches restarted after a Gaussian-process surrogate failure (mlpwr engines).
+    gp_restarts = output$gp_restarts %||% 0L,
     mean_or_assurance = mean_or_assurance
   )
   if (!is.null(output$history)) {
