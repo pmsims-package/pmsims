@@ -292,7 +292,10 @@ calculate_adaptive_bounds <- function(
       {
         dat <- data_function(n)
         fit <- model_function(dat)
-        metric_function(test_data, fit, attr(model_function, "model"))
+        metric_or_fallback(
+          metric_function(test_data, fit, attr(model_function, "model")),
+          value_on_error
+        )
       },
       error = function(e) value_on_error
     )

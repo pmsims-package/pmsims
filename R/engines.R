@@ -234,7 +234,7 @@ calculate_mlpwr <- function(
         train_data <- data_function(n)
         fit <- model_function(train_data)
         model <- attr(model_function, "model")
-        metric_function(test_data, fit, model)
+        metric_or_fallback(metric_function(test_data, fit, model), value_on_error)
       },
       error = function(e) {
         return(value_on_error)
@@ -460,7 +460,10 @@ calculate_bisection <- function(
       {
         dat <- data_function(n)
         fit <- model_function(dat)
-        metric_function(test_data, fit, attr(model_function, "model"))
+        metric_or_fallback(
+          metric_function(test_data, fit, attr(model_function, "model")),
+          value_on_error
+        )
       },
       error = function(e) value_on_error
     )
@@ -477,7 +480,14 @@ calculate_bisection <- function(
             {
               dat <- data_function(n)
               fit <- model_function(dat)
-              metric_function(test_data, fit, attr(model_function, "model"))
+              v <- metric_function(test_data, fit, attr(model_function, "model"))
+              # Same check as metric_or_fallback(), inlined: package functions
+              # are not exported to the workers.
+              if (is.numeric(v) && length(v) == 1L && is.finite(v)) {
+                v
+              } else {
+                value_on_error
+              }
             },
             error = function(e) value_on_error
           )
@@ -664,7 +674,7 @@ calculate_mlpwr_bs <- function(
         train_data <- data_function(n)
         fit <- model_function(train_data)
         model <- attr(model_function, "model")
-        metric_function(test_data, fit, model)
+        metric_or_fallback(metric_function(test_data, fit, model), value_on_error)
       },
       error = function(e) {
         return(value_on_error)
