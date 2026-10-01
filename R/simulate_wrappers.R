@@ -32,7 +32,7 @@
 #' @noRd
 resolve_data_control <- function(data_control, complexity) {
   validate_data_control(data_control, complexity)
-
+  
   ctrl <- utils::modifyList(
     list(
       nonlinear_strength = NULL,
@@ -42,7 +42,7 @@ resolve_data_control <- function(data_control, complexity) {
     ),
     if (is.null(data_control)) list() else data_control
   )
-
+  
   if (identical(ctrl$predictor_distribution, "binary")) {
     predictor_type <- "binary"
     distribution <- "normal" # ignored by the generator for binary predictors
@@ -52,7 +52,7 @@ resolve_data_control <- function(data_control, complexity) {
     distribution <- ctrl$predictor_distribution
     binary_prevalence <- 0
   }
-
+  
   list(
     nonlinear_strength = ctrl$nonlinear_strength,
     correlation = ctrl$correlation,
@@ -98,7 +98,7 @@ call_tuner <- function(tuner, required, dc) {
   fmls <- names(formals(tuner))
   complexity <- required$.complexity
   required$.complexity <- NULL
-
+  
   data_config <- list(
     complexity = complexity,
     nonlinear_strength = dc$nonlinear_strength,
@@ -107,7 +107,7 @@ call_tuner <- function(tuner, required, dc) {
     predictor_type = dc$predictor_type,
     binary_prevalence = dc$binary_prevalence
   )
-
+  
   if (!is.null(dc$nonlinear_strength) && !("nonlinear_strength" %in% fmls)) {
     warning(
       "The tuning function does not accept `nonlinear_strength`; the tuned ",
@@ -116,7 +116,7 @@ call_tuner <- function(tuner, required, dc) {
       call. = FALSE
     )
   }
-
+  
   optional <- data_config[names(data_config) %in% fmls]
   do.call(tuner, c(required, optional))
 }
@@ -147,11 +147,11 @@ get_param <- function(tp, name) {
 #' @keywords internal
 #' @noRd
 make_data_args <- function(
-  signal_parameters,
-  noise_parameters,
-  complexity,
-  dc,
-  extra = list()
+    signal_parameters,
+    noise_parameters,
+    complexity,
+    dc,
+    extra = list()
 ) {
   args <- c(
     list(
@@ -171,6 +171,87 @@ make_data_args <- function(
   args
 }
 
+
+# Models for which the simulation budget is raised at small signal sizes.
+# These are the directly-fitted learners -- one per outcome type -- i.e. the
+# complement of `ml_model_families` in R/csse_internal.R. They are cheap enough
+# per replication that the extra budget costs little, and they are the ones for
+# which the Gaussian-process stage is budget-limited rather than
+# design-limited at small p.
+budget_boost_models <- c("lm", "glm", "coxph")
+
+#' Resolve the simulation budget shared by the outcome-specific wrappers
+#'
+#' Raises `n_reps_total` to `boost_to` for designs that sit in the regime where
+#' the second-stage Gaussian-process search is limited by simulation budget
+#' rather than by the design itself: few signal parameters, fitted with one of
+#' the directly-fitted models in `budget_boost_models`. In that regime the
+#' spread of `min_n` across repeat runs falls roughly with the budget, so the
+#' default of 1000 leaves avoidable run-to-run variability on the table.
+#'
+#' The rule only ever increases the budget: a caller who asks for more than
+#' `boost_to` keeps their value. A caller who deliberately wants a smaller,
+#' faster run can switch the rule off with `auto_n_reps_total = FALSE`. When the
+#' budget is changed a message says so, so the figure reported in the result is
+#' never a surprise.
+#'
+#' Inputs that are not usable (missing, non-numeric, length != 1) are passed
+#' through untouched, leaving the wrappers' own validation to report them.
+#'
+#' @param n_reps_total The requested total number of simulation replications.
+#' @param signal_parameters Number of signal predictors in the design.
+#' @param model The resolved model string (after `check_pmsims_args()`).
+#' @param auto Logical; `FALSE` disables the rule entirely.
+#' @param boost_to The budget to raise to. Default `2000`.
+#' @param max_signal_parameters The rule applies at or below this many signal
+#'   parameters. Default `10`.
+#' @param models Character vector of models the rule applies to.
+#' @return A single number: the budget the wrapper should use.
+#' @keywords internal
+#' @noRd
+resolve_n_reps_total <- function(
+    n_reps_total,
+    signal_parameters,
+    model,
+    auto = TRUE,
+    boost_to = 2000,
+    max_signal_parameters = 10,
+    models = budget_boost_models
+) {
+  if (!isTRUE(auto)) {
+    return(n_reps_total)
+  }
+  
+  usable <- function(x) is.numeric(x) && length(x) == 1L && is.finite(x)
+  if (!usable(n_reps_total) || !usable(signal_parameters)) {
+    return(n_reps_total)
+  }
+  if (!(is.character(model) && length(model) == 1L && model %in% models)) {
+    return(n_reps_total)
+  }
+  if (signal_parameters > max_signal_parameters) {
+    return(n_reps_total)
+  }
+  # Only ever increase.
+  if (n_reps_total >= boost_to) {
+    return(n_reps_total)
+  }
+  
+  message(sprintf(
+    paste0(
+      "n_reps_total raised from %s to %s: with %s signal parameters and ",
+      "model \"%s\", the search is budget-limited at the default. ",
+      "Set auto_n_reps_total = FALSE to keep %s."
+    ),
+    format(n_reps_total, scientific = FALSE),
+    format(boost_to, scientific = FALSE),
+    format(signal_parameters, scientific = FALSE),
+    model,
+    format(n_reps_total, scientific = FALSE)
+  ))
+  
+  boost_to
+}
 
 #' Minimum sample size for binary-outcome prediction models
 #'
@@ -270,6 +351,12 @@ make_data_args <- function(
 #'   Controls whether the minimum \eqn{n} is defined by the mean-based criterion
 #'   or the assurance-based criterion (with the assurance level \eqn{\delta}
 #'   controlled by the engine's defaults or additional arguments in `...`).
+#' @param auto_n_reps_total Logical. When `TRUE` (default), `n_reps_total` is
+#'   raised to 2000 for designs with at most 10 signal parameters fitted with
+#'   `"lm"`, `"glm"` or `"coxph"`, where the search is limited by simulation
+#'   budget rather than by the design. The rule only ever increases the budget,
+#'   and reports the change with a message. Set `FALSE` to use `n_reps_total`
+#'   exactly as supplied.
 #' @param ... Additional options passed to [simulate_custom()] (e.g., assurance
 #'   level \eqn{\delta}, per-iteration settings).
 #'
@@ -296,6 +383,7 @@ make_data_args <- function(
 #'   min_sample_size = 50,
 #'   max_sample_size = 1000,
 #'   n_reps_total = 1000,
+#'   auto_n_reps_total = FALSE,
 #'   test_n = 30000,
 #'   progress = FALSE
 #' )
@@ -305,7 +393,7 @@ make_data_args <- function(
 #' }
 #' @export
 simulate_binary <- function(
-  # Predictors
+    # Predictors
   signal_parameters,
   noise_parameters = 0,
   complexity = 1,
@@ -321,6 +409,7 @@ simulate_binary <- function(
   # Engine
   n_reps_total = 1000,
   mean_or_assurance = "assurance",
+  auto_n_reps_total = TRUE,
   ...
 ) {
   model <- check_pmsims_args(model, c("glm", "lasso", "ridge", "rf", "xgboost"))
@@ -335,10 +424,20 @@ simulate_binary <- function(
   validate_complexity(complexity)
   validate_outcome_prevalence(outcome_prevalence)
   dc <- resolve_data_control(data_control, complexity)
-
+  
+  # Shared budget rule; see resolve_n_reps_total(). Applied after validation so
+  # that bad inputs are still reported by the checks above, and before the
+  # engine call so that output$n_reps_total records what was actually used.
+  n_reps_total <- resolve_n_reps_total(
+    n_reps_total = n_reps_total,
+    signal_parameters = signal_parameters,
+    model = model,
+    auto = auto_n_reps_total
+  )
+  
   candidate_features <- signal_parameters + noise_parameters
   proportion_noise_features <- noise_parameters / candidate_features
-
+  
   # Tune the data-generating function under the SAME data configuration.
   tune_param <- call_tuner(
     binary_tuning,
@@ -351,7 +450,7 @@ simulate_binary <- function(
     ),
     dc = dc
   )
-
+  
   data_spec <- list(
     type = "binary",
     args = make_data_args(
@@ -366,11 +465,11 @@ simulate_binary <- function(
       )
     )
   )
-
+  
   data_function <- default_data_generators(data_spec)
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
-
+  
   simulate_custom_args <- utils::modifyList(
     list(
       metric_function = default_metric_generator(
@@ -389,31 +488,31 @@ simulate_binary <- function(
     ),
     list(...)
   )
-
+  
   suppressWarnings(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
-
+  
   # Put any internally-converted results back on the calibration slope scale.
   output <- restore_calibration_slope_scale(output, csse_plan)
-
+  
   metric_2 <- if (metric %in% c("csse", "calibration_slope")) {
     "auc"
   } else {
     "calibration_slope"
   }
-
+  
   test_n <- 30000
   metric_function_2 <- default_metric_generator(metric_2, data_function)
-
+  
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
   fit_2 <- model_function(data_2)
   metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
-
+  
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
-
+  
   output$signal_parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$complexity <- complexity
@@ -477,6 +576,7 @@ simulate_binary <- function(
 #'   min_sample_size = 50,
 #'   max_sample_size = 1000,
 #'   n_reps_total = 1000,
+#'   auto_n_reps_total = FALSE,
 #'   test_n = 30000,
 #'   progress = FALSE
 #' )
@@ -486,17 +586,18 @@ simulate_binary <- function(
 #' }
 #' @export
 simulate_continuous <- function(
-  signal_parameters,
-  noise_parameters = 0,
-  complexity = 1,
-  data_control = NULL,
-  maximum_achievable_rsquared,
-  model = c("lm", "lasso", "ridge", "rf", "xgboost"),
-  metric = "calibration_slope",
-  target_performance,
-  n_reps_total = 1000,
-  mean_or_assurance = "assurance",
-  ...
+    signal_parameters,
+    noise_parameters = 0,
+    complexity = 1,
+    data_control = NULL,
+    maximum_achievable_rsquared,
+    model = c("lm", "lasso", "ridge", "rf", "xgboost"),
+    metric = "calibration_slope",
+    target_performance,
+    n_reps_total = 1000,
+    mean_or_assurance = "assurance",
+    auto_n_reps_total = TRUE,
+    ...
 ) {
   model <- check_pmsims_args(model, c("lm", "lasso", "ridge", "rf", "xgboost"))
   validate_metric_constraints(
@@ -509,10 +610,20 @@ simulate_continuous <- function(
   csse_plan <- plan_internal_csse(metric, model, target_performance)
   validate_complexity(complexity)
   dc <- resolve_data_control(data_control, complexity)
-
+  
+  # Shared budget rule; see resolve_n_reps_total(). Applied after validation so
+  # that bad inputs are still reported by the checks above, and before the
+  # engine call so that output$n_reps_total records what was actually used.
+  n_reps_total <- resolve_n_reps_total(
+    n_reps_total = n_reps_total,
+    signal_parameters = signal_parameters,
+    model = model,
+    auto = auto_n_reps_total
+  )
+  
   candidate_features <- signal_parameters + noise_parameters
   proportion_noise_features <- noise_parameters / candidate_features
-
+  
   # Tune the data-generating function under the SAME data configuration.
   tune_param <- call_tuner(
     continuous_tuning,
@@ -524,7 +635,7 @@ simulate_continuous <- function(
     ),
     dc = dc
   )
-
+  
   data_spec <- list(
     type = "continuous",
     args = make_data_args(
@@ -535,11 +646,11 @@ simulate_continuous <- function(
       extra = list(beta_signal = get_param(tune_param, "beta_signal"))
     )
   )
-
+  
   data_function <- default_data_generators(data_spec)
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
-
+  
   simulate_custom_args <- utils::modifyList(
     list(
       metric_function = default_metric_generator(
@@ -558,31 +669,31 @@ simulate_continuous <- function(
     ),
     list(...)
   )
-
+  
   suppressWarnings(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
-
+  
   # Put any internally-converted results back on the calibration slope scale.
   output <- restore_calibration_slope_scale(output, csse_plan)
-
+  
   metric_2 <- if (metric %in% c("csse", "calibration_slope")) {
     "r2"
   } else {
     "calibration_slope"
   }
-
+  
   metric_function_2 <- default_metric_generator(metric_2, data_function)
-
+  
   test_n <- 30000
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
   fit_2 <- model_function(data_2)
   metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
-
+  
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
-
+  
   output$signal_parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
   output$complexity <- complexity
@@ -650,6 +761,7 @@ simulate_continuous <- function(
 #'   min_sample_size = 25,
 #'   max_sample_size = 500,
 #'   n_reps_total = 1000,
+#'   auto_n_reps_total = FALSE,
 #'   test_n = 30000,
 #'   progress = FALSE
 #' )
@@ -659,19 +771,20 @@ simulate_continuous <- function(
 #' }
 #' @export
 simulate_survival <- function(
-  signal_parameters,
-  noise_parameters = 0,
-  complexity = 1,
-  data_control = NULL,
-  maximum_achievable_cindex,
-  baseline_hazard = 1,
-  censoring_rate,
-  model = c("coxph", "lasso", "ridge", "rf", "xgboost"),
-  metric = "calibration_slope",
-  target_performance,
-  n_reps_total = 1000,
-  mean_or_assurance = "assurance",
-  ...
+    signal_parameters,
+    noise_parameters = 0,
+    complexity = 1,
+    data_control = NULL,
+    maximum_achievable_cindex,
+    baseline_hazard = 1,
+    censoring_rate,
+    model = c("coxph", "lasso", "ridge", "rf", "xgboost"),
+    metric = "calibration_slope",
+    target_performance,
+    n_reps_total = 1000,
+    mean_or_assurance = "assurance",
+    auto_n_reps_total = TRUE,
+    ...
 ) {
   model <- check_pmsims_args(
     model,
@@ -687,10 +800,20 @@ simulate_survival <- function(
   csse_plan <- plan_internal_csse(metric, model, target_performance)
   validate_complexity(complexity)
   dc <- resolve_data_control(data_control, complexity)
-
+  
+  # Shared budget rule; see resolve_n_reps_total(). Applied after validation so
+  # that bad inputs are still reported by the checks above, and before the
+  # engine call so that output$n_reps_total records what was actually used.
+  n_reps_total <- resolve_n_reps_total(
+    n_reps_total = n_reps_total,
+    signal_parameters = signal_parameters,
+    model = model,
+    auto = auto_n_reps_total
+  )
+  
   candidate_features <- signal_parameters + noise_parameters
   proportion_noise_features <- noise_parameters / candidate_features
-
+  
   # Tune the data-generating function under the SAME data configuration.
   tune_param <- call_tuner(
     survival_tuning,
@@ -703,7 +826,7 @@ simulate_survival <- function(
     ),
     dc = dc
   )
-
+  
   data_spec <- list(
     type = "survival",
     args = make_data_args(
@@ -718,11 +841,11 @@ simulate_survival <- function(
       )
     )
   )
-
+  
   data_function <- default_data_generators(data_spec)
   outcome_type <- attr(data_function, "outcome")
   model_function <- default_model_generators(outcome_type, model)
-
+  
   simulate_custom_args <- utils::modifyList(
     list(
       metric_function = default_metric_generator(
@@ -741,31 +864,31 @@ simulate_survival <- function(
     ),
     list(...)
   )
-
+  
   suppressWarnings(
     output <- do.call(simulate_custom, simulate_custom_args)
   )
-
+  
   # Put any internally-converted results back on the calibration slope scale.
   output <- restore_calibration_slope_scale(output, csse_plan)
-
+  
   metric_2 <- if (metric %in% c("csse", "calibration_slope")) {
     "cindex"
   } else {
     "calibration_slope"
   }
-
+  
   test_n <- 30000
   metric_function_2 <- default_metric_generator(metric_2, data_function)
-
+  
   data_2 <- data_function(output$min_n)
   test_data_2 <- data_function(test_n)
   fit_2 <- model_function(data_2)
   metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
-
+  
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
-
+  
   # Append input parameters
   output$signal_parameters <- signal_parameters
   output$noise_parameters <- noise_parameters
