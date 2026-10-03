@@ -260,7 +260,7 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
   if (model == "xgboost" || inherits(fit, "xgb.Booster")) {
     require_optional_packages("xgboost", "xgboost predictions")
     # xgboost predict expects a matrix or xgb.DMatrix
-    dmat <- xgboost::xgb.DMatrix(data = x_mat)
+    dmat <- xgboost::xgb.DMatrix(data = x_mat, nthread = pmsims_threads())
     preds <- stats::predict(fit, dmat)
 
     # For binary: preds are probabilities (objective = binary:logistic)

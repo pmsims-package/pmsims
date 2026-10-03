@@ -7,6 +7,22 @@
 #' @keywords internal
 
 # ---------------------------------------------------------------------------
+# Internal helper: xgboost parameters with the thread count set.
+#
+# xgboost uses every core unless told otherwise. Inside a simulation that runs
+# replicates in parallel, or on a busy machine, that oversubscribes the CPU so
+# badly that a fit of well under a second can take minutes. Use
+# pmsims_threads(), as for ranger, unless the caller set nthread. The fitted
+# model does not depend on the number of threads.
+# @keywords internal
+xgb_threaded_params <- function(params) {
+  if (is.null(params$nthread)) {
+    params$nthread <- pmsims_threads()
+  }
+  params
+}
+
+# ---------------------------------------------------------------------------
 # Internal helper: select nrounds for XGBoost via cross-validation.
 #
 # Uses xgb.cv with early stopping to find the optimal number of boosting
@@ -29,7 +45,7 @@
   early_stopping_rounds = 20L
 ) {
   cv <- xgboost::xgb.cv(
-    params = params,
+    params = xgb_threaded_params(params),
     data = dtrain,
     nrounds = nrounds_max,
     nfold = nfold,
@@ -124,10 +140,14 @@ default_models <- list(
       # small n, collapsing the calibration slope well below 1.
       x <- as.matrix(d[, -1, drop = FALSE])
       y <- as.numeric(d[, 1])
-      dtrain <- xgboost::xgb.DMatrix(data = x, label = y)
+      dtrain <- xgboost::xgb.DMatrix(
+        data = x,
+        label = y,
+        nthread = pmsims_threads()
+      )
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
-        params = params,
+        params = xgb_threaded_params(params),
         data = dtrain,
         nrounds = best_nrounds,
         verbose = 0
@@ -205,10 +225,14 @@ default_models <- list(
       # on the number of rounds.
       x <- as.matrix(d[, -1, drop = FALSE])
       y <- as.numeric(d[, 1])
-      dtrain <- xgboost::xgb.DMatrix(data = x, label = y)
+      dtrain <- xgboost::xgb.DMatrix(
+        data = x,
+        label = y,
+        nthread = pmsims_threads()
+      )
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
-        params = params,
+        params = xgb_threaded_params(params),
         data = dtrain,
         nrounds = best_nrounds,
         verbose = 0
@@ -304,10 +328,14 @@ default_models <- list(
       # label = time / weight = event encoding silently down-weighted censored
       # rows to zero instead of treating them as censored.
       lab <- ifelse(d$event == 1, label_time, -label_time)
-      dtrain <- xgboost::xgb.DMatrix(data = x, label = lab)
+      dtrain <- xgboost::xgb.DMatrix(
+        data = x,
+        label = lab,
+        nthread = pmsims_threads()
+      )
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
-        params = params,
+        params = xgb_threaded_params(params),
         data = dtrain,
         nrounds = best_nrounds,
         verbose = 0
