@@ -126,9 +126,9 @@ build_pmsims_items <- function(x, verbose = FALSE) {
   metric_2 <- x$metric_2
   target <- x$target_performance %||% x$minimum_acceptable_performance
   min_n <- x$min_n
-  # min_n and perf_n hold a diagnostic string when the target could not be
-  # reached. That message belongs on the sample-size line, not repeated as a
-  # performance estimate.
+  # min_n and perf_n are NA when no sample size was found (results from older
+  # versions hold a diagnostic string instead); only finite values are shown
+  # as estimates.
   numeric_only <- function(v) {
     if (is.numeric(v) && length(v) == 1L && is.finite(v)) v else NULL
   }
@@ -323,8 +323,8 @@ build_pmsims_items <- function(x, verbose = FALSE) {
 
   # --- Results ---------------------------------------------------------------
 
-  # min_n is a diagnostic string when the target could not be reached, so it is
-  # printed as it stands rather than formatted as a count.
+  # Results from older versions hold a diagnostic string when no sample size
+  # was found; it is printed as it stands.
   min_n_text <- if (has_n) {
     pmsims_fmt_int(min_n)
   } else if (is.character(min_n)) {

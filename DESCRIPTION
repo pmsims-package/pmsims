@@ -63,8 +63,6 @@ Imports:
 Suggests:
     covr,
     DescTools,
-    doParallel,
-    foreach,
     glmnet,
     knitr,
     mlbench,

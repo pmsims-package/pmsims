@@ -7,22 +7,6 @@
 #' @keywords internal
 
 # ---------------------------------------------------------------------------
-# Internal helper: xgboost parameters with the thread count set.
-#
-# xgboost uses every core unless told otherwise. Inside a simulation that runs
-# replicates in parallel, or on a busy machine, that oversubscribes the CPU so
-# badly that a fit of well under a second can take minutes. Use
-# pmsims_threads(), as for ranger, unless the caller set nthread. The fitted
-# model does not depend on the number of threads.
-# @keywords internal
-xgb_threaded_params <- function(params) {
-  if (is.null(params$nthread)) {
-    params$nthread <- pmsims_threads()
-  }
-  params
-}
-
-# ---------------------------------------------------------------------------
 # Internal helper: select nrounds for XGBoost via cross-validation.
 #
 # Uses xgb.cv with early stopping to find the optimal number of boosting
@@ -62,6 +46,21 @@ xgb_threaded_params <- function(params) {
     best <- nrounds_max
   }
   as.integer(best)
+}
+
+# ---------------------------------------------------------------------------
+# Internal helper: xgboost parameters with the thread count set.
+#
+# xgboost uses every core unless told otherwise. Inside a simulation that runs
+# replicates in parallel, or on a busy machine, that oversubscribes the CPU so
+# badly that a fit of well under a second can take minutes. Use
+# pmsims_threads(), as for ranger, unless the caller set nthread. The fitted
+# model does not depend on the number of threads.
+xgb_threaded_params <- function(params) {
+  if (is.null(params$nthread)) {
+    params$nthread <- pmsims_threads()
+  }
+  params
 }
 # ---------------------------------------------------------------------------
 
