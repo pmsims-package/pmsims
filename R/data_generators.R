@@ -524,8 +524,23 @@ draw_correlated_predictors <- function(
   }
 
   # Rows of Z %*% U, with U = chol(R) upper triangular, have covariance
-  # t(U) %*% U = R.
-  Z <- matrix(stats::rnorm(n * p), nrow = n, ncol = p) %*% chol(cor_mat)
+  # t(U) %*% U = R. For an equicorrelation matrix each row of U is constant to
+  # the right of the diagonal (U[i, j] = U[i, p] for j > i), so column j of
+  # Z %*% U is a running sum over the earlier columns of Z plus U[j, j] times
+  # its own: O(n p) work instead of the matrix product's O(n p^2), which for
+  # 80 predictors was most of the time spent drawing a 30,000-row test set.
+  # The terms are added in the same order as in the matrix product, but
+  # chol() can return rows that differ in the last bit, so the result is
+  # equal to the matrix product to rounding error (bit-identical when the
+  # rows are exactly constant, as for up to about 10 predictors).
+  U <- chol(cor_mat)
+  Z <- matrix(stats::rnorm(n * p), nrow = n, ncol = p)
+  running <- numeric(n)
+  for (j in seq_len(p)) {
+    z_j <- Z[, j]
+    Z[, j] <- running + U[j, j] * z_j
+    running <- running + U[j, p] * z_j # not needed after the last column
+  }
   normal_to_family(Z, family, binary_prevalence)
 }
 

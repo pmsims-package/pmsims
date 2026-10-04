@@ -781,13 +781,22 @@ secondary_metric_at <- function(output, metric_function_2, reps = 10L) {
   if (length(n) != 1L || !is.finite(n)) {
     return(NA_real_)
   }
+  # Same cores as the search; each replicate has its own stream, so the
+  # value does not depend on them.
+  cores <- output$cores %||% 1L
+  if (cores > 1L) {
+    old_threads <- options(pmsims.threads = 1L)
+    on.exit(options(old_threads), add = TRUE)
+  }
   evaluator <- new_evaluator(
     data_function = output$data_function,
     model_function = output$model_function,
     metric_function = metric_function_2,
     test_n = output$test_n,
     value_on_error = NA_real_,
-    streams = new_simulation_streams(output$rng_base_seed)
+    streams = new_simulation_streams(output$rng_base_seed),
+    parallel = cores > 1L,
+    cores = cores
   )
   mean(evaluator$batch(n, reps, "secondary"), na.rm = TRUE)
 }

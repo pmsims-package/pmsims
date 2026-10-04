@@ -57,7 +57,7 @@ Imports:
     parallel,
     pROC,
     stats,
-    survival,
+    survival (>= 3.5-0),
     timeROC,
     utils
 Suggests:

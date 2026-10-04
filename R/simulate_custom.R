@@ -421,6 +421,9 @@ simulate_custom <- function(
     # Searches restarted after a Gaussian-process surrogate failure (mlpwr engines).
     gp_restarts = output$gp_restarts %||% 0L,
     rng_base_seed = streams$base_seed,
+    # So that follow-up simulations (e.g. the wrappers' secondary metric)
+    # can use the same number of cores.
+    cores = cores,
     mean_or_assurance = mean_or_assurance
   )
   if (!is.null(output$history)) {

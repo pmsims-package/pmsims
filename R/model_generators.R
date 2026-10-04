@@ -142,7 +142,7 @@ default_models <- list(
       dtrain <- xgboost::xgb.DMatrix(
         data = x,
         label = y,
-        nthread = pmsims_threads()
+        nthread = xgb_threaded_params(params)$nthread
       )
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
@@ -227,7 +227,7 @@ default_models <- list(
       dtrain <- xgboost::xgb.DMatrix(
         data = x,
         label = y,
-        nthread = pmsims_threads()
+        nthread = xgb_threaded_params(params)$nthread
       )
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
@@ -291,7 +291,7 @@ default_models <- list(
         importance = "none",
         save.memory = TRUE,
         keep.inbag = FALSE,
-        num.threads = 2,
+        num.threads = pmsims_threads(),
         write.forest = TRUE
       )
 
@@ -330,7 +330,7 @@ default_models <- list(
       dtrain <- xgboost::xgb.DMatrix(
         data = x,
         label = lab,
-        nthread = pmsims_threads()
+        nthread = xgb_threaded_params(params)$nthread
       )
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
