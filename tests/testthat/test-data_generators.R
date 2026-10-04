@@ -192,7 +192,9 @@ test_that("correlated binary predictors match the Gaussian copula", {
   phi_theory <- function(p) {
     c <- stats::qnorm(1 - p)
     p11 <- stats::integrate(
-      function(z) stats::dnorm(z) * stats::pnorm((rho * z - c) / sqrt(1 - rho^2)),
+      function(z) {
+        stats::dnorm(z) * stats::pnorm((rho * z - c) / sqrt(1 - rho^2))
+      },
       c,
       Inf
     )$value

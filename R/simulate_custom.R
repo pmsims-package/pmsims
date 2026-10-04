@@ -436,8 +436,12 @@ check_result <- function(
   search <- output$search %||% list()
   min_n <- suppressWarnings(as.numeric(output$min_n))
   perf_n <- suppressWarnings(as.numeric(output$perf_n))
-  if (length(min_n) != 1L) min_n <- NA_real_
-  if (length(perf_n) != 1L) perf_n <- NA_real_
+  if (length(min_n) != 1L) {
+    min_n <- NA_real_
+  }
+  if (length(perf_n) != 1L) {
+    perf_n <- NA_real_
+  }
 
   status <- search$status
   status_message <- search$status_message
@@ -482,7 +486,9 @@ check_result <- function(
 
   if (!identical(status, "ok")) {
     min_n <- if (identical(status, "not_verified")) min_n else NA_real_
-    if (!identical(status, "not_verified")) perf_n <- NA_real_
+    if (!identical(status, "not_verified")) {
+      perf_n <- NA_real_
+    }
     warning(status_message, call. = FALSE)
   } else if (!is.na(search$at_bound %||% NA)) {
     cli::cli_alert_info(paste(

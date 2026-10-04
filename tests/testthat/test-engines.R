@@ -390,7 +390,9 @@ test_that("find_design_with_restarts restarts after a GP surrogate failure", {
   calls <- 0L
   local_mocked_bindings(run_find_design = function(args) {
     calls <<- calls + 1L
-    if (calls == 1L) gp_failure()
+    if (calls == 1L) {
+      gp_failure()
+    }
     list(final = list(design = 123))
   })
   expect_message(
@@ -429,6 +431,8 @@ test_that("find_design_with_restarts gives up after max_attempts", {
 })
 
 test_that("a successful first search records zero restarts", {
-  local_mocked_bindings(run_find_design = function(args) list(final = list(design = 1)))
+  local_mocked_bindings(run_find_design = function(args) {
+    list(final = list(design = 1))
+  })
   expect_equal(attr(find_design_with_restarts(list()), "gp_restarts"), 0L)
 })
