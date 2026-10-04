@@ -54,6 +54,7 @@ Imports:
     ggplot2,
     lifecycle,
     mlpwr,
+    parallel,
     pROC,
     stats,
     survival,

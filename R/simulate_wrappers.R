@@ -395,9 +395,7 @@ simulate_binary <- function(
     list(...)
   )
 
-  suppressWarnings(
-    output <- do.call(simulate_custom, simulate_custom_args)
-  )
+  output <- do.call(simulate_custom, simulate_custom_args)
 
   # Put any internally-converted results back on the calibration slope scale.
   output <- restore_calibration_slope_scale(output, csse_plan)
@@ -408,13 +406,9 @@ simulate_binary <- function(
     "calibration_slope"
   }
 
-  test_n <- 30000
   metric_function_2 <- default_metric_generator(metric_2, data_function)
 
-  data_2 <- data_function(output$min_n)
-  test_data_2 <- data_function(test_n)
-  fit_2 <- model_function(data_2)
-  metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
+  metric_2_at_n <- secondary_metric_at(output, metric_function_2)
 
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
@@ -564,9 +558,7 @@ simulate_continuous <- function(
     list(...)
   )
 
-  suppressWarnings(
-    output <- do.call(simulate_custom, simulate_custom_args)
-  )
+  output <- do.call(simulate_custom, simulate_custom_args)
 
   # Put any internally-converted results back on the calibration slope scale.
   output <- restore_calibration_slope_scale(output, csse_plan)
@@ -579,11 +571,7 @@ simulate_continuous <- function(
 
   metric_function_2 <- default_metric_generator(metric_2, data_function)
 
-  test_n <- 30000
-  data_2 <- data_function(output$min_n)
-  test_data_2 <- data_function(test_n)
-  fit_2 <- model_function(data_2)
-  metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
+  metric_2_at_n <- secondary_metric_at(output, metric_function_2)
 
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
@@ -747,9 +735,7 @@ simulate_survival <- function(
     list(...)
   )
 
-  suppressWarnings(
-    output <- do.call(simulate_custom, simulate_custom_args)
-  )
+  output <- do.call(simulate_custom, simulate_custom_args)
 
   # Put any internally-converted results back on the calibration slope scale.
   output <- restore_calibration_slope_scale(output, csse_plan)
@@ -760,13 +746,9 @@ simulate_survival <- function(
     "calibration_slope"
   }
 
-  test_n <- 30000
   metric_function_2 <- default_metric_generator(metric_2, data_function)
 
-  data_2 <- data_function(output$min_n)
-  test_data_2 <- data_function(test_n)
-  fit_2 <- model_function(data_2)
-  metric_2_at_n <- metric_function_2(test_data_2, fit_2, model)
+  metric_2_at_n <- secondary_metric_at(output, metric_function_2)
 
   output$metric_2_at_n <- metric_2_at_n
   output$metric_2 <- metric_2
@@ -790,4 +772,22 @@ simulate_survival <- function(
   output$mean_or_assurance <- mean_or_assurance
   class(output) <- "pmsims"
   output
+}
+
+# Secondary metric at the returned sample size, averaged over `reps`
+# replicates on their own random streams. NA when there is no sample size.
+secondary_metric_at <- function(output, metric_function_2, reps = 10L) {
+  n <- suppressWarnings(as.numeric(output$min_n))
+  if (length(n) != 1L || !is.finite(n)) {
+    return(NA_real_)
+  }
+  evaluator <- new_evaluator(
+    data_function = output$data_function,
+    model_function = output$model_function,
+    metric_function = metric_function_2,
+    test_n = output$test_n,
+    value_on_error = NA_real_,
+    streams = new_simulation_streams(output$rng_base_seed)
+  )
+  mean(evaluator$batch(n, reps, "secondary"), na.rm = TRUE)
 }
