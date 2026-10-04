@@ -908,7 +908,10 @@ answer_flags <- function(fit, pts, n_star, ci, reps, target) {
   se_star <- p$se[nearest] * sqrt(p$reps[nearest] / reps)
   iso_n <- isotonic_crossing(p$n, p$est, p$reps, target)
   list(
-    near_ceiling = isTRUE(gain < 2 * se_star),
+    # Only where the answer is a crossing: a curve already above the target at
+    # the lower limit is flat there for another reason.
+    near_ceiling = isTRUE(gain < 2 * se_star) &&
+      isTRUE(curve_value(fit, n_star) - target < 2 * se_star),
     poorly_determined = !is.finite(ci[2]) ||
       isTRUE(ci[2] / max(ci[1], 1) > 2),
     gain_per_doubling = gain,
