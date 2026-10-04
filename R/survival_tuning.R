@@ -149,9 +149,13 @@ survival_tuning <- function(
     ev <- as.integer(Tt <= cut)
     tm <- pmin(Tt, cut)
     # reverse = TRUE: larger lp = higher hazard = shorter survival
-    survival::concordance(
-      survival::Surv(tm, ev) ~ lp,
-      reverse = TRUE
+    # The concordance only; concordance() would also compute its standard
+    # error. The value is identical.
+    survival::concordancefit(
+      survival::Surv(tm, ev),
+      lp,
+      reverse = TRUE,
+      std.err = FALSE
     )$concordance
   }
 
@@ -212,9 +216,11 @@ survival_tuning <- function(
     nonlinear_strength = nonlinear_strength
   )
   event_rate <- mean(val$event)
-  cindex <- survival::concordance(
-    survival::Surv(val$time, val$event) ~ lpv,
-    reverse = TRUE
+  cindex <- survival::concordancefit(
+    survival::Surv(val$time, val$event),
+    lpv,
+    reverse = TRUE,
+    std.err = FALSE
   )$concordance
 
   if (
