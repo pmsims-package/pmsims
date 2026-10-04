@@ -78,6 +78,8 @@
 #'       clearly below the target, so `min_n` is likely too small.}
 #'     \item{`"not_bracketed"`}{No sample size up to `max_n` met the target,
 #'       or the search returned no sample size.}
+#'     \item{`"unreachable"`}{With `method = "curve"`: the learning curve
+#'       levels off below the target, so no sample size reaches it.}
 #'     \item{`"replicates_failed"`}{At least half the simulation replicates
 #'       failed to fit or score the model, so no sample size was estimated.}
 #'   }
