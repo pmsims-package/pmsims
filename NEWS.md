@@ -11,7 +11,9 @@
   (`diagnostics$curve$n_ci`), checked against a shape-free fit
   (`diagnostics$crosscheck_n`); targets close to the best achievable
   performance are flagged. Targets that cannot be reached stop with status
-  `"unreachable"` and a message saying what is achievable.
+  `"unreachable"` and a message saying what is achievable; when 20% or more
+  of replicates fail at every sample size tried, so that no curve can be
+  fitted, it stops with status `"replicates_failed"`.
 - `plot()` shows the learning curve, the target and the answer for
   `method = "curve"`; `live_plot = TRUE` redraws it during the search.
 - `cores` runs the replicates of each batch in parallel; results are the same

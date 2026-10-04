@@ -86,8 +86,9 @@ evaluations, and summary metrics).
 \description{
 Compute the minimum sample size required to develop a prediction model with a
 \strong{continuous} outcome. This wraps the same simulation engine as
-\code{\link[=simulate_binary]{simulate_binary()}}, combining bisection search with Gaussian-process
-learning-curve modelling. From user inputs (maximum achievable performance, target
+\code{\link[=simulate_binary]{simulate_binary()}}: by default a learning curve fitted to every simulated
+replicate (\code{method = "curve"}), or the Gaussian-process search with
+\code{method = "mlpwr"}. From user inputs (maximum achievable performance, target
 performance, etc.) it constructs a
 data-generating function, model-fitting function, and metric function, then
 searches for the smallest \eqn{n} meeting the chosen criterion.

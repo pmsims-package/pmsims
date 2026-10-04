@@ -1,7 +1,8 @@
 #' Plot sample-size learning curves for `pmsims` outputs
 #'
-#' Produces a ggplot showing the simulated points and the fitted
-#' Gaussian-process learning curve stored inside a `pmsims` object.
+#' Produces a ggplot showing the simulated points and the fitted learning
+#' curve (the learning-curve fit for `method = "curve"`, the Gaussian-process
+#' surrogate for the mlpwr engines) stored inside a `pmsims` object.
 #' Optionally returns the underlying data instead of drawing the plot.
 #'
 #' @param x A `pmsims` object returned by `simulate_binary()`,
@@ -14,8 +15,12 @@
 #' @param ... Currently unused.
 #'
 #' @return Invisibly returns the `ggplot` object when `plot = TRUE`. When
-#'   `plot = FALSE`, returns a list with two data frames: `observed_data`
-#'   (simulated points) and `predicted_data` (Gaussian-process predictions).
+#'   `plot = FALSE`, returns a list with two data frames: for the mlpwr
+#'   engines, `observed_data` (simulated points) and `predicted_data`
+#'   (Gaussian-process predictions); for `method = "curve"`, `observed_data`
+#'   (the criterion at each simulated sample size, with replicates, standard
+#'   error and a +/- 2 SE interval) and `fitted_curve` (the fitted learning
+#'   curve, or `NULL` when none was fitted).
 #' @keywords internal
 #' @importFrom ggplot2 .data
 #' @export

@@ -78,8 +78,8 @@ candidate sample size.}
 crosses the target, see Details), \code{"mlpwr"} (adaptive start values, then
 mlpwr's Gaussian-process search), \code{"bisection"} or \code{"mlpwr-bs"}.}
 
-\item{progress}{Logical flag controlling whether the \code{mlpwr} progress bar is
-shown for \code{mlpwr}-based methods.}
+\item{progress}{Logical flag controlling whether a progress bar is shown:
+the curve engine's own, or mlpwr's for the \code{mlpwr}-based methods.}
 
 \item{verbose}{Logical flag controlling engine-specific diagnostic output
 when supported. For the bisection engine, setting \code{verbose = TRUE} stores

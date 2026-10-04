@@ -48,7 +48,8 @@ metric_maximum <- function(metric) {
 # Points where this share of replicates or more failed are left out of the fit.
 curve_max_failed <- 0.2
 
-curve_c_grid <- function() exp(seq(log(0.25), log(2.5), length.out = 40))
+# Grid of exponents c searched by fit_learning_curve().
+curve_c_grid <- exp(seq(log(0.25), log(2.5), length.out = 40))
 
 #' Fit the learning curve C(n) = a - b n^(-c)
 #'
@@ -58,13 +59,7 @@ curve_c_grid <- function() exp(seq(log(0.25), log(2.5), length.out = 40))
 #' @return list(a, b, c, rss), or NULL with fewer than two distinct n.
 #' @keywords internal
 #' @noRd
-fit_learning_curve <- function(
-  n,
-  est,
-  w,
-  a_max = Inf,
-  c_grid = curve_c_grid()
-) {
+fit_learning_curve <- function(n, est, w, a_max = Inf) {
   ok <- is.finite(n) & is.finite(est) & is.finite(w) & w > 0
   n <- n[ok]
   est <- est[ok]
@@ -75,7 +70,7 @@ fit_learning_curve <- function(
   sw <- sum(w)
   ym <- sum(w * est) / sw
   best <- NULL
-  for (cc in c_grid) {
+  for (cc in curve_c_grid) {
     x <- n^(-cc)
     xm <- sum(w * x) / sw
     sxx <- sum(w * (x - xm)^2)
@@ -113,7 +108,20 @@ curve_crossing <- function(fit, target) {
 
 #' Learning-curve engine
 #'
-#' @inheritParams calculate_mlpwr
+#' @inheritParams simulate_custom
+#' @param se_final Not used: this engine stops when the replicate budget is
+#'   spent, and reports a bootstrap interval for its answer in
+#'   `diagnostics$curve$n_ci`.
+#' @param progress Logical; show a progress bar over the replicate budget.
+#' @param value_on_error Numeric value recorded for a replicate whose fit or
+#'   metric fails.
+#' @param evaluator Optional evaluator from `new_evaluator()`, shared by every
+#'   stage of the search. Created from the data, model and metric functions
+#'   when `NULL`.
+#' @param max_n Largest sample size the search may try when no
+#'   `min_sample_size` and `max_sample_size` are given.
+#' @param parallel,cores Run the replicates of each batch in parallel with
+#'   [parallel::mclapply()]; used only when `evaluator` is `NULL`.
 #' @param min_n_floor Smallest sample size the search may evaluate. Defaults to
 #'   `max(10, p + 5)` for `p` predictors.
 #' @param boot_reps Number of bootstrap refits for the interval of the answer.
@@ -121,9 +129,7 @@ curve_crossing <- function(fit, target) {
 #'   heuristic start value.
 #' @param live_plot Redraw the learning curve after each batch of replicates
 #'   (interactive sessions with a graphics device only).
-#' @details `se_final` is not used: this engine stops when the replicate
-#'   budget is spent, and reports a bootstrap interval for its answer in
-#'   `diagnostics$curve$n_ci`.
+#' @param ... Unused.
 #' @keywords internal
 calculate_curve <- function(
   test_n,
@@ -136,7 +142,6 @@ calculate_curve <- function(
   c_statistic,
   mean_or_assurance,
   progress = TRUE,
-  verbose = FALSE,
   data_function,
   model_function,
   metric_function,
@@ -162,7 +167,6 @@ calculate_curve <- function(
       cores = cores
     )
   }
-  crit <- criterion_function(mean_or_assurance)
   # For the curve fit, the 20th percentile of each point is estimated with the
   # approximately median-unbiased estimator (type 8). The default (type 7) is
   # optimistic for the few dozen replicates at a point (about +0.06 SD at 20
@@ -188,6 +192,9 @@ calculate_curve <- function(
   hi_limit <- if (user_bounds) max_sample_size else max_n
   hi_name <- if (user_bounds) "max_sample_size" else "max_n"
   clamp <- function(n) round(min(hi_limit, max(lo_limit, n)))
+  # Replicates for a precise point: what the largest n is topped up to before
+  # a stopping rule fires, and the batch the answer's flags are judged for.
+  reps_precise <- 4L * as.integer(n_reps_per)
 
   # ---- data -----------------------------------------------------------------
   store <- new.env(parent = emptyenv())
@@ -323,6 +330,7 @@ calculate_curve <- function(
     } else {
       rep(stats::median(sd_rep[use], na.rm = TRUE), length(sy$n))
     }
+    # No point with a usable spread (e.g. one replicate each): equal weights.
     sd_hat[!is.finite(sd_hat)] <- 1
     # SE of the criterion: inflate x sd / sqrt(reps). For the mean the factor
     # is 1. For the 20th percentile it is about 1.4 for normal values but
@@ -384,6 +392,8 @@ calculate_curve <- function(
     if (length(ratios) < 3L) 1.4 else stats::median(ratios)
   }
 
+  # Weights by distance from the predicted crossing: Gaussian on log n with an
+  # SD of log(3), so a point 3x away keeps about 60% of its weight.
   kernel <- function(n, near) {
     if (is.null(near) || !is.finite(near) || near <= 0) {
       return(rep(1, length(n)))
@@ -396,10 +406,12 @@ calculate_curve <- function(
   }
 
   # Bootstrap: resample replicates within each n and refit with the same
-  # weights.
+  # weights. The stream is keyed by the replicates used so far, offset by 1e6
+  # to keep it apart from the bootstrap streams keyed by a sample size
+  # (quantile_se_factor() and the verification).
   bootstrap_fit <- function(pts, near, B = boot_reps) {
     sy <- sorted_y()
-    out <- with_stream(evaluator$streams, "bootstrap", used + 1e6, 1L, {
+    with_stream(evaluator$streams, "bootstrap", used + 1e6, 1L, {
       t(vapply(
         seq_len(B),
         function(b) {
@@ -419,8 +431,6 @@ calculate_curve <- function(
         numeric(2)
       ))
     })
-    attr(out, "target") <- target
-    out
   }
 
   # Performance values in messages: on the metric's own scale, except CSSE
@@ -445,7 +455,10 @@ calculate_curve <- function(
       status = kind,
       message = paste0(
         if (kind == "unreachable") {
-          "The target looks unreachable: the fitted learning curve levels off below it."
+          paste(
+            "The target looks unreachable: the fitted learning curve levels",
+            "off below it."
+          )
         } else if (any(pts$est >= target)) {
           paste(
             "Some sample sizes searched met the target, but the fitted",
@@ -501,8 +514,7 @@ calculate_curve <- function(
     )
   }
 
-  # Stopping rules while no sample size has reached the target (shared by
-  # the pilot and the single-stage GP loop):
+  # Stopping rules for the pilot while no sample size has reached the target:
   # - out of reach: clearly below target at the largest n so far, and either
   #   the curve's ceiling is clearly below the target, or 97.5% of bootstrap
   #   refits put the crossing beyond max_n (or never). Reach is judged against
@@ -515,12 +527,17 @@ calculate_curve <- function(
   # Returns NULL to continue, or list(status, reason).
   reach_check <- function(pts, f, nxt) {
     decide <- function(pts, f) {
-      if (sum(pts$usable) < 4L || is.null(f) || !clearly_below_at_top(pts)) {
+      if (
+        sum(pts$usable) < 4L ||
+          is.null(f) ||
+          !clearly_below_at_top(pts) ||
+          !top_is_flat(pts)
+      ) {
         return(NULL)
       }
       bf <- bootstrap_fit(pts, NULL, B = 100L)
       a_ub <- stats::quantile(bf[, "a"], 0.975, na.rm = TRUE, names = FALSE)
-      if (isTRUE(a_ub < target) && top_is_flat(pts)) {
+      if (isTRUE(a_ub < target)) {
         return(list(
           reason = "ceiling_below_target",
           status = stop_status(
@@ -534,10 +551,7 @@ calculate_curve <- function(
           )
         ))
       }
-      if (
-        isTRUE(mean(bf[, "n"] > hi_limit, na.rm = TRUE) > 0.975) &&
-          top_is_flat(pts)
-      ) {
+      if (isTRUE(mean(bf[, "n"] > hi_limit, na.rm = TRUE) > 0.975)) {
         return(list(
           reason = "beyond_max_n",
           status = stop_status(
@@ -557,7 +571,6 @@ calculate_curve <- function(
       }
       if (
         nxt > max(32 * first_n, 5e4) &&
-          top_is_flat(pts) &&
           isTRUE(stats::median(bf[, "n"], na.rm = TRUE) > hi_limit)
       ) {
         return(list(
@@ -602,9 +615,8 @@ calculate_curve <- function(
   # returns the refreshed summaries.
   confirm_top <- function(pts) {
     it <- which.max(pts$n)
-    want <- 4L * as.integer(n_reps_per)
-    if (pts$reps[it] < want && used < n_reps_total) {
-      add(pts$n[it], want - pts$reps[it])
+    if (pts$reps[it] < reps_precise && used < n_reps_total) {
+      add(pts$n[it], reps_precise - pts$reps[it])
       pts <- summarise_points()
     }
     pts
@@ -668,7 +680,7 @@ calculate_curve <- function(
     if (above && below) {
       break
     }
-    if (used >= pilot_budget || used >= n_reps_total) {
+    if (used >= pilot_budget) {
       pilot_reason <- "budget"
       break
     }
@@ -680,11 +692,6 @@ calculate_curve <- function(
       }
       f <- if (sum(pts$usable) >= 3L) fit_points(pts) else NULL
       pred <- curve_crossing(f, target)
-      # Out of reach: clearly below target at the largest n so far, and either
-      # the curve's ceiling is clearly below the target, or 97.5% of bootstrap
-      # refits put the crossing beyond max_n (or never). Reach is judged
-      # against max_n, not against how far the pilot has got: a pilot that
-      # started far below the answer is still far from it.
       nxt <- if (is.finite(pred) && pred > top) {
         min(4 * top, max(2 * top, 1.25 * pred))
       } else {
@@ -710,8 +717,7 @@ calculate_curve <- function(
   pts <- summarise_points()
 
   if (is.null(status) && identical(pilot_reason, "max_n_reached")) {
-    top <- which.max(pts$n)
-    if (pts$est[top] + 2 * pts$se[top] < target) {
+    if (clearly_below_at_top(pts)) {
       status <- stop_status(
         pts,
         "not_bracketed",
@@ -726,7 +732,6 @@ calculate_curve <- function(
       pts,
       fit_points(pts),
       NA_real_,
-      crit,
       status,
       pilot_reason,
       NULL,
@@ -746,6 +751,8 @@ calculate_curve <- function(
 
   # ---- refinement -----------------------------------------------------------
   cli::cli_alert_info("Refining the learning curve near the target...")
+  # Batches cycle through the predicted crossing and 0.8x and 1.25x of it, so
+  # the points around the answer also fix the curve's local slope.
   factors <- c(1, 0.8, 1.25)
   step <- 0L
   near <- NA_real_
@@ -787,7 +794,6 @@ calculate_curve <- function(
         pts,
         NULL,
         min(met),
-        crit,
         NULL,
         pilot_reason,
         NULL,
@@ -826,7 +832,6 @@ calculate_curve <- function(
       pts,
       f,
       NA_real_,
-      crit,
       status,
       "final_fit_below_target",
       ci,
@@ -854,7 +859,6 @@ calculate_curve <- function(
       pts,
       f,
       NA_real_,
-      crit,
       status,
       "crossing_beyond_limit",
       ci,
@@ -867,7 +871,6 @@ calculate_curve <- function(
     pts,
     f,
     min_n,
-    crit,
     NULL,
     pilot_reason,
     ci,
@@ -882,7 +885,7 @@ calculate_curve <- function(
     pts,
     max(n_star, lo_limit),
     ci,
-    4L * n_reps_per,
+    reps_precise,
     target
   )
   out$search[names(flags)] <- flags
@@ -891,7 +894,7 @@ calculate_curve <- function(
 
 # Diagnostics for the answer n_star:
 # - near_ceiling: doubling n from the answer gains less than two standard
-#   errors of the criterion (for a batch of `reps` replicates), so the curve
+#   errors of the criterion (for a point of `reps` replicates), so the curve
 #   barely rises there and n is poorly determined by the data (ridge p5: the
 #   criterion is at the target from n = 40,000 to 150,000);
 # - poorly_determined: the interval for the answer spans more than 2x;
@@ -906,8 +909,8 @@ answer_flags <- function(fit, pts, n_star, ci, reps, target) {
   iso_n <- isotonic_crossing(p$n, p$est, p$reps, target)
   list(
     near_ceiling = isTRUE(gain < 2 * se_star),
-    poorly_determined = length(ci) == 2L &&
-      (!is.finite(ci[2]) || isTRUE(ci[2] / max(ci[1], 1) > 2)),
+    poorly_determined = !is.finite(ci[2]) ||
+      isTRUE(ci[2] / max(ci[1], 1) > 2),
     gain_per_doubling = gain,
     crosscheck_n = iso_n,
     crosscheck_disagrees = is.finite(iso_n) &&
@@ -960,7 +963,6 @@ curve_output <- function(
   pts,
   fit,
   min_n,
-  crit,
   status,
   pilot_reason,
   ci,
@@ -978,11 +980,6 @@ curve_output <- function(
     results[i, seq_along(dat[[i]]$y)] <- dat[[i]]$y
   }
 
-  fitfun <- if (!is.null(fit)) {
-    function(x) curve_value(fit, as.numeric(x))
-  } else {
-    NULL
-  }
   perf_n <- if (!is.null(fit) && is.finite(min_n)) {
     curve_value(fit, min_n)
   } else {
@@ -1001,16 +998,6 @@ curve_output <- function(
     summaries = get_summaries(results),
     min_n = min_n,
     perf_n = perf_n,
-    mlpwr_ds = if (!is.null(fit)) {
-      list(
-        data = dat,
-        fit = list(fitfun = fitfun, fitfun.sd = NULL, badfit = FALSE),
-        boundaries = list(n = range(ns)),
-        final = list(design = c(n = min_n), power = perf_n),
-        aggregate_fun = crit
-      )
-    },
-    gp_restarts = 0L,
     search = list(
       status = status$status,
       status_message = status$message,
@@ -1019,10 +1006,6 @@ curve_output <- function(
       adaptive_stop_reason = pilot_reason,
       bounds = range(ns),
       at_bound = at_bound,
-      mlpwr_warnings = character(0),
-      near_ceiling = FALSE,
-      poorly_determined = FALSE,
-      crosscheck_disagrees = FALSE,
       curve = if (!is.null(fit)) {
         list(
           a = fit$a,

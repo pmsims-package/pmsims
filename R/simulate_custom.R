@@ -46,8 +46,8 @@
 #'   (default; fits a learning curve to all replicates and searches where it
 #'   crosses the target, see Details), `"mlpwr"` (adaptive start values, then
 #'   mlpwr's Gaussian-process search), `"bisection"` or `"mlpwr-bs"`.
-#' @param progress Logical flag controlling whether the `mlpwr` progress bar is
-#'   shown for `mlpwr`-based methods.
+#' @param progress Logical flag controlling whether a progress bar is shown:
+#'   the curve engine's own, or mlpwr's for the `mlpwr`-based methods.
 #' @param verbose Logical flag controlling engine-specific diagnostic output
 #'   when supported. For the bisection engine, setting `verbose = TRUE` stores
 #'   the iteration history on the returned object.
@@ -301,7 +301,6 @@ simulate_custom <- function(
           c_statistic = c_statistic,
           mean_or_assurance = mean_or_assurance,
           progress = progress,
-          verbose = verbose,
           data_function = data_function,
           model_function = model_function,
           metric_function = metric_function,
@@ -628,9 +627,10 @@ check_result <- function(
         "Carlo error, so the sample size is poorly determined."
       ))
     } else if (isTRUE(search$poorly_determined)) {
-      cli::cli_alert_warning(
-        "The sample size is poorly determined: its interval is {ci_text(search$curve$n_ci)}."
-      )
+      cli::cli_alert_warning(paste(
+        "The sample size is poorly determined: its interval is",
+        "{ci_text(search$curve$n_ci)}."
+      ))
     }
     if (isTRUE(search$crosscheck_disagrees)) {
       cli::cli_alert_warning(paste(

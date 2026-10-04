@@ -15,7 +15,6 @@ calculate_curve(
   c_statistic,
   mean_or_assurance,
   progress = TRUE,
-  verbose = FALSE,
   data_function,
   model_function,
   metric_function,
@@ -43,6 +42,10 @@ to the search. The search evaluates approximately
 \item{n_reps_per}{Integer number of simulation replications performed at each
 candidate sample size.}
 
+\item{se_final}{Not used: this engine stops when the replicate budget is
+spent, and reports a bootstrap interval for its answer in
+\code{diagnostics$curve$n_ci}.}
+
 \item{min_sample_size}{Optional integer lower bound for the sample-size
 search. If supplied, \code{max_sample_size} must also be supplied.}
 
@@ -63,9 +66,7 @@ custom workflows this should be left as \code{NULL}.}
 \item{mean_or_assurance}{Character string specifying the criterion used to
 define the minimum sample size. Must be either \code{"mean"} or \code{"assurance"}.}
 
-\item{progress}{Logical flag controlling whether the \code{mlpwr} progress bar is shown.}
-
-\item{verbose}{Logical flag passed to \code{mlpwr}; when \code{TRUE} verbose output is printed.}
+\item{progress}{Logical; show a progress bar over the replicate budget.}
 
 \item{data_function}{Function taking a single argument, \code{n}, giving the
 training sample size, and returning a dataset that can be passed to
@@ -82,17 +83,18 @@ Optionally, users may set \code{attr(metric_function, "value_on_error")} to a
 single numeric fallback value to be returned if model fitting or metric
 evaluation fails during a simulation run.}
 
-\item{value_on_error}{Numeric fallback value used if model fitting or metric calculation fails.}
+\item{value_on_error}{Numeric value recorded for a replicate whose fit or
+metric fails.}
 
 \item{evaluator}{Optional evaluator from \code{new_evaluator()}, shared by every
 stage of the search. Created from the data, model and metric functions
 when \code{NULL}.}
 
-\item{max_n}{Largest sample size the adaptive start-value search may try.}
+\item{max_n}{Largest sample size the search may try when no
+\code{min_sample_size} and \code{max_sample_size} are given.}
 
-\item{parallel, cores}{Run the replicates of each batch in parallel (see
-\code{\link[=calculate_bisection]{calculate_bisection()}}); with mlpwr, replicates are requested one at a
-time, so this mainly affects the adaptive stage and verification.}
+\item{parallel, cores}{Run the replicates of each batch in parallel with
+\code{\link[parallel:mclapply]{parallel::mclapply()}}; used only when \code{evaluator} is \code{NULL}.}
 
 \item{min_n_floor}{Smallest sample size the search may evaluate. Defaults to
 \code{max(10, p + 5)} for \code{p} predictors.}
@@ -105,14 +107,9 @@ heuristic start value.}
 \item{live_plot}{Redraw the learning curve after each batch of replicates
 (interactive sessions with a graphics device only).}
 
-\item{...}{Additional options passed to \code{\link[mlpwr:find.design]{mlpwr::find.design()}}.}
+\item{...}{Unused.}
 }
 \description{
 Learning-curve engine
-}
-\details{
-\code{se_final} is not used: this engine stops when the replicate
-budget is spent, and reports a bootstrap interval for its answer in
-\code{diagnostics$curve$n_ci}.
 }
 \keyword{internal}

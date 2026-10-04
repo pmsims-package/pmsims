@@ -175,8 +175,11 @@ make_data_args <- function(
 #' Minimum sample size for binary-outcome prediction models
 #'
 #' Compute the minimum sample size required to develop a prediction model with a
-#' binary outcome. The function wraps a simulation-based engine that combines a
-#' bisection search with Gaussian-process curve fitting. From user inputs
+#' binary outcome. The function wraps a simulation-based search that, by
+#' default, fits a learning curve to every simulated replicate and simulates
+#' further where the curve crosses the target (`method = "curve"`; see
+#' [simulate_custom()]); `method = "mlpwr"` selects the Gaussian-process
+#' search of earlier versions. From user inputs
 #' (outcome prevalence, maximum achievable performance, target performance, etc.) it
 #' constructs a data-generating function, a model-fitting
 #' function, and a metric function, then searches for the smallest \eqn{n} that
@@ -437,8 +440,9 @@ simulate_binary <- function(
 #'
 #' Compute the minimum sample size required to develop a prediction model with a
 #' **continuous** outcome. This wraps the same simulation engine as
-#' [simulate_binary()], combining bisection search with Gaussian-process
-#' learning-curve modelling. From user inputs (maximum achievable performance, target
+#' [simulate_binary()]: by default a learning curve fitted to every simulated
+#' replicate (`method = "curve"`), or the Gaussian-process search with
+#' `method = "mlpwr"`. From user inputs (maximum achievable performance, target
 #' performance, etc.) it constructs a
 #' data-generating function, model-fitting function, and metric function, then
 #' searches for the smallest \eqn{n} meeting the chosen criterion.
@@ -598,9 +602,10 @@ simulate_continuous <- function(
 #'
 #' Compute the minimum sample size required to develop a prediction model with a
 #' **time-to-event (survival)** outcome. As with the other wrappers, this uses a
-#' simulation-based learning-curve approach with Gaussian-process surrogate
-#' modelling to locate the smallest \eqn{n} meeting the chosen performance
-#' criterion.
+#' simulation-based learning curve, fitted by default to every simulated
+#' replicate (`method = "curve"`; `method = "mlpwr"` uses a Gaussian-process
+#' surrogate instead), to locate the smallest \eqn{n} meeting the chosen
+#' performance criterion.
 #'
 #' @inheritSection simulate_binary Criteria
 #' @inheritSection simulate_binary Data control
