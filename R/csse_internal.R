@@ -57,7 +57,8 @@ csse_to_calibration_slope <- function(csse, direction = c("below", "above")) {
 #'
 #' @param metric_function The CSSE metric function used for the search.
 #' @param plan The list returned by `plan_internal_csse()`.
-#' @return `metric_function`, with a `describe` attribute when `plan$active`.
+#' @return `metric_function`, with `describe` and `csse_direction` attributes
+#'   when `plan$active` (the curve engine's live plot reads the direction).
 #' @keywords internal
 #' @noRd
 describe_as_calibration_slope <- function(metric_function, plan) {
@@ -66,6 +67,7 @@ describe_as_calibration_slope <- function(metric_function, plan) {
       slope <- csse_to_calibration_slope(x, direction = plan$direction)
       paste("a calibration slope of", format(signif(slope, 3)))
     }
+    attr(metric_function, "csse_direction") <- plan$direction
   }
   metric_function
 }

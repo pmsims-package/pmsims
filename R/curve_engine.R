@@ -45,6 +45,9 @@ metric_maximum <- function(metric) {
   )
 }
 
+# Points where this share of replicates or more failed are left out of the fit.
+curve_max_failed <- 0.2
+
 curve_c_grid <- function() exp(seq(log(0.25), log(2.5), length.out = 40))
 
 #' Fit the learning curve C(n) = a - b n^(-c)
@@ -189,6 +192,7 @@ calculate_curve <- function(
   }
   lo_limit <- if (user_bounds) min_sample_size else min_n_floor
   hi_limit <- if (user_bounds) max_sample_size else max_n
+  hi_name <- if (user_bounds) "max_sample_size" else "max_n"
   clamp <- function(n) round(min(hi_limit, max(lo_limit, n)))
 
   # ---- data -----------------------------------------------------------------
@@ -201,11 +205,13 @@ calculate_curve <- function(
   }
   on.exit(if (!is.null(pb)) cli::cli_progress_done(id = pb), add = TRUE)
 
-  # Evaluate `reps` replicates at n, or at an existing n within 7% of it.
+  # Evaluate `reps` replicates at n, or at an existing n within 7% of it. A
+  # request on a search limit is never moved, so that the limit itself is
+  # simulated.
   add <- function(n, reps) {
     n <- clamp(n)
     have <- as.numeric(names(store$y))
-    if (length(have)) {
+    if (length(have) && n > lo_limit && n < hi_limit) {
       near <- have[abs(log(have / n)) < log(1.07)]
       if (length(near)) n <- near[which.min(abs(log(near / n)))]
     }
@@ -236,11 +242,14 @@ calculate_curve <- function(
   show_live <- isTRUE(live_plot) &&
     (isTRUE(getOption("pmsims.live_plot_force")) ||
       (interactive() && grDevices::dev.interactive(orNone = TRUE)))
+  # As in plot(), a calibration slope target searched on the CSSE scale
+  # (see R/csse_internal.R) is shown on the slope scale; a CSSE target is not.
+  csse_direction <- attr(metric_function, "csse_direction", exact = TRUE)
+  internal_csse <- !is.null(csse_direction)
   draw_live <- function() {
     pts <- summarise_points()
     f <- if (sum(pts$usable) >= 3L) fit_points(pts)
     n_now <- if (!is.null(f)) curve_crossing(f, target) else NA_real_
-    is_csse <- identical(attr(metric_function, "metric", exact = TRUE), "csse")
     sy <- sorted_y()
     state <- list(
       data = lapply(seq_along(sy$n), function(i) {
@@ -255,16 +264,17 @@ calculate_curve <- function(
       ),
       mean_or_assurance = mean_or_assurance,
       min_n = if (is.finite(n_now) && n_now > 0) n_now else NA_real_,
-      metric = if (is_csse) {
+      metric = if (internal_csse) {
         "calibration_slope"
       } else {
         attr(metric_function, "metric", exact = TRUE)
       },
       outcome = attr(data_function, "outcome", exact = TRUE),
-      internal_csse = is_csse,
+      internal_csse = internal_csse,
+      csse_direction = csse_direction,
       csse_target_performance = target,
-      target_performance = if (is_csse) {
-        csse_to_calibration_slope(target)
+      target_performance = if (internal_csse) {
+        csse_to_calibration_slope(target, direction = csse_direction)
       } else {
         target
       }
@@ -309,7 +319,7 @@ calculate_curve <- function(
     )
     # Spread of single replicates against n, smoothed on the log-log scale so
     # that weights do not depend on each point's own noisy estimate.
-    use <- is.finite(sd_rep) & sd_rep > 0 & fail < 0.2
+    use <- is.finite(sd_rep) & sd_rep > 0 & fail < curve_max_failed
     sd_hat <- if (sum(use) >= 3L) {
       co <- stats::coef(stats::lm(
         log(sd_rep[use]) ~ log(sy$n[use]),
@@ -338,7 +348,7 @@ calculate_curve <- function(
       est = unname(est),
       se = unname(se_hat),
       fail = unname(fail),
-      usable = unname(fail < 0.2)
+      usable = unname(fail < curve_max_failed)
     )
     attr(out, "se_factor") <- inflate
     out
@@ -442,6 +452,11 @@ calculate_curve <- function(
       message = paste0(
         if (kind == "unreachable") {
           "The target looks unreachable: the fitted learning curve levels off below it."
+        } else if (any(pts$est >= target)) {
+          paste(
+            "Some sample sizes searched met the target, but the fitted",
+            "learning curve does not cross it within the sample sizes allowed."
+          )
         } else {
           "No sample size searched reached the target."
         },
@@ -465,6 +480,30 @@ calculate_curve <- function(
         }
       ),
       max_achievable_perf = best
+    )
+  }
+
+  # Too many failed replicates to fit a curve: every one of at least three
+  # sample sizes has curve_max_failed or more of its replicates failed. (The
+  # evaluator's own check, failure_status(), fires only at half.)
+  too_many_failed <- function(pts) nrow(pts) >= 3L && !any(pts$usable)
+  failed_status <- function() {
+    failed <- sum(unlist(store$failed))
+    err <- evaluator$failures()$first_error
+    err <- err[!is.na(err)][1]
+    list(
+      status = "replicates_failed",
+      message = sprintf(
+        paste(
+          "%d of %d simulation replicates failed to fit or score the",
+          "model%s. At every sample size tried, %d%% or more failed, so no",
+          "learning curve can be fitted."
+        ),
+        failed,
+        used,
+        if (is.na(err)) "" else paste0(" (first error: ", err, ")"),
+        round(100 * curve_max_failed)
+      )
     )
   }
 
@@ -512,8 +551,12 @@ calculate_curve <- function(
             "not_bracketed",
             f,
             sprintf(
-              " The fitted learning curve puts the crossing beyond %s, the largest sample size allowed (max_n), if at all.",
-              format(hi_limit, big.mark = ",", scientific = FALSE)
+              paste(
+                " The fitted learning curve puts the crossing beyond %s, the",
+                "largest sample size allowed (%s), if at all."
+              ),
+              format(hi_limit, big.mark = ",", scientific = FALSE),
+              hi_name
             )
           )
         ))
@@ -532,10 +575,11 @@ calculate_curve <- function(
             sprintf(
               paste(
                 " Most bootstrap refits of the learning curve put the crossing",
-                "beyond %s (max_n), or never; the search stopped rather than",
+                "beyond %s (%s), or never; the search stopped rather than",
                 "simulate ever larger samples."
               ),
-              format(hi_limit, big.mark = ",", scientific = FALSE)
+              format(hi_limit, big.mark = ",", scientific = FALSE),
+              hi_name
             )
           )
         ))
@@ -620,6 +664,11 @@ calculate_curve <- function(
   first_n <- min(as.numeric(names(store$y)))
   repeat {
     pts <- summarise_points()
+    if (too_many_failed(pts)) {
+      status <- failed_status()
+      pilot_reason <- "replicates_failed"
+      break
+    }
     above <- any(pts$est >= target)
     below <- any(pts$est < target)
     if (above && below) {
@@ -733,6 +782,29 @@ calculate_curve <- function(
   # ---- answer ---------------------------------------------------------------
   pts <- summarise_points()
   f <- fit_points(pts, near)
+  if (is.null(f)) {
+    # No curve (fewer than two usable sample sizes, e.g. min_sample_size ==
+    # max_sample_size): return the smallest observed n that meets the target,
+    # which check_result() then verifies.
+    met <- pts$n[pts$usable & pts$est >= target]
+    if (length(met)) {
+      out <- curve_output(
+        store,
+        pts,
+        NULL,
+        min(met),
+        crit,
+        NULL,
+        pilot_reason,
+        NULL,
+        used,
+        lo_limit,
+        hi_limit
+      )
+      out$perf_n <- pts$est[pts$n == min(met)]
+      return(out)
+    }
+  }
   n_star <- curve_crossing(f, target)
   bf <- bootstrap_fit(pts, if (is.finite(n_star)) n_star else near)
   ci <- stats::quantile(bf[, "n"], c(0.025, 0.975), na.rm = TRUE, names = FALSE)
@@ -741,7 +813,19 @@ calculate_curve <- function(
       pts,
       "not_bracketed",
       f,
-      " The fitted learning curve does not reach the target."
+      if (is.null(f) && nrow(pts) < 2L) {
+        " No learning curve could be fitted: only one sample size was simulated."
+      } else if (is.null(f)) {
+        sprintf(
+          paste(
+            " No learning curve could be fitted: it needs two sample sizes",
+            "where fewer than %d%% of replicates failed."
+          ),
+          round(100 * curve_max_failed)
+        )
+      } else {
+        " The fitted learning curve does not reach the target."
+      }
     )
     return(curve_output(
       store,
@@ -763,9 +847,12 @@ calculate_curve <- function(
       "not_bracketed",
       f,
       sprintf(
-        " The fitted learning curve crosses the target at about %s, beyond the largest sample size allowed (%s).",
+        paste(
+          " The fitted learning curve crosses the target at about %s, beyond",
+          "the largest sample size allowed (%s)."
+        ),
         format(round(n_star), big.mark = ",", scientific = FALSE),
-        if (user_bounds) "max_sample_size" else "max_n"
+        hi_name
       )
     )
     return(curve_output(
@@ -794,7 +881,16 @@ calculate_curve <- function(
     lo_limit,
     hi_limit
   )
-  flags <- answer_flags(f, pts, n_star, ci, 4L * n_reps_per, target)
+  # Flags for the reported answer: a curve that is flat above the target
+  # crosses it at n = 0, below the smallest sample size allowed.
+  flags <- answer_flags(
+    f,
+    pts,
+    max(n_star, lo_limit),
+    ci,
+    4L * n_reps_per,
+    target
+  )
   out$search[names(flags)] <- flags
   out
 }
