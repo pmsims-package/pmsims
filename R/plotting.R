@@ -263,7 +263,12 @@ mlpwr_results_to_dataframe <- function(dat, aggregate = TRUE, aggregate_fun) {
 # fitted learning curve, the target, and the answer with its interval and the
 # shape-free cross-check. Also works when the search stopped without an
 # answer, where it shows where the curve levels off.
-plot_learning_curve <- function(x, metric_label = NULL, plot = TRUE, subtitle = NULL) {
+plot_learning_curve <- function(
+  x,
+  metric_label = NULL,
+  plot = TRUE,
+  subtitle = NULL
+) {
   curve <- x$diagnostics$curve
   moa <- tolower(as.character(x$mean_or_assurance %||% "assurance")[1])
   crit <- if (identical(moa, "mean")) {
@@ -273,14 +278,17 @@ plot_learning_curve <- function(x, metric_label = NULL, plot = TRUE, subtitle = 
   }
   se_factor <- if (identical(moa, "mean")) 1 else curve$se_factor %||% 1.4
 
-  obs <- do.call(rbind, lapply(x$data, function(p) {
-    data.frame(
-      n = as.numeric(p$x),
-      reps = length(p$y),
-      y = crit(p$y),
-      se = se_factor * stats::sd(p$y) / sqrt(length(p$y))
-    )
-  }))
+  obs <- do.call(
+    rbind,
+    lapply(x$data, function(p) {
+      data.frame(
+        n = as.numeric(p$x),
+        reps = length(p$y),
+        y = crit(p$y),
+        se = se_factor * stats::sd(p$y) / sqrt(length(p$y))
+      )
+    })
+  )
   ns <- exp(seq(log(min(obs$n) / 1.2), log(max(obs$n) * 1.2), length.out = 200))
   fit <- if (!is.null(curve$a)) {
     data.frame(n = ns, y = curve$a - curve$b * ns^(-curve$c))
@@ -299,7 +307,9 @@ plot_learning_curve <- function(x, metric_label = NULL, plot = TRUE, subtitle = 
     obs$y <- to_slope(obs$y)
     obs$lo <- pmin(lo, hi)
     obs$hi <- pmax(lo, hi)
-    if (!is.null(fit)) fit$y <- to_slope(fit$y)
+    if (!is.null(fit)) {
+      fit$y <- to_slope(fit$y)
+    }
     target <- as.numeric(x$target_performance)
   } else {
     obs$lo <- obs$y - 2 * obs$se
@@ -310,38 +320,71 @@ plot_learning_curve <- function(x, metric_label = NULL, plot = TRUE, subtitle = 
     return(list(observed_data = obs, fitted_curve = fit))
   }
 
-  label <- metric_label %||% pmsims_metric_label(x$metric, x$outcome) %||% "Performance"
-  subtitle <- subtitle %||% if (is.finite(min_n)) {
-    ci <- curve$n_ci
-    sprintf(
-      "Minimum sample size %s (interval %s to %s)",
-      format(round(min_n), big.mark = ","),
-      format(round(ci[1]), big.mark = ","),
-      if (is.finite(ci[2])) format(round(ci[2]), big.mark = ",") else "Inf"
-    )
-  } else {
-    sprintf("No sample size found (status: %s)", gsub("_", " ", x$status %||% "unknown"))
-  }
+  label <- metric_label %||%
+    pmsims_metric_label(x$metric, x$outcome) %||%
+    "Performance"
+  subtitle <- subtitle %||%
+    if (is.finite(min_n)) {
+      ci <- curve$n_ci
+      sprintf(
+        "Minimum sample size %s (interval %s to %s)",
+        format(round(min_n), big.mark = ","),
+        format(round(ci[1]), big.mark = ","),
+        if (is.finite(ci[2])) format(round(ci[2]), big.mark = ",") else "Inf"
+      )
+    } else {
+      sprintf(
+        "No sample size found (status: %s)",
+        gsub("_", " ", x$status %||% "unknown")
+      )
+    }
 
   p <- ggplot2::ggplot(obs, ggplot2::aes(x = .data$n, y = .data$y)) +
-    ggplot2::geom_hline(yintercept = target, linetype = "dashed", colour = "grey40")
-  if (is.finite(min_n) && length(curve$n_ci) == 2L && all(is.finite(curve$n_ci))) {
-    p <- p + ggplot2::annotate(
-      "rect", xmin = curve$n_ci[1], xmax = curve$n_ci[2], ymin = -Inf, ymax = Inf,
-      alpha = 0.12, fill = "steelblue"
+    ggplot2::geom_hline(
+      yintercept = target,
+      linetype = "dashed",
+      colour = "grey40"
     )
+  if (
+    is.finite(min_n) && length(curve$n_ci) == 2L && all(is.finite(curve$n_ci))
+  ) {
+    p <- p +
+      ggplot2::annotate(
+        "rect",
+        xmin = curve$n_ci[1],
+        xmax = curve$n_ci[2],
+        ymin = -Inf,
+        ymax = Inf,
+        alpha = 0.12,
+        fill = "steelblue"
+      )
   }
   if (!is.null(fit)) {
-    p <- p + ggplot2::geom_line(data = fit, colour = "steelblue", linewidth = 0.8)
+    p <- p +
+      ggplot2::geom_line(data = fit, colour = "steelblue", linewidth = 0.8)
   }
   p <- p +
-    ggplot2::geom_errorbar(ggplot2::aes(ymin = .data$lo, ymax = .data$hi), width = 0, colour = "grey50") +
-    ggplot2::geom_point(ggplot2::aes(size = .data$reps), shape = 21, fill = "white") +
-    ggplot2::scale_x_log10(labels = function(b) format(b, big.mark = ",", scientific = FALSE)) +
+    ggplot2::geom_errorbar(
+      ggplot2::aes(ymin = .data$lo, ymax = .data$hi),
+      width = 0,
+      colour = "grey50"
+    ) +
+    ggplot2::geom_point(
+      ggplot2::aes(size = .data$reps),
+      shape = 21,
+      fill = "white"
+    ) +
+    ggplot2::scale_x_log10(labels = function(b) {
+      format(b, big.mark = ",", scientific = FALSE)
+    }) +
     ggplot2::scale_size_area(max_size = 4, name = "Replicates") +
     ggplot2::labs(
       x = "Training sample size (log scale)",
-      y = sprintf("%s (%s)", label, if (identical(moa, "mean")) "mean" else "20th percentile"),
+      y = sprintf(
+        "%s (%s)",
+        label,
+        if (identical(moa, "mean")) "mean" else "20th percentile"
+      ),
       title = "Learning curve",
       subtitle = subtitle
     ) +
@@ -350,7 +393,12 @@ plot_learning_curve <- function(x, metric_label = NULL, plot = TRUE, subtitle = 
     p <- p + ggplot2::geom_vline(xintercept = min_n, colour = "steelblue")
     xc <- x$diagnostics$crosscheck_n
     if (is.numeric(xc) && is.finite(xc)) {
-      p <- p + ggplot2::geom_vline(xintercept = xc, colour = "darkorange", linetype = "dotted")
+      p <- p +
+        ggplot2::geom_vline(
+          xintercept = xc,
+          colour = "darkorange",
+          linetype = "dotted"
+        )
     }
   }
   print(p)
