@@ -105,7 +105,8 @@ test_that("the evaluator counts failures and warnings instead of hiding them", {
     streams = new_simulation_streams(1L)
   )
   expect_no_warning(vals <- ev$batch(20, 6))
-  expect_identical(vals, c(-1, 0.7, -1, -1, 0.7, -1))
+  expect_identical(as.numeric(vals), c(-1, 0.7, -1, -1, 0.7, -1))
+  expect_identical(attr(vals, "failed"), c(TRUE, FALSE, TRUE, TRUE, FALSE, TRUE))
   f <- ev$failures()
   expect_identical(f$failed, 4L)
   expect_identical(f$warnings, 6L)
@@ -179,6 +180,7 @@ test_that("simulate_custom stops at max_n when the target is out of reach", {
       n_reps_total = 200,
       n_reps_per = 10,
       progress = FALSE,
+      method = "mlpwr",
       max_n = 5000
     )),
     "No sample size up to"
@@ -203,7 +205,8 @@ test_that("an unreachable target without max_n is flagged by the check", {
       test_n = 10,
       n_reps_total = 200,
       n_reps_per = 10,
-      progress = FALSE
+      progress = FALSE,
+      method = "mlpwr"
     )),
     "clearly below the target"
   )
@@ -226,7 +229,8 @@ test_that("simulate_custom flags an answer that fails the check", {
       max_sample_size = 2000,
       n_reps_total = 200,
       n_reps_per = 10,
-      progress = FALSE
+      progress = FALSE,
+      method = "mlpwr"
     )),
     "clearly below the target|did not return"
   )
@@ -247,6 +251,7 @@ test_that("simulate_custom verifies a reachable target and is reproducible", {
       n_reps_total = 200,
       n_reps_per = 10,
       progress = FALSE,
+      method = "mlpwr",
       verify_reps = 50
     ))
   }

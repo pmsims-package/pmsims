@@ -16,7 +16,7 @@ simulate_custom(
   max_sample_size = NULL,
   n_reps_total = 1000,
   n_reps_per = 20,
-  method = "mlpwr",
+  method = "curve",
   progress = TRUE,
   verbose = FALSE,
   verify_reps = 100,
@@ -71,8 +71,10 @@ to the search. The search evaluates approximately
 \item{n_reps_per}{Integer number of simulation replications performed at each
 candidate sample size.}
 
-\item{method}{Character string specifying the search engine. Defaults to
-\code{"mlpwr"}.}
+\item{method}{Character string specifying the search engine: \code{"curve"}
+(default; fits a learning curve to all replicates and searches where it
+crosses the target, see Details), \code{"mlpwr"} (adaptive start values, then
+mlpwr's Gaussian-process search), \code{"bisection"} or \code{"mlpwr-bs"}.}
 
 \item{progress}{Logical flag controlling whether the \code{mlpwr} progress bar is
 shown for \code{mlpwr}-based methods.}
@@ -85,10 +87,10 @@ the iteration history on the returned object.}
 returned sample size to check that it meets the target (see \code{status}).
 Set to \code{0} to skip the check.}
 
-\item{max_n}{Largest sample size the adaptive start-value search may try.
-If performance there is still clearly below the target, the search stops
-with status \code{"not_bracketed"}. Defaults to 200,000 for random forests and
-xgboost (one batch of replicates at a million rows would take hours) and
+\item{max_n}{Largest sample size the search may try. If performance there is
+still clearly below the target, the search stops with status
+\code{"not_bracketed"}. Defaults to 200,000 for random forests and xgboost
+(one batch of replicates at a million rows would take hours) and
 1,000,000 otherwise.}
 
 \item{...}{Additional arguments passed to the selected search engine.}
@@ -119,6 +121,30 @@ predictive performance using user-defined simulation components.
 data-generating function, a model-fitting function, and a metric function,
 and the chosen search engine estimates the smallest \eqn{n} meeting the
 selected performance criterion.
+}
+\details{
+With \code{method = "curve"}, every replicate is kept and a monotone learning
+curve \eqn{C(n) = a - b n^{-c}} is fitted to the criterion at each sample
+size evaluated (weighted by a smoothed model of the replicate spread; the
+ceiling \eqn{a} is capped at the metric's maximum). A pilot doubles
+(or halves) from a heuristic start until the criterion is seen on both sides
+of the target; each further batch of \code{n_reps_per} replicates is placed where
+the fitted curve crosses the target. The search range is therefore never
+fixed. The answer is where the final fitted curve crosses the target. A
+target is declared unreachable if a bootstrap upper bound for the curve's
+ceiling \eqn{a} is below it; the search also stops (status
+\code{"not_bracketed"}) when the crossing is very likely beyond \code{max_n}. These
+stops extrapolate the fitted curve and should be read as heuristics.
+
+The answer is a median-unbiased estimate of where the criterion reaches the
+target (the mlpwr engine instead picks where its surrogate's mean plus 0.3
+standard deviations does, which tends to give smaller sample sizes). The
+interval in \code{diagnostics$curve$n_ci} reflects Monte Carlo error given the
+learning-curve shape, not uncertainty about the shape; a shape-free check
+(\code{diagnostics$crosscheck_n}) is reported alongside, and flagged when it
+differs by more than 10\%. The verification of the answer has limited power
+for skewed metrics such as CSSE: passing it does not show that the target
+is met.
 }
 \section{Random numbers}{
 

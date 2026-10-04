@@ -42,8 +42,10 @@
 #'   `n_reps_total / n_reps_per` candidate sample sizes.
 #' @param n_reps_per Integer number of simulation replications performed at each
 #'   candidate sample size.
-#' @param method Character string specifying the search engine. Defaults to
-#'   `"mlpwr"`.
+#' @param method Character string specifying the search engine: `"curve"`
+#'   (default; fits a learning curve to all replicates and searches where it
+#'   crosses the target, see Details), `"mlpwr"` (adaptive start values, then
+#'   mlpwr's Gaussian-process search), `"bisection"` or `"mlpwr-bs"`.
 #' @param progress Logical flag controlling whether the `mlpwr` progress bar is
 #'   shown for `mlpwr`-based methods.
 #' @param verbose Logical flag controlling engine-specific diagnostic output
@@ -52,10 +54,10 @@
 #' @param verify_reps Integer number of fresh replicates simulated at the
 #'   returned sample size to check that it meets the target (see `status`).
 #'   Set to `0` to skip the check.
-#' @param max_n Largest sample size the adaptive start-value search may try.
-#'   If performance there is still clearly below the target, the search stops
-#'   with status `"not_bracketed"`. Defaults to 200,000 for random forests and
-#'   xgboost (one batch of replicates at a million rows would take hours) and
+#' @param max_n Largest sample size the search may try. If performance there is
+#'   still clearly below the target, the search stops with status
+#'   `"not_bracketed"`. Defaults to 200,000 for random forests and xgboost
+#'   (one batch of replicates at a million rows would take hours) and
 #'   1,000,000 otherwise.
 #' @param ... Additional arguments passed to the selected search engine.
 #'
@@ -76,6 +78,30 @@
 #'   holds the check at `min_n`, and `diagnostics` records the search bounds,
 #'   whether `min_n` lies on one of them, mlpwr's warnings, Gaussian-process
 #'   restarts and failed replicates.
+#'
+#' @details
+#' With `method = "curve"`, every replicate is kept and a monotone learning
+#' curve \eqn{C(n) = a - b n^{-c}} is fitted to the criterion at each sample
+#' size evaluated (weighted by a smoothed model of the replicate spread; the
+#' ceiling \eqn{a} is capped at the metric's maximum). A pilot doubles
+#' (or halves) from a heuristic start until the criterion is seen on both sides
+#' of the target; each further batch of `n_reps_per` replicates is placed where
+#' the fitted curve crosses the target. The search range is therefore never
+#' fixed. The answer is where the final fitted curve crosses the target. A
+#' target is declared unreachable if a bootstrap upper bound for the curve's
+#' ceiling \eqn{a} is below it; the search also stops (status
+#' `"not_bracketed"`) when the crossing is very likely beyond `max_n`. These
+#' stops extrapolate the fitted curve and should be read as heuristics.
+#'
+#' The answer is a median-unbiased estimate of where the criterion reaches the
+#' target (the mlpwr engine instead picks where its surrogate's mean plus 0.3
+#' standard deviations does, which tends to give smaller sample sizes). The
+#' interval in `diagnostics$curve$n_ci` reflects Monte Carlo error given the
+#' learning-curve shape, not uncertainty about the shape; a shape-free check
+#' (`diagnostics$crosscheck_n`) is reported alongside, and flagged when it
+#' differs by more than 10%. The verification of the answer has limited power
+#' for skewed metrics such as CSSE: passing it does not show that the target
+#' is met.
 #'
 #' @section Random numbers:
 #' Each simulation replicate runs on its own random-number stream, derived from
@@ -148,7 +174,7 @@ simulate_custom <- function(
   max_sample_size = NULL,
   n_reps_total = 1000,
   n_reps_per = 20,
-  method = "mlpwr",
+  method = "curve",
   progress = TRUE,
   verbose = FALSE,
   verify_reps = 100,
@@ -233,7 +259,33 @@ simulate_custom <- function(
     cores = if (parallel) cores else 1L
   )
 
-  if (method == "mlpwr") {
+  if (method == "curve") {
+    output <- do.call(
+      calculate_curve,
+      utils::modifyList(
+        list(
+          test_n = test_n,
+          n_reps_total = n_reps_total,
+          n_reps_per = n_reps_per,
+          se_final = se_final,
+          min_sample_size = min_sample_size,
+          max_sample_size = max_sample_size,
+          target_performance = target_performance,
+          c_statistic = c_statistic,
+          mean_or_assurance = mean_or_assurance,
+          progress = progress,
+          verbose = verbose,
+          data_function = data_function,
+          model_function = model_function,
+          metric_function = metric_function,
+          value_on_error = value_on_error,
+          evaluator = evaluator,
+          max_n = max_n
+        ),
+        list(...)
+      )
+    )
+  } else if (method == "mlpwr") {
     output <- do.call(
       calculate_mlpwr,
       utils::modifyList(
@@ -527,6 +579,29 @@ check_result <- function(
       "be larger."
     ))
   }
+  if (identical(status, "ok")) {
+    ci_text <- function(ci) {
+      sprintf("%s to %s", round(ci[1]), if (is.finite(ci[2])) round(ci[2]) else "Inf")
+    }
+    if (isTRUE(search$near_ceiling)) {
+      cli::cli_alert_warning(paste(
+        "The target is close to the best performance this model can reach:",
+        "doubling the sample size from the answer gains less than the Monte",
+        "Carlo error, so the sample size is poorly determined."
+      ))
+    } else if (isTRUE(search$poorly_determined)) {
+      cli::cli_alert_warning(
+        "The sample size is poorly determined: its interval is {ci_text(search$curve$n_ci)}."
+      )
+    }
+    if (isTRUE(search$crosscheck_disagrees)) {
+      cli::cli_alert_warning(paste(
+        "A shape-free check (a monotone fit to the simulated points) puts the",
+        "answer at {round(search$crosscheck_n)}, more than 10% from the",
+        "learning-curve answer."
+      ))
+    }
+  }
   if (length(search$mlpwr_warnings)) {
     cli::cli_alert_warning(
       "mlpwr reported: {paste(search$mlpwr_warnings, collapse = '; ')}"
@@ -547,6 +622,12 @@ check_result <- function(
       max_achievable_perf = search$max_achievable_perf %||% NA_real_,
       mlpwr_warnings = search$mlpwr_warnings %||% character(0),
       gp_restarts = output$gp_restarts %||% 0L,
+      curve = search$curve,
+      near_ceiling = isTRUE(search$near_ceiling),
+      poorly_determined = isTRUE(search$poorly_determined),
+      gain_per_doubling = search$gain_per_doubling %||% NA_real_,
+      crosscheck_n = search$crosscheck_n %||% NA_real_,
+      crosscheck_disagrees = isTRUE(search$crosscheck_disagrees),
       replicates = failures,
       failed_replicates = sum(failures$failed),
       total_replicates = sum(failures$reps)

@@ -388,7 +388,7 @@ simulate_binary <- function(
       model_function = model_function,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
-      method = "mlpwr",
+      method = "curve",
       mean_or_assurance = mean_or_assurance,
       test_n = 30000
     ),
@@ -551,7 +551,7 @@ simulate_continuous <- function(
       model_function = model_function,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
-      method = "mlpwr",
+      method = "curve",
       mean_or_assurance = mean_or_assurance,
       test_n = 30000
     ),
@@ -728,7 +728,7 @@ simulate_survival <- function(
       model_function = model_function,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
-      method = "mlpwr",
+      method = "curve",
       mean_or_assurance = mean_or_assurance,
       test_n = 30000
     ),

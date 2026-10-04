@@ -237,7 +237,11 @@ new_evaluator <- function(
       },
       stringsAsFactors = FALSE
     )
-    vapply(res, `[[`, numeric(1), "value")
+    values <- vapply(res, `[[`, numeric(1), "value")
+    # Which replicates failed (their value is the fallback), for callers that
+    # need to tell a failure from a legitimate value equal to the fallback.
+    attr(values, "failed") <- failed
+    values
   }
 
   failures <- function() {
@@ -312,7 +316,13 @@ verify_sample_size <- function(
   mean_or_assurance,
   reps = 100L
 ) {
-  crit <- criterion_function(mean_or_assurance)
+  # The 20th percentile is estimated with the approximately median-unbiased
+  # quantile (type 8), the estimator the curve engine fits.
+  crit <- if (identical(mean_or_assurance, "mean")) {
+    function(x) mean(x)
+  } else {
+    function(x) as.numeric(stats::quantile(x, probs = 0.2, type = 8))
+  }
   vals <- evaluator$batch(n, reps, "verify")
   est <- crit(vals)
   se <- with_stream(evaluator$streams, "bootstrap", n, 1L, {
