@@ -42,10 +42,11 @@ calibration_glm <- function(
   x = NULL,
   family = stats::binomial(),
   weights = NULL,
-  offset = NULL,
-  epsilon = 1e-8,
-  maxit = 25L
+  offset = NULL
 ) {
+  # glm.control() defaults.
+  epsilon <- 1e-8
+  maxit <- 25L
   if (is.null(weights)) {
     weights <- rep.int(1, length(y))
   }

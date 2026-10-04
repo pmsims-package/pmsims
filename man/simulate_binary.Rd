@@ -89,8 +89,11 @@ evaluations, and summary metrics).
 }
 \description{
 Compute the minimum sample size required to develop a prediction model with a
-binary outcome. The function wraps a simulation-based engine that combines a
-bisection search with Gaussian-process curve fitting. From user inputs
+binary outcome. The function wraps a simulation-based search that, by
+default, fits a learning curve to every simulated replicate and simulates
+further where the curve crosses the target (\code{method = "curve"}; see
+\code{\link[=simulate_custom]{simulate_custom()}}); \code{method = "mlpwr"} selects the Gaussian-process
+search of earlier versions. From user inputs
 (outcome prevalence, maximum achievable performance, target performance, etc.) it
 constructs a data-generating function, a model-fitting
 function, and a metric function, then searches for the smallest \eqn{n} that

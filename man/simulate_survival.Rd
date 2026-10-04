@@ -96,9 +96,10 @@ evaluations, and summary metrics).
 \description{
 Compute the minimum sample size required to develop a prediction model with a
 \strong{time-to-event (survival)} outcome. As with the other wrappers, this uses a
-simulation-based learning-curve approach with Gaussian-process surrogate
-modelling to locate the smallest \eqn{n} meeting the chosen performance
-criterion.
+simulation-based learning curve, fitted by default to every simulated
+replicate (\code{method = "curve"}; \code{method = "mlpwr"} uses a Gaussian-process
+surrogate instead), to locate the smallest \eqn{n} meeting the chosen
+performance criterion.
 }
 \section{Criteria}{
 
