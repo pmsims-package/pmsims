@@ -322,3 +322,23 @@ test_that("resolve_value_on_error preserves current defaults and supports custom
     fixed = TRUE
   )
 })
+
+test_that("simulate_custom rejects an invalid number of cores", {
+  data_function <- function(n) data.frame(n = n)
+  model_function <- function(d) d
+  metric_function <- function(test_data, fit, model) 0.9
+  attr(metric_function, "metric") <- "auc"
+  for (cores in list(NA, 0, 1.5, c(1, 2), "2", NULL)) {
+    expect_error(
+      suppressMessages(simulate_custom(
+        data_function,
+        model_function,
+        metric_function,
+        target_performance = 0.8,
+        cores = cores,
+        progress = FALSE
+      )),
+      "single positive whole number"
+    )
+  }
+})

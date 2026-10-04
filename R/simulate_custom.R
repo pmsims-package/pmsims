@@ -254,7 +254,16 @@ simulate_custom <- function(
   if (missing(cores) && isTRUE(list(...)$parallel)) {
     cores <- min(20L, parallel::detectCores(), na.rm = TRUE)
   }
-  cores <- max(1L, as.integer(cores))
+  if (
+    !is.numeric(cores) ||
+      length(cores) != 1L ||
+      !is.finite(cores) ||
+      cores < 1 ||
+      cores != round(cores)
+  ) {
+    cli::cli_abort("{.arg cores} must be a single positive whole number.")
+  }
+  cores <- as.integer(cores)
   if (cores > 1L && .Platform$OS.type != "unix") {
     cli::cli_alert_info(
       "Parallel replicates need a Unix-like system; running on one core."
@@ -392,7 +401,8 @@ simulate_custom <- function(
     target_performance = target_performance,
     mean_or_assurance = mean_or_assurance,
     verify_reps = verify_reps,
-    describe = describe_value(metric_function)
+    describe = describe_value(metric_function),
+    quantile_type = if (method == "curve") 8L else 7L
   )
   time_2 <- Sys.time()
 
@@ -524,7 +534,8 @@ check_result <- function(
   target_performance,
   mean_or_assurance,
   verify_reps = 100,
-  describe = function(x) format(signif(x, 4))
+  describe = function(x) format(signif(x, 4)),
+  quantile_type = 7L
 ) {
   search <- output$search %||% list()
   min_n <- suppressWarnings(as.numeric(output$min_n))
@@ -561,7 +572,8 @@ check_result <- function(
         n = min_n,
         target_performance = target_performance,
         mean_or_assurance = mean_or_assurance,
-        reps = verify_reps
+        reps = verify_reps,
+        type = quantile_type
       )
       if (verification$verified) {
         status <- "ok"

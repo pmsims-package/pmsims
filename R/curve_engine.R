@@ -168,13 +168,7 @@ calculate_curve <- function(
   # optimistic for the few dozen replicates at a point (about +0.06 SD at 20
   # replicates), which made the fitted crossing slightly too small; at the 100
   # replicates of the verification the difference is small.
-  crit_fit <- if (identical(mean_or_assurance, "mean")) {
-    crit
-  } else {
-    function(x) {
-      as.numeric(stats::quantile(x, probs = 0.2, type = 8, na.rm = TRUE))
-    }
-  }
+  crit_fit <- criterion_function(mean_or_assurance, type = 8L)
   target <- target_performance
   a_max <- metric_maximum(attr(metric_function, "metric", exact = TRUE))
   user_bounds <- !is.null(min_sample_size) && !is.null(max_sample_size)
