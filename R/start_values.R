@@ -112,27 +112,6 @@ adaptive_startvalues <- function(
   ))
 }
 
-#' Evaluate an expression under a fixed RNG seed, restoring the stream after
-#'
-#' @param seed Integer seed.
-#' @param expr Expression to evaluate.
-#' @return The value of `expr`.
-#' @keywords internal
-#' @noRd
-with_preserved_seed <- function(seed, expr) {
-  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
-    old_seed <- get(".Random.seed", envir = globalenv())
-    on.exit(assign(".Random.seed", old_seed, envir = globalenv()), add = TRUE)
-  } else {
-    on.exit(
-      suppressWarnings(rm(".Random.seed", envir = globalenv())),
-      add = TRUE
-    )
-  }
-  set.seed(seed)
-  force(expr)
-}
-
 #' Calculate adaptive start bounds
 #'
 #' Derive lower and upper sample-size bounds by simulating model performance
@@ -155,7 +134,8 @@ with_preserved_seed <- function(seed, expr) {
 #' @param metric_function Function evaluating the fitted model on test data.
 #' @param value_on_error Numeric fallback used when fitting or evaluation fails.
 #' @param start_n Positive integer initial sample size.
-#' @param test_n Positive integer size of the fixed test dataset.
+#' @param test_n Positive integer size of the test set drawn for each
+#'   replicate.
 #' @param n_reps_per Positive integer simulations performed at each sample size.
 #' @param n_reps_total Positive integer total simulation budget.
 #' @param target_performance Numeric performance threshold used to define the
@@ -173,11 +153,6 @@ with_preserved_seed <- function(seed, expr) {
 #'   `threshold`, the tolerance actually used is the larger of `plateau_tol` and
 #'   twice the Monte Carlo standard error, so that Monte Carlo noise is not
 #'   mistaken for a real gain (or a real gain for a plateau).
-#' @param seed Optional integer seed. When supplied, the whole stage -- the test
-#'   dataset and every replication -- is generated from this seed, so the bounds
-#'   are identical on every run regardless of the calling session's RNG state.
-#'   The caller's RNG stream is restored on exit. Set to `NULL` to follow the
-#'   global stream.
 #' @param conf_z Numeric number of standard errors a sample size must be away
 #'   from `target_performance` before it is used as a bound.
 #' @param max_reps_per Optional positive integer cap on the replications spent
@@ -201,6 +176,10 @@ with_preserved_seed <- function(seed, expr) {
 #'   parallel backend.
 #' @param cores Positive integer number of parallel workers.
 #' @param verbose Logical; whether to report search progress.
+#' @param max_n Largest sample size the search may try. Reaching it stops the
+#'   search with `stop_reason = "max_n_reached"`.
+#' @param evaluator Optional evaluator from `new_evaluator()`. When `NULL`, one
+#'   is created from the data, model and metric functions.
 #'
 #' @return A list containing lower and upper sample-size bounds, the associated
 #'   performance summaries, and the search trace. Each element of `track` also
@@ -222,7 +201,6 @@ calculate_adaptive_bounds <- function(
     mean_or_assurance = "mean",
     plateau_k = 3,
     plateau_tol = 0.005,
-    seed = NULL,
     conf_z = 2,
     max_reps_per = NULL,
     winsorise = TRUE,
@@ -238,26 +216,27 @@ calculate_adaptive_bounds <- function(
     c_statistic = NULL,
     parallel = FALSE,
     cores = 20,
-    verbose = FALSE
+    verbose = FALSE,
+    max_n = 1e6,
+    evaluator = NULL
 ) {
   vcat <- function(...) if (verbose) message(sprintf(...))
   
-  # -- Reproducibility ------------------------------------------------------
-  # The adaptive stage only produces search bounds for the second stage, so
-  # running it under a fixed seed costs nothing statistically and removes the
-  # run-to-run variability in the bounds entirely. The caller's RNG stream is
-  # left exactly as it was found.
-  if (!is.null(seed)) {
-    if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
-      caller_seed <- get(".Random.seed", envir = globalenv())
-      on.exit(
-        assign(".Random.seed", caller_seed, envir = globalenv()),
-        add = TRUE
-      )
-    }
-    set.seed(seed)
+  # Replicates come from the shared evaluator (R/simulation_core.R), so this
+  # stage scores models exactly as the main search does -- a fresh test set
+  # per replicate -- and each replicate runs on its own keyed random stream.
+  if (is.null(evaluator)) {
+    evaluator <- new_evaluator(
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      test_n = test_n,
+      value_on_error = value_on_error,
+      parallel = parallel,
+      cores = cores
+    )
   }
-  
+
   max_iter <- floor(n_reps_total / n_reps_per)
   max_reps_per <- if (is.null(max_reps_per)) {
     4L * as.integer(n_reps_per)
@@ -265,63 +244,8 @@ calculate_adaptive_bounds <- function(
     max(as.integer(max_reps_per), as.integer(n_reps_per))
   }
   
-  # The test dataset is drawn once and reused at every sample size, so its own
-  # sampling error is a run-level shift applied to the whole performance curve
-  # (empirically r > 0.99 between sample sizes) and is not reduced by
-  # n_reps_per. Keep it large.
-  if (is.finite(test_n) && test_n < 5000) {
-    warning(
-      sprintf(
-        paste(
-          "test_n = %d is small for the adaptive start-value search. The test",
-          "set is drawn once and reused at every sample size, so its own",
-          "sampling error shifts the whole performance curve and is not reduced",
-          "by n_reps_per. Values below ~5000 make the search bounds noticeably",
-          "run-dependent, particularly for the calibration slope."
-        ),
-        as.integer(test_n)
-      ),
-      call. = FALSE
-    )
-  }
-  
-  test_data <- data_function(test_n)
-  
-  single_run <- function(n) {
-    tryCatch(
-      {
-        dat <- data_function(n)
-        fit <- model_function(dat)
-        metric_or_fallback(
-          metric_function(test_data, fit, attr(model_function, "model")),
-          value_on_error
-        )
-      },
-      error = function(e) value_on_error
-    )
-  }
-  
-  draw_reps <- function(n, reps) {
-    if (parallel) {
-      require_optional_packages(
-        c("doParallel", "foreach"),
-        "parallel adaptive-bound calculations"
-      )
-      
-      cl <- parallel::makeCluster(cores)
-      doParallel::registerDoParallel(cl)
-      on.exit(parallel::stopCluster(cl), add = TRUE)
-      foreach::`%dopar%`(
-        foreach::foreach(i = seq_len(reps), .combine = c),
-        {
-          single_run(n)
-        }
-      )
-    } else {
-      vapply(seq_len(reps), function(i) single_run(n), FUN.VALUE = numeric(1))
-    }
-  }
-  
+  draw_reps <- function(n, reps) evaluator$batch(n, reps, "adaptive")
+
   # -- Summary with its Monte Carlo standard error --------------------------
   summarise_vals <- function(vals, n) {
     ok <- vals[is.finite(vals)]
@@ -502,6 +426,12 @@ calculate_adaptive_bounds <- function(
         stop_reason <- "no_movement"
         break
       }
+      # Doubling is unbounded otherwise: with an unreachable target it runs
+      # until the time or memory limit.
+      if (n_up > max_n) {
+        stop_reason <- "max_n_reached"
+        break
+      }
       push(assess(n_up))
     } else if (!have_call("below")) {
       n_next <- max(1, floor(n_down / 2))
@@ -601,6 +531,14 @@ compute_start_sample_sizes <- function(
   # Infer the number of predictors from the generator formals.
   npar <- formals(data_function)$n_signal_parameters +
     formals(data_function)$noise_parameters
+  # Custom data functions need not have these arguments; count the columns of
+  # a small sample instead (outcome columns excluded). The RNG is restored, so
+  # this does not change the simulations that follow.
+  if (!is.numeric(npar) || length(npar) != 1L || !is.finite(npar)) {
+    sample_data <- with_rng_restored(data_function(20))
+    outcome_cols <- intersect(names(sample_data), c("y", "time", "event"))
+    npar <- max(1L, ncol(sample_data) - max(1L, length(outcome_cols)))
+  }
   default_start_value <- max(10L, 10L * npar)
   
   # 2. Inspect data_function formals to infer outcome type

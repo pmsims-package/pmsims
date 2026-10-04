@@ -20,6 +20,19 @@
 #' @export
 plot.pmsims <- function(x, metric_label = NULL, plot = TRUE, ...) {
   ds <- x$mlpwr_ds
+  # The learning curve comes from the mlpwr search; a search that stopped
+  # early, or the bisection engine, has none to draw.
+  if (is.null(ds) || !length(ds$data %||% ds$dat)) {
+    stop(
+      "No learning curve to plot: ",
+      if (!is.null(x$status) && !identical(x$status, "ok")) {
+        sprintf("the search stopped (status '%s').", x$status)
+      } else {
+        "this result has no Gaussian-process search data (e.g. method = 'bisection')."
+      },
+      call. = FALSE
+    )
+  }
   design <- NULL
 
   dat <- if (!is.null(ds$data)) ds$data else ds$dat

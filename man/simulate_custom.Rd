@@ -19,6 +19,8 @@ simulate_custom(
   method = "mlpwr",
   progress = TRUE,
   verbose = FALSE,
+  verify_reps = 100,
+  max_n = 1e+06,
   ...
 )
 }
@@ -79,10 +81,32 @@ shown for \code{mlpwr}-based methods.}
 when supported. For the bisection engine, setting \code{verbose = TRUE} stores
 the iteration history on the returned object.}
 
+\item{verify_reps}{Integer number of fresh replicates simulated at the
+returned sample size to check that it meets the target (see \code{status}).
+Set to \code{0} to skip the check.}
+
+\item{max_n}{Largest sample size the adaptive start-value search may try.
+If performance there is still clearly below the target, the search stops
+with status \code{"not_bracketed"}.}
+
 \item{...}{Additional arguments passed to the selected search engine.}
 }
 \value{
-An object of class \code{"pmsims"} containing the estimated minimum sample size.
+An object of class \code{"pmsims"} containing the estimated minimum
+sample size \code{min_n} (numeric; \code{NA} when no sample size could be found)
+and a \code{status}:
+\describe{
+\item{\code{"ok"}}{The search found \code{min_n}, and simulating it again
+confirmed the target is met (or the check was skipped).}
+\item{\code{"not_verified"}}{Simulating \code{min_n} again gave performance
+clearly below the target, so \code{min_n} is likely too small.}
+\item{\code{"not_bracketed"}}{No sample size up to \code{max_n} met the target,
+or the search returned no sample size.}
+}
+\code{status_message} explains a status other than \code{"ok"}, \code{verification}
+holds the check at \code{min_n}, and \code{diagnostics} records the search bounds,
+whether \code{min_n} lies on one of them, mlpwr's warnings, Gaussian-process
+restarts and failed replicates.
 }
 \description{
 Compute the minimum sample size required to achieve a target level of
@@ -92,6 +116,14 @@ data-generating function, a model-fitting function, and a metric function,
 and the chosen search engine estimates the smallest \eqn{n} meeting the
 selected performance criterion.
 }
+\section{Random numbers}{
+
+Each simulation replicate runs on its own random-number stream, derived from
+a single draw from the session's RNG. Results are therefore reproducible
+with \code{\link[=set.seed]{set.seed()}}, and a replicate's data do not depend on how many random
+numbers other parts of the search consumed.
+}
+
 \examples{
 # Three independent predictors with a population R-squared of 0.5.
 data_fun <- function(n) {

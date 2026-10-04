@@ -128,6 +128,17 @@ restore_calibration_slope_scale <- function(output, plan) {
     )
   }
 
+  # The verification check ran on the CSSE scale too; report it on the
+  # calibration slope scale, keeping the CSSE values alongside.
+  v <- output$verification
+  if (is.list(v) && is.numeric(v$performance) && length(v$performance) == 1L) {
+    v$csse_performance <- v$performance
+    v$csse_se <- v$se
+    v$performance <- csse_to_calibration_slope(v$performance, plan$direction)
+    v$se <- NULL
+    output$verification <- v
+  }
+
   output$target_performance <- plan$user_target_performance
   output$metric <- "calibration_slope"
   output$internal_csse <- TRUE

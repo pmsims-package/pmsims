@@ -34,6 +34,9 @@
 #'   search. If supplied, `max_sample_size` must also be supplied.
 #' @param max_sample_size Optional integer upper bound for the sample-size
 #'   search. If supplied, `min_sample_size` must also be supplied.
+#'   Supplying both bounds defines the search space directly, so the adaptive
+#'   starting-value search is skipped. Because the runtime estimate is
+#'   extrapolated from that stage, no long-run warning is issued either.
 #' @param n_reps_total Integer total number of simulation replications allocated
 #'   to the search. The search evaluates approximately
 #'   `n_reps_total / n_reps_per` candidate sample sizes.
@@ -44,127 +47,161 @@
 #' @param progress Logical flag controlling whether the `mlpwr` progress bar is
 #'   shown for `mlpwr`-based methods.
 #' @param verbose Logical flag controlling engine-specific diagnostic output
-#' @param adaptive_seed Integer seed used for the adaptive start-value search.
-#'   This stage only establishes search bounds for the main simulation, so it is
-#'   run under a fixed seed by default: the bounds are then identical from run to
-#'   run, whatever the calling session's RNG state. The caller's RNG stream is
-#'   restored afterwards and the main simulation is unaffected. Set to `NULL` to
-#'   let the stage follow the global stream instead (useful for checking how
-#'   sensitive the bounds are).
 #'   when supported. For the bisection engine, setting `verbose = TRUE` stores
 #'   the iteration history on the returned object.
+#' @param verify_reps Integer number of fresh replicates simulated at the
+#'   returned sample size to check that it meets the target (see `status`).
+#'   Set to `0` to skip the check.
+#' @param max_n Largest sample size the adaptive start-value search may try.
+#'   If performance there is still clearly below the target, the search stops
+#'   with status `"not_bracketed"`.
 #' @param ... Additional arguments passed to the selected search engine.
 #'
-#' @return An object of class `"pmsims"` containing the estimated minimum sample size.
+#' @return An object of class `"pmsims"` containing the estimated minimum
+#'   sample size `min_n` (numeric; `NA` when no sample size could be found)
+#'   and a `status`:
+#'   \describe{
+#'     \item{`"ok"`}{The search found `min_n`, and simulating it again
+#'       confirmed the target is met (or the check was skipped).}
+#'     \item{`"not_verified"`}{Simulating `min_n` again gave performance
+#'       clearly below the target, so `min_n` is likely too small.}
+#'     \item{`"not_bracketed"`}{No sample size up to `max_n` met the target,
+#'       or the search returned no sample size.}
+#'   }
+#'   `status_message` explains a status other than `"ok"`, `verification`
+#'   holds the check at `min_n`, and `diagnostics` records the search bounds,
+#'   whether `min_n` lies on one of them, mlpwr's warnings, Gaussian-process
+#'   restarts and failed replicates.
+#'
+#' @section Random numbers:
+#' Each simulation replicate runs on its own random-number stream, derived from
+#' a single draw from the session's RNG. Results are therefore reproducible
+#' with [set.seed()], and a replicate's data do not depend on how many random
+#' numbers other parts of the search consumed.
 #'
 #' @seealso [simulate_binary()], [simulate_continuous()], [simulate_survival()]
 #'
 #' @examples
-#' \dontrun{
-#' set.seed(1234)
-#'
+#' # Three independent predictors with a population R-squared of 0.5.
 #' data_fun <- function(n) {
 #'   x1 <- rnorm(n)
 #'   x2 <- rnorm(n)
 #'   x3 <- rnorm(n)
-#'   x4 <- rnorm(n)
-#'   x5 <- rnorm(n)
-#'   y <- 0.35 * x1 - 0.3 * x2 + 0.2 * x3 + 0.1 * x4 - 0.1 * x5 +
-#'     rnorm(n, sd = 1)
-#'   data.frame(y = y, x1 = x1, x2 = x2, x3 = x3, x4 = x4, x5 = x5)
+#'   y <- (x1 + x2 + x3) / sqrt(3) + rnorm(n)
+#'   data.frame(y = y, x1 = x1, x2 = x2, x3 = x3)
 #' }
 #'
 #' model_fun <- function(dat) {
 #'   stats::lm(y ~ ., data = dat)
 #' }
 #'
+#' # Calibration slope evaluated on independent test data.
 #' metric_fun <- function(test_data, fit, model) {
 #'   preds <- stats::predict(fit, newdata = test_data)
-#'   1 - sum((test_data$y - preds)^2) /
-#'     sum((test_data$y - mean(test_data$y))^2)
+#'   unname(stats::coef(stats::lm(test_data$y ~ preds))[2])
 #' }
-#' attr(metric_fun, "metric") <- "r2"
+#' attr(metric_fun, "metric") <- "calibration_slope"
 #'
-#' maximum_achievable_data <- data_fun(100000)
-#' test_data <- data_fun(50000)
-#' maximum_achievable_fit <- model_fun(maximum_achievable_data)
-#' maximum_achievable_performance <- metric_fun(
-#'   test_data,
-#'   maximum_achievable_fit,
-#'   "lm"
-#' )
-#'
+#' \donttest{
+#' set.seed(123)
 #' est <- simulate_custom(
 #'   data_function = data_fun,
 #'   model_function = model_fun,
 #'   metric_function = metric_fun,
-#'   target_performance = maximum_achievable_performance - 0.02
+#'   target_performance = 0.9,
+#'   mean_or_assurance = "assurance",
+#'   min_sample_size = 25,
+#'   max_sample_size = 1000,
+#'   n_reps_total = 1000,
+#'   test_n = 30000,
+#'   progress = FALSE
 #' )
 #' est
+#' est$min_n
+#' plot(est)
 #' }
 #' @export
 simulate_custom <- function(
-    data_function,
-    model_function,
-    metric_function,
-    target_performance,
-    c_statistic = NULL,
-    mean_or_assurance = "assurance",
-    test_n = 30000,
-    min_sample_size = NULL,
-    max_sample_size = NULL,
-    n_reps_total = 1000,
-    n_reps_per = 20,
-    method = "mlpwr",
-    progress = TRUE,
-    verbose = FALSE,
-    adaptive_seed = 20240101L,
-    ...
+  data_function,
+  model_function,
+  metric_function,
+  target_performance,
+  c_statistic = NULL,
+  mean_or_assurance = "assurance",
+  test_n = 30000,
+  min_sample_size = NULL,
+  max_sample_size = NULL,
+  n_reps_total = 1000,
+  n_reps_per = 20,
+  method = "mlpwr",
+  progress = TRUE,
+  verbose = FALSE,
+  verify_reps = 100,
+  max_n = 1e6,
+  ...
 ) {
   # Evaluate four initial sample sizes after establishing the search bounds.
   n_init <- 4
   se_final <- NULL # Reserved for internal engine use.
-  
+
   if (is.null(data_function)) {
     stop("data_function missing")
   }
-  
+
   if (is.null(n_reps_total)) {
     stop("'n_reps_total' must be specified.")
   }
-  
+
   # Validate the optional sample-size bounds.
   if (
     (!is.null(min_sample_size) && is.null(max_sample_size)) ||
-    (is.null(min_sample_size) && !is.null(max_sample_size))
+      (is.null(min_sample_size) && !is.null(max_sample_size))
   ) {
     stop(
       "min_sample_size and max_sample_size must either both be positive integers or both set to NULL"
     )
   }
-  
+
   if (
     !is.null(min_sample_size) &&
-    !is.null(max_sample_size) &&
-    min_sample_size > max_sample_size
+      !is.null(max_sample_size) &&
+      min_sample_size > max_sample_size
   ) {
     stop("min_sample_size must be less than max_sample_size")
   }
-  
+
   if (!is.null(min_sample_size)) {
-    cat(
-      "Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.\n"
+    cli::cli_alert_info(
+      "Using user-specified min_sample_size and max_sample_size. \\
+       Adaptive starting values will not be used."
     )
   }
-  
+
   if ((mean_or_assurance %in% c("mean", "assurance")) == FALSE) {
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
   }
-  
+
+  check_metric_direction(attr(metric_function, "metric", exact = TRUE))
+
   # Choose the metric-specific fallback used when a simulation fails.
   value_on_error <- resolve_value_on_error(metric_function)
   time_1 <- Sys.time()
-  
+
+  # One evaluator, on keyed random streams, for every stage of the search
+  # (see R/simulation_core.R).
+  dots <- list(...)
+  streams <- new_simulation_streams()
+  evaluator <- new_evaluator(
+    data_function = data_function,
+    model_function = model_function,
+    metric_function = metric_function,
+    test_n = test_n,
+    value_on_error = value_on_error,
+    streams = streams,
+    parallel = isTRUE(dots$parallel),
+    cores = if (is.numeric(dots$cores)) dots$cores else 1L
+  )
+
   if (method == "mlpwr") {
     output <- do.call(
       calculate_mlpwr,
@@ -186,7 +223,8 @@ simulate_custom <- function(
           model_function = model_function,
           metric_function = metric_function,
           value_on_error = value_on_error,
-          adaptive_seed = adaptive_seed
+          evaluator = evaluator,
+          max_n = max_n
         ),
         list(...)
       )
@@ -213,7 +251,8 @@ simulate_custom <- function(
           cores = 20,
           verbose = verbose,
           budget = TRUE,
-          adaptive_seed = adaptive_seed
+          evaluator = evaluator,
+          max_n = max_n
         ),
         list(...)
       )
@@ -238,7 +277,8 @@ simulate_custom <- function(
           model_function = model_function,
           metric_function = metric_function,
           value_on_error = value_on_error,
-          adaptive_seed = adaptive_seed
+          evaluator = evaluator,
+          max_n = max_n
         ),
         list(...)
       )
@@ -246,19 +286,23 @@ simulate_custom <- function(
   } else {
     stop("Method not found")
   }
+  check <- check_result(
+    output = output,
+    evaluator = evaluator,
+    target_performance = target_performance,
+    mean_or_assurance = mean_or_assurance,
+    verify_reps = verify_reps
+  )
   time_2 <- Sys.time()
+
   results_list <- list(
     outcome = attr(data_function, "outcome"),
-    min_n = ifelse(
-      is.na(output$min_n),
-      "Not possible. Increase sample or lower performance",
-      output$min_n
-    ),
-    perf_n = ifelse(
-      is.na(output$perf_n),
-      "Not possible. Increase sample or lower performance",
-      output$perf_n
-    ),
+    min_n = check$min_n,
+    perf_n = check$perf_n,
+    status = check$status,
+    status_message = check$status_message,
+    verification = check$verification,
+    diagnostics = check$diagnostics,
     mlpwr_ds = output$mlpwr_ds,
     target_performance = target_performance,
     summaries = output$summaries,
@@ -281,6 +325,7 @@ simulate_custom <- function(
     simulation_time = difftime(time_2, time_1, units = "secs"),
     # Searches restarted after a Gaussian-process surrogate failure (mlpwr engines).
     gp_restarts = output$gp_restarts %||% 0L,
+    rng_base_seed = streams$base_seed,
     mean_or_assurance = mean_or_assurance
   )
   if (!is.null(output$history)) {
@@ -306,29 +351,29 @@ resolve_value_on_error <- function(metric_function) {
     # fit as better than perfect calibration.
     csse = -1
   )
-  
+
   if (!is.null(custom_value_on_error)) {
     if (
       !is.numeric(custom_value_on_error) ||
-      length(custom_value_on_error) != 1 ||
-      is.na(custom_value_on_error)
+        length(custom_value_on_error) != 1 ||
+        is.na(custom_value_on_error)
     ) {
       stop(
         "attr(metric_function, \"value_on_error\") must be a single non-missing numeric value."
       )
     }
-    
+
     return(as.numeric(custom_value_on_error))
   }
-  
+
   if (
     length(metric_name) == 1 &&
-    !is.na(metric_name) &&
-    metric_name %in% names(error_values)
+      !is.na(metric_name) &&
+      metric_name %in% names(error_values)
   ) {
     return(unname(error_values[[metric_name]]))
   }
-  
+
   0.5
 }
 
@@ -343,6 +388,108 @@ metric_or_fallback <- function(value, value_on_error) {
   } else {
     value_on_error
   }
+}
+
+#' Check an engine's answer and assign the result status
+#'
+#' Engines can stop early (the adaptive stage reached max_n without meeting
+#' the target). Otherwise the returned sample size is simulated again
+#' with fresh replicates: mlpwr's reported performance is its surrogate's
+#' prediction, never an observed value, so without this check an answer for an
+#' unreachable target -- for example the edge of the search range -- is
+#' returned as if it met the target.
+#' @keywords internal
+#' @noRd
+check_result <- function(
+  output,
+  evaluator,
+  target_performance,
+  mean_or_assurance,
+  verify_reps = 100
+) {
+  search <- output$search %||% list()
+  min_n <- suppressWarnings(as.numeric(output$min_n))
+  perf_n <- suppressWarnings(as.numeric(output$perf_n))
+  if (length(min_n) != 1L) min_n <- NA_real_
+  if (length(perf_n) != 1L) perf_n <- NA_real_
+
+  status <- search$status
+  status_message <- search$status_message
+  verification <- NULL
+
+  if (is.null(status)) {
+    if (!is.finite(min_n)) {
+      status <- "not_bracketed"
+      status_message <- paste(
+        "The search did not return a sample size: no sample size in the",
+        "search range was predicted to meet the target."
+      )
+    } else if (isTRUE(verify_reps > 0)) {
+      verification <- verify_sample_size(
+        evaluator = evaluator,
+        n = min_n,
+        target_performance = target_performance,
+        mean_or_assurance = mean_or_assurance,
+        reps = verify_reps
+      )
+      if (verification$verified) {
+        status <- "ok"
+      } else {
+        status <- "not_verified"
+        status_message <- sprintf(
+          paste(
+            "Simulating n = %s again gave performance %s (SE %s), clearly",
+            "below the target %s. The target may be unreachable, or the",
+            "search range may not contain the answer; this sample size is",
+            "likely too small."
+          ),
+          format(min_n, big.mark = ",", scientific = FALSE),
+          format(signif(verification$performance, 4)),
+          format(signif(verification$se, 2)),
+          format(signif(target_performance, 4))
+        )
+      }
+    } else {
+      status <- "ok"
+    }
+  }
+
+  if (!identical(status, "ok")) {
+    min_n <- if (identical(status, "not_verified")) min_n else NA_real_
+    if (!identical(status, "not_verified")) perf_n <- NA_real_
+    warning(status_message, call. = FALSE)
+  } else if (!is.na(search$at_bound %||% NA)) {
+    cli::cli_alert_info(paste(
+      "The estimate lies on the {search$at_bound} edge of the search range",
+      "({search$bounds[1]}-{search$bounds[2]}), so it may overstate the",
+      "sample size needed."
+    ))
+  }
+  if (length(search$mlpwr_warnings)) {
+    cli::cli_alert_warning(
+      "mlpwr reported: {paste(search$mlpwr_warnings, collapse = '; ')}"
+    )
+  }
+
+  failures <- evaluator$failures()
+  list(
+    min_n = min_n,
+    perf_n = perf_n,
+    status = status,
+    status_message = status_message %||% NA_character_,
+    verification = verification,
+    diagnostics = list(
+      bounds = search$bounds,
+      at_bound = search$at_bound %||% NA_character_,
+      adaptive_stop_reason = search$adaptive_stop_reason %||% NA_character_,
+      max_achievable_perf = search$max_achievable_perf %||% NA_real_,
+      mlpwr_warnings = search$mlpwr_warnings %||% character(0),
+      gp_restarts = output$gp_restarts %||% 0L,
+      replicates = failures,
+      failed_replicates = sum(failures$failed),
+      total_replicates = sum(failures$reps)
+    )
+  )
 }
 
 #' Parse and validate input specifications
@@ -386,7 +533,7 @@ parse_inputs <- function(data_spec, metric, model) {
     attr(data_function, "outcome"),
     model
   )
-  
+
   # The current interface uses the first requested metric.
   metric_function <- default_metric_generator(metric[[1]], data_function)
   return(list(
