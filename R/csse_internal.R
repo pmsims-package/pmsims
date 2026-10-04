@@ -53,6 +53,23 @@ csse_to_calibration_slope <- function(csse, direction = c("below", "above")) {
   if (direction == "above") 1 + deviation else 1 - deviation
 }
 
+#' Describe CSSE values as calibration slopes in messages
+#'
+#' @param metric_function The CSSE metric function used for the search.
+#' @param plan The list returned by `plan_internal_csse()`.
+#' @return `metric_function`, with a `describe` attribute when `plan$active`.
+#' @keywords internal
+#' @noRd
+describe_as_calibration_slope <- function(metric_function, plan) {
+  if (isTRUE(plan$active)) {
+    attr(metric_function, "describe") <- function(x) {
+      slope <- csse_to_calibration_slope(x, direction = plan$direction)
+      paste("a calibration slope of", format(signif(slope, 3)))
+    }
+  }
+  metric_function
+}
+
 #' Plan any internal calibration slope to CSSE conversion
 #'
 #' Decides whether the requested metric and model combination should be run on

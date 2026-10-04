@@ -69,6 +69,8 @@
 #'       clearly below the target, so `min_n` is likely too small.}
 #'     \item{`"not_bracketed"`}{No sample size up to `max_n` met the target,
 #'       or the search returned no sample size.}
+#'     \item{`"replicates_failed"`}{At least half the simulation replicates
+#'       failed to fit or score the model, so no sample size was estimated.}
 #'   }
 #'   `status_message` explains a status other than `"ok"`, `verification`
 #'   holds the check at `min_n`, and `diagnostics` records the search bounds,
@@ -205,7 +207,20 @@ simulate_custom <- function(
 
   # One evaluator, on keyed random streams, for every stage of the search
   # (see R/simulation_core.R).
+  # Replicates of a batch run in parallel with `parallel = TRUE` (forked
+  # processes, so not on Windows); random forests and xgboost then use one
+  # thread per worker, so the workers do not compete for cores.
   dots <- list(...)
+  parallel <- isTRUE(dots$parallel)
+  cores <- if (is.numeric(dots$cores)) {
+    dots$cores
+  } else {
+    min(20L, parallel::detectCores(), na.rm = TRUE)
+  }
+  if (parallel) {
+    old_threads <- options(pmsims.threads = 1L)
+    on.exit(options(old_threads), add = TRUE)
+  }
   streams <- new_simulation_streams()
   evaluator <- new_evaluator(
     data_function = data_function,
@@ -214,8 +229,8 @@ simulate_custom <- function(
     test_n = test_n,
     value_on_error = value_on_error,
     streams = streams,
-    parallel = isTRUE(dots$parallel),
-    cores = if (is.numeric(dots$cores)) dots$cores else 1L
+    parallel = parallel,
+    cores = if (parallel) cores else 1L
   )
 
   if (method == "mlpwr") {
@@ -263,8 +278,6 @@ simulate_custom <- function(
           c_statistic = c_statistic,
           mean_or_assurance = mean_or_assurance,
           tol = 1e-3,
-          parallel = FALSE,
-          cores = 20,
           verbose = verbose,
           budget = TRUE,
           evaluator = evaluator,
@@ -307,7 +320,8 @@ simulate_custom <- function(
     evaluator = evaluator,
     target_performance = target_performance,
     mean_or_assurance = mean_or_assurance,
-    verify_reps = verify_reps
+    verify_reps = verify_reps,
+    describe = describe_value(metric_function)
   )
   time_2 <- Sys.time()
 
@@ -400,6 +414,10 @@ resolve_value_on_error <- function(metric_function) {
     return(unname(error_values[[metric_name]]))
   }
 
+  cli::cli_alert_info(paste(
+    "Failed replicates will count as a performance of 0.5. Set",
+    "{.code attr(metric_function, \"value_on_error\")} to choose another value."
+  ))
   0.5
 }
 
@@ -431,7 +449,8 @@ check_result <- function(
   evaluator,
   target_performance,
   mean_or_assurance,
-  verify_reps = 100
+  verify_reps = 100,
+  describe = function(x) format(signif(x, 4))
 ) {
   search <- output$search %||% list()
   min_n <- suppressWarnings(as.numeric(output$min_n))
@@ -446,6 +465,14 @@ check_result <- function(
   status <- search$status
   status_message <- search$status_message
   verification <- NULL
+
+  # Mostly failed replicates make any answer meaningless, whatever the search
+  # returned.
+  failed <- failure_status(evaluator)
+  if (!is.null(failed)) {
+    status <- failed$status
+    status_message <- failed$message
+  }
 
   if (is.null(status)) {
     if (!is.finite(min_n)) {
@@ -468,15 +495,13 @@ check_result <- function(
         status <- "not_verified"
         status_message <- sprintf(
           paste(
-            "Simulating n = %s again gave performance %s (SE %s), clearly",
-            "below the target %s. The target may be unreachable, or the",
-            "search range may not contain the answer; this sample size is",
-            "likely too small."
+            "Simulating n = %s again gave %s, clearly below the target %s.",
+            "The target may be unreachable, or the search range may not",
+            "contain the answer; this sample size is likely too small."
           ),
           format(min_n, big.mark = ",", scientific = FALSE),
-          format(signif(verification$performance, 4)),
-          format(signif(verification$se, 2)),
-          format(signif(target_performance, 4))
+          describe(verification$performance),
+          describe(target_performance)
         )
       }
     } else {
@@ -484,17 +509,22 @@ check_result <- function(
     }
   }
 
+  if (!status %in% c("ok", "not_verified")) {
+    min_n <- perf_n <- NA_real_
+  }
   if (!identical(status, "ok")) {
-    min_n <- if (identical(status, "not_verified")) min_n else NA_real_
-    if (!identical(status, "not_verified")) {
-      perf_n <- NA_real_
-    }
     warning(status_message, call. = FALSE)
-  } else if (!is.na(search$at_bound %||% NA)) {
+  } else if (identical(search$at_bound, "lower")) {
     cli::cli_alert_info(paste(
-      "The estimate lies on the {search$at_bound} edge of the search range",
+      "The estimate lies on the lower edge of the search range",
       "({search$bounds[1]}-{search$bounds[2]}), so it may overstate the",
       "sample size needed."
+    ))
+  } else if (identical(search$at_bound, "upper")) {
+    cli::cli_alert_info(paste(
+      "The estimate lies on the upper edge of the search range",
+      "({search$bounds[1]}-{search$bounds[2]}); the sample size needed may",
+      "be larger."
     ))
   }
   if (length(search$mlpwr_warnings)) {

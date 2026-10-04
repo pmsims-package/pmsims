@@ -203,7 +203,12 @@ search_bounds <- function(
     adaptive = adaptive,
     status = NULL
   )
-  out$status <- adaptive_status(adaptive, target_performance)
+  out$status <- failure_status(evaluator) %||%
+    adaptive_status(
+      adaptive,
+      target_performance,
+      describe_value(metric_function)
+    )
   if (is.null(out$status)) {
     cli::cli_alert_info(
       "Starting values determined: min sample size = {out$min}, \\
@@ -223,7 +228,11 @@ search_bounds <- function(
 # simulations, up to 80% of runs that started 8x below a strict target).
 # After a plateau the main search runs as before, and the verification of the
 # returned sample size flags an answer that does not meet the target.
-adaptive_status <- function(adaptive, target_performance) {
+adaptive_status <- function(
+  adaptive,
+  target_performance,
+  describe = function(x) format(signif(x, 4))
+) {
   track <- adaptive$track
   if (!length(track) || !identical(adaptive$stop_reason, "max_n_reached")) {
     return(NULL)
@@ -248,8 +257,8 @@ adaptive_status <- function(adaptive, target_performance) {
         "(max_n); the target may be unreachable."
       ),
       format(max(ns), big.mark = ",", scientific = FALSE),
-      format(signif(target_performance, 4)),
-      format(signif(perfs[largest], 4))
+      describe(target_performance),
+      describe(perfs[largest])
     ),
     max_achievable_perf = max(perfs, na.rm = TRUE)
   )

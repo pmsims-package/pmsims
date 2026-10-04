@@ -16,8 +16,10 @@
 # replicate's data no longer depend on how many random numbers were consumed
 # before it -- by other replicates, by mlpwr's surrogate fits and optimiser, or
 # by any added check -- a change to one part of the search no longer reshuffles
-# the data seen by every other part. The caller's RNG stream is left as it was
-# found, apart from the single draw used for the base seed.
+# the data seen by every other part. The replicates themselves never touch the
+# caller's RNG; the adaptive stage's bootstrap standard errors and mlpwr's
+# surrogate do, but they run in the main process, so results are still
+# reproducible and the same for any number of cores.
 # =============================================================================
 
 # Purposes have separate streams, so that, for example, the verification
@@ -353,6 +355,36 @@ check_metric_direction <- function(metric) {
 
 # Number of threads for ranger fits and predictions: the `pmsims.threads`
 # option if set, otherwise the physical cores less two, and never below one.
+# Status when at least half the replicates failed to fit or score, else NULL.
+# Failed replicates are replaced by value_on_error, so the search would be
+# working on that fallback rather than on the model's performance.
+failure_status <- function(evaluator) {
+  f <- evaluator$failures()
+  total <- sum(f$reps)
+  failed <- sum(f$failed)
+  if (!total || failed / total < 0.5) {
+    return(NULL)
+  }
+  err <- f$first_error[!is.na(f$first_error)][1]
+  list(
+    status = "replicates_failed",
+    message = sprintf(
+      "%d of %d simulation replicates failed to fit or score the model%s, so no sample size can be estimated.",
+      failed,
+      total,
+      if (is.na(err)) "" else paste0(" (first error: ", err, ")")
+    )
+  )
+}
+
+# How to show a value of the searched metric in messages. Searches run on the
+# CSSE scale for a calibration slope target describe values as slopes (see
+# describe_as_calibration_slope()).
+describe_value <- function(metric_function) {
+  attr(metric_function, "describe", exact = TRUE) %||%
+    function(x) format(signif(x, 4))
+}
+
 pmsims_threads <- function() {
   n <- getOption("pmsims.threads")
   if (is.null(n)) {

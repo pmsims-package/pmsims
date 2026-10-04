@@ -378,9 +378,9 @@ simulate_binary <- function(
 
   simulate_custom_args <- utils::modifyList(
     list(
-      metric_function = default_metric_generator(
-        csse_plan$metric,
-        data_function
+      metric_function = describe_as_calibration_slope(
+        default_metric_generator(csse_plan$metric, data_function),
+        csse_plan
       ),
       target_performance = csse_plan$target_performance,
       c_statistic = maximum_achievable_cstatistic,
@@ -541,9 +541,9 @@ simulate_continuous <- function(
 
   simulate_custom_args <- utils::modifyList(
     list(
-      metric_function = default_metric_generator(
-        csse_plan$metric,
-        data_function
+      metric_function = describe_as_calibration_slope(
+        default_metric_generator(csse_plan$metric, data_function),
+        csse_plan
       ),
       target_performance = csse_plan$target_performance,
       c_statistic = maximum_achievable_rsquared,
@@ -718,9 +718,9 @@ simulate_survival <- function(
 
   simulate_custom_args <- utils::modifyList(
     list(
-      metric_function = default_metric_generator(
-        csse_plan$metric,
-        data_function
+      metric_function = describe_as_calibration_slope(
+        default_metric_generator(csse_plan$metric, data_function),
+        csse_plan
       ),
       target_performance = csse_plan$target_performance,
       c_statistic = maximum_achievable_cindex,
