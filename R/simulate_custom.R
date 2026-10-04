@@ -81,6 +81,17 @@
 #' with [set.seed()], and a replicate's data do not depend on how many random
 #' numbers other parts of the search consumed.
 #'
+#' @section How the mlpwr engine picks its answer:
+#' mlpwr returns the smallest sample size at which its Gaussian-process
+#' surrogate's mean plus 0.3 of its standard deviation reaches the target
+#' (fixed inside mlpwr). Where the surrogate is uncertain, this is below the
+#' sample size at which the criterion is expected to reach the target: in
+#' benchmark simulations against directly simulated reference sample sizes,
+#' answers were a median of about 9% too small, and more for penalised and
+#' machine-learning models. The verification step (status `"not_verified"`)
+#' catches only answers clearly below the target. Whether to correct for this
+#' is an open question.
+#'
 #' @seealso [simulate_binary()], [simulate_continuous()], [simulate_survival()]
 #'
 #' @examples

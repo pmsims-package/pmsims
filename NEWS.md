@@ -1,6 +1,36 @@
 # pmsims (development version)
 
+## Search
+
+- Every stage of the search (start values, the mlpwr and bisection searches,
+  verification and the secondary metric) now evaluates replicates the same
+  way: a model trained on fresh data and scored on a fresh test set. The
+  start-value stage previously scored every replicate against one test set,
+  so it could bracket the wrong range.
+- Each replicate has its own random-number stream, so results are
+  reproducible with `set.seed()`, identical in serial and parallel, and
+  unaffected by how much of the search came before.
+- Results are checked before they are returned: the answer is simulated again
+  with fresh replicates (`verify_reps`) and the result reports a `status`
+  (`"ok"`, `"not_verified"`, `"not_bracketed"`). `min_n` is `NA` when no
+  answer was found.
+- The mlpwr search restarts when its Gaussian-process surrogate fails, instead
+  of erroring.
+- Updated adaptive start values (Ridwan Olaniran).
+- `max_n` caps the start-value search; it defaults to 200,000 for random
+  forests and xgboost and 1,000,000 otherwise.
+- The mlpwr engine's answer tends to be small (see "How the mlpwr engine picks
+  its answer" in `?simulate_custom`); whether to correct this is open.
+
 ## Bug fixes
+
+- Metric values that are not finite (for example, the calibration slope of a
+  lasso that selects no predictors) count as failed replicates.
+- Metrics where smaller is better (`calibration_in_the_large`, `brier_score`,
+  `ibs`) are rejected: they were searched in the wrong direction.
+- `survival_auc`'s concordance fallback returned 1 - C.
+- ranger and xgboost thread counts: at least one thread, following option
+  `pmsims.threads`; xgboost previously used every core.
 
 - Fixed predictor correlation. The Gaussian copula applied the Cholesky factor
   transposed, so predictors did not share the requested pairwise correlation:
