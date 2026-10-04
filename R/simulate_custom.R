@@ -81,7 +81,9 @@
 #'     \item{`"unreachable"`}{With `method = "curve"`: the learning curve
 #'       levels off below the target, so no sample size reaches it.}
 #'     \item{`"replicates_failed"`}{At least half the simulation replicates
-#'       failed to fit or score the model, so no sample size was estimated.}
+#'       failed to fit or score the model, so no sample size was estimated.
+#'       With `method = "curve"`, also when 20% or more failed at every
+#'       sample size tried, so no learning curve could be fitted.}
 #'   }
 #'   `status_message` explains a status other than `"ok"`, `verification`
 #'   holds the check at `min_n`, and `diagnostics` records the search bounds,

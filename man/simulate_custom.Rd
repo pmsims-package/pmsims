@@ -120,7 +120,9 @@ or the search returned no sample size.}
 \item{\code{"unreachable"}}{With \code{method = "curve"}: the learning curve
 levels off below the target, so no sample size reaches it.}
 \item{\code{"replicates_failed"}}{At least half the simulation replicates
-failed to fit or score the model, so no sample size was estimated.}
+failed to fit or score the model, so no sample size was estimated.
+With \code{method = "curve"}, also when 20\% or more failed at every
+sample size tried, so no learning curve could be fitted.}
 }
 \code{status_message} explains a status other than \code{"ok"}, \code{verification}
 holds the check at \code{min_n}, and \code{diagnostics} records the search bounds,

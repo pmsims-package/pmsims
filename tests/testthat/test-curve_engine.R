@@ -374,3 +374,92 @@ test_that("the live plot draws for real on a graphics device", {
     live_plot = TRUE
   ))
 })
+
+test_that("too many failed replicates stop the search with a clear status", {
+  # About 40% of replicates fail at every n: each point is left out of the fit
+  # (20% or more failed), but the evaluator's own check needs half.
+  sc <- synthetic_curve()
+  metric <- sc$metric_function
+  sc$metric_function <- function(test_data, fit, model) {
+    if (fit$z < stats::qnorm(0.4)) {
+      stop("did not converge")
+    }
+    metric(test_data, fit, model)
+  }
+  attr(sc$metric_function, "metric") <- "auc"
+  res <- run_curve(sc, 0.85)
+  expect_identical(res$status, "replicates_failed")
+  expect_match(res$status_message, "did not converge.*20% or more failed")
+  expect_lt(res$diagnostics$total_replicates, 100)
+})
+
+test_that("a search limit is simulated, not snapped onto a nearby point", {
+  # From 64, halving reaches 16; the next request (8) is clamped to the floor
+  # of 15, within 7% of 16, and must still be simulated at 15.
+  low <- run_curve(synthetic_curve(), 0.2, min_n_floor = 15, start_n = 64)
+  expect_identical(low$diagnostics$bounds[1], 15)
+  expect_identical(low$diagnostics$adaptive_stop_reason, "lower_bound")
+  # Doubling from 130 reaches 1,040; the next request is clamped to max_n.
+  high <- run_curve(
+    synthetic_curve(ceiling = 0.85),
+    0.9,
+    start_n = 130,
+    max_n = 1100
+  )
+  expect_identical(high$diagnostics$bounds[2], 1100)
+  expect_identical(high$diagnostics$adaptive_stop_reason, "max_n_reached")
+})
+
+test_that("with a single sample size, a met target is returned and verified", {
+  res <- run_curve(
+    synthetic_curve(),
+    0.75,
+    min_sample_size = 500,
+    max_sample_size = 500
+  )
+  expect_identical(res$min_n, 500)
+  expect_identical(res$status, "ok")
+  expect_false(is.null(res$verification))
+})
+
+test_that("a curve that is flat above the target gives no spurious cross-check", {
+  # Decreasing values: the fitted curve is flat (b = 0) and crosses the target
+  # at n = 0, so the answer is the smallest sample size allowed.
+  sc <- synthetic_curve(scale = -2)
+  res <- run_curve(sc, 0.7, min_n_floor = 10, start_n = 40)
+  expect_identical(res$min_n, 10)
+  expect_false(res$diagnostics$crosscheck_disagrees)
+  expect_true(is.finite(res$diagnostics$gain_per_doubling))
+})
+
+test_that("the live plot shows CSSE on the slope scale only as plot() does", {
+  states <- list()
+  local_mocked_bindings(plot_learning_curve = function(x, ...) {
+    states[[length(states) + 1L]] <<- x
+    invisible(NULL)
+  })
+  old <- options(pmsims.live_plot_force = TRUE)
+  on.exit(options(old), add = TRUE)
+  # A calibration slope target above 1, searched on the CSSE scale.
+  sc <- csse_curve(bias = 0.2)
+  plan <- plan_internal_csse("calibration_slope", "ridge", 1.1)
+  sc$metric_function <- describe_as_calibration_slope(sc$metric_function, plan)
+  run_curve(
+    sc,
+    plan$target_performance,
+    seed = 1,
+    start_n = 300,
+    live_plot = TRUE
+  )
+  last <- states[[length(states)]]
+  expect_true(last$internal_csse)
+  expect_identical(last$metric, "calibration_slope")
+  expect_equal(last$target_performance, 1.1)
+  # A CSSE target asked for directly stays on the CSSE scale.
+  states <- list()
+  run_curve(csse_curve(), -0.01, seed = 1, start_n = 300, live_plot = TRUE)
+  last <- states[[length(states)]]
+  expect_false(last$internal_csse)
+  expect_identical(last$metric, "csse")
+  expect_identical(last$target_performance, -0.01)
+})
