@@ -54,7 +54,9 @@
 #'   Set to `0` to skip the check.
 #' @param max_n Largest sample size the adaptive start-value search may try.
 #'   If performance there is still clearly below the target, the search stops
-#'   with status `"not_bracketed"`.
+#'   with status `"not_bracketed"`. Defaults to 200,000 for random forests and
+#'   xgboost (one batch of replicates at a million rows would take hours) and
+#'   1,000,000 otherwise.
 #' @param ... Additional arguments passed to the selected search engine.
 #'
 #' @return An object of class `"pmsims"` containing the estimated minimum
@@ -137,7 +139,7 @@ simulate_custom <- function(
   progress = TRUE,
   verbose = FALSE,
   verify_reps = 100,
-  max_n = 1e6,
+  max_n = NULL,
   ...
 ) {
   # Evaluate four initial sample sizes after establishing the search bounds.
@@ -182,6 +184,9 @@ simulate_custom <- function(
   }
 
   check_metric_direction(attr(metric_function, "metric", exact = TRUE))
+  if (is.null(max_n)) {
+    max_n <- default_max_n(attr(model_function, "model", exact = TRUE))
+  }
 
   # Choose the metric-specific fallback used when a simulation fails.
   value_on_error <- resolve_value_on_error(metric_function)
@@ -333,6 +338,16 @@ simulate_custom <- function(
   }
   attr(results_list, "class") <- "pmsims"
   return(results_list)
+}
+
+# Default largest sample size: lower for random forests and xgboost, where one
+# batch of replicates at a million rows would take hours.
+default_max_n <- function(model) {
+  if (length(model) == 1L && !is.na(model) && model %in% c("rf", "xgboost")) {
+    2e5
+  } else {
+    1e6
+  }
 }
 
 resolve_value_on_error <- function(metric_function) {
