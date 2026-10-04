@@ -218,7 +218,26 @@ new_evaluator <- function(
       with_rng_restored(run_replicate(n), state = state)
     }
     res <- if (isTRUE(parallel) && cores > 1L && .Platform$OS.type == "unix") {
-      parallel::mclapply(states, one_rep, mc.cores = cores)
+      # A worker that dies returns a try-error (or NULL) for its replicates:
+      # count them as failed rather than abort the run.
+      lapply(
+        parallel::mclapply(states, one_rep, mc.cores = cores),
+        function(r) {
+          if (is.list(r)) {
+            return(r)
+          }
+          list(
+            value = value_on_error,
+            failed = TRUE,
+            error = if (inherits(r, "try-error")) {
+              trimws(as.character(r))
+            } else {
+              "the parallel worker returned no result"
+            },
+            warnings = 0L
+          )
+        }
+      )
     } else {
       lapply(states, one_rep)
     }
@@ -290,13 +309,20 @@ new_evaluator <- function(
   )
 }
 
+# The 20th percentile of replicate values (assurance). The mlpwr and bisection
+# engines use R's default estimator (type 7); the curve engine uses the
+# approximately median-unbiased one (type 8), see calculate_curve().
+quantile_20 <- function(x, type = 7L) {
+  as.numeric(stats::quantile(x, probs = 0.2, type = type, na.rm = TRUE))
+}
+
 # The criterion the search targets: the mean, or the 20th percentile
 # (assurance) of the replicate values.
-criterion_function <- function(mean_or_assurance) {
+criterion_function <- function(mean_or_assurance, type = 7L) {
   if (identical(mean_or_assurance, "mean")) {
     function(x) mean(x, na.rm = TRUE)
   } else {
-    function(x) as.numeric(stats::quantile(x, probs = 0.2, na.rm = TRUE))
+    function(x) quantile_20(x, type)
   }
 }
 
@@ -306,7 +332,8 @@ criterion_function <- function(mean_or_assurance) {
 #' observed criterion with the target. The result is "not verified" only when
 #' the observed value is clearly below the target -- more than two bootstrap
 #' standard errors -- so a correct answer, whose true criterion sits at the
-#' target, passes about 97% of the time.
+#' target, passes about 97% of the time. `type` is the quantile estimator for
+#' assurance: 8 for the curve engine, which fits that estimator, else 7.
 #' @keywords internal
 #' @noRd
 verify_sample_size <- function(
@@ -314,15 +341,10 @@ verify_sample_size <- function(
   n,
   target_performance,
   mean_or_assurance,
-  reps = 100L
+  reps = 100L,
+  type = 7L
 ) {
-  # The 20th percentile is estimated with the approximately median-unbiased
-  # quantile (type 8), the estimator the curve engine fits.
-  crit <- if (identical(mean_or_assurance, "mean")) {
-    function(x) mean(x)
-  } else {
-    function(x) as.numeric(stats::quantile(x, probs = 0.2, type = 8))
-  }
+  crit <- criterion_function(mean_or_assurance, type)
   vals <- evaluator$batch(n, reps, "verify")
   est <- crit(vals)
   se <- with_stream(evaluator$streams, "bootstrap", n, 1L, {

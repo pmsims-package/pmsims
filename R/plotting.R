@@ -271,11 +271,7 @@ plot_learning_curve <- function(
 ) {
   curve <- x$diagnostics$curve
   moa <- tolower(as.character(x$mean_or_assurance %||% "assurance")[1])
-  crit <- if (identical(moa, "mean")) {
-    function(v) mean(v)
-  } else {
-    function(v) as.numeric(stats::quantile(v, probs = 0.2, type = 8))
-  }
+  crit <- criterion_function(moa, type = 8L)
   se_factor <- if (identical(moa, "mean")) 1 else curve$se_factor %||% 1.4
 
   obs <- do.call(
