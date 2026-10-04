@@ -40,8 +40,13 @@ calculate_mlpwr <- function(
   # are named here so they are not passed on to mlpwr::find.design().
   if (is.null(evaluator)) {
     evaluator <- new_evaluator(
-      data_function, model_function, metric_function, test_n, value_on_error,
-      parallel = parallel, cores = cores
+      data_function,
+      model_function,
+      metric_function,
+      test_n,
+      value_on_error,
+      parallel = parallel,
+      cores = cores
     )
   }
 
@@ -153,7 +158,10 @@ search_bounds <- function(
       mean_or_assurance = mean_or_assurance
     ),
     error = function(e) {
-      stop(paste("Error when computing start values:", e$message), call. = FALSE)
+      stop(
+        paste("Error when computing start values:", e$message),
+        call. = FALSE
+      )
     }
   )
 
@@ -429,7 +437,9 @@ with_mlpwr_progress <- function(progress, n_reps_total, expr) {
   on.exit(
     {
       utils::assignInNamespace("print_progress", orig_print_progress, "mlpwr")
-      if (!is.null(pb_txt)) close(pb_txt)
+      if (!is.null(pb_txt)) {
+        close(pb_txt)
+      }
       if (!is.null(pb_id)) cli::cli_progress_done(id = pb_id)
     },
     add = TRUE
@@ -483,8 +493,13 @@ calculate_bisection <- function(
       cores <- min(cores, parallel::detectCores())
     }
     evaluator <- new_evaluator(
-      data_function, model_function, metric_function, test_n, value_on_error,
-      parallel = parallel, cores = cores
+      data_function,
+      model_function,
+      metric_function,
+      test_n,
+      value_on_error,
+      parallel = parallel,
+      cores = cores
     )
   }
 
@@ -617,8 +632,13 @@ calculate_mlpwr_bs <- function(
   # are named here so they are not passed on to mlpwr::find.design().
   if (is.null(evaluator)) {
     evaluator <- new_evaluator(
-      data_function, model_function, metric_function, test_n, value_on_error,
-      parallel = parallel, cores = cores
+      data_function,
+      model_function,
+      metric_function,
+      test_n,
+      value_on_error,
+      parallel = parallel,
+      cores = cores
     )
   }
 
@@ -759,7 +779,10 @@ find_design_with_restarts <- function(args, max_attempts = 3L) {
       return(result)
     }
     if (!is_gp_surrogate_failure(result) || attempt == max_attempts) {
-      msg <- paste("mlpwr::find.design failed with error:", conditionMessage(result))
+      msg <- paste(
+        "mlpwr::find.design failed with error:",
+        conditionMessage(result)
+      )
       if (is_gp_surrogate_failure(result)) {
         msg <- sprintf("%s (after %d attempts)", msg, attempt)
       }
@@ -784,4 +807,3 @@ is_gp_surrogate_failure <- function(e) {
     fixed = TRUE
   )
 }
-

@@ -50,15 +50,15 @@ get_summaries <- function(performance_matrix) {
 #' @param ci_q Numeric quantile for confidence-interval construction (default 0.975 gives a two-sided 95% interval).
 #' @keywords internal
 adaptive_startvalues <- function(
-    output,
-    aggregate_fun,
-    var_bootstrap,
-    target,
-    ci_q = 0.975
+  output,
+  aggregate_fun,
+  var_bootstrap,
+  target,
+  ci_q = 0.975
 ) {
   bisection_output <- output$track_bisection
   n_iter <- length(bisection_output)
-  
+
   # Matrix: n, est, se, ll, ul
   bisection_summary <- matrix(
     NA,
@@ -66,45 +66,45 @@ adaptive_startvalues <- function(
     ncol = 5,
     dimnames = list(NULL, c("n", "est", "se", "ll", "ul"))
   )
-  
+
   for (i in seq_len(n_iter)) {
     results <- bisection_output[[i]]
     n <- results$x
     performance_data <- results$y
-    
+
     est <- aggregate_fun(performance_data)
     se <- sqrt(var_bootstrap(performance_data))
-    
+
     ll <- est - se * stats::qnorm(ci_q)
     ul <- est + se * stats::qnorm(ci_q)
-    
+
     bisection_summary[i, ] <- c(n, est, se, ll, ul)
   }
-  
+
   # Find the lower bound.
   ordered_by_ul <- bisection_summary[
     order(bisection_summary[, "ul"], decreasing = TRUE),
   ]
   below_target <- ordered_by_ul[ordered_by_ul[, "ul"] < target, , drop = FALSE]
-  
+
   if (nrow(below_target) == 0) {
     min_value <- min(bisection_summary[, "n"] * 0.8)
   } else {
     min_value <- max(below_target[, "n"])
   }
-  
+
   # Find the upper bound.
   ordered_by_ll <- bisection_summary[
     order(bisection_summary[, "ll"], decreasing = TRUE),
   ]
   above_target <- ordered_by_ll[ordered_by_ll[, "ll"] > target, , drop = FALSE]
-  
+
   if (nrow(above_target) == 0) {
     max_value <- max(bisection_summary[, "n"] * 1.2)
   } else {
     max_value <- min(above_target[, "n"])
   }
-  
+
   return(list(
     summary = bisection_summary,
     min_value = round(min_value),
@@ -188,40 +188,40 @@ adaptive_startvalues <- function(
 #'   classification `call` (`"below"`, `"above"` or `"uncertain"`).
 #' @noRd
 calculate_adaptive_bounds <- function(
-    data_function,
-    model_function,
-    metric_function,
-    value_on_error,
-    start_n,
-    test_n,
-    n_reps_per,
-    n_reps_total,
-    target_performance,
-    threshold = 0.01,
-    mean_or_assurance = "mean",
-    plateau_k = 3,
-    plateau_tol = 0.005,
-    conf_z = 2,
-    max_reps_per = NULL,
-    winsorise = TRUE,
-    # Optional large-sample pre-check. When enabled, the search first evaluates
-    # performance at large_n. If the target is more than large_n_tol above that
-    # estimate, it stops and reports the target as unreachable.
-    #
-    # Disabled by default because the preliminary large-sample fit did not work
-    # reliably for some machine-learning models.
-    large_perf_check = FALSE,
-    large_n = NULL,
-    large_n_tol = 0.05,
-    c_statistic = NULL,
-    parallel = FALSE,
-    cores = 20,
-    verbose = FALSE,
-    max_n = 1e6,
-    evaluator = NULL
+  data_function,
+  model_function,
+  metric_function,
+  value_on_error,
+  start_n,
+  test_n,
+  n_reps_per,
+  n_reps_total,
+  target_performance,
+  threshold = 0.01,
+  mean_or_assurance = "mean",
+  plateau_k = 3,
+  plateau_tol = 0.005,
+  conf_z = 2,
+  max_reps_per = NULL,
+  winsorise = TRUE,
+  # Optional large-sample pre-check. When enabled, the search first evaluates
+  # performance at large_n. If the target is more than large_n_tol above that
+  # estimate, it stops and reports the target as unreachable.
+  #
+  # Disabled by default because the preliminary large-sample fit did not work
+  # reliably for some machine-learning models.
+  large_perf_check = FALSE,
+  large_n = NULL,
+  large_n_tol = 0.05,
+  c_statistic = NULL,
+  parallel = FALSE,
+  cores = 20,
+  verbose = FALSE,
+  max_n = 1e6,
+  evaluator = NULL
 ) {
   vcat <- function(...) if (verbose) message(sprintf(...))
-  
+
   # Replicates come from the shared evaluator (R/simulation_core.R), so this
   # stage scores models exactly as the main search does -- a fresh test set
   # per replicate -- and each replicate runs on its own keyed random stream.
@@ -243,14 +243,14 @@ calculate_adaptive_bounds <- function(
   } else {
     max(as.integer(max_reps_per), as.integer(n_reps_per))
   }
-  
+
   draw_reps <- function(n, reps) evaluator$batch(n, reps, "adaptive")
 
   # -- Summary with its Monte Carlo standard error --------------------------
   summarise_vals <- function(vals, n) {
     ok <- vals[is.finite(vals)]
     m <- length(ok)
-    
+
     if (m == 0L) {
       stop(
         sprintf(
@@ -263,7 +263,7 @@ calculate_adaptive_bounds <- function(
         call. = FALSE
       )
     }
-    
+
     if (isTRUE(winsorise) && m >= 5L) {
       centre <- stats::median(ok)
       spread <- stats::mad(ok)
@@ -271,7 +271,7 @@ calculate_adaptive_bounds <- function(
         ok <- pmin(pmax(ok, centre - 5 * spread), centre + 5 * spread)
       }
     }
-    
+
     if (mean_or_assurance == "mean") {
       est <- mean(ok)
       se <- if (m > 1L) stats::sd(ok) / sqrt(m) else 0
@@ -287,7 +287,7 @@ calculate_adaptive_bounds <- function(
         0
       }
     }
-    
+
     if (length(est) != 1L || !is.finite(est)) {
       stop(
         sprintf(
@@ -300,7 +300,7 @@ calculate_adaptive_bounds <- function(
         call. = FALSE
       )
     }
-    
+
     list(
       n = n,
       est = est,
@@ -310,19 +310,19 @@ calculate_adaptive_bounds <- function(
       vals = vals
     )
   }
-  
+
   # Replicate values are cached per sample size so that refining a sample size
   # adds replications rather than discarding the ones already paid for.
   cache <- new.env(parent = emptyenv())
   budget <- n_reps_total
-  
+
   cache_key <- function(n) format(n, scientific = FALSE)
-  
+
   cached_vals <- function(n) {
     have <- cache[[cache_key(n)]]
     if (is.null(have)) numeric(0) else have
   }
-  
+
   evaluate_at <- function(n, reps) {
     have <- cached_vals(n)
     if (length(have) < reps) {
@@ -331,7 +331,7 @@ calculate_adaptive_bounds <- function(
     }
     summarise_vals(have[seq_len(min(reps, length(have)))], n)
   }
-  
+
   classify <- function(s) {
     band <- max(threshold, conf_z * s$se)
     if (s$est > target_performance + band) {
@@ -342,7 +342,7 @@ calculate_adaptive_bounds <- function(
       "uncertain"
     }
   }
-  
+
   # Evaluate a sample size, buying more replications while the call is too
   # close to make confidently and the budget allows.
   assess <- function(n) {
@@ -352,16 +352,14 @@ calculate_adaptive_bounds <- function(
       s <- evaluate_at(n, reps)
       budget <<- budget - (length(cached_vals(n)) - before)
       s$call <- classify(s)
-      if (
-        s$call != "uncertain" || reps >= max_reps_per || budget < reps
-      ) {
+      if (s$call != "uncertain" || reps >= max_reps_per || budget < reps) {
         break
       }
       reps <- min(max_reps_per, reps * 2L)
     }
     s
   }
-  
+
   track <- list()
   push <- function(s) {
     track[[length(track) + 1L]] <<- list(
@@ -373,16 +371,22 @@ calculate_adaptive_bounds <- function(
       call = s$call,
       raw = s$vals
     )
-    vcat("n = %s | perf = %.4f (se %.4f) | %s", format(s$n), s$est, s$se, s$call)
+    vcat(
+      "n = %s | perf = %.4f (se %.4f) | %s",
+      format(s$n),
+      s$est,
+      s$se,
+      s$call
+    )
   }
-  
+
   have_call <- function(what) {
     any(vapply(track, function(z) identical(z$call, what), logical(1)))
   }
-  
+
   stop_reason <- "budget_exhausted"
   max_achievable_perf <- NA_real_
-  
+
   # -- Optional large-sample pre-check --------------------------------------
   if (isTRUE(large_perf_check)) {
     if (is.null(large_n)) {
@@ -390,7 +394,7 @@ calculate_adaptive_bounds <- function(
     }
     s <- assess(large_n)
     push(s)
-    
+
     if (target_performance - s$est > large_n_tol) {
       return(list(
         min_sample_size = as.numeric(large_n),
@@ -411,7 +415,7 @@ calculate_adaptive_bounds <- function(
     push(s)
     n_up <- n_down <- as.numeric(start_n)
   }
-  
+
   # -- Ladder ---------------------------------------------------------------
   # Walk outwards until BOTH a confidently-below and a confidently-above sample
   # size are in hand. Sample sizes that are too close to call belong to neither
@@ -445,7 +449,7 @@ calculate_adaptive_bounds <- function(
       stop_reason <- "target_bracketed"
       break
     }
-    
+
     # -- Plateau check, judged against the noise level ----------------------
     if (length(track) >= plateau_k + 1L && !have_call("above")) {
       by_n <- track[order(vapply(track, `[[`, numeric(1), "n"))]
@@ -465,7 +469,7 @@ calculate_adaptive_bounds <- function(
       }
     }
   }
-  
+
   # -- Bounds, derived from the whole trace ---------------------------------
   # Taken from the sorted trace rather than from whatever the loop state
   # happened to be when it broke, so the result does not depend on the path
@@ -473,21 +477,21 @@ calculate_adaptive_bounds <- function(
   ns <- vapply(track, `[[`, numeric(1), "n")
   perfs <- vapply(track, `[[`, numeric(1), "performance")
   calls <- vapply(track, `[[`, character(1), "call")
-  
+
   below_ns <- ns[calls == "below"]
   above_ns <- ns[calls == "above"]
-  
+
   lower_n <- if (length(below_ns)) max(below_ns) else max(1, min(ns) / 2)
   upper_n <- if (length(above_ns)) min(above_ns) else max(ns) * 2
   if (!(lower_n < upper_n)) {
     lower_n <- max(1, upper_n / 2)
   }
-  
+
   perf_at <- function(x) {
     i <- which(ns == x)
     if (length(i)) perfs[i[1]] else NA_real_
   }
-  
+
   list(
     min_sample_size = as.numeric(round(lower_n)),
     min_sample_size_perf = perf_at(lower_n),
@@ -520,14 +524,14 @@ calculate_adaptive_bounds <- function(
 #' @keywords internal
 #' @noRd
 compute_start_sample_sizes <- function(
-    data_function,
-    metric_function,
-    target_performance,
-    c_statistic = NULL,
-    mean_or_assurance = c("mean", "assurance")
+  data_function,
+  metric_function,
+  target_performance,
+  c_statistic = NULL,
+  mean_or_assurance = c("mean", "assurance")
 ) {
   mean_or_assurance <- match.arg(mean_or_assurance)
-  
+
   # Infer the number of predictors from the generator formals.
   npar <- formals(data_function)$n_signal_parameters +
     formals(data_function)$noise_parameters
@@ -540,11 +544,11 @@ compute_start_sample_sizes <- function(
     npar <- max(1L, ncol(sample_data) - max(1L, length(outcome_cols)))
   }
   default_start_value <- max(10L, 10L * npar)
-  
+
   # 2. Inspect data_function formals to infer outcome type
   formals_list <- formals(data_function)
   args_names <- names(formals_list)
-  
+
   metric_used <- attr(metric_function, "metric")
   if (is.null(metric_used)) {
     return(
@@ -556,19 +560,19 @@ compute_start_sample_sizes <- function(
       )
     )
   }
-  
+
   if (metric_used == "csse") {
     metric_used <- "calibration_slope"
     target_performance <- 1 - sqrt(abs(target_performance))
   }
-  
+
   # Survival outcome
   if ("censoring_rate" %in% args_names) {
     censoring_rate <- eval(
       formals_list[["censoring_rate"]],
       environment(data_function)
     )
-    
+
     if (metric_used == "cindex") {
       prev_min_sample_size <- get_min_sample_size(
         npar = npar,
@@ -578,7 +582,7 @@ compute_start_sample_sizes <- function(
         epv_value = 5 * (1 - censoring_rate),
         outcome_type = "survival"
       )
-      
+
       prev_max_sample_size <- 100 * npar
     } else {
       prev_min_sample_size <- get_min_sample_size(
@@ -589,32 +593,32 @@ compute_start_sample_sizes <- function(
         epv_value = 10,
         outcome_type = "survival"
       )
-      
+
       prev_max_sample_size <- 10 * prev_min_sample_size
     }
-    
+
     # Binary outcome
   } else if ("baseline_prob" %in% args_names) {
     baseline_prob <- eval(
       formals_list[["baseline_prob"]],
       envir = environment(data_function)
     )
-    
+
     # Validate baseline_prob
     if (
       !is.numeric(baseline_prob) ||
-      length(baseline_prob) != 1 ||
-      is.na(baseline_prob)
+        length(baseline_prob) != 1 ||
+        is.na(baseline_prob)
     ) {
       stop("baseline_prob must be a single numeric value (not NA).")
     }
     if (baseline_prob <= 0 || baseline_prob >= 1) {
       stop("baseline_prob must be between 0 and 1 (exclusive).")
     }
-    
+
     if (metric_used == "auc") {
       epv_val <- 3 * baseline_prob
-      
+
       prev_min_sample_size <- get_min_sample_size(
         npar = npar,
         prevalence = baseline_prob,
@@ -623,16 +627,16 @@ compute_start_sample_sizes <- function(
         epv_value = epv_val,
         outcome_type = "binary"
       )
-      
+
       prev_max_sample_size <- 100 * npar
     } else {
       if (
         baseline_prob <= 0.2 &&
-        c_statistic <= 0.7 &&
-        mean_or_assurance == "assurance"
+          c_statistic <= 0.7 &&
+          mean_or_assurance == "assurance"
       ) {
         epv_val <- 30L
-        
+
         prev_min_sample_size <- get_min_sample_size(
           npar = npar,
           prevalence = baseline_prob,
@@ -641,11 +645,11 @@ compute_start_sample_sizes <- function(
           epv_value = epv_val,
           outcome_type = "binary"
         )
-        
+
         prev_max_sample_size <- 5 * prev_min_sample_size
       } else if (baseline_prob <= 0.2) {
         epv_val <- 10L
-        
+
         prev_min_sample_size <- get_min_sample_size(
           npar = npar,
           prevalence = baseline_prob,
@@ -654,11 +658,11 @@ compute_start_sample_sizes <- function(
           epv_value = epv_val,
           outcome_type = "binary"
         )
-        
+
         prev_max_sample_size <- 2 * prev_min_sample_size
       } else {
         epv_val <- 10L
-        
+
         prev_min_sample_size <- get_min_sample_size(
           npar = npar,
           prevalence = baseline_prob,
@@ -667,11 +671,11 @@ compute_start_sample_sizes <- function(
           epv_value = epv_val,
           outcome_type = "binary"
         )
-        
+
         prev_max_sample_size <- 10 * prev_min_sample_size
       }
     }
-    
+
     # Continuous outcome
   } else {
     if (metric_used == "calibration_slope") {
@@ -682,7 +686,7 @@ compute_start_sample_sizes <- function(
         calibration_slope = target_performance,
         outcome_type = "continuous"
       )
-      
+
       prev_max_sample_size <- 100 * npar
     } else {
       prev_min_sample_size <- get_min_sample_size(
@@ -692,7 +696,7 @@ compute_start_sample_sizes <- function(
         calibration_slope = NULL,
         outcome_type = "continuous"
       )
-      
+
       if (target_performance <= 0.5) {
         prev_max_sample_size <- 200 * npar
       } else {
@@ -700,7 +704,7 @@ compute_start_sample_sizes <- function(
       }
     }
   }
-  
+
   # Return results
   list(
     npar = npar,
@@ -722,18 +726,18 @@ compute_start_sample_sizes <- function(
 #' @return Integer recommended starting value from which to calculate the minimum sample size.
 #' @keywords internal
 get_min_sample_size <- function(
-    npar,
-    prevalence = NULL,
-    c_stat = NULL,
-    calibration_slope = NULL,
-    epv_value = NULL,
-    outcome_type = c("binary", "survival", "continuous")
+  npar,
+  prevalence = NULL,
+  c_stat = NULL,
+  calibration_slope = NULL,
+  epv_value = NULL,
+  outcome_type = c("binary", "survival", "continuous")
 ) {
   outcome_type <- match.arg(outcome_type)
-  
+
   # --- 1) Base rule: 3 * npar (absolute minimum)
   n0 <- 3 * npar
-  
+
   # --- 2) Outcome-specific rules ---
   if (outcome_type == "binary") {
     # Recommended: ≥10 EPV (Riley et al., 2020)
@@ -765,11 +769,11 @@ get_min_sample_size <- function(
     n0 <- max(n0, n_epv)
   } else if (outcome_type == "survival") {
     # Recommended: ≥20 EPV (Riley et al., 2020)
-    
+
     epv <- epv_value
     if (!is.null(prevalence) && prevalence > 0 && prevalence < 1) {
       n_epv <- round(epv * npar / prevalence)
-      
+
       # Optional adjustments:
       if (!is.null(c_stat)) {
         if (c_stat <= 0 || c_stat > 1) {
@@ -792,12 +796,12 @@ get_min_sample_size <- function(
         n_epv <- round(n_epv * adj)
       }
     }
-    
+
     n0 <- max(n0, n_epv)
   } else if (outcome_type == "continuous") {
     # Continuous outcome: ≥20 obs per predictor (Steyerberg, 2019)
     n_cont <- 3 * npar
-    
+
     # Optional adjustments:
     if (!is.null(c_stat)) {
       if (c_stat <= 0 || c_stat > 1) {
@@ -807,7 +811,7 @@ get_min_sample_size <- function(
       adj <- 1 / max(c_stat, 0.2) # avoid extreme inflation
       n_cont <- round(n_cont * adj)
     }
-    
+
     if (!is.null(calibration_slope)) {
       if (calibration_slope > 0 && calibration_slope < 1) {
         # Lower slope means more shrinkage needed → increase N slightly
@@ -819,9 +823,9 @@ get_min_sample_size <- function(
         n_cont <- round(n_cont * adj)
       }
     }
-    
+
     n0 <- max(n0, n_cont)
   }
-  
+
   return(as.integer(n0))
 }

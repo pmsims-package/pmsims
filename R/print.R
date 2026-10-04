@@ -412,13 +412,16 @@ build_pmsims_items <- function(x, verbose = FALSE) {
   if (pmsims_is_present(x$status_message) && !identical(x$status, "ok")) {
     notes <- c(notes, list(pmsims_note(x$status_message)))
   }
-  notes <- c(notes, list(pmsims_note(
-    if (identical(moa, "assurance")) {
-      "Assurance mode selects N so that the target is achieved with high probability across repeated datasets."
-    } else {
-      "Mean mode selects N so that the target is achieved on average across repeated datasets."
-    }
-  )))
+  notes <- c(
+    notes,
+    list(pmsims_note(
+      if (identical(moa, "assurance")) {
+        "Assurance mode selects N so that the target is achieved with high probability across repeated datasets."
+      } else {
+        "Mean mode selects N so that the target is achieved on average across repeated datasets."
+      }
+    ))
+  )
   if (derived_from_csse) {
     notes <- c(
       notes,

@@ -26,9 +26,18 @@ test_that("a replicate's stream does not depend on earlier RNG use", {
   x2 <- with_stream(s2, "search", 1000, 3, stats::rnorm(5))
   expect_identical(x1, x2)
 
-  expect_false(identical(x1, with_stream(s1, "search", 1000, 4, stats::rnorm(5))))
-  expect_false(identical(x1, with_stream(s1, "search", 1001, 3, stats::rnorm(5))))
-  expect_false(identical(x1, with_stream(s1, "verify", 1000, 3, stats::rnorm(5))))
+  expect_false(identical(
+    x1,
+    with_stream(s1, "search", 1000, 4, stats::rnorm(5))
+  ))
+  expect_false(identical(
+    x1,
+    with_stream(s1, "search", 1001, 3, stats::rnorm(5))
+  ))
+  expect_false(identical(
+    x1,
+    with_stream(s1, "verify", 1000, 3, stats::rnorm(5))
+  ))
 })
 
 test_that("streams leave the caller's RNG as found, apart from the base-seed draw", {
@@ -47,8 +56,13 @@ test_that("replicate values do not depend on order or on parallel execution", {
   fc <- fake_curve_components()
   make <- function(...) {
     new_evaluator(
-      fc$data_function, fc$model_function, fc$metric_function,
-      test_n = 10, value_on_error = 0, streams = new_simulation_streams(7L), ...
+      fc$data_function,
+      fc$model_function,
+      fc$metric_function,
+      test_n = 10,
+      value_on_error = 0,
+      streams = new_simulation_streams(7L),
+      ...
     )
   }
   a <- make()
@@ -74,13 +88,21 @@ test_that("the evaluator counts failures and warnings instead of hiding them", {
   calls <- 0L
   metric_function <- function(test_data, fit, model) {
     calls <<- calls + 1L
-    if (calls %% 3L == 0L) stop("fit failed")
-    if (calls %% 3L == 1L) return(NA_real_)
+    if (calls %% 3L == 0L) {
+      stop("fit failed")
+    }
+    if (calls %% 3L == 1L) {
+      return(NA_real_)
+    }
     0.7
   }
   ev <- new_evaluator(
-    data_function, model_function, metric_function,
-    test_n = 5, value_on_error = -1, streams = new_simulation_streams(1L)
+    data_function,
+    model_function,
+    metric_function,
+    test_n = 5,
+    value_on_error = -1,
+    streams = new_simulation_streams(1L)
   )
   expect_no_warning(vals <- ev$batch(20, 6))
   expect_identical(vals, c(-1, 0.7, -1, -1, 0.7, -1))
@@ -91,7 +113,10 @@ test_that("the evaluator counts failures and warnings instead of hiding them", {
 })
 
 test_that("metrics where smaller is better are rejected", {
-  expect_error(check_metric_direction("calibration_in_the_large"), "better when smaller")
+  expect_error(
+    check_metric_direction("calibration_in_the_large"),
+    "better when smaller"
+  )
   expect_error(check_metric_direction("brier_score"), "better when smaller")
   expect_silent(check_metric_direction("brier_score_scaled"))
   expect_error(
@@ -145,9 +170,16 @@ test_that("simulate_custom stops at max_n when the target is out of reach", {
   set.seed(3)
   expect_warning(
     res <- suppressMessages(simulate_custom(
-      fc$data_function, fc$model_function, fc$metric_function,
-      target_performance = 0.9, mean_or_assurance = "mean", test_n = 10,
-      n_reps_total = 200, n_reps_per = 10, progress = FALSE, max_n = 5000
+      fc$data_function,
+      fc$model_function,
+      fc$metric_function,
+      target_performance = 0.9,
+      mean_or_assurance = "mean",
+      test_n = 10,
+      n_reps_total = 200,
+      n_reps_per = 10,
+      progress = FALSE,
+      max_n = 5000
     )),
     "No sample size up to"
   )
@@ -163,9 +195,15 @@ test_that("an unreachable target without max_n is flagged by the check", {
   set.seed(3)
   expect_warning(
     res <- suppressMessages(simulate_custom(
-      fc$data_function, fc$model_function, fc$metric_function,
-      target_performance = 0.9, mean_or_assurance = "mean", test_n = 10,
-      n_reps_total = 200, n_reps_per = 10, progress = FALSE
+      fc$data_function,
+      fc$model_function,
+      fc$metric_function,
+      target_performance = 0.9,
+      mean_or_assurance = "mean",
+      test_n = 10,
+      n_reps_total = 200,
+      n_reps_per = 10,
+      progress = FALSE
     )),
     "clearly below the target"
   )
@@ -178,10 +216,17 @@ test_that("simulate_custom flags an answer that fails the check", {
   # Bounds supplied, so no adaptive stage: mlpwr can only return the edge.
   expect_warning(
     res <- suppressMessages(simulate_custom(
-      fc$data_function, fc$model_function, fc$metric_function,
-      target_performance = 0.9, mean_or_assurance = "mean", test_n = 10,
-      min_sample_size = 100, max_sample_size = 2000,
-      n_reps_total = 200, n_reps_per = 10, progress = FALSE
+      fc$data_function,
+      fc$model_function,
+      fc$metric_function,
+      target_performance = 0.9,
+      mean_or_assurance = "mean",
+      test_n = 10,
+      min_sample_size = 100,
+      max_sample_size = 2000,
+      n_reps_total = 200,
+      n_reps_per = 10,
+      progress = FALSE
     )),
     "clearly below the target|did not return"
   )
@@ -193,9 +238,16 @@ test_that("simulate_custom verifies a reachable target and is reproducible", {
   run <- function() {
     set.seed(11)
     suppressMessages(simulate_custom(
-      fc$data_function, fc$model_function, fc$metric_function,
-      target_performance = 0.85, mean_or_assurance = "assurance", test_n = 10,
-      n_reps_total = 200, n_reps_per = 10, progress = FALSE, verify_reps = 50
+      fc$data_function,
+      fc$model_function,
+      fc$metric_function,
+      target_performance = 0.85,
+      mean_or_assurance = "assurance",
+      test_n = 10,
+      n_reps_total = 200,
+      n_reps_per = 10,
+      progress = FALSE,
+      verify_reps = 50
     ))
   }
   res <- run()

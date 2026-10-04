@@ -212,7 +212,9 @@ new_evaluator <- function(
     # States are computed here, before any forking, so the stream cache is
     # updated in this process.
     states <- lapply(idx, function(r) stream_state(streams, purpose, n, r))
-    one_rep <- function(state) with_rng_restored(run_replicate(n), state = state)
+    one_rep <- function(state) {
+      with_rng_restored(run_replicate(n), state = state)
+    }
     res <- if (isTRUE(parallel) && cores > 1L && .Platform$OS.type == "unix") {
       parallel::mclapply(states, one_rep, mc.cores = cores)
     } else {
@@ -226,7 +228,11 @@ new_evaluator <- function(
       reps = reps,
       failed = sum(failed),
       warnings = sum(vapply(res, `[[`, integer(1), "warnings")),
-      first_error = if (any(!is.na(errors))) errors[!is.na(errors)][1] else NA_character_,
+      first_error = if (any(!is.na(errors))) {
+        errors[!is.na(errors)][1]
+      } else {
+        NA_character_
+      },
       stringsAsFactors = FALSE
     )
     vapply(res, `[[`, numeric(1), "value")
@@ -235,28 +241,35 @@ new_evaluator <- function(
   failures <- function() {
     if (!length(log$rows)) {
       return(data.frame(
-        purpose = character(0), n = numeric(0), reps = integer(0),
-        failed = integer(0), warnings = integer(0),
-        first_error = character(0), stringsAsFactors = FALSE
+        purpose = character(0),
+        n = numeric(0),
+        reps = integer(0),
+        failed = integer(0),
+        warnings = integer(0),
+        first_error = character(0),
+        stringsAsFactors = FALSE
       ))
     }
     rows <- do.call(rbind, log$rows)
     keys <- paste(rows$purpose, rows$n)
-    out <- do.call(rbind, lapply(split(rows, factor(keys, unique(keys))), function(d) {
-      data.frame(
-        purpose = d$purpose[1],
-        n = d$n[1],
-        reps = sum(d$reps),
-        failed = sum(d$failed),
-        warnings = sum(d$warnings),
-        first_error = if (any(!is.na(d$first_error))) {
-          d$first_error[!is.na(d$first_error)][1]
-        } else {
-          NA_character_
-        },
-        stringsAsFactors = FALSE
-      )
-    }))
+    out <- do.call(
+      rbind,
+      lapply(split(rows, factor(keys, unique(keys))), function(d) {
+        data.frame(
+          purpose = d$purpose[1],
+          n = d$n[1],
+          reps = sum(d$reps),
+          failed = sum(d$failed),
+          warnings = sum(d$warnings),
+          first_error = if (any(!is.na(d$first_error))) {
+            d$first_error[!is.na(d$first_error)][1]
+          } else {
+            NA_character_
+          },
+          stringsAsFactors = FALSE
+        )
+      })
+    )
     rownames(out) <- NULL
     out
   }
@@ -318,7 +331,11 @@ verify_sample_size <- function(
 lower_is_better_metrics <- c("calibration_in_the_large", "brier_score", "ibs")
 
 check_metric_direction <- function(metric) {
-  if (length(metric) == 1L && !is.na(metric) && metric %in% lower_is_better_metrics) {
+  if (
+    length(metric) == 1L &&
+      !is.na(metric) &&
+      metric %in% lower_is_better_metrics
+  ) {
     stop(
       sprintf(
         paste(
