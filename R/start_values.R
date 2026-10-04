@@ -184,8 +184,7 @@ adaptive_startvalues <- function(
 #' @return A list containing lower and upper sample-size bounds, the associated
 #'   performance summaries, and the search trace. Each element of `track` also
 #'   carries the Monte Carlo standard error `se`, the number of replications
-#'   `reps` spent, the number of failed replications `n_fail`, and the
-#'   classification `call` (`"below"`, `"above"` or `"uncertain"`).
+#'   `reps` spent, and the classification `call` (`"below"`, `"above"` or `"uncertain"`).
 #' @noRd
 calculate_adaptive_bounds <- function(
   data_function,
@@ -306,7 +305,6 @@ calculate_adaptive_bounds <- function(
       est = est,
       se = if (is.finite(se)) se else 0,
       reps = length(vals),
-      n_fail = sum(!is.finite(vals)),
       vals = vals
     )
   }
@@ -367,7 +365,6 @@ calculate_adaptive_bounds <- function(
       performance = s$est,
       se = s$se,
       reps = s$reps,
-      n_fail = s$n_fail,
       call = s$call,
       raw = s$vals
     )
@@ -431,11 +428,12 @@ calculate_adaptive_bounds <- function(
         break
       }
       # Doubling is unbounded otherwise: with an unreachable target it runs
-      # until the time or memory limit.
-      if (n_up > max_n) {
+      # until the time or memory limit. The last rung is max_n itself.
+      if (n_up / 2 >= max_n) {
         stop_reason <- "max_n_reached"
         break
       }
+      n_up <- min(n_up, max_n)
       push(assess(n_up))
     } else if (!have_call("below")) {
       n_next <- max(1, floor(n_down / 2))
@@ -451,6 +449,11 @@ calculate_adaptive_bounds <- function(
     }
 
     # -- Plateau check, judged against the noise level ----------------------
+    # A slowly rising but reachable curve can also look flat here (the gain
+    # from one doubling is often within the Monte Carlo error), which leaves
+    # the answer above the bracket; the verification of the returned sample
+    # size then flags it "not_verified". Doubling on to max_n instead makes
+    # unreachable and near-ceiling targets run for hours or out of memory.
     if (length(track) >= plateau_k + 1L && !have_call("above")) {
       by_n <- track[order(vapply(track, `[[`, numeric(1), "n"))]
       recent <- utils::tail(by_n, plateau_k + 1L)
@@ -482,7 +485,7 @@ calculate_adaptive_bounds <- function(
   above_ns <- ns[calls == "above"]
 
   lower_n <- if (length(below_ns)) max(below_ns) else max(1, min(ns) / 2)
-  upper_n <- if (length(above_ns)) min(above_ns) else max(ns) * 2
+  upper_n <- if (length(above_ns)) min(above_ns) else min(max(ns) * 2, max_n)
   if (!(lower_n < upper_n)) {
     lower_n <- max(1, upper_n / 2)
   }

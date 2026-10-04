@@ -272,3 +272,54 @@ test_that("max_n defaults by model", {
   expect_identical(default_max_n("glm"), 1e6)
   expect_identical(default_max_n(NULL), 1e6)
 })
+
+test_that("the last rung of the ladder is max_n", {
+  fc <- fake_curve_components(ceiling = 0.85)
+  set.seed(3)
+  b <- calculate_adaptive_bounds(
+    fc$data_function,
+    fc$model_function,
+    fc$metric_function,
+    value_on_error = 0.5,
+    start_n = 100,
+    test_n = 10,
+    n_reps_per = 10,
+    n_reps_total = 500,
+    target_performance = 0.9,
+    mean_or_assurance = "mean",
+    max_n = 5000
+  )
+  expect_identical(b$stop_reason, "max_n_reached")
+  expect_identical(max(vapply(b$track, `[[`, numeric(1), "n")), 5000)
+  expect_lte(b$max_sample_size, 5000)
+})
+
+test_that("mostly failing replicates give status replicates_failed", {
+  fc <- fake_curve_components()
+  broken <- function(d) stop("model did not converge")
+  attr(broken, "model") <- "glm"
+  set.seed(1)
+  expect_warning(
+    res <- suppressMessages(simulate_custom(
+      fc$data_function,
+      broken,
+      fc$metric_function,
+      target_performance = 0.7,
+      mean_or_assurance = "mean",
+      test_n = 10,
+      n_reps_total = 200,
+      n_reps_per = 10,
+      progress = FALSE
+    )),
+    "failed to fit or score.*model did not converge"
+  )
+  expect_identical(res$status, "replicates_failed")
+  expect_true(is.na(res$min_n))
+})
+
+test_that("CSSE values are described as calibration slopes in messages", {
+  plan <- plan_internal_csse("calibration_slope", "lasso", 0.9)
+  f <- describe_as_calibration_slope(function(...) 0, plan)
+  expect_identical(describe_value(f)(-0.01), "a calibration slope of 0.9")
+  expect_identical(describe_value(function(...) 0)(0.123456), "0.1235")
+})

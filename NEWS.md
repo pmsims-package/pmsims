@@ -16,8 +16,30 @@
   answer was found.
 - The mlpwr search restarts when its Gaussian-process surrogate fails, instead
   of erroring.
+- The start-value search tries `max_n` itself as its last rung (it could stop
+  at about half of it).
+- When at least half the simulation replicates fail to fit or score the model,
+  the result has status `"replicates_failed"` and no sample size.
+- For calibration slope targets with penalised and machine-learning models
+  (searched on the CSSE scale internally), status messages give calibration
+  slopes.
+- `parallel = TRUE` without `cores` uses up to 20 cores, as before. Parallel
+  replicates use forked processes, so they run serially on Windows; random
+  forests and xgboost then use one thread per worker.
 - `max_n` caps the start-value search; it defaults to 200,000 for random
   forests and xgboost and 1,000,000 otherwise.
+
+## Breaking changes
+
+- `min_n` and `perf_n` are `NA` when no sample size is found (they were a
+  character message); see `status` and `status_message`.
+- The `simulate_*()` wrappers no longer suppress warnings: a result that is
+  not `"ok"` raises a warning with its `status_message`, and mlpwr's own
+  warnings are reported.
+- `metric_2_at_n` is the mean over 10 replicates at `min_n` (it was one).
+- Custom metric functions without a `metric` attribute count failed
+  replicates as 0.5 (with a message); set `attr(metric_function,
+  "value_on_error")` to choose another value.
 
 ## Bug fixes
 

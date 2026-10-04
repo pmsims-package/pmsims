@@ -104,6 +104,8 @@ confirmed the target is met (or the check was skipped).}
 clearly below the target, so \code{min_n} is likely too small.}
 \item{\code{"not_bracketed"}}{No sample size up to \code{max_n} met the target,
 or the search returned no sample size.}
+\item{\code{"replicates_failed"}}{At least half the simulation replicates
+failed to fit or score the model, so no sample size was estimated.}
 }
 \code{status_message} explains a status other than \code{"ok"}, \code{verification}
 holds the check at \code{min_n}, and \code{diagnostics} records the search bounds,
