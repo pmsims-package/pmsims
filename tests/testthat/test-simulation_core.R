@@ -106,7 +106,10 @@ test_that("the evaluator counts failures and warnings instead of hiding them", {
   )
   expect_no_warning(vals <- ev$batch(20, 6))
   expect_identical(as.numeric(vals), c(-1, 0.7, -1, -1, 0.7, -1))
-  expect_identical(attr(vals, "failed"), c(TRUE, FALSE, TRUE, TRUE, FALSE, TRUE))
+  expect_identical(
+    attr(vals, "failed"),
+    c(TRUE, FALSE, TRUE, TRUE, FALSE, TRUE)
+  )
   f <- ev$failures()
   expect_identical(f$failed, 4L)
   expect_identical(f$warnings, 6L)

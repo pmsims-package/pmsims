@@ -252,7 +252,9 @@ simulate_custom <- function(
   }
   cores <- max(1L, as.integer(cores))
   if (cores > 1L && .Platform$OS.type != "unix") {
-    cli::cli_alert_info("Parallel replicates need a Unix-like system; running on one core.")
+    cli::cli_alert_info(
+      "Parallel replicates need a Unix-like system; running on one core."
+    )
     cores <- 1L
   }
   if (cores > 1L) {
@@ -597,7 +599,11 @@ check_result <- function(
   }
   if (identical(status, "ok")) {
     ci_text <- function(ci) {
-      sprintf("%s to %s", round(ci[1]), if (is.finite(ci[2])) round(ci[2]) else "Inf")
+      sprintf(
+        "%s to %s",
+        round(ci[1]),
+        if (is.finite(ci[2])) round(ci[2]) else "Inf"
+      )
     }
     if (isTRUE(search$near_ceiling)) {
       cli::cli_alert_warning(paste(

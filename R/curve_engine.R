@@ -55,7 +55,13 @@ curve_c_grid <- function() exp(seq(log(0.25), log(2.5), length.out = 40))
 #' @return list(a, b, c, rss), or NULL with fewer than two distinct n.
 #' @keywords internal
 #' @noRd
-fit_learning_curve <- function(n, est, w, a_max = Inf, c_grid = curve_c_grid()) {
+fit_learning_curve <- function(
+  n,
+  est,
+  w,
+  a_max = Inf,
+  c_grid = curve_c_grid()
+) {
   ok <- is.finite(n) & is.finite(est) & is.finite(w) & w > 0
   n <- n[ok]
   est <- est[ok]
@@ -144,8 +150,13 @@ calculate_curve <- function(
 ) {
   if (is.null(evaluator)) {
     evaluator <- new_evaluator(
-      data_function, model_function, metric_function, test_n, value_on_error,
-      parallel = parallel, cores = cores
+      data_function,
+      model_function,
+      metric_function,
+      test_n,
+      value_on_error,
+      parallel = parallel,
+      cores = cores
     )
   }
   crit <- criterion_function(mean_or_assurance)
@@ -157,7 +168,9 @@ calculate_curve <- function(
   crit_fit <- if (identical(mean_or_assurance, "mean")) {
     crit
   } else {
-    function(x) as.numeric(stats::quantile(x, probs = 0.2, type = 8, na.rm = TRUE))
+    function(x) {
+      as.numeric(stats::quantile(x, probs = 0.2, type = 8, na.rm = TRUE))
+    }
   }
   target <- target_performance
   a_max <- metric_maximum(attr(metric_function, "metric", exact = TRUE))
@@ -203,10 +216,17 @@ calculate_curve <- function(
     key <- format(n, scientific = FALSE)
     vals <- evaluator$batch(n, reps, "search")
     store$y[[key]] <- c(store$y[[key]], as.numeric(vals))
-    store$failed[[key]] <- c(store$failed[[key]], attr(vals, "failed") %||% rep(FALSE, length(vals)))
+    store$failed[[key]] <- c(
+      store$failed[[key]],
+      attr(vals, "failed") %||% rep(FALSE, length(vals))
+    )
     used <<- used + reps
-    if (!is.null(pb)) cli::cli_progress_update(id = pb, set = used)
-    if (show_live) draw_live()
+    if (!is.null(pb)) {
+      cli::cli_progress_update(id = pb, set = used)
+    }
+    if (show_live) {
+      draw_live()
+    }
     invisible(n)
   }
 
@@ -223,24 +243,41 @@ calculate_curve <- function(
     is_csse <- identical(attr(metric_function, "metric", exact = TRUE), "csse")
     sy <- sorted_y()
     state <- list(
-      data = lapply(seq_along(sy$n), function(i) list(x = c(n = sy$n[i]), y = sy$y[[i]])),
-      diagnostics = list(curve = if (!is.null(f)) {
-        list(a = f$a, b = f$b, c = f$c, se_factor = attr(pts, "se_factor"))
-      } else {
-        list(se_factor = attr(pts, "se_factor"))
+      data = lapply(seq_along(sy$n), function(i) {
+        list(x = c(n = sy$n[i]), y = sy$y[[i]])
       }),
+      diagnostics = list(
+        curve = if (!is.null(f)) {
+          list(a = f$a, b = f$b, c = f$c, se_factor = attr(pts, "se_factor"))
+        } else {
+          list(se_factor = attr(pts, "se_factor"))
+        }
+      ),
       mean_or_assurance = mean_or_assurance,
       min_n = if (is.finite(n_now) && n_now > 0) n_now else NA_real_,
-      metric = if (is_csse) "calibration_slope" else attr(metric_function, "metric", exact = TRUE),
+      metric = if (is_csse) {
+        "calibration_slope"
+      } else {
+        attr(metric_function, "metric", exact = TRUE)
+      },
       outcome = attr(data_function, "outcome", exact = TRUE),
       internal_csse = is_csse,
       csse_target_performance = target,
-      target_performance = if (is_csse) csse_to_calibration_slope(target) else target
+      target_performance = if (is_csse) {
+        csse_to_calibration_slope(target)
+      } else {
+        target
+      }
     )
     subtitle <- sprintf(
       "Searching: %s of %s replicates; current estimate %s",
-      format(used, big.mark = ","), format(n_reps_total, big.mark = ","),
-      if (is.finite(state$min_n)) format(round(state$min_n), big.mark = ",") else "not yet"
+      format(used, big.mark = ","),
+      format(n_reps_total, big.mark = ","),
+      if (is.finite(state$min_n)) {
+        format(round(state$min_n), big.mark = ",")
+      } else {
+        "not yet"
+      }
     )
     tryCatch(
       suppressWarnings(plot_learning_curve(state, subtitle = subtitle)),
@@ -262,15 +299,22 @@ calculate_curve <- function(
     fail <- vapply(sy$failed, mean, numeric(1))
     # Spread of the replicates that did not fail: one fallback value (e.g. -1
     # among CSSE values near -0.01) would otherwise inflate it many-fold.
-    sd_rep <- mapply(function(v, f) {
-      v <- v[!f]
-      if (length(v) > 1L) stats::sd(v) else NA_real_
-    }, sy$y, sy$failed)
+    sd_rep <- mapply(
+      function(v, f) {
+        v <- v[!f]
+        if (length(v) > 1L) stats::sd(v) else NA_real_
+      },
+      sy$y,
+      sy$failed
+    )
     # Spread of single replicates against n, smoothed on the log-log scale so
     # that weights do not depend on each point's own noisy estimate.
     use <- is.finite(sd_rep) & sd_rep > 0 & fail < 0.2
     sd_hat <- if (sum(use) >= 3L) {
-      co <- stats::coef(stats::lm(log(sd_rep[use]) ~ log(sy$n[use]), weights = reps[use]))
+      co <- stats::coef(stats::lm(
+        log(sd_rep[use]) ~ log(sy$n[use]),
+        weights = reps[use]
+      ))
       exp(co[1] + co[2] * log(sy$n))
     } else {
       rep(stats::median(sd_rep[use], na.rm = TRUE), length(sy$n))
@@ -282,11 +326,19 @@ calculate_curve <- function(
     # estimated from the data: the median, over points with enough
     # replicates, of the bootstrap SE of the point's 20th percentile divided
     # by sd / sqrt(reps).
-    inflate <- if (identical(mean_or_assurance, "mean")) 1 else quantile_se_factor(sy, use, sd_rep, reps)
+    inflate <- if (identical(mean_or_assurance, "mean")) {
+      1
+    } else {
+      quantile_se_factor(sy, use, sd_rep, reps)
+    }
     se_hat <- inflate * pmax(sd_hat, 1e-8) / sqrt(reps)
     out <- data.frame(
-      n = sy$n, reps = reps, est = unname(est), se = unname(se_hat),
-      fail = unname(fail), usable = unname(fail < 0.2)
+      n = sy$n,
+      reps = reps,
+      est = unname(est),
+      se = unname(se_hat),
+      fail = unname(fail),
+      usable = unname(fail < 0.2)
     )
     attr(out, "se_factor") <- inflate
     out
@@ -298,19 +350,32 @@ calculate_curve <- function(
     if (length(ok) < 3L) {
       return(1.4)
     }
-    ratios <- vapply(ok, function(i) {
-      key <- paste(format(sy$n[i], scientific = FALSE), reps[i])
-      hit <- ratio_cache[[key]]
-      if (is.null(hit)) {
-        v <- sy$y[[i]][!sy$failed[[i]]]
-        boot <- with_stream(evaluator$streams, "bootstrap", sy$n[i], reps[i], {
-          stats::sd(replicate(200L, crit_fit(sample(v, length(v), replace = TRUE))))
-        })
-        hit <- boot / (sd_rep[i] / sqrt(length(v)))
-        ratio_cache[[key]] <- hit
-      }
-      hit
-    }, numeric(1))
+    ratios <- vapply(
+      ok,
+      function(i) {
+        key <- paste(format(sy$n[i], scientific = FALSE), reps[i])
+        hit <- ratio_cache[[key]]
+        if (is.null(hit)) {
+          v <- sy$y[[i]][!sy$failed[[i]]]
+          boot <- with_stream(
+            evaluator$streams,
+            "bootstrap",
+            sy$n[i],
+            reps[i],
+            {
+              stats::sd(replicate(
+                200L,
+                crit_fit(sample(v, length(v), replace = TRUE))
+              ))
+            }
+          )
+          hit <- boot / (sd_rep[i] / sqrt(length(v)))
+          ratio_cache[[key]] <- hit
+        }
+        hit
+      },
+      numeric(1)
+    )
     ratios <- ratios[is.finite(ratios) & ratios > 0]
     if (length(ratios) < 3L) 1.4 else stats::median(ratios)
   }
@@ -331,12 +396,24 @@ calculate_curve <- function(
   bootstrap_fit <- function(pts, near, B = boot_reps) {
     sy <- sorted_y()
     out <- with_stream(evaluator$streams, "bootstrap", used + 1e6, 1L, {
-      t(vapply(seq_len(B), function(b) {
-        bp <- pts
-        bp$est <- vapply(sy$y, function(v) crit_fit(sample(v, length(v), replace = TRUE)), numeric(1))
-        f <- fit_points(bp, near)
-        if (is.null(f)) c(a = NA_real_, n = NA_real_) else c(a = f$a, n = curve_crossing(f, target))
-      }, numeric(2)))
+      t(vapply(
+        seq_len(B),
+        function(b) {
+          bp <- pts
+          bp$est <- vapply(
+            sy$y,
+            function(v) crit_fit(sample(v, length(v), replace = TRUE)),
+            numeric(1)
+          )
+          f <- fit_points(bp, near)
+          if (is.null(f)) {
+            c(a = NA_real_, n = NA_real_)
+          } else {
+            c(a = f$a, n = curve_crossing(f, target))
+          }
+        },
+        numeric(2)
+      ))
     })
     attr(out, "target") <- target
     out
@@ -348,7 +425,10 @@ calculate_curve <- function(
   is_csse <- identical(attr(metric_function, "metric", exact = TRUE), "csse")
   fmt_perf <- function(v) {
     if (is_csse) {
-      sprintf("a calibration slope within %s of 1", format(signif(sqrt(max(0, -v)), 3)))
+      sprintf(
+        "a calibration slope within %s of 1",
+        format(signif(sqrt(max(0, -v)), 3))
+      )
     } else {
       format(signif(v, 4))
     }
@@ -368,7 +448,8 @@ calculate_curve <- function(
         sprintf(
           " Performance at n = %s was %s, against a target of %s.",
           format(pts$n[top], big.mark = ",", scientific = FALSE),
-          fmt_perf(pts$est[top]), fmt_perf(target)
+          fmt_perf(pts$est[top]),
+          fmt_perf(target)
         ),
         extra,
         if (kind == "unreachable") {
@@ -407,21 +488,57 @@ calculate_curve <- function(
       bf <- bootstrap_fit(pts, NULL, B = 100L)
       a_ub <- stats::quantile(bf[, "a"], 0.975, na.rm = TRUE, names = FALSE)
       if (isTRUE(a_ub < target) && top_is_flat(pts)) {
-        return(list(reason = "ceiling_below_target", status = stop_status(pts, "unreachable", f, sprintf(
-          " (95%% upper bound of the curve's ceiling: %s.)", fmt_perf(a_ub)))))
+        return(list(
+          reason = "ceiling_below_target",
+          status = stop_status(
+            pts,
+            "unreachable",
+            f,
+            sprintf(
+              " (95%% upper bound of the curve's ceiling: %s.)",
+              fmt_perf(a_ub)
+            )
+          )
+        ))
       }
-      if (isTRUE(mean(bf[, "n"] > hi_limit, na.rm = TRUE) > 0.975) && top_is_flat(pts)) {
-        return(list(reason = "beyond_max_n", status = stop_status(pts, "not_bracketed", f, sprintf(
-          " The fitted learning curve puts the crossing beyond %s, the largest sample size allowed (max_n), if at all.",
-          format(hi_limit, big.mark = ",", scientific = FALSE)))))
+      if (
+        isTRUE(mean(bf[, "n"] > hi_limit, na.rm = TRUE) > 0.975) &&
+          top_is_flat(pts)
+      ) {
+        return(list(
+          reason = "beyond_max_n",
+          status = stop_status(
+            pts,
+            "not_bracketed",
+            f,
+            sprintf(
+              " The fitted learning curve puts the crossing beyond %s, the largest sample size allowed (max_n), if at all.",
+              format(hi_limit, big.mark = ",", scientific = FALSE)
+            )
+          )
+        ))
       }
-      if (nxt > max(32 * first_n, 5e4) && top_is_flat(pts) &&
-          isTRUE(stats::median(bf[, "n"], na.rm = TRUE) > hi_limit)) {
-        return(list(reason = "cost_guard", status = stop_status(pts, "not_bracketed", f, sprintf(
-          paste(" Most bootstrap refits of the learning curve put the crossing",
+      if (
+        nxt > max(32 * first_n, 5e4) &&
+          top_is_flat(pts) &&
+          isTRUE(stats::median(bf[, "n"], na.rm = TRUE) > hi_limit)
+      ) {
+        return(list(
+          reason = "cost_guard",
+          status = stop_status(
+            pts,
+            "not_bracketed",
+            f,
+            sprintf(
+              paste(
+                " Most bootstrap refits of the learning curve put the crossing",
                 "beyond %s (max_n), or never; the search stopped rather than",
-                "simulate ever larger samples."),
-          format(hi_limit, big.mark = ",", scientific = FALSE)))))
+                "simulate ever larger samples."
+              ),
+              format(hi_limit, big.mark = ",", scientific = FALSE)
+            )
+          )
+        ))
       }
       NULL
     }
@@ -489,8 +606,14 @@ calculate_curve <- function(
   status <- NULL
   pilot_reason <- "bracketed"
   if (user_bounds) {
-    pilot_ns <- unique(round(exp(seq(log(min_sample_size), log(max_sample_size), length.out = 4))))
-    for (n in pilot_ns) add(n, n_reps_per)
+    pilot_ns <- unique(round(exp(seq(
+      log(min_sample_size),
+      log(max_sample_size),
+      length.out = 4
+    ))))
+    for (n in pilot_ns) {
+      add(n, n_reps_per)
+    }
   } else {
     add(start_n %||% start$start_min_sample_size %||% (10 * npar), n_reps_per)
   }
@@ -499,7 +622,9 @@ calculate_curve <- function(
     pts <- summarise_points()
     above <- any(pts$est >= target)
     below <- any(pts$est < target)
-    if (above && below) break
+    if (above && below) {
+      break
+    }
     if (used >= pilot_budget || used >= n_reps_total) {
       pilot_reason <- "budget"
       break
@@ -517,7 +642,11 @@ calculate_curve <- function(
       # refits put the crossing beyond max_n (or never). Reach is judged
       # against max_n, not against how far the pilot has got: a pilot that
       # started far below the answer is still far from it.
-      nxt <- if (is.finite(pred) && pred > top) min(4 * top, max(2 * top, 1.25 * pred)) else 2 * top
+      nxt <- if (is.finite(pred) && pred > top) {
+        min(4 * top, max(2 * top, 1.25 * pred))
+      } else {
+        2 * top
+      }
       stop_here <- reach_check(pts, f, nxt)
       if (!is.null(stop_here)) {
         status <- stop_here$status
@@ -540,12 +669,26 @@ calculate_curve <- function(
   if (is.null(status) && identical(pilot_reason, "max_n_reached")) {
     top <- which.max(pts$n)
     if (pts$est[top] + 2 * pts$se[top] < target) {
-      status <- stop_status(pts, "not_bracketed", NULL,
-                            " The search stopped at the largest sample size it may try (max_n).")
+      status <- stop_status(
+        pts,
+        "not_bracketed",
+        NULL,
+        " The search stopped at the largest sample size it may try (max_n)."
+      )
     }
   }
   if (!is.null(status)) {
-    return(curve_output(store, pts, fit_points(pts), NA_real_, crit, status, pilot_reason, NULL, used))
+    return(curve_output(
+      store,
+      pts,
+      fit_points(pts),
+      NA_real_,
+      crit,
+      status,
+      pilot_reason,
+      NULL,
+      used
+    ))
   }
 
   warn_if_long_run(
@@ -566,8 +709,12 @@ calculate_curve <- function(
   while (used < n_reps_total) {
     pts <- summarise_points()
     pred <- curve_crossing(fit_points(pts, near), target)
-    if (!is.finite(pred)) pred <- curve_crossing(fit_points(pts), target)
-    if (!is.finite(pred)) pred <- 2 * max(pts$n)
+    if (!is.finite(pred)) {
+      pred <- curve_crossing(fit_points(pts), target)
+    }
+    if (!is.finite(pred)) {
+      pred <- 2 * max(pts$n)
+    }
     # Never jump more than 4x beyond the data in either direction; once the
     # target has been seen on both sides, stay within 1/2x below and 2x above
     # that evidence, so a noisy, flat curve does not send the search to
@@ -590,20 +737,63 @@ calculate_curve <- function(
   bf <- bootstrap_fit(pts, if (is.finite(n_star)) n_star else near)
   ci <- stats::quantile(bf[, "n"], c(0.025, 0.975), na.rm = TRUE, names = FALSE)
   if (!is.finite(n_star)) {
-    status <- stop_status(pts, "not_bracketed", f, " The fitted learning curve does not reach the target.")
-    return(curve_output(store, pts, f, NA_real_, crit, status, "final_fit_below_target", ci, used))
+    status <- stop_status(
+      pts,
+      "not_bracketed",
+      f,
+      " The fitted learning curve does not reach the target."
+    )
+    return(curve_output(
+      store,
+      pts,
+      f,
+      NA_real_,
+      crit,
+      status,
+      "final_fit_below_target",
+      ci,
+      used
+    ))
   }
   if (n_star > hi_limit) {
     # The crossing lies beyond the largest sample size allowed: say so rather
     # than returning that limit as if it were the answer.
-    status <- stop_status(pts, "not_bracketed", f, sprintf(
-      " The fitted learning curve crosses the target at about %s, beyond the largest sample size allowed (%s).",
-      format(round(n_star), big.mark = ",", scientific = FALSE),
-      if (user_bounds) "max_sample_size" else "max_n"))
-    return(curve_output(store, pts, f, NA_real_, crit, status, "crossing_beyond_limit", ci, used))
+    status <- stop_status(
+      pts,
+      "not_bracketed",
+      f,
+      sprintf(
+        " The fitted learning curve crosses the target at about %s, beyond the largest sample size allowed (%s).",
+        format(round(n_star), big.mark = ",", scientific = FALSE),
+        if (user_bounds) "max_sample_size" else "max_n"
+      )
+    )
+    return(curve_output(
+      store,
+      pts,
+      f,
+      NA_real_,
+      crit,
+      status,
+      "crossing_beyond_limit",
+      ci,
+      used
+    ))
   }
   min_n <- clamp(ceiling(n_star))
-  out <- curve_output(store, pts, f, min_n, crit, NULL, pilot_reason, ci, used, lo_limit, hi_limit)
+  out <- curve_output(
+    store,
+    pts,
+    f,
+    min_n,
+    crit,
+    NULL,
+    pilot_reason,
+    ci,
+    used,
+    lo_limit,
+    hi_limit
+  )
   flags <- answer_flags(f, pts, n_star, ci, 4L * n_reps_per, target)
   out$search[names(flags)] <- flags
   out
@@ -630,7 +820,8 @@ answer_flags <- function(fit, pts, n_star, ci, reps, target) {
       (!is.finite(ci[2]) || isTRUE(ci[2] / max(ci[1], 1) > 2)),
     gain_per_doubling = gain,
     crosscheck_n = iso_n,
-    crosscheck_disagrees = is.finite(iso_n) && abs(log(iso_n / n_star)) > log(1.1)
+    crosscheck_disagrees = is.finite(iso_n) &&
+      abs(log(iso_n / n_star)) > log(1.1)
   )
 }
 
@@ -674,21 +865,44 @@ weighted_isotonic <- function(y, w) {
 }
 
 # Engine output in the shape simulate_custom() and the print/plot methods use.
-curve_output <- function(store, pts, fit, min_n, crit, status, pilot_reason, ci,
-                         used, lo_limit = NA, hi_limit = NA) {
+curve_output <- function(
+  store,
+  pts,
+  fit,
+  min_n,
+  crit,
+  status,
+  pilot_reason,
+  ci,
+  used,
+  lo_limit = NA,
+  hi_limit = NA
+) {
   ns <- as.numeric(names(store$y))
   o <- order(ns)
   dat <- lapply(o, function(i) list(x = c(n = ns[i]), y = store$y[[i]]))
   max_len <- max(lengths(store$y))
   results <- matrix(nrow = length(dat), ncol = max_len)
   rownames(results) <- ns[o]
-  for (i in seq_along(dat)) results[i, seq_along(dat[[i]]$y)] <- dat[[i]]$y
+  for (i in seq_along(dat)) {
+    results[i, seq_along(dat[[i]]$y)] <- dat[[i]]$y
+  }
 
-  fitfun <- if (!is.null(fit)) function(x) curve_value(fit, as.numeric(x)) else NULL
-  perf_n <- if (!is.null(fit) && is.finite(min_n)) curve_value(fit, min_n) else NA_real_
+  fitfun <- if (!is.null(fit)) {
+    function(x) curve_value(fit, as.numeric(x))
+  } else {
+    NULL
+  }
+  perf_n <- if (!is.null(fit) && is.finite(min_n)) {
+    curve_value(fit, min_n)
+  } else {
+    NA_real_
+  }
   at_bound <- NA_character_
   if (is.finite(min_n)) {
-    if (isTRUE(min_n <= lo_limit)) at_bound <- "lower"
+    if (isTRUE(min_n <= lo_limit)) {
+      at_bound <- "lower"
+    }
     if (isTRUE(min_n >= hi_limit)) at_bound <- "upper"
   }
 
@@ -710,7 +924,8 @@ curve_output <- function(store, pts, fit, min_n, crit, status, pilot_reason, ci,
     search = list(
       status = status$status,
       status_message = status$message,
-      max_achievable_perf = status$max_achievable_perf %||% (fit$a %||% NA_real_),
+      max_achievable_perf = status$max_achievable_perf %||%
+        (fit$a %||% NA_real_),
       adaptive_stop_reason = pilot_reason,
       bounds = range(ns),
       at_bound = at_bound,
@@ -719,8 +934,15 @@ curve_output <- function(store, pts, fit, min_n, crit, status, pilot_reason, ci,
       poorly_determined = FALSE,
       crosscheck_disagrees = FALSE,
       curve = if (!is.null(fit)) {
-        list(a = fit$a, b = fit$b, c = fit$c, n_ci = ci, replicates = used,
-             points = nrow(pts), se_factor = attr(pts, "se_factor"))
+        list(
+          a = fit$a,
+          b = fit$b,
+          c = fit$c,
+          n_ci = ci,
+          replicates = used,
+          points = nrow(pts),
+          se_factor = attr(pts, "se_factor")
+        )
       }
     )
   )
