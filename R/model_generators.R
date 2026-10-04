@@ -87,8 +87,8 @@ default_models <- list(
       )
 
       # expects column 1 = y (0/1) and remaining columns predictors
-      ncores <- parallel::detectCores(logical = FALSE)
-      nthreads <- ncores - 2
+      # At least one thread; see pmsims_threads().
+      nthreads <- pmsims_threads()
 
       x <- d[, -1, drop = FALSE]
       y <- as.factor(d[, 1])
@@ -172,8 +172,8 @@ default_models <- list(
       )
 
       # expects first column y (numeric), remaining columns predictors
-      ncores <- parallel::detectCores(logical = FALSE)
-      nthreads <- ncores - 2
+      # At least one thread; see pmsims_threads().
+      nthreads <- pmsims_threads()
 
       x <- d[, -1, drop = FALSE]
       y <- d[, 1]
