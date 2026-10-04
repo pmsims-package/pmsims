@@ -21,6 +21,8 @@ simulate_custom(
   verbose = FALSE,
   verify_reps = 100,
   max_n = NULL,
+  cores = 1L,
+  live_plot = FALSE,
   ...
 )
 }
@@ -92,6 +94,15 @@ still clearly below the target, the search stops with status
 \code{"not_bracketed"}. Defaults to 200,000 for random forests and xgboost
 (one batch of replicates at a million rows would take hours) and
 1,000,000 otherwise.}
+
+\item{cores}{Number of cores for running the replicates of each batch in
+parallel (Unix-like systems only). Results are the same for any number of
+cores, because each replicate has its own random-number stream.}
+
+\item{live_plot}{Logical; with \code{method = "curve"}, redraw the learning
+curve after each batch of replicates so the search can be watched as it
+runs (interactive sessions with a graphics device only; it does not
+change the results).}
 
 \item{...}{Additional arguments passed to the selected search engine.}
 }

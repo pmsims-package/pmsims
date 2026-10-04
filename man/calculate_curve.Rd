@@ -27,6 +27,7 @@ calculate_curve(
   min_n_floor = NULL,
   boot_reps = 200L,
   start_n = NULL,
+  live_plot = FALSE,
   ...
 )
 }
@@ -100,6 +101,9 @@ time, so this mainly affects the adaptive stage and verification.}
 
 \item{start_n}{Optional first sample size of the pilot; defaults to the
 heuristic start value.}
+
+\item{live_plot}{Redraw the learning curve after each batch of replicates
+(interactive sessions with a graphics device only).}
 
 \item{...}{Additional options passed to \code{\link[mlpwr:find.design]{mlpwr::find.design()}}.}
 }
