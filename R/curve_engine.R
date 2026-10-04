@@ -110,6 +110,8 @@ curve_crossing <- function(fit, target) {
 #' @param boot_reps Number of bootstrap refits for the interval of the answer.
 #' @param start_n Optional first sample size of the pilot; defaults to the
 #'   heuristic start value.
+#' @param live_plot Redraw the learning curve after each batch of replicates
+#'   (interactive sessions with a graphics device only).
 #' @details `se_final` is not used: this engine stops when the replicate
 #'   budget is spent, and reports a bootstrap interval for its answer in
 #'   `diagnostics$curve$n_ci`.
@@ -137,6 +139,7 @@ calculate_curve <- function(
   min_n_floor = NULL,
   boot_reps = 200L,
   start_n = NULL,
+  live_plot = FALSE,
   ...
 ) {
   if (is.null(evaluator)) {
@@ -203,7 +206,46 @@ calculate_curve <- function(
     store$failed[[key]] <- c(store$failed[[key]], attr(vals, "failed") %||% rep(FALSE, length(vals)))
     used <<- used + reps
     if (!is.null(pb)) cli::cli_progress_update(id = pb, set = used)
+    if (show_live) draw_live()
     invisible(n)
+  }
+
+  # Live plot: the state of the search after each batch, drawn with the same
+  # function as plot(). Interactive sessions with a graphics device only (or
+  # when forced, for tests); it never affects the results.
+  show_live <- isTRUE(live_plot) &&
+    (isTRUE(getOption("pmsims.live_plot_force")) ||
+      (interactive() && grDevices::dev.interactive(orNone = TRUE)))
+  draw_live <- function() {
+    pts <- summarise_points()
+    f <- if (sum(pts$usable) >= 3L) fit_points(pts)
+    n_now <- if (!is.null(f)) curve_crossing(f, target) else NA_real_
+    is_csse <- identical(attr(metric_function, "metric", exact = TRUE), "csse")
+    sy <- sorted_y()
+    state <- list(
+      data = lapply(seq_along(sy$n), function(i) list(x = c(n = sy$n[i]), y = sy$y[[i]])),
+      diagnostics = list(curve = if (!is.null(f)) {
+        list(a = f$a, b = f$b, c = f$c, se_factor = attr(pts, "se_factor"))
+      } else {
+        list(se_factor = attr(pts, "se_factor"))
+      }),
+      mean_or_assurance = mean_or_assurance,
+      min_n = if (is.finite(n_now) && n_now > 0) n_now else NA_real_,
+      metric = if (is_csse) "calibration_slope" else attr(metric_function, "metric", exact = TRUE),
+      outcome = attr(data_function, "outcome", exact = TRUE),
+      internal_csse = is_csse,
+      csse_target_performance = target,
+      target_performance = if (is_csse) csse_to_calibration_slope(target) else target
+    )
+    subtitle <- sprintf(
+      "Searching: %s of %s replicates; current estimate %s",
+      format(used, big.mark = ","), format(n_reps_total, big.mark = ","),
+      if (is.finite(state$min_n)) format(round(state$min_n), big.mark = ",") else "not yet"
+    )
+    tryCatch(
+      suppressWarnings(plot_learning_curve(state, subtitle = subtitle)),
+      error = function(e) invisible(NULL)
+    )
   }
 
   sorted_y <- function() {
@@ -300,21 +342,48 @@ calculate_curve <- function(
     out
   }
 
+  # Performance values in messages: on the metric's own scale, except CSSE
+  # (used internally for calibration-slope targets of penalised and ML
+  # models), which is shown as the distance of the calibration slope from 1.
+  is_csse <- identical(attr(metric_function, "metric", exact = TRUE), "csse")
+  fmt_perf <- function(v) {
+    if (is_csse) {
+      sprintf("a calibration slope within %s of 1", format(signif(sqrt(max(0, -v)), 3)))
+    } else {
+      format(signif(v, 4))
+    }
+  }
+
   stop_status <- function(pts, kind, f, extra = "") {
     top <- which.max(pts$n)
+    best <- if (!is.null(f)) f$a else max(pts$est)
     list(
       status = kind,
-      message = sprintf(
-        "%s Performance at n = %s was %s against a target of %s.%s",
+      message = paste0(
         if (kind == "unreachable") {
           "The target looks unreachable: the fitted learning curve levels off below it."
         } else {
           "No sample size searched reached the target."
         },
-        format(pts$n[top], big.mark = ",", scientific = FALSE),
-        format(signif(pts$est[top], 4)), format(signif(target, 4)), extra
+        sprintf(
+          " Performance at n = %s was %s, against a target of %s.",
+          format(pts$n[top], big.mark = ",", scientific = FALSE),
+          fmt_perf(pts$est[top]), fmt_perf(target)
+        ),
+        extra,
+        if (kind == "unreachable") {
+          sprintf(
+            paste(
+              " The best achievable here is about %s; consider a less strict",
+              "target, or a setting with higher achievable performance."
+            ),
+            fmt_perf(best)
+          )
+        } else {
+          ""
+        }
       ),
-      max_achievable_perf = if (!is.null(f)) f$a else max(pts$est)
+      max_achievable_perf = best
     )
   }
 
@@ -339,8 +408,7 @@ calculate_curve <- function(
       a_ub <- stats::quantile(bf[, "a"], 0.975, na.rm = TRUE, names = FALSE)
       if (isTRUE(a_ub < target) && top_is_flat(pts)) {
         return(list(reason = "ceiling_below_target", status = stop_status(pts, "unreachable", f, sprintf(
-          " The curve's ceiling is about %s (95%% upper bound %s).",
-          format(signif(f$a, 4)), format(signif(a_ub, 4))))))
+          " (95%% upper bound of the curve's ceiling: %s.)", fmt_perf(a_ub)))))
       }
       if (isTRUE(mean(bf[, "n"] > hi_limit, na.rm = TRUE) > 0.975) && top_is_flat(pts)) {
         return(list(reason = "beyond_max_n", status = stop_status(pts, "not_bracketed", f, sprintf(
@@ -477,7 +545,7 @@ calculate_curve <- function(
     }
   }
   if (!is.null(status)) {
-    return(curve_output(store, pts, NULL, NA_real_, crit, status, pilot_reason, NULL, used))
+    return(curve_output(store, pts, fit_points(pts), NA_real_, crit, status, pilot_reason, NULL, used))
   }
 
   warn_if_long_run(

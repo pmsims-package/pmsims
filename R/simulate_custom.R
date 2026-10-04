@@ -59,6 +59,13 @@
 #'   `"not_bracketed"`. Defaults to 200,000 for random forests and xgboost
 #'   (one batch of replicates at a million rows would take hours) and
 #'   1,000,000 otherwise.
+#' @param cores Number of cores for running the replicates of each batch in
+#'   parallel (Unix-like systems only). Results are the same for any number of
+#'   cores, because each replicate has its own random-number stream.
+#' @param live_plot Logical; with `method = "curve"`, redraw the learning
+#'   curve after each batch of replicates so the search can be watched as it
+#'   runs (interactive sessions with a graphics device only; it does not
+#'   change the results).
 #' @param ... Additional arguments passed to the selected search engine.
 #'
 #' @return An object of class `"pmsims"` containing the estimated minimum
@@ -179,6 +186,8 @@ simulate_custom <- function(
   verbose = FALSE,
   verify_reps = 100,
   max_n = NULL,
+  cores = 1L,
+  live_plot = FALSE,
   ...
 ) {
   # Evaluate four initial sample sizes after establishing the search bounds.
@@ -233,17 +242,20 @@ simulate_custom <- function(
 
   # One evaluator, on keyed random streams, for every stage of the search
   # (see R/simulation_core.R).
-  # Replicates of a batch run in parallel with `parallel = TRUE` (forked
-  # processes, so not on Windows); random forests and xgboost then use one
-  # thread per worker, so the workers do not compete for cores.
-  dots <- list(...)
-  parallel <- isTRUE(dots$parallel)
-  cores <- if (is.numeric(dots$cores)) {
-    dots$cores
-  } else {
-    min(20L, parallel::detectCores(), na.rm = TRUE)
+  # Replicates within each batch can run in parallel (forked processes, so
+  # not on Windows). Results do not depend on the number of cores: each
+  # replicate has its own random-number stream. Random forests and xgboost
+  # then use one thread each, so the workers do not compete for cores.
+  # `parallel = TRUE` without `cores`, as in earlier versions, uses up to 20.
+  if (missing(cores) && isTRUE(list(...)$parallel)) {
+    cores <- min(20L, parallel::detectCores(), na.rm = TRUE)
   }
-  if (parallel) {
+  cores <- max(1L, as.integer(cores))
+  if (cores > 1L && .Platform$OS.type != "unix") {
+    cli::cli_alert_info("Parallel replicates need a Unix-like system; running on one core.")
+    cores <- 1L
+  }
+  if (cores > 1L) {
     old_threads <- options(pmsims.threads = 1L)
     on.exit(options(old_threads), add = TRUE)
   }
@@ -255,8 +267,8 @@ simulate_custom <- function(
     test_n = test_n,
     value_on_error = value_on_error,
     streams = streams,
-    parallel = parallel,
-    cores = if (parallel) cores else 1L
+    parallel = cores > 1L,
+    cores = cores
   )
 
   if (method == "curve") {
@@ -280,7 +292,8 @@ simulate_custom <- function(
           metric_function = metric_function,
           value_on_error = value_on_error,
           evaluator = evaluator,
-          max_n = max_n
+          max_n = max_n,
+          live_plot = live_plot
         ),
         list(...)
       )

@@ -205,3 +205,56 @@ test_that("weighted_isotonic and isotonic_crossing behave", {
                exp(mean(log(c(200, 400)))))
   expect_identical(isotonic_crossing(c(100, 200), c(0.5, 0.6), c(1, 1), 0.9), Inf)
 })
+
+test_that("curve results plot, including stopped searches", {
+  ok <- run_curve(synthetic_curve(), 0.85, seed = 1)
+  d <- plot(ok, plot = FALSE)
+  expect_s3_class(d$observed_data, "data.frame")
+  expect_true(all(c("n", "y", "lo", "hi", "reps") %in% names(d$observed_data)))
+  expect_s3_class(d$fitted_curve, "data.frame")
+  pdf(NULL)
+  on.exit(dev.off(), add = TRUE)
+  expect_s3_class(plot(ok), "ggplot")
+  stopped <- run_curve(csse_curve(bias = 0.12), -0.01, seed = 2, start_n = 500)
+  expect_true(stopped$status %in% c("unreachable", "not_bracketed"))
+  expect_s3_class(plot(stopped), "ggplot")
+})
+
+test_that("messages for CSSE targets use the calibration slope scale", {
+  stopped <- run_curve(csse_curve(bias = 0.12), -0.01, seed = 2, start_n = 500)
+  expect_match(stopped$status_message, "calibration slope within")
+  expect_false(grepl("-0.01", stopped$status_message, fixed = TRUE))
+})
+
+test_that("results are identical on one core and several", {
+  skip_on_os("windows")
+  sc <- synthetic_curve()
+  one <- run_curve(sc, 0.85, seed = 4)
+  two <- run_curve(sc, 0.85, seed = 4, cores = 2)
+  expect_identical(one$min_n, two$min_n)
+  expect_identical(one$verification$performance, two$verification$performance)
+})
+
+test_that("the live plot redraws after each batch and does not change results", {
+  draws <- 0L
+  local_mocked_bindings(plot_learning_curve = function(x, ...) {
+    draws <<- draws + 1L
+    expect_true(length(x$data) >= 1L)
+    invisible(NULL)
+  })
+  withr_opts <- options(pmsims.live_plot_force = TRUE)
+  on.exit(options(withr_opts), add = TRUE)
+  live <- run_curve(synthetic_curve(), 0.85, seed = 5, live_plot = TRUE)
+  options(pmsims.live_plot_force = NULL)
+  quiet <- run_curve(synthetic_curve(), 0.85, seed = 5)
+  expect_gt(draws, 5L)
+  expect_identical(live$min_n, quiet$min_n)
+})
+
+test_that("the live plot draws for real on a graphics device", {
+  old <- options(pmsims.live_plot_force = TRUE)
+  on.exit(options(old), add = TRUE)
+  pdf(NULL)
+  on.exit(dev.off(), add = TRUE)
+  expect_no_error(run_curve(csse_curve(), -0.01, seed = 3, start_n = 300, live_plot = TRUE))
+})
