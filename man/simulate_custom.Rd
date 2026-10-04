@@ -20,7 +20,7 @@ simulate_custom(
   progress = TRUE,
   verbose = FALSE,
   verify_reps = 100,
-  max_n = 1e+06,
+  max_n = NULL,
   ...
 )
 }
@@ -87,7 +87,9 @@ Set to \code{0} to skip the check.}
 
 \item{max_n}{Largest sample size the adaptive start-value search may try.
 If performance there is still clearly below the target, the search stops
-with status \code{"not_bracketed"}.}
+with status \code{"not_bracketed"}. Defaults to 200,000 for random forests and
+xgboost (one batch of replicates at a million rows would take hours) and
+1,000,000 otherwise.}
 
 \item{...}{Additional arguments passed to the selected search engine.}
 }

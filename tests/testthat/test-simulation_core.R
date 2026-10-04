@@ -213,3 +213,10 @@ test_that("the secondary metric is skipped when there is no sample size", {
     NA_real_
   )
 })
+
+test_that("max_n defaults by model", {
+  expect_identical(default_max_n("rf"), 2e5)
+  expect_identical(default_max_n("xgboost"), 2e5)
+  expect_identical(default_max_n("glm"), 1e6)
+  expect_identical(default_max_n(NULL), 1e6)
+})
