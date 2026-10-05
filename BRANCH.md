@@ -1,50 +1,35 @@
-# Branch `release/mlpwr-fixes`: the mlpwr approach, with fixes
+# Branch `release/curve-engine`: a learning-curve engine as the default
 
-Base: `dev` at `e7e35ff`. The search is unchanged in design: adaptive start
-values, then mlpwr's Gaussian-process search. This branch fixes known errors
-and makes results checkable. It is meant to change as little as possible.
-The new engine is a separate branch, `release/curve-engine`, built on this
-one.
+Base: `release/mlpwr-fixes` (see that branch's BRANCH.md for its fixes, all included here). This branch adds a new search engine, `method = "curve"`, and makes it the default in `simulate_custom()` and the `simulate_*()` wrappers. The previous engine is still available as `method = "mlpwr"` and behaves exactly as on `release/mlpwr-fixes`.
 
 ## What it contains
 
 | Commit | What it does |
 |---|---|
-| updated adaptive start values | Ridwan's start-value search (fix-peaks). |
-| Gaussian copula | **Correlated predictors were wrong**: the Cholesky factor was applied transposed, so pairwise correlations ranged from about 0 to 0.88 (mean 0.09) instead of the requested 0.3. Predictors are now drawn directly, which is also 3–7× faster. Results for any scenario with `correlation > 0` (the default is 0.3) change. |
-| Non-finite metric values | NA or NaN metric values (e.g. a lasso that selects no predictors) count as failed replicates. They were dropped, which overstated performance. |
-| GP restart | The mlpwr search restarts when its surrogate fails, instead of erroring. |
-| Shared evaluator, keyed streams, result checks | Every stage evaluates replicates the same way: train on fresh data, score on a fresh test set. The start-value stage used one shared test set, so it could bracket the wrong range. Each replicate has its own random-number stream, so results are reproducible with `set.seed()` and identical on any number of cores. The returned `min_n` is simulated again (`verify_reps = 100`), and the result has a `status`: `ok`, `not_verified`, `not_bracketed` or `replicates_failed`. Metrics where smaller is better are rejected (they were searched in the wrong direction). |
-| survival_auc, ranger threads | `survival_auc()`'s fallback returned 1 − C. ranger could be given zero threads. |
-| Truth tests | Simulated data checked against prevalence, discrimination, calibration, correlation and metric direction. |
-| xgboost threads | xgboost used every core, which oversubscribed the CPU: one replicate could take 175 s instead of under 1 s. |
-| `max_n` by model | Default cap of 200,000 for random forests and xgboost, 1,000,000 otherwise. |
-| mlpwr's optimistic pick (docs) | Documented, not changed (see open questions). |
-| air formatting, tidy-ups | No behaviour changes. |
-| Review fixes | `replicates_failed` status; the start-value search's last rung is `max_n` itself; messages for calibration-slope targets in slope terms; correct wording at the upper edge of the range; `parallel = TRUE` uses several cores again. |
-
-## Changes users will notice
-
-These are listed under *Breaking changes* in NEWS.md:
-
-- `min_n` and `perf_n` are `NA` when no answer is found (they were a text message); see `status` and `status_message`.
-- The `simulate_*()` wrappers no longer suppress warnings.
-- `metric_2_at_n` is a mean over 10 replicates (it was one).
+| Learning-curve engine | Fits a monotone learning curve, C(n) = a − b·n^−c, to the criterion at every simulated n, using every replicate. A pilot doubles or halves from the start value until it sees the criterion on both sides of the target. Each further batch goes where the fitted curve crosses the target, so there is no fixed search range to get wrong. The answer is where the final curve crosses, with a bootstrap interval. It is median-unbiased, with no optimism margin like mlpwr's mean + 0.3 SD. Stops only on confirmed evidence: `unreachable` (the curve levels off below the target, confirmed with extra replicates) or `not_bracketed` (the crossing is very likely beyond `max_n`). Flags targets close to the best achievable performance, and cross-checks the answer against a shape-free (isotonic) fit. |
+| Plot, live plot, messages, `cores` | `plot()` shows the simulated points, the fitted curve, the target and the answer with its interval; `live_plot = TRUE` redraws it during the search. Stop messages for calibration-slope targets are given in slope terms. `cores` runs each batch's replicates in parallel, and results are identical for any number of cores. |
+| Faster metrics, predictions and data generation | Exact fast paths, each with a fallback to the general code: two-parameter calibration fits instead of `glm()`/`lm()` on the 30,000-row test set, a direct survival calibration slope, linear predictors without model frames, AUC from ranks, a leaner concordance, running-sum correlated predictors and survival forests predicted from terminal nodes. Replicate values agree with the old code to within 2e-14. `tests/testthat/test-fast_paths.R` checks each fast path against the code it replaces. |
+| air formatting, NEWS | No behaviour changes. |
+| Review fixes | Stops with `replicates_failed` when 20% or more of replicates fail at every n. Searches reach their own limits. A target met with no usable curve is answered from the observed points. A crashed parallel worker counts as a failed replicate instead of aborting the run. `cores` is validated. The documentation is accurate. |
 
 ## Evidence
 
 From pmsims-bench, with reference sample sizes simulated directly for each scenario and seed (five sample sizes around the answer, 600 replicates each):
 
-| Tiers | Runs | Median error | Median absolute error | Within 10% |
-|---|---|---|---|---|
-| core + compat | 97 | −8.2% | 9.0% | 52% |
-| wide (48 scenarios × 3 seeds) | 138 | −8.7% | 9.6% | 54% |
+| Tiers | Engine | Runs | Median error | Median absolute error | Within 10% |
+|---|---|---|---|---|---|
+| core + compat | curve (this branch) | 96 | +1.4% | 4.4% | 82% |
+| core + compat | mlpwr (`release/mlpwr-fixes`) | 97 | −8.2% | 9.0% | 52% |
+| wide (48 scenarios × 3 seeds) | curve (this branch) | 138 | +0.4% | 3.6% | 94% |
+| wide | mlpwr | 138 | −8.7% | 9.6% | 54% |
 
-Answers are about 9% too small, mainly because of mlpwr's final pick (below). These figures were measured just before the plateau stop was restored (open question 2). The earlier consolidated version, which has the same search, gave the same figures: −8.7%, 9.6%, 53% on the wide tier. Tests: 590 pass.
+- **Penalised and ML models.** The gap is largest here. mlpwr's answers are 10–16% too small for these groups (by median), and 20–47% too small on some random forest, lasso, ridge and xgboost scenarios. The curve engine stays within about ±9% on all of them.
+- **Unreachable targets.** The curve engine stopped correctly on 5 of 6 runs; mlpwr stopped on none.
+- **Speed.** Measured on a quiet machine, single thread, against the engine before the speed-ups. A full binary glm run went from 26 s to 17 s, and a full Cox run from 52 s to 14 s, with identical answers.
+- **Tests.** 752 pass.
 
-## Open questions for the team
+## Known limitations and open questions
 
-1. **mlpwr's final pick.** mlpwr returns the smallest n at which its surrogate's mean + 0.3 SD reaches the target (fixed inside mlpwr). That causes the −9% bias above, and more for penalised and ML models. It is left unchanged here; see "How the mlpwr engine picks its answer" in `?simulate_custom`.
-2. **The start-value plateau stop is kept.** On a slowly rising curve it can leave the answer above the search range; the answer is then flagged `not_verified`. Removing the stop made unreachable and near-ceiling targets double to `max_n`, causing 16 timeouts or out-of-memory failures in the benchmark with no gain in accuracy.
-3. **Test-set ceiling.** With a 30,000-row test set, the slope estimate itself varies by about ±0.015. So targets such as a calibration slope of 0.99 at 20% assurance are unreachable at any n.
-4. **Seed-dependent tuning.** The wrappers tune the data generator by simulation, so a target close to the maximum achievable performance can give answers about 45% apart on different seeds.
+1. **Targets at or near the ceiling are slow.** Ridge with 5 predictors (where the criterion sits at the target from about 40,000 to 150,000), an edge ridge case and survival lasso p5 still time out on some seeds. A time budget for such targets is an open question.
+2. **The interval reflects Monte Carlo error given the curve's shape, not uncertainty about the shape.** The isotonic cross-check is reported alongside, and flagged when it disagrees by more than 10%.
+3. **The test-set ceiling and seed-dependent tuning** described in `release/mlpwr-fixes` apply to both engines.
