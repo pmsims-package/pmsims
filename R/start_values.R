@@ -216,7 +216,7 @@ calculate_adaptive_bounds <- function(
   parallel = FALSE,
   cores = 20,
   verbose = FALSE,
-  max_n = 1e6,
+  max_n = 1e5,
   evaluator = NULL
 ) {
   vcat <- function(...) if (verbose) message(sprintf(...))

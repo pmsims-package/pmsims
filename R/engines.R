@@ -31,7 +31,7 @@ calculate_mlpwr <- function(
   metric_function,
   value_on_error,
   evaluator = NULL,
-  max_n = 1e6,
+  max_n = 1e5,
   parallel = FALSE,
   cores = 1L,
   ...
@@ -132,7 +132,7 @@ search_bounds <- function(
   c_statistic,
   mean_or_assurance,
   evaluator,
-  max_n = 1e6,
+  max_n = 1e5,
   adaptive_reps = 500
 ) {
   if (!is.null(min_sample_size) && !is.null(max_sample_size)) {
