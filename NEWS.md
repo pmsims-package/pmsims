@@ -48,6 +48,10 @@
 - `parallel = TRUE` without `cores` uses up to 20 cores, as before. Parallel
   replicates use forked processes, so they run serially on Windows; random
   forests and xgboost then use one thread per worker.
+- With `method = "mlpwr"`, `n_reps_total` is raised to 2000 for `"lm"`,
+  `"glm"` and `"coxph"` models with at most 10 signal parameters, where the
+  Gaussian-process search is limited by its budget. A message says so, and
+  `auto_n_reps_total = FALSE` keeps the value supplied.
 - `max_n` is the largest sample size the search may try, for every engine.
   With `method = "curve"` it caps the whole search (unless `max_sample_size`
   is given); with the mlpwr and bisection engines it caps the start-value
