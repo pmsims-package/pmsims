@@ -333,7 +333,7 @@ simulate_custom <- function(
     status_message = check$status_message,
     verification = check$verification,
     diagnostics = check$diagnostics,
-    mlpwr_ds = output$mlpwr_ds,
+    #mlpwr_ds = output$mlpwr_ds,
     target_performance = target_performance,
     summaries = output$summaries,
     data = output$results,
