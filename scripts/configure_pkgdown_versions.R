@@ -31,6 +31,13 @@ config$navbar$components$news <- list(
       text = "Releases"
     ),
     list(
+      text = "Version 1.1.0",
+      href = paste0(
+        "https://pmsims-package.github.io/pmsims/",
+        "articles/release-1-1-0.html"
+      )
+    ),
+    list(
       text = "Version 1.0.0",
       href = paste0(
         "https://pmsims-package.github.io/pmsims/",
