@@ -2,19 +2,24 @@
 % Please edit documentation in R/data_generators.R
 \name{default_data_generators}
 \alias{default_data_generators}
-\title{Title Create default data generating functions}
+\title{Create default data generating functions}
 \usage{
 default_data_generators(opts)
 }
 \arguments{
-\item{opts}{A list of options to be used with the data generating function. Must include type as either "binary", "continuous", or "survival".
-Arguments to be passed to the data generating function must be stored in a list item named args.
-For options that can be passed to the different default generators see \link{generate_continuous_data}, \link{generate_binary_data}, or \link{generate_survival_data}.}
+\item{opts}{A list with two elements:
+\describe{
+\item{\code{type}}{Outcome type: \code{"continuous"}, \code{"binary"},
+or \code{"survival"}.}
+\item{\code{args}}{Named list of arguments to pre-set on the
+corresponding generator function.}
+}}
 }
 \value{
-A function with default arguments set to the values passed with opts
+A partially-applied generator function whose formals have been set
+to the values in \code{opts$args}.
 }
 \description{
-Title Create default data generating functions
+Create default data generating functions
 }
 \keyword{internal}

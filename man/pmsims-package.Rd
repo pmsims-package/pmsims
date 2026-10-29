@@ -4,11 +4,11 @@
 \name{pmsims-package}
 \alias{pmsims}
 \alias{pmsims-package}
-\title{pmsims: Simulation-based Sample Size Tools for Prediction Models}
+\title{pmsims: Simulation-Based Sample Size Tools for Prediction Models}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-pmsims is a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects stability, accuracy, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with a range of regression-based modelling approaches. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models.
+Provides a flexible, simulation-based toolkit for exploring how much data are needed to develop reliable prediction models. It works by repeatedly generating data, fitting models, and evaluating performance to show how sample size affects predictive accuracy, calibration, and overfitting. The package supports continuous, binary, and time-to-event outcomes and can be used with both regression-based modelling approaches and machine-learning methods. It is designed to help researchers plan studies, assess feasibility, and build more robust and generalisable models. The methods are described in Olaniran et al. (2026) \doi{10.1186/s12874-026-02935-9} and Shamsutdinova et al. (2026) \doi{10.48550/arXiv.2602.23507}.
 }
 \seealso{
 Useful links:
@@ -20,12 +20,13 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Ewan Carr \email{pmsims@kcl.ac.uk} (\href{https://orcid.org/0000-0002-1146-4922}{ORCID})
+\strong{Maintainer}: Ewan Carr \email{ewan.carr@kcl.ac.uk} (\href{https://orcid.org/0000-0002-1146-4922}{ORCID})
 
 Authors:
 \itemize{
+  \item Ewan Carr \email{ewan.carr@kcl.ac.uk} (\href{https://orcid.org/0000-0002-1146-4922}{ORCID})
   \item Gordon Forbes (\href{https://orcid.org/0000-0001-8662-3636}{ORCID})
-  \item Ridwan Olaniran
+  \item Ridwan Olaniran (\href{https://orcid.org/0000-0001-7342-8639}{ORCID})
   \item Diana Shamsutdinova (\href{https://orcid.org/0000-0003-2434-3641}{ORCID})
   \item Daniel Stahl (\href{https://orcid.org/0000-0001-7987-6619}{ORCID})
   \item Sarah Markham (\href{https://orcid.org/0000-0002-8755-5935}{ORCID})

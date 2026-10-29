@@ -1,0 +1,59 @@
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+name: Generated documentation
+
+permissions: read-all
+
+jobs:
+  generated-files:
+    name: Generated documentation
+    runs-on: ubuntu-24.04
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      PKGDOWN_DEV_MODE: release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+        with:
+          pandoc-version: '3.8.3'
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.6.1'
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          # Do not add an `any::` prefix to these: it silently discards the
+          # `@version` pin and installs the latest release instead, which is
+          # how roxygen2 8.1.0 crept in and started reformatting NAMESPACE.
+          extra-packages: >
+            roxygen2@8.0.0,
+            rmarkdown@2.31,
+            local::.
+          needs: website
+
+      - name: Regenerate package documentation
+        run: roxygen2::roxygenise(".")
+        shell: Rscript {0}
+
+      - name: Regenerate README
+        run: |
+          rmarkdown::render(
+            "README.Rmd",
+            output_format = rmarkdown::github_document(html_preview = FALSE),
+            output_file = "README.md",
+            quiet = TRUE
+          )
+        shell: Rscript {0}
+
+      - name: Verify generated files are current
+        run: |
+          git diff --exit-code -- NAMESPACE man README.md
+          test -z "$(git ls-files --others --exclude-standard -- NAMESPACE man README.md)"

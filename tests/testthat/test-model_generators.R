@@ -54,13 +54,21 @@ test_that("cheap model generators fit expected model classes", {
 
 test_that("cv.ranger_tune reports missing optional dependencies clearly", {
   required <- c("tuneRanger", "mlr", "ranger")
-  installed <- rownames(utils::installed.packages())
+  missing <- required[
+    !vapply(required, requireNamespace, logical(1), quietly = TRUE)
+  ]
 
-  if (all(required %in% installed)) {
+  if (length(missing) == 0) {
     skip(
       "All optional dependencies are installed; skipping missing-dependency branch."
     )
   }
+
+  expected <- paste0(
+    "The ranger tuning feature requires the following optional package",
+    if (length(missing) > 1) "s" else "",
+    ":"
+  )
 
   expect_error(
     cv.ranger_tune(
@@ -68,7 +76,7 @@ test_that("cv.ranger_tune reports missing optional dependencies clearly", {
       formula = y ~ x1 + x2,
       type = "classification"
     ),
-    "Please install required packages:",
+    expected,
     fixed = TRUE
   )
 })
@@ -89,6 +97,29 @@ test_that("cv.ranger_tune validates survival formulas when dependencies are inst
       show.info = FALSE
     ),
     "For survival, specify Surv(time, status) on LHS of formula.",
+    fixed = TRUE
+  )
+})
+
+test_that("resolve_mlr_measures maps exported mlr measures by id", {
+  skip_if_not_installed("mlr")
+
+  measures <- resolve_mlr_measures(c("auc", "acc"), task_type = "classif")
+
+  expect_length(measures, 2)
+  expect_true(all(vapply(measures, inherits, logical(1), what = "Measure")))
+  expect_identical(vapply(measures, `[[`, character(1), "id"), c("auc", "acc"))
+})
+
+test_that("resolve_mlr_measures rejects unknown ids", {
+  skip_if_not_installed("mlr")
+
+  expect_error(
+    resolve_mlr_measures(
+      "definitely_not_a_real_measure",
+      task_type = "classif"
+    ),
+    "Unknown mlr measure: definitely_not_a_real_measure",
     fixed = TRUE
   )
 })

@@ -2,6 +2,14 @@ predict.fake_rf <- function(object, newdata, ...) {
   rep(0.4, nrow(newdata))
 }
 
+test_that("metric generators retain canonical metric names", {
+  metric_function <- default_metric_generator(
+    "calibration_slope",
+    make_binary_data_function()
+  )
+  expect_identical(attr(metric_function, "metric"), "calibration_slope")
+})
+
 make_continuous_inputs <- function(metric) {
   parse_inputs(
     data_spec = list(
@@ -142,9 +150,14 @@ test_that("predict_custom returns linear predictors for coxph without attaching 
 test_that("predict_custom covers error and fallback branches", {
   x <- data.frame(x1 = c(0, 1, 2))
 
-  local_mocked_bindings(
-    predict = function(object, newdata, ...) rep(0.4, nrow(newdata)),
-    .package = "stats"
+  # Mock the S3 method rather than the `stats::predict` binding itself: mocking
+  # the binding patches it into the import environments of other packages
+  # (glmnet among them) and is not reliably restored, which breaks their
+  # `predict()` dispatch for the rest of the session.
+  local_mocked_s3_method(
+    "predict",
+    "fake_rf",
+    function(object, newdata, ...) rep(0.4, nrow(newdata))
   )
   expect_equal(
     predict_custom(x, fit = structure(list(), class = "fake_rf"), model = "rf"),
@@ -195,7 +208,11 @@ test_that("binary metric functions return finite values", {
 })
 
 test_that("continuous metrics use the current metric API", {
-  for (metric_name in c("r2", "calib_slope", "calib_itl")) {
+  for (metric_name in c(
+    "r2",
+    "calibration_slope",
+    "calibration_in_the_large"
+  )) {
     inputs <- make_continuous_inputs(metric_name)
     set.seed(1234)
     data <- inputs$data_function(300)
@@ -268,7 +285,7 @@ test_that("survival metric helpers return NaN on unsupported probability paths",
 
   expect_warning(
     metric <- survival_calib_slope_free(data, fit = NULL, model = "xgboost"),
-    "predicted survival probabilities not available",
+    "predicted survival not available",
     fixed = FALSE
   )
   expect_true(is.nan(metric))

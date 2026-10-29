@@ -1,0 +1,56 @@
+.navbar small.nav-text {
+  color: rgba(222, 226, 230, 0.75) !important;
+}
+
+.navbar small.nav-text:has(+ small.archive-version) {
+  display: none;
+}
+
+.archive-banner {
+  background-color: #fff7e6;
+  border-bottom: 1px solid rgba(5, 63, 69, 0.18);
+  color: #343a40;
+  padding: 0.65rem 0;
+}
+
+.archive-banner .container {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  justify-content: center;
+}
+
+.archive-banner a {
+  color: #067f8d;
+  font-weight: 600;
+}
+
+.navbar #dropdown-news + .dropdown-menu {
+  --bs-dropdown-bg: #ffffff;
+  --bs-dropdown-border-color: rgba(5, 63, 69, 0.18);
+  --bs-dropdown-color: #343a40;
+  --bs-dropdown-divider-bg: rgba(5, 63, 69, 0.14);
+  --bs-dropdown-header-color: #6c757d;
+  --bs-dropdown-link-color: #343a40;
+  --bs-dropdown-link-hover-bg: #e7f7f9;
+  --bs-dropdown-link-hover-color: #053f45;
+  box-shadow: 0 0.5rem 1.25rem rgba(5, 63, 69, 0.16);
+}
+
+.navbar #search-input {
+  background-color: #053f45;
+  border-color: rgba(216, 251, 255, 0.35);
+  color: #ffffff;
+}
+
+.navbar #search-input::placeholder {
+  color: rgba(216, 251, 255, 0.78);
+}
+
+.navbar #search-input:focus {
+  background-color: #033136;
+  border-color: #9eeaf2;
+  box-shadow: 0 0 0 0.15rem rgba(4, 173, 191, 0.35);
+  color: #ffffff;
+}

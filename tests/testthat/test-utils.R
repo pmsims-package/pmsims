@@ -168,7 +168,7 @@ test_that("get_min_sample_size applies EPV and outcome-specific rules", {
     npar = 5,
     prevalence = 0.2,
     c_stat = 0.8,
-    calib_slope = NULL,
+    calibration_slope = NULL,
     epv_value = 10,
     outcome_type = "binary"
   )
@@ -176,7 +176,7 @@ test_that("get_min_sample_size applies EPV and outcome-specific rules", {
     npar = 5,
     prevalence = 0.2,
     c_stat = 0.9,
-    calib_slope = NULL,
+    calibration_slope = NULL,
     epv_value = 10,
     outcome_type = "binary"
   )
@@ -189,7 +189,7 @@ test_that("get_min_sample_size applies EPV and outcome-specific rules", {
     npar = 4,
     prevalence = NULL,
     c_stat = 0.6,
-    calib_slope = 0.9,
+    calibration_slope = 0.9,
     outcome_type = "continuous"
   )
   expect_true(continuous_n >= 12)

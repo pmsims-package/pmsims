@@ -2,7 +2,10 @@
 "_PACKAGE"
 
 ## usethis namespace: start
+#' @importFrom lifecycle deprecated
+#' @importFrom stats predict
 #' @importFrom survival Surv
+#' @importFrom utils head
 #' @importFrom utils setTxtProgressBar
 #' @importFrom utils txtProgressBar
 ## usethis namespace: end
