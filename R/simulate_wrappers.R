@@ -333,8 +333,9 @@ resolve_n_reps_total <- function(
 #'   forest), or `"xgboost"` (gradient-boosted trees).
 #' @param metric Character string naming the performance metric used to assess
 #'   the sample size; defaults to `"calibration_slope"`. Metric identifiers use
-#'   one canonical form throughout the package, such as `"calibration_slope"`,
-#'   `"calibration_in_the_large"`, `"auc"`, `"r2"`, `"cindex"`, and `"csse"`.
+#'   one canonical form throughout the package: `"calibration_slope"`,
+#'   `"auc"`, `"r2"`, `"cindex"` and `"csse"`. Metrics where smaller is better,
+#'   such as `"calibration_in_the_large"`, cannot be used as search targets.
 #'
 #'   `"calibration_slope"` is the slope from regressing the observed outcome on
 #'   the model's linear predictor in held-out data; 1 indicates perfect

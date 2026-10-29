@@ -46,8 +46,9 @@ forest), or \code{"xgboost"} (gradient-boosted trees).}
 
 \item{metric}{Character string naming the performance metric used to assess
 the sample size; defaults to \code{"calibration_slope"}. Metric identifiers use
-one canonical form throughout the package, such as \code{"calibration_slope"},
-\code{"calibration_in_the_large"}, \code{"auc"}, \code{"r2"}, \code{"cindex"}, and \code{"csse"}.
+one canonical form throughout the package: \code{"calibration_slope"},
+\code{"auc"}, \code{"r2"}, \code{"cindex"} and \code{"csse"}. Metrics where smaller is better,
+such as \code{"calibration_in_the_large"}, cannot be used as search targets.
 
 \code{"calibration_slope"} is the slope from regressing the observed outcome on
 the model's linear predictor in held-out data; 1 indicates perfect

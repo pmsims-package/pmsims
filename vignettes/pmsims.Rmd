@@ -316,9 +316,9 @@ lists the key inputs.
       <td>
         <em>(chr)</em> <strong>Performance metric</strong> used to estimate the minimum
         required sample size. Metric identifiers take one canonical form throughout the
-        package: <code>"calibration_slope"</code>, <code>"calibration_in_the_large"</code>,
-        <code>"auc"</code>, <code>"r2"</code>, <code>"cindex"</code>, and
-        <code>"csse"</code> (calibration slope squared error).
+        package: <code>"calibration_slope"</code>, <code>"auc"</code>,
+        <code>"r2"</code>, <code>"cindex"</code> and <code>"csse"</code>
+        (calibration slope squared error).
         <div class="meta">
           <span class="badge badge--scope">Applies: all</span>
           <span class="badge badge--default">Default: <code>"calibration_slope"</code></span>
@@ -467,9 +467,38 @@ quantities recorded on an internal search scale --- is available through
 
 Plot the estimated learning curve and identified sample size:
 
-```{r, fig.alt="Plot showing learning curve for binary outcome"}
+```{r}
+#| eval: false
 plot(binary_example)
 ```
+
+The animation below shows the same search as it ran. With
+`live_plot = TRUE`, the plot is redrawn after each batch of 20 replicates.
+The final frame is what `plot(binary_example)` draws: the 20th percentile of
+the calibration slope at each simulated sample size (point size shows the
+number of replicates, with ±2 standard errors), the fitted learning curve,
+the target (dashed line), the minimum sample size (solid line) with its
+interval (shaded), and a shape-free cross-check (dotted line).
+
+<p align="center">
+  <img src="images/live_plot.gif" alt="Animation of the learning-curve search for the binary example. Each frame adds a batch of replicates; points accumulate around the target, the fitted curve settles, and the estimate converges on a minimum sample size of 1,000 (interval 972 to 1,061)." width="100%">
+</p>
+
+## How the search works
+
+By default (`method = "curve"`), `pmsims` fits a learning curve,
+$C(n) = a - b n^{-c}$, to the criterion at every sample size simulated so
+far. A pilot doubles or halves $n$ until the criterion has been seen on both
+sides of the target. Each further batch is placed where the fitted curve
+crosses the target, and the answer is where the final curve crosses it. The
+answer is then simulated again with fresh replicates to check that it meets
+the target.
+
+Every result has a `status`. `"ok"` means a sample size was found and the
+check confirmed it. Otherwise `min_n` may be `NA`, and `status_message`
+explains why (for example, `"unreachable"` when the curve levels off below
+the target). The previous Gaussian-process engine is available with
+`method = "mlpwr"`; see `?simulate_custom` for details of both engines.
 
 ## Continuous-outcome example
 

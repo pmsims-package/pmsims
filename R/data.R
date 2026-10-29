@@ -18,8 +18,12 @@
 #'   \item{`target_performance`}{The performance target the search aimed for.}
 #'   \item{`metric`}{The performance metric used.}
 #'   \item{`model`}{The model fitted to each simulated dataset.}
-#'   \item{`mlpwr_ds`}{The sampled designs and simulated performance values
-#'     behind the fitted curve, used by [plot()].}
+#'   \item{`status`}{`"ok"` when the search found `min_n` and a check at
+#'     `min_n` confirmed it; see [simulate_custom()] for other values.}
+#'   \item{`data`}{The simulated performance values at each sample size,
+#'     used by [plot()].}
+#'   \item{`diagnostics`}{Details of the search, including the fitted
+#'     learning curve and the interval for `min_n` (`diagnostics$curve`).}
 #'   \item{`summaries`}{Aggregated performance summaries across replications.}
 #'   \item{`simulation_time`}{Elapsed time of the original run, in seconds.}
 #' }
