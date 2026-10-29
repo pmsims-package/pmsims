@@ -21,7 +21,9 @@ calculate_bisection(
   parallel = FALSE,
   cores = 20,
   verbose = FALSE,
-  budget = TRUE
+  budget = TRUE,
+  evaluator = NULL,
+  max_n = 1e+06
 )
 }
 \arguments{
@@ -75,13 +77,21 @@ define the minimum sample size. Must be either \code{"mean"} or \code{"assurance
 
 \item{tol}{Numeric tolerance controlling when the bisection loop stops.}
 
-\item{parallel}{Logical; if \code{TRUE} the per-sample-size simulations run in parallel via \code{foreach}.}
+\item{parallel}{Logical; if \code{TRUE} the replicates at each sample size run in
+parallel (forked processes; serial on Windows). Results do not depend on
+the number of cores.}
 
 \item{cores}{Integer number of cores to use when \code{parallel = TRUE}.}
 
 \item{verbose}{Logical flag passed to \code{mlpwr}; when \code{TRUE} verbose output is printed.}
 
 \item{budget}{Logical; if \code{TRUE} the algorithm halts once the evaluation budget is exhausted instead of using \code{tol}.}
+
+\item{evaluator}{Optional evaluator from \code{new_evaluator()}, shared by every
+stage of the search. Created from the data, model and metric functions
+when \code{NULL}.}
+
+\item{max_n}{Largest sample size the adaptive start-value search may try.}
 }
 \value{
 A list containing the simulation \code{results}, performance \code{summaries},

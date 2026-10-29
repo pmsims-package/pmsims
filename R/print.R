@@ -126,10 +126,13 @@ build_pmsims_items <- function(x, verbose = FALSE) {
   metric_2 <- x$metric_2
   target <- x$target_performance %||% x$minimum_acceptable_performance
   min_n <- x$min_n
-  # min_n and perf_n hold a diagnostic string when the target could not be
-  # reached. That message belongs on the sample-size line, not repeated as a
-  # performance estimate.
-  numeric_only <- function(v) if (is.numeric(v)) v else NULL
+  # min_n and perf_n are NA when no sample size was found (results from older
+  # versions hold a diagnostic string instead); only finite values are shown
+  # as estimates.
+  numeric_only <- function(v) {
+    if (is.numeric(v) && length(v) == 1L && is.finite(v)) v else NULL
+  }
+  has_n <- is.numeric(min_n) && length(min_n) == 1L && is.finite(min_n)
   perf_at <- numeric_only(x$perf_n)
   perf2_at <- numeric_only(x$metric_2_at_n)
   complexity <- x$complexity
@@ -320,16 +323,22 @@ build_pmsims_items <- function(x, verbose = FALSE) {
 
   # --- Results ---------------------------------------------------------------
 
-  # min_n is a diagnostic string when the target could not be reached, so it is
-  # printed as it stands rather than formatted as a count.
-  min_n_text <- if (is.numeric(min_n)) pmsims_fmt_int(min_n) else min_n
+  # Results from older versions hold a diagnostic string when no sample size
+  # was found; it is printed as it stands.
+  min_n_text <- if (has_n) {
+    pmsims_fmt_int(min_n)
+  } else if (is.character(min_n)) {
+    min_n
+  } else {
+    "Not found (see status)"
+  }
   minimum <- pmsims_field(
     "Minimum sample size",
     min_n_text,
-    emphasis = if (is.numeric(min_n)) "strong" else "normal"
+    emphasis = if (has_n) "strong" else "normal"
   )
 
-  performance_heading <- if (is.numeric(min_n)) {
+  performance_heading <- if (has_n) {
     sprintf("Performance at N = %s", pmsims_fmt_int(min_n))
   } else {
     "Performance at the selected sample size"
@@ -381,7 +390,10 @@ build_pmsims_items <- function(x, verbose = FALSE) {
     indent = 2L
   )
 
-  results <- pmsims_compact(minimum)
+  status_field <- if (!is.null(x$status) && !identical(x$status, "ok")) {
+    pmsims_field("Status", gsub("_", " ", x$status), emphasis = "strong")
+  }
+  results <- pmsims_compact(minimum, status_field)
   if (length(performance)) {
     results <- c(results, list(pmsims_blank()), performance)
   }
@@ -396,13 +408,20 @@ build_pmsims_items <- function(x, verbose = FALSE) {
 
   # --- Notes -----------------------------------------------------------------
 
-  notes <- list(pmsims_note(
-    if (identical(moa, "assurance")) {
-      "Assurance mode selects N so that the target is achieved with high probability across repeated datasets."
-    } else {
-      "Mean mode selects N so that the target is achieved on average across repeated datasets."
-    }
-  ))
+  notes <- list()
+  if (pmsims_is_present(x$status_message) && !identical(x$status, "ok")) {
+    notes <- c(notes, list(pmsims_note(x$status_message)))
+  }
+  notes <- c(
+    notes,
+    list(pmsims_note(
+      if (identical(moa, "assurance")) {
+        "Assurance mode selects N so that the target is achieved with high probability across repeated datasets."
+      } else {
+        "Mean mode selects N so that the target is achieved on average across repeated datasets."
+      }
+    ))
+  )
   if (derived_from_csse) {
     notes <- c(
       notes,

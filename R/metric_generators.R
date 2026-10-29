@@ -147,10 +147,7 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
     if (is_ranger) {
       require_optional_packages("ranger", "random forest (ranger) predictions")
 
-      ncores <- parallel::detectCores(logical = FALSE)
-      nthreads <- max(1L, ifelse(is.na(ncores), 1L, ncores - 2L))
-
-      pr <- stats::predict(fit, data = x_df, num.threads = nthreads)
+      pr <- stats::predict(fit, data = x_df, num.threads = pmsims_threads())
 
       # Survival forest
       if (identical(fit$treetype, "Survival")) {
@@ -263,7 +260,7 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
   if (model == "xgboost" || inherits(fit, "xgb.Booster")) {
     require_optional_packages("xgboost", "xgboost predictions")
     # xgboost predict expects a matrix or xgb.DMatrix
-    dmat <- xgboost::xgb.DMatrix(data = x_mat)
+    dmat <- xgboost::xgb.DMatrix(data = x_mat, nthread = pmsims_threads())
     preds <- stats::predict(fit, dmat)
 
     # For binary: preds are probabilities (objective = binary:logistic)
@@ -946,7 +943,13 @@ survival_auc <- function(data, fit, model) {
     return(NaN)
   }
 
-  concordance <- try(survival::concordancefit(y_surv, y_hat), silent = TRUE)
+  # y_hat is a risk score (higher = earlier event), so its concordance with
+  # survival time is reversed, as in survival_cindex(). Without the sign flip
+  # this fallback returned 1 - C.
+  concordance <- try(
+    survival::concordancefit(y_surv, -1 * as.numeric(y_hat)),
+    silent = TRUE
+  )
   if (inherits(concordance, "try-error") || is.null(concordance)) {
     return(NaN)
   }

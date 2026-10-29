@@ -49,9 +49,39 @@
 #' @param verbose Logical flag controlling engine-specific diagnostic output
 #'   when supported. For the bisection engine, setting `verbose = TRUE` stores
 #'   the iteration history on the returned object.
+#' @param verify_reps Integer number of fresh replicates simulated at the
+#'   returned sample size to check that it meets the target (see `status`).
+#'   Set to `0` to skip the check.
+#' @param max_n Largest sample size the adaptive start-value search may try.
+#'   If performance there is still clearly below the target, the search stops
+#'   with status `"not_bracketed"`. Defaults to 200,000 for random forests and
+#'   xgboost (one batch of replicates at a million rows would take hours) and
+#'   1,000,000 otherwise.
 #' @param ... Additional arguments passed to the selected search engine.
 #'
-#' @return An object of class `"pmsims"` containing the estimated minimum sample size.
+#' @return An object of class `"pmsims"` containing the estimated minimum
+#'   sample size `min_n` (numeric; `NA` when no sample size could be found)
+#'   and a `status`:
+#'   \describe{
+#'     \item{`"ok"`}{The search found `min_n`, and simulating it again
+#'       confirmed the target is met (or the check was skipped).}
+#'     \item{`"not_verified"`}{Simulating `min_n` again gave performance
+#'       clearly below the target, so `min_n` is likely too small.}
+#'     \item{`"not_bracketed"`}{No sample size up to `max_n` met the target,
+#'       or the search returned no sample size.}
+#'     \item{`"replicates_failed"`}{At least half the simulation replicates
+#'       failed to fit or score the model, so no sample size was estimated.}
+#'   }
+#'   `status_message` explains a status other than `"ok"`, `verification`
+#'   holds the check at `min_n`, and `diagnostics` records the search bounds,
+#'   whether `min_n` lies on one of them, mlpwr's warnings, Gaussian-process
+#'   restarts and failed replicates.
+#'
+#' @section Random numbers:
+#' Each simulation replicate runs on its own random-number stream, derived from
+#' a single draw from the session's RNG. Results are therefore reproducible
+#' with [set.seed()], and a replicate's data do not depend on how many random
+#' numbers other parts of the search consumed.
 #'
 #' @seealso [simulate_binary()], [simulate_continuous()], [simulate_survival()]
 #'
@@ -110,6 +140,8 @@ simulate_custom <- function(
   method = "mlpwr",
   progress = TRUE,
   verbose = FALSE,
+  verify_reps = 100,
+  max_n = NULL,
   ...
 ) {
   # Evaluate four initial sample sizes after establishing the search bounds.
@@ -153,9 +185,42 @@ simulate_custom <- function(
     stop("mean_or_assurance must be either 'mean' or 'assurance'")
   }
 
+  check_metric_direction(attr(metric_function, "metric", exact = TRUE))
+  if (is.null(max_n)) {
+    max_n <- default_max_n(attr(model_function, "model", exact = TRUE))
+  }
+
   # Choose the metric-specific fallback used when a simulation fails.
   value_on_error <- resolve_value_on_error(metric_function)
   time_1 <- Sys.time()
+
+  # One evaluator, on keyed random streams, for every stage of the search
+  # (see R/simulation_core.R).
+  # Replicates of a batch run in parallel with `parallel = TRUE` (forked
+  # processes, so not on Windows); random forests and xgboost then use one
+  # thread per worker, so the workers do not compete for cores.
+  dots <- list(...)
+  parallel <- isTRUE(dots$parallel)
+  cores <- if (is.numeric(dots$cores)) {
+    dots$cores
+  } else {
+    min(20L, parallel::detectCores(), na.rm = TRUE)
+  }
+  if (parallel) {
+    old_threads <- options(pmsims.threads = 1L)
+    on.exit(options(old_threads), add = TRUE)
+  }
+  streams <- new_simulation_streams()
+  evaluator <- new_evaluator(
+    data_function = data_function,
+    model_function = model_function,
+    metric_function = metric_function,
+    test_n = test_n,
+    value_on_error = value_on_error,
+    streams = streams,
+    parallel = parallel,
+    cores = if (parallel) cores else 1L
+  )
 
   if (method == "mlpwr") {
     output <- do.call(
@@ -177,7 +242,9 @@ simulate_custom <- function(
           data_function = data_function,
           model_function = model_function,
           metric_function = metric_function,
-          value_on_error = value_on_error
+          value_on_error = value_on_error,
+          evaluator = evaluator,
+          max_n = max_n
         ),
         list(...)
       )
@@ -200,10 +267,10 @@ simulate_custom <- function(
           c_statistic = c_statistic,
           mean_or_assurance = mean_or_assurance,
           tol = 1e-3,
-          parallel = FALSE,
-          cores = 20,
           verbose = verbose,
-          budget = TRUE
+          budget = TRUE,
+          evaluator = evaluator,
+          max_n = max_n
         ),
         list(...)
       )
@@ -227,7 +294,9 @@ simulate_custom <- function(
           data_function = data_function,
           model_function = model_function,
           metric_function = metric_function,
-          value_on_error = value_on_error
+          value_on_error = value_on_error,
+          evaluator = evaluator,
+          max_n = max_n
         ),
         list(...)
       )
@@ -235,19 +304,24 @@ simulate_custom <- function(
   } else {
     stop("Method not found")
   }
+  check <- check_result(
+    output = output,
+    evaluator = evaluator,
+    target_performance = target_performance,
+    mean_or_assurance = mean_or_assurance,
+    verify_reps = verify_reps,
+    describe = describe_value(metric_function)
+  )
   time_2 <- Sys.time()
+
   results_list <- list(
     outcome = attr(data_function, "outcome"),
-    min_n = ifelse(
-      is.na(output$min_n),
-      "Not possible. Increase sample or lower performance",
-      output$min_n
-    ),
-    perf_n = ifelse(
-      is.na(output$perf_n),
-      "Not possible. Increase sample or lower performance",
-      output$perf_n
-    ),
+    min_n = check$min_n,
+    perf_n = check$perf_n,
+    status = check$status,
+    status_message = check$status_message,
+    verification = check$verification,
+    diagnostics = check$diagnostics,
     mlpwr_ds = output$mlpwr_ds,
     target_performance = target_performance,
     summaries = output$summaries,
@@ -268,6 +342,9 @@ simulate_custom <- function(
     progress = progress,
     verbose = verbose,
     simulation_time = difftime(time_2, time_1, units = "secs"),
+    # Searches restarted after a Gaussian-process surrogate failure (mlpwr engines).
+    gp_restarts = output$gp_restarts %||% 0L,
+    rng_base_seed = streams$base_seed,
     mean_or_assurance = mean_or_assurance
   )
   if (!is.null(output$history)) {
@@ -275,6 +352,16 @@ simulate_custom <- function(
   }
   attr(results_list, "class") <- "pmsims"
   return(results_list)
+}
+
+# Default largest sample size: lower for random forests and xgboost, where one
+# batch of replicates at a million rows would take hours.
+default_max_n <- function(model) {
+  if (length(model) == 1L && !is.na(model) && model %in% c("rf", "xgboost")) {
+    2e5
+  } else {
+    1e6
+  }
 }
 
 resolve_value_on_error <- function(metric_function) {
@@ -287,7 +374,11 @@ resolve_value_on_error <- function(metric_function) {
     brier_score_scaled = 0,
     brier_score = 1,
     ibs = 1,
-    calibration_slope = 0
+    calibration_slope = 0,
+    # CSSE of a calibration slope of 0, matching calibration_slope above. CSSE
+    # is <= 0 with 0 perfect, so the generic 0.5 fallback would score a failed
+    # fit as better than perfect calibration.
+    csse = -1
   )
 
   if (!is.null(custom_value_on_error)) {
@@ -312,7 +403,144 @@ resolve_value_on_error <- function(metric_function) {
     return(unname(error_values[[metric_name]]))
   }
 
+  cli::cli_alert_info(paste(
+    "Failed replicates will count as a performance of 0.5. Set",
+    "{.code attr(metric_function, \"value_on_error\")} to choose another value."
+  ))
   0.5
+}
+
+# Fallback for a metric value that is not a single finite number. Metrics can
+# fail without raising an error, e.g. a lasso that selects no predictors gives
+# constant predictions and an NA calibration slope. Those replicates must count
+# as failures, like errors do; otherwise na.rm = TRUE in the summaries drops
+# them and the remaining replicates overstate performance.
+metric_or_fallback <- function(value, value_on_error) {
+  if (is.numeric(value) && length(value) == 1L && is.finite(value)) {
+    value
+  } else {
+    value_on_error
+  }
+}
+
+#' Check an engine's answer and assign the result status
+#'
+#' Engines can stop early (the adaptive stage reached max_n without meeting
+#' the target). Otherwise the returned sample size is simulated again
+#' with fresh replicates: mlpwr's reported performance is its surrogate's
+#' prediction, never an observed value, so without this check an answer for an
+#' unreachable target -- for example the edge of the search range -- is
+#' returned as if it met the target.
+#' @keywords internal
+#' @noRd
+check_result <- function(
+  output,
+  evaluator,
+  target_performance,
+  mean_or_assurance,
+  verify_reps = 100,
+  describe = function(x) format(signif(x, 4))
+) {
+  search <- output$search %||% list()
+  min_n <- suppressWarnings(as.numeric(output$min_n))
+  perf_n <- suppressWarnings(as.numeric(output$perf_n))
+  if (length(min_n) != 1L) {
+    min_n <- NA_real_
+  }
+  if (length(perf_n) != 1L) {
+    perf_n <- NA_real_
+  }
+
+  status <- search$status
+  status_message <- search$status_message
+  verification <- NULL
+
+  # Mostly failed replicates make any answer meaningless, whatever the search
+  # returned.
+  failed <- failure_status(evaluator)
+  if (!is.null(failed)) {
+    status <- failed$status
+    status_message <- failed$message
+  }
+
+  if (is.null(status)) {
+    if (!is.finite(min_n)) {
+      status <- "not_bracketed"
+      status_message <- paste(
+        "The search did not return a sample size: no sample size in the",
+        "search range was predicted to meet the target."
+      )
+    } else if (isTRUE(verify_reps > 0)) {
+      verification <- verify_sample_size(
+        evaluator = evaluator,
+        n = min_n,
+        target_performance = target_performance,
+        mean_or_assurance = mean_or_assurance,
+        reps = verify_reps
+      )
+      if (verification$verified) {
+        status <- "ok"
+      } else {
+        status <- "not_verified"
+        status_message <- sprintf(
+          paste(
+            "Simulating n = %s again gave %s, clearly below the target %s.",
+            "The target may be unreachable, or the search range may not",
+            "contain the answer; this sample size is likely too small."
+          ),
+          format(min_n, big.mark = ",", scientific = FALSE),
+          describe(verification$performance),
+          describe(target_performance)
+        )
+      }
+    } else {
+      status <- "ok"
+    }
+  }
+
+  if (!status %in% c("ok", "not_verified")) {
+    min_n <- perf_n <- NA_real_
+  }
+  if (!identical(status, "ok")) {
+    warning(status_message, call. = FALSE)
+  } else if (identical(search$at_bound, "lower")) {
+    cli::cli_alert_info(paste(
+      "The estimate lies on the lower edge of the search range",
+      "({search$bounds[1]}-{search$bounds[2]}), so it may overstate the",
+      "sample size needed."
+    ))
+  } else if (identical(search$at_bound, "upper")) {
+    cli::cli_alert_info(paste(
+      "The estimate lies on the upper edge of the search range",
+      "({search$bounds[1]}-{search$bounds[2]}); the sample size needed may",
+      "be larger."
+    ))
+  }
+  if (length(search$mlpwr_warnings)) {
+    cli::cli_alert_warning(
+      "mlpwr reported: {paste(search$mlpwr_warnings, collapse = '; ')}"
+    )
+  }
+
+  failures <- evaluator$failures()
+  list(
+    min_n = min_n,
+    perf_n = perf_n,
+    status = status,
+    status_message = status_message %||% NA_character_,
+    verification = verification,
+    diagnostics = list(
+      bounds = search$bounds,
+      at_bound = search$at_bound %||% NA_character_,
+      adaptive_stop_reason = search$adaptive_stop_reason %||% NA_character_,
+      max_achievable_perf = search$max_achievable_perf %||% NA_real_,
+      mlpwr_warnings = search$mlpwr_warnings %||% character(0),
+      gp_restarts = output$gp_restarts %||% 0L,
+      replicates = failures,
+      failed_replicates = sum(failures$failed),
+      total_replicates = sum(failures$reps)
+    )
+  )
 }
 
 #' Parse and validate input specifications

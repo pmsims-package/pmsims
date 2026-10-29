@@ -53,6 +53,23 @@ csse_to_calibration_slope <- function(csse, direction = c("below", "above")) {
   if (direction == "above") 1 + deviation else 1 - deviation
 }
 
+#' Describe CSSE values as calibration slopes in messages
+#'
+#' @param metric_function The CSSE metric function used for the search.
+#' @param plan The list returned by `plan_internal_csse()`.
+#' @return `metric_function`, with a `describe` attribute when `plan$active`.
+#' @keywords internal
+#' @noRd
+describe_as_calibration_slope <- function(metric_function, plan) {
+  if (isTRUE(plan$active)) {
+    attr(metric_function, "describe") <- function(x) {
+      slope <- csse_to_calibration_slope(x, direction = plan$direction)
+      paste("a calibration slope of", format(signif(slope, 3)))
+    }
+  }
+  metric_function
+}
+
 #' Plan any internal calibration slope to CSSE conversion
 #'
 #' Decides whether the requested metric and model combination should be run on
@@ -126,6 +143,17 @@ restore_calibration_slope_scale <- function(output, plan) {
       output$perf_n,
       direction = plan$direction
     )
+  }
+
+  # The verification check ran on the CSSE scale too; report it on the
+  # calibration slope scale, keeping the CSSE values alongside.
+  v <- output$verification
+  if (is.list(v) && is.numeric(v$performance) && length(v$performance) == 1L) {
+    v$csse_performance <- v$performance
+    v$csse_se <- v$se
+    v$performance <- csse_to_calibration_slope(v$performance, plan$direction)
+    v$se <- NULL
+    output$verification <- v
   }
 
   output$target_performance <- plan$user_target_performance

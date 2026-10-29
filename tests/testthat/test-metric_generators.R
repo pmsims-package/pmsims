@@ -244,9 +244,11 @@ test_that("survival metrics cover finite and fallback paths", {
     model = "coxph"
   )))
 
+  # y_hat is a risk score, so concordance with survival time is reversed; the
+  # fallback must agree with survival_cindex() (it used to return 1 - C).
   concordance <- survival::concordancefit(
     survival::Surv(data$time, data$event),
-    y_hat
+    -y_hat
   )$concordance
 
   local_mocked_bindings(
@@ -256,6 +258,11 @@ test_that("survival metrics cover finite and fallback paths", {
   expect_equal(
     survival_auc(data, fit = NULL, model = "coxph"),
     as.numeric(concordance),
+    tolerance = 1e-8
+  )
+  expect_equal(
+    survival_auc(data, fit = NULL, model = "coxph"),
+    survival_cindex(data, fit = NULL, model = "coxph"),
     tolerance = 1e-8
   )
 })

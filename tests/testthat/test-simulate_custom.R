@@ -308,7 +308,12 @@ test_that("resolve_value_on_error preserves current defaults and supports custom
   invalid_metric <- function(test_data, fitted_model, model_name) 0.8
   attr(invalid_metric, "value_on_error") <- c(0.1, 0.2)
 
+  csse_metric <- function(test_data, fitted_model, model_name) -0.01
+  attr(csse_metric, "metric") <- "csse"
+
   expect_identical(resolve_value_on_error(builtin_metric), 0.5)
+  # CSSE is <= 0 with 0 perfect: a failed fit must score worse than any fit.
+  expect_identical(resolve_value_on_error(csse_metric), -1)
   expect_identical(resolve_value_on_error(custom_metric), -Inf)
   expect_identical(resolve_value_on_error(unknown_metric), 0.5)
   expect_error(

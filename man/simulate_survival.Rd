@@ -131,7 +131,12 @@ variance carried by the nonlinear, linearly-inaccessible component.
 Applies to complexity 2 and 3 only; ignored (with a warning) for 1 and 4.
 If omitted, the generator's per-complexity default is used.}
 \item{\code{correlation}}{Numeric in \eqn{[-1, 1]}. Pairwise correlation among the
-candidate predictors. Default \code{0.3}.}
+candidate predictors, induced through a Gaussian copula. Default \code{0.3}.
+This is the correlation of the underlying normal variables: for
+\code{"normal"} predictors it is also the observed correlation, but for other
+distributions the observed correlation is lower. For example, binary
+predictors with prevalence 0.3 correlate at about 0.18 when
+\code{correlation = 0.3}.}
 \item{\code{predictor_distribution}}{One of \code{"normal"}, \code{"uniform"}, \code{"binary"},
 \code{"exponential"}, \code{"lognormal"}, \code{"t"}, \code{"laplace"}. \code{"binary"} selects
 0/1 predictors and requires \code{binary_predictor_prevalence}; any other

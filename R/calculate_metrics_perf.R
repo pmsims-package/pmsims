@@ -19,7 +19,7 @@ calculate_metrics_perf <- function(
       train_data <- data_function(n)
       fit <- model_function(train_data)
       model <- attr(model_function, "model")
-      metric_function(test_data, fit, model)
+      metric_or_fallback(metric_function(test_data, fit, model), value_on_error)
     },
     error = function(e) {
       return(value_on_error)
