@@ -3,7 +3,7 @@
 .RData
 .Ruserdata
 pmsims.Rproj
-.DS_store
+.DS_Store
 vignettes/.quarto/project-cache
 *.Rcheck/
 *.tar.gz
@@ -16,3 +16,7 @@ docs/
 
 # Local generated plots.
 /Rplots.pdf
+
+# Local HTE simulation output and drafts.
+HTE Results/
+HTE/archive/
