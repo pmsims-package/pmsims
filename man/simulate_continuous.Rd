@@ -15,6 +15,7 @@ simulate_continuous(
   target_performance,
   n_reps_total = 1000,
   mean_or_assurance = "assurance",
+  auto_n_reps_total = TRUE,
   ...
 )
 }
@@ -74,6 +75,14 @@ the engine across the search.}
 Controls whether the minimum \eqn{n} is defined by the mean-based criterion
 or the assurance-based criterion (with the assurance level \eqn{\delta}
 controlled by the engine's defaults or additional arguments in \code{...}).}
+
+\item{auto_n_reps_total}{Logical. When \code{TRUE} (default) and
+\code{method = "mlpwr"}, \code{n_reps_total} is raised to 2000 for designs with at
+most 10 signal parameters fitted with \code{"lm"}, \code{"glm"} or \code{"coxph"}, where
+the Gaussian-process search is limited by simulation budget rather than
+by the design. It has no effect with the default \code{method = "curve"}. The rule only ever increases the budget,
+and reports the change with a message. Set \code{FALSE} to use \code{n_reps_total}
+exactly as supplied.}
 
 \item{...}{Additional options passed to \code{\link[=simulate_custom]{simulate_custom()}} (e.g., assurance
 level \eqn{\delta}, per-iteration settings).}
@@ -158,6 +167,7 @@ est <- simulate_continuous(
   min_sample_size = 50,
   max_sample_size = 1000,
   n_reps_total = 1000,
+  auto_n_reps_total = FALSE,
   test_n = 30000,
   progress = FALSE
 )
