@@ -42,21 +42,30 @@
 #'   `n_reps_total / n_reps_per` candidate sample sizes.
 #' @param n_reps_per Integer number of simulation replications performed at each
 #'   candidate sample size.
-#' @param method Character string specifying the search engine. Defaults to
-#'   `"mlpwr"`.
-#' @param progress Logical flag controlling whether the `mlpwr` progress bar is
-#'   shown for `mlpwr`-based methods.
+#' @param method Character string specifying the search engine: `"curve"`
+#'   (default; fits a learning curve to all replicates and searches where it
+#'   crosses the target, see Details), `"mlpwr"` (adaptive start values, then
+#'   mlpwr's Gaussian-process search), `"bisection"` or `"mlpwr-bs"`.
+#' @param progress Logical flag controlling whether a progress bar is shown:
+#'   the curve engine's own, or mlpwr's for the `mlpwr`-based methods.
 #' @param verbose Logical flag controlling engine-specific diagnostic output
 #'   when supported. For the bisection engine, setting `verbose = TRUE` stores
 #'   the iteration history on the returned object.
 #' @param verify_reps Integer number of fresh replicates simulated at the
 #'   returned sample size to check that it meets the target (see `status`).
 #'   Set to `0` to skip the check.
-#' @param max_n Largest sample size the adaptive start-value search may try.
-#'   If performance there is still clearly below the target, the search stops
-#'   with status `"not_bracketed"`. Defaults to 200,000 for random forests and
-#'   xgboost (one batch of replicates at a million rows would take hours) and
+#' @param max_n Largest sample size the search may try. If performance there is
+#'   still clearly below the target, the search stops with status
+#'   `"not_bracketed"`. Defaults to 200,000 for random forests and xgboost
+#'   (one batch of replicates at a million rows would take hours) and
 #'   1,000,000 otherwise.
+#' @param cores Number of cores for running the replicates of each batch in
+#'   parallel (Unix-like systems only). Results are the same for any number of
+#'   cores, because each replicate has its own random-number stream.
+#' @param live_plot Logical; with `method = "curve"`, redraw the learning
+#'   curve after each batch of replicates so the search can be watched as it
+#'   runs (interactive sessions with a graphics device only; it does not
+#'   change the results).
 #' @param ... Additional arguments passed to the selected search engine.
 #'
 #' @return An object of class `"pmsims"` containing the estimated minimum
@@ -69,13 +78,40 @@
 #'       clearly below the target, so `min_n` is likely too small.}
 #'     \item{`"not_bracketed"`}{No sample size up to `max_n` met the target,
 #'       or the search returned no sample size.}
+#'     \item{`"unreachable"`}{With `method = "curve"`: the learning curve
+#'       levels off below the target, so no sample size reaches it.}
 #'     \item{`"replicates_failed"`}{At least half the simulation replicates
-#'       failed to fit or score the model, so no sample size was estimated.}
+#'       failed to fit or score the model, so no sample size was estimated.
+#'       With `method = "curve"`, also when 20% or more failed at every
+#'       sample size tried, so no learning curve could be fitted.}
 #'   }
 #'   `status_message` explains a status other than `"ok"`, `verification`
 #'   holds the check at `min_n`, and `diagnostics` records the search bounds,
 #'   whether `min_n` lies on one of them, mlpwr's warnings, Gaussian-process
 #'   restarts and failed replicates.
+#'
+#' @details
+#' With `method = "curve"`, every replicate is kept and a monotone learning
+#' curve \eqn{C(n) = a - b n^{-c}} is fitted to the criterion at each sample
+#' size evaluated (weighted by a smoothed model of the replicate spread; the
+#' ceiling \eqn{a} is capped at the metric's maximum). A pilot doubles
+#' (or halves) from a heuristic start until the criterion is seen on both sides
+#' of the target; each further batch of `n_reps_per` replicates is placed where
+#' the fitted curve crosses the target. The search range is therefore never
+#' fixed. The answer is where the final fitted curve crosses the target. A
+#' target is declared unreachable if a bootstrap upper bound for the curve's
+#' ceiling \eqn{a} is below it; the search also stops (status
+#' `"not_bracketed"`) when the crossing is very likely beyond `max_n`. These
+#' stops extrapolate the fitted curve and should be read as heuristics.
+#'
+#' The answer is a median-unbiased estimate of where the criterion reaches the
+#' target. The
+#' interval in `diagnostics$curve$n_ci` reflects Monte Carlo error given the
+#' learning-curve shape, not uncertainty about the shape; a shape-free check
+#' (`diagnostics$crosscheck_n`) is reported alongside, and flagged when it
+#' differs by more than 10%. The verification of the answer has limited power
+#' for skewed metrics such as CSSE: passing it does not show that the target
+#' is met.
 #'
 #' @section Random numbers:
 #' Each simulation replicate runs on its own random-number stream, derived from
@@ -137,11 +173,13 @@ simulate_custom <- function(
   max_sample_size = NULL,
   n_reps_total = 1000,
   n_reps_per = 20,
-  method = "mlpwr",
+  method = "curve",
   progress = TRUE,
   verbose = FALSE,
   verify_reps = 100,
   max_n = NULL,
+  cores = 1L,
+  live_plot = FALSE,
   ...
 ) {
   # Evaluate four initial sample sizes after establishing the search bounds.
@@ -196,17 +234,31 @@ simulate_custom <- function(
 
   # One evaluator, on keyed random streams, for every stage of the search
   # (see R/simulation_core.R).
-  # Replicates of a batch run in parallel with `parallel = TRUE` (forked
-  # processes, so not on Windows); random forests and xgboost then use one
-  # thread per worker, so the workers do not compete for cores.
-  dots <- list(...)
-  parallel <- isTRUE(dots$parallel)
-  cores <- if (is.numeric(dots$cores)) {
-    dots$cores
-  } else {
-    min(20L, parallel::detectCores(), na.rm = TRUE)
+  # Replicates within each batch can run in parallel (forked processes, so
+  # not on Windows). Results do not depend on the number of cores: each
+  # replicate has its own random-number stream. Random forests and xgboost
+  # then use one thread each, so the workers do not compete for cores.
+  # `parallel = TRUE` without `cores`, as in earlier versions, uses up to 20.
+  if (missing(cores) && isTRUE(list(...)$parallel)) {
+    cores <- min(20L, parallel::detectCores(), na.rm = TRUE)
   }
-  if (parallel) {
+  if (
+    !is.numeric(cores) ||
+      length(cores) != 1L ||
+      !is.finite(cores) ||
+      cores < 1 ||
+      cores != round(cores)
+  ) {
+    cli::cli_abort("{.arg cores} must be a single positive whole number.")
+  }
+  cores <- as.integer(cores)
+  if (cores > 1L && .Platform$OS.type != "unix") {
+    cli::cli_alert_info(
+      "Parallel replicates need a Unix-like system; running on one core."
+    )
+    cores <- 1L
+  }
+  if (cores > 1L) {
     old_threads <- options(pmsims.threads = 1L)
     on.exit(options(old_threads), add = TRUE)
   }
@@ -218,11 +270,37 @@ simulate_custom <- function(
     test_n = test_n,
     value_on_error = value_on_error,
     streams = streams,
-    parallel = parallel,
-    cores = if (parallel) cores else 1L
+    parallel = cores > 1L,
+    cores = cores
   )
 
-  if (method == "mlpwr") {
+  if (method == "curve") {
+    output <- do.call(
+      calculate_curve,
+      utils::modifyList(
+        list(
+          test_n = test_n,
+          n_reps_total = n_reps_total,
+          n_reps_per = n_reps_per,
+          se_final = se_final,
+          min_sample_size = min_sample_size,
+          max_sample_size = max_sample_size,
+          target_performance = target_performance,
+          c_statistic = c_statistic,
+          mean_or_assurance = mean_or_assurance,
+          progress = progress,
+          data_function = data_function,
+          model_function = model_function,
+          metric_function = metric_function,
+          value_on_error = value_on_error,
+          evaluator = evaluator,
+          max_n = max_n,
+          live_plot = live_plot
+        ),
+        list(...)
+      )
+    )
+  } else if (method == "mlpwr") {
     output <- do.call(
       calculate_mlpwr,
       utils::modifyList(
@@ -310,7 +388,8 @@ simulate_custom <- function(
     target_performance = target_performance,
     mean_or_assurance = mean_or_assurance,
     verify_reps = verify_reps,
-    describe = describe_value(metric_function)
+    describe = describe_value(metric_function),
+    quantile_type = if (method == "curve") 8L else 7L
   )
   time_2 <- Sys.time()
 
@@ -345,6 +424,9 @@ simulate_custom <- function(
     # Searches restarted after a Gaussian-process surrogate failure (mlpwr engines).
     gp_restarts = output$gp_restarts %||% 0L,
     rng_base_seed = streams$base_seed,
+    # So that follow-up simulations (e.g. the wrappers' secondary metric)
+    # can use the same number of cores.
+    cores = cores,
     mean_or_assurance = mean_or_assurance
   )
   if (!is.null(output$history)) {
@@ -439,7 +521,8 @@ check_result <- function(
   target_performance,
   mean_or_assurance,
   verify_reps = 100,
-  describe = function(x) format(signif(x, 4))
+  describe = function(x) format(signif(x, 4)),
+  quantile_type = 7L
 ) {
   search <- output$search %||% list()
   min_n <- suppressWarnings(as.numeric(output$min_n))
@@ -476,7 +559,8 @@ check_result <- function(
         n = min_n,
         target_performance = target_performance,
         mean_or_assurance = mean_or_assurance,
-        reps = verify_reps
+        reps = verify_reps,
+        type = quantile_type
       )
       if (verification$verified) {
         status <- "ok"
@@ -516,6 +600,34 @@ check_result <- function(
       "be larger."
     ))
   }
+  if (identical(status, "ok")) {
+    ci_text <- function(ci) {
+      sprintf(
+        "%s to %s",
+        round(ci[1]),
+        if (is.finite(ci[2])) round(ci[2]) else "Inf"
+      )
+    }
+    if (isTRUE(search$near_ceiling)) {
+      cli::cli_alert_warning(paste(
+        "The target is close to the best performance this model can reach:",
+        "doubling the sample size from the answer gains less than the Monte",
+        "Carlo error, so the sample size is poorly determined."
+      ))
+    } else if (isTRUE(search$poorly_determined)) {
+      cli::cli_alert_warning(paste(
+        "The sample size is poorly determined: its interval is",
+        "{ci_text(search$curve$n_ci)}."
+      ))
+    }
+    if (isTRUE(search$crosscheck_disagrees)) {
+      cli::cli_alert_warning(paste(
+        "A shape-free check (a monotone fit to the simulated points) puts the",
+        "answer at {round(search$crosscheck_n)}, more than 10% from the",
+        "learning-curve answer."
+      ))
+    }
+  }
   if (length(search$mlpwr_warnings)) {
     cli::cli_alert_warning(
       "mlpwr reported: {paste(search$mlpwr_warnings, collapse = '; ')}"
@@ -536,6 +648,12 @@ check_result <- function(
       max_achievable_perf = search$max_achievable_perf %||% NA_real_,
       mlpwr_warnings = search$mlpwr_warnings %||% character(0),
       gp_restarts = output$gp_restarts %||% 0L,
+      curve = search$curve,
+      near_ceiling = isTRUE(search$near_ceiling),
+      poorly_determined = isTRUE(search$poorly_determined),
+      gain_per_doubling = search$gain_per_doubling %||% NA_real_,
+      crosscheck_n = search$crosscheck_n %||% NA_real_,
+      crosscheck_disagrees = isTRUE(search$crosscheck_disagrees),
       replicates = failures,
       failed_replicates = sum(failures$failed),
       total_replicates = sum(failures$reps)

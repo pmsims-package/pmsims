@@ -105,7 +105,11 @@ test_that("the evaluator counts failures and warnings instead of hiding them", {
     streams = new_simulation_streams(1L)
   )
   expect_no_warning(vals <- ev$batch(20, 6))
-  expect_identical(vals, c(-1, 0.7, -1, -1, 0.7, -1))
+  expect_identical(as.numeric(vals), c(-1, 0.7, -1, -1, 0.7, -1))
+  expect_identical(
+    attr(vals, "failed"),
+    c(TRUE, FALSE, TRUE, TRUE, FALSE, TRUE)
+  )
   f <- ev$failures()
   expect_identical(f$failed, 4L)
   expect_identical(f$warnings, 6L)
@@ -179,6 +183,7 @@ test_that("simulate_custom stops at max_n when the target is out of reach", {
       n_reps_total = 200,
       n_reps_per = 10,
       progress = FALSE,
+      method = "mlpwr",
       max_n = 5000
     )),
     "No sample size up to"
@@ -203,7 +208,8 @@ test_that("an unreachable target without max_n is flagged by the check", {
       test_n = 10,
       n_reps_total = 200,
       n_reps_per = 10,
-      progress = FALSE
+      progress = FALSE,
+      method = "mlpwr"
     )),
     "clearly below the target"
   )
@@ -226,7 +232,8 @@ test_that("simulate_custom flags an answer that fails the check", {
       max_sample_size = 2000,
       n_reps_total = 200,
       n_reps_per = 10,
-      progress = FALSE
+      progress = FALSE,
+      method = "mlpwr"
     )),
     "clearly below the target|did not return"
   )
@@ -247,6 +254,7 @@ test_that("simulate_custom verifies a reachable target and is reproducible", {
       n_reps_total = 200,
       n_reps_per = 10,
       progress = FALSE,
+      method = "mlpwr",
       verify_reps = 50
     ))
   }
@@ -322,4 +330,76 @@ test_that("CSSE values are described as calibration slopes in messages", {
   f <- describe_as_calibration_slope(function(...) 0, plan)
   expect_identical(describe_value(f)(-0.01), "a calibration slope of 0.9")
   expect_identical(describe_value(function(...) 0)(0.123456), "0.1235")
+})
+
+test_that("a parallel worker that dies counts its replicates as failed", {
+  skip_on_os("windows")
+  fc <- fake_curve_components()
+  parent <- Sys.getpid()
+  # Kills the forked worker it runs in (never the test process itself).
+  metric_function <- function(test_data, fit, model) {
+    if (Sys.getpid() != parent) {
+      tools::pskill(Sys.getpid(), tools::SIGKILL)
+    }
+    0.7
+  }
+  ev <- new_evaluator(
+    fc$data_function,
+    fc$model_function,
+    metric_function,
+    test_n = 1,
+    value_on_error = 0.5,
+    streams = new_simulation_streams(1L),
+    parallel = TRUE,
+    cores = 2L
+  )
+  vals <- suppressWarnings(ev$batch(100, 4))
+  expect_identical(as.numeric(vals), rep(0.5, 4))
+  expect_true(all(attr(vals, "failed")))
+  f <- ev$failures()
+  expect_identical(f$failed, 4L)
+  expect_false(is.na(f$first_error))
+})
+
+test_that("verification uses the quantile estimator of the engine", {
+  fc <- fake_curve_components(noise = 0.1)
+  make <- function() {
+    new_evaluator(
+      fc$data_function,
+      fc$model_function,
+      fc$metric_function,
+      test_n = 1,
+      value_on_error = 0.5,
+      streams = new_simulation_streams(1L)
+    )
+  }
+  vals <- make()$batch(200, 50, "verify")
+  expect_false(identical(quantile_20(vals, 7L), quantile_20(vals, 8L)))
+  for (type in c(7L, 8L)) {
+    v <- verify_sample_size(make(), 200, 0.5, "assurance", 50L, type = type)
+    expect_identical(v$performance, quantile_20(vals, type))
+  }
+  # simulate_custom() asks for type 8 with the curve engine only.
+  types <- c()
+  local_mocked_bindings(verify_sample_size = function(..., type) {
+    types <<- c(types, type)
+    list(verified = TRUE, performance = 0.9)
+  })
+  for (method in c("curve", "bisection")) {
+    set.seed(1)
+    suppressWarnings(suppressMessages(simulate_custom(
+      fc$data_function,
+      fc$model_function,
+      fc$metric_function,
+      target_performance = 0.7,
+      test_n = 1,
+      min_sample_size = 20,
+      max_sample_size = 2000,
+      n_reps_total = 100,
+      n_reps_per = 10,
+      progress = FALSE,
+      method = method
+    )))
+  }
+  expect_identical(types, c(8L, 7L))
 })

@@ -172,11 +172,99 @@ make_data_args <- function(
 }
 
 
+# Models for which the simulation budget is raised at small signal sizes.
+# These are the directly-fitted learners -- one per outcome type -- i.e. the
+# complement of `ml_model_families` in R/csse_internal.R. They are cheap enough
+# per replication that the extra budget costs little, and they are the ones for
+# which the Gaussian-process stage is budget-limited rather than
+# design-limited at small p. The rule applies to method = "mlpwr" only.
+budget_boost_models <- c("lm", "glm", "coxph")
+
+#' Resolve the simulation budget shared by the outcome-specific wrappers
+#'
+#' With `method = "mlpwr"`, raises `n_reps_total` to `boost_to` for designs
+#' that sit in the regime where the second-stage Gaussian-process search
+#' is limited by simulation budget
+#' rather than by the design itself: few signal parameters, fitted with one of
+#' the directly-fitted models in `budget_boost_models`. In that regime the
+#' spread of `min_n` across repeat runs falls roughly with the budget, so the
+#' default of 1000 leaves avoidable run-to-run variability on the table.
+#'
+#' The rule only ever increases the budget: a caller who asks for more than
+#' `boost_to` keeps their value. A caller who deliberately wants a smaller,
+#' faster run can switch the rule off with `auto_n_reps_total = FALSE`. When the
+#' budget is changed a message says so, so the figure reported in the result is
+#' never a surprise.
+#'
+#' Inputs that are not usable (missing, non-numeric, length != 1) are passed
+#' through untouched, leaving the wrappers' own validation to report them.
+#'
+#' @param n_reps_total The requested total number of simulation replications.
+#' @param signal_parameters Number of signal predictors in the design.
+#' @param model The resolved model string (after `check_pmsims_args()`).
+#' @param method The search engine passed to [simulate_custom()]. The rule
+#'   applies to `"mlpwr"` only; `NULL` means the default engine (`"curve"`).
+#' @param auto Logical; `FALSE` disables the rule entirely.
+#' @param boost_to The budget to raise to. Default `2000`.
+#' @param max_signal_parameters The rule applies at or below this many signal
+#'   parameters. Default `10`.
+#' @param models Character vector of models the rule applies to.
+#' @return A single number: the budget the wrapper should use.
+#' @keywords internal
+#' @noRd
+resolve_n_reps_total <- function(
+  n_reps_total,
+  signal_parameters,
+  model,
+  method = NULL,
+  auto = TRUE,
+  boost_to = 2000,
+  max_signal_parameters = 10,
+  models = budget_boost_models
+) {
+  if (!isTRUE(auto) || !identical(method, "mlpwr")) {
+    return(n_reps_total)
+  }
+
+  usable <- function(x) is.numeric(x) && length(x) == 1L && is.finite(x)
+  if (!usable(n_reps_total) || !usable(signal_parameters)) {
+    return(n_reps_total)
+  }
+  if (!(is.character(model) && length(model) == 1L && model %in% models)) {
+    return(n_reps_total)
+  }
+  if (signal_parameters > max_signal_parameters) {
+    return(n_reps_total)
+  }
+  # Only ever increase.
+  if (n_reps_total >= boost_to) {
+    return(n_reps_total)
+  }
+
+  message(sprintf(
+    paste0(
+      "n_reps_total raised from %s to %s: with %s signal parameters and ",
+      "model \"%s\", the search is budget-limited at the default. ",
+      "Set auto_n_reps_total = FALSE to keep %s."
+    ),
+    format(n_reps_total, scientific = FALSE),
+    format(boost_to, scientific = FALSE),
+    format(signal_parameters, scientific = FALSE),
+    model,
+    format(n_reps_total, scientific = FALSE)
+  ))
+
+  boost_to
+}
+
 #' Minimum sample size for binary-outcome prediction models
 #'
 #' Compute the minimum sample size required to develop a prediction model with a
-#' binary outcome. The function wraps a simulation-based engine that combines a
-#' bisection search with Gaussian-process curve fitting. From user inputs
+#' binary outcome. The function wraps a simulation-based search that, by
+#' default, fits a learning curve to every simulated replicate and simulates
+#' further where the curve crosses the target (`method = "curve"`; see
+#' [simulate_custom()]); `method = "mlpwr"` selects the Gaussian-process
+#' search of earlier versions. From user inputs
 #' (outcome prevalence, maximum achievable performance, target performance, etc.) it
 #' constructs a data-generating function, a model-fitting
 #' function, and a metric function, then searches for the smallest \eqn{n} that
@@ -275,6 +363,13 @@ make_data_args <- function(
 #'   Controls whether the minimum \eqn{n} is defined by the mean-based criterion
 #'   or the assurance-based criterion (with the assurance level \eqn{\delta}
 #'   controlled by the engine's defaults or additional arguments in `...`).
+#' @param auto_n_reps_total Logical. When `TRUE` (default) and
+#'   `method = "mlpwr"`, `n_reps_total` is raised to 2000 for designs with at
+#'   most 10 signal parameters fitted with `"lm"`, `"glm"` or `"coxph"`, where
+#'   the Gaussian-process search is limited by simulation budget rather than
+#'   by the design. It has no effect with the default `method = "curve"`. The rule only ever increases the budget,
+#'   and reports the change with a message. Set `FALSE` to use `n_reps_total`
+#'   exactly as supplied.
 #' @param ... Additional options passed to [simulate_custom()] (e.g., assurance
 #'   level \eqn{\delta}, per-iteration settings).
 #'
@@ -301,6 +396,7 @@ make_data_args <- function(
 #'   min_sample_size = 50,
 #'   max_sample_size = 1000,
 #'   n_reps_total = 1000,
+#'   auto_n_reps_total = FALSE,
 #'   test_n = 30000,
 #'   progress = FALSE
 #' )
@@ -326,6 +422,7 @@ simulate_binary <- function(
   # Engine
   n_reps_total = 1000,
   mean_or_assurance = "assurance",
+  auto_n_reps_total = TRUE,
   ...
 ) {
   model <- check_pmsims_args(model, c("glm", "lasso", "ridge", "rf", "xgboost"))
@@ -340,6 +437,17 @@ simulate_binary <- function(
   validate_complexity(complexity)
   validate_outcome_prevalence(outcome_prevalence)
   dc <- resolve_data_control(data_control, complexity)
+
+  # Shared budget rule; see resolve_n_reps_total(). Applied after validation so
+  # that bad inputs are still reported by the checks above, and before the
+  # engine call so that output$n_reps_total records what was actually used.
+  n_reps_total <- resolve_n_reps_total(
+    n_reps_total = n_reps_total,
+    signal_parameters = signal_parameters,
+    model = model,
+    method = list(...)$method,
+    auto = auto_n_reps_total
+  )
 
   candidate_features <- signal_parameters + noise_parameters
   proportion_noise_features <- noise_parameters / candidate_features
@@ -388,7 +496,7 @@ simulate_binary <- function(
       model_function = model_function,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
-      method = "mlpwr",
+      method = "curve",
       mean_or_assurance = mean_or_assurance,
       test_n = 30000
     ),
@@ -437,8 +545,9 @@ simulate_binary <- function(
 #'
 #' Compute the minimum sample size required to develop a prediction model with a
 #' **continuous** outcome. This wraps the same simulation engine as
-#' [simulate_binary()], combining bisection search with Gaussian-process
-#' learning-curve modelling. From user inputs (maximum achievable performance, target
+#' [simulate_binary()]: by default a learning curve fitted to every simulated
+#' replicate (`method = "curve"`), or the Gaussian-process search with
+#' `method = "mlpwr"`. From user inputs (maximum achievable performance, target
 #' performance, etc.) it constructs a
 #' data-generating function, model-fitting function, and metric function, then
 #' searches for the smallest \eqn{n} meeting the chosen criterion.
@@ -476,6 +585,7 @@ simulate_binary <- function(
 #'   min_sample_size = 50,
 #'   max_sample_size = 1000,
 #'   n_reps_total = 1000,
+#'   auto_n_reps_total = FALSE,
 #'   test_n = 30000,
 #'   progress = FALSE
 #' )
@@ -495,6 +605,7 @@ simulate_continuous <- function(
   target_performance,
   n_reps_total = 1000,
   mean_or_assurance = "assurance",
+  auto_n_reps_total = TRUE,
   ...
 ) {
   model <- check_pmsims_args(model, c("lm", "lasso", "ridge", "rf", "xgboost"))
@@ -508,6 +619,17 @@ simulate_continuous <- function(
   csse_plan <- plan_internal_csse(metric, model, target_performance)
   validate_complexity(complexity)
   dc <- resolve_data_control(data_control, complexity)
+
+  # Shared budget rule; see resolve_n_reps_total(). Applied after validation so
+  # that bad inputs are still reported by the checks above, and before the
+  # engine call so that output$n_reps_total records what was actually used.
+  n_reps_total <- resolve_n_reps_total(
+    n_reps_total = n_reps_total,
+    signal_parameters = signal_parameters,
+    model = model,
+    method = list(...)$method,
+    auto = auto_n_reps_total
+  )
 
   candidate_features <- signal_parameters + noise_parameters
   proportion_noise_features <- noise_parameters / candidate_features
@@ -551,7 +673,7 @@ simulate_continuous <- function(
       model_function = model_function,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
-      method = "mlpwr",
+      method = "curve",
       mean_or_assurance = mean_or_assurance,
       test_n = 30000
     ),
@@ -598,9 +720,10 @@ simulate_continuous <- function(
 #'
 #' Compute the minimum sample size required to develop a prediction model with a
 #' **time-to-event (survival)** outcome. As with the other wrappers, this uses a
-#' simulation-based learning-curve approach with Gaussian-process surrogate
-#' modelling to locate the smallest \eqn{n} meeting the chosen performance
-#' criterion.
+#' simulation-based learning curve, fitted by default to every simulated
+#' replicate (`method = "curve"`; `method = "mlpwr"` uses a Gaussian-process
+#' surrogate instead), to locate the smallest \eqn{n} meeting the chosen
+#' performance criterion.
 #'
 #' @inheritSection simulate_binary Criteria
 #' @inheritSection simulate_binary Data control
@@ -643,6 +766,7 @@ simulate_continuous <- function(
 #'   min_sample_size = 25,
 #'   max_sample_size = 500,
 #'   n_reps_total = 1000,
+#'   auto_n_reps_total = FALSE,
 #'   test_n = 30000,
 #'   progress = FALSE
 #' )
@@ -664,6 +788,7 @@ simulate_survival <- function(
   target_performance,
   n_reps_total = 1000,
   mean_or_assurance = "assurance",
+  auto_n_reps_total = TRUE,
   ...
 ) {
   model <- check_pmsims_args(
@@ -680,6 +805,17 @@ simulate_survival <- function(
   csse_plan <- plan_internal_csse(metric, model, target_performance)
   validate_complexity(complexity)
   dc <- resolve_data_control(data_control, complexity)
+
+  # Shared budget rule; see resolve_n_reps_total(). Applied after validation so
+  # that bad inputs are still reported by the checks above, and before the
+  # engine call so that output$n_reps_total records what was actually used.
+  n_reps_total <- resolve_n_reps_total(
+    n_reps_total = n_reps_total,
+    signal_parameters = signal_parameters,
+    model = model,
+    method = list(...)$method,
+    auto = auto_n_reps_total
+  )
 
   candidate_features <- signal_parameters + noise_parameters
   proportion_noise_features <- noise_parameters / candidate_features
@@ -728,7 +864,7 @@ simulate_survival <- function(
       model_function = model_function,
       n_reps_total = n_reps_total,
       n_reps_per = 20,
-      method = "mlpwr",
+      method = "curve",
       mean_or_assurance = mean_or_assurance,
       test_n = 30000
     ),
@@ -781,13 +917,22 @@ secondary_metric_at <- function(output, metric_function_2, reps = 10L) {
   if (length(n) != 1L || !is.finite(n)) {
     return(NA_real_)
   }
+  # Same cores as the search; each replicate has its own stream, so the
+  # value does not depend on them.
+  cores <- output$cores %||% 1L
+  if (cores > 1L) {
+    old_threads <- options(pmsims.threads = 1L)
+    on.exit(options(old_threads), add = TRUE)
+  }
   evaluator <- new_evaluator(
     data_function = output$data_function,
     model_function = output$model_function,
     metric_function = metric_function_2,
     test_n = output$test_n,
     value_on_error = NA_real_,
-    streams = new_simulation_streams(output$rng_base_seed)
+    streams = new_simulation_streams(output$rng_base_seed),
+    parallel = cores > 1L,
+    cores = cores
   )
   mean(evaluator$batch(n, reps, "secondary"), na.rm = TRUE)
 }

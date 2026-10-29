@@ -1,5 +1,27 @@
 # pmsims (development version)
 
+## New search engine
+
+- A learning-curve engine, `method = "curve"`, is the default in
+  `simulate_custom()` and the `simulate_*()` wrappers; the previous engine is
+  available as `method = "mlpwr"`. It fits a monotone learning curve to every
+  replicate simulated so far and puts each new batch where the curve crosses
+  the target, so there is no fixed search range. The answer is a
+  median-unbiased estimate with an interval
+  (`diagnostics$curve$n_ci`), checked against a shape-free fit
+  (`diagnostics$crosscheck_n`); targets close to the best achievable
+  performance are flagged. Targets that cannot be reached stop with status
+  `"unreachable"` and a message saying what is achievable; when 20% or more
+  of replicates fail at every sample size tried, so that no curve can be
+  fitted, it stops with status `"replicates_failed"`.
+- `plot()` shows the learning curve, the target and the answer for
+  `method = "curve"`; `live_plot = TRUE` redraws it during the search.
+- `cores` runs the replicates of each batch in parallel; results are the same
+  for any number of cores.
+- Faster calibration slopes, AUC, concordance, linear predictors and
+  correlated predictors: a binary glm search takes about two thirds of the
+  time, a Cox search about a quarter. Results are unchanged.
+
 ## Search
 
 - Every stage of the search (start values, the mlpwr and bisection searches,
@@ -26,7 +48,14 @@
 - `parallel = TRUE` without `cores` uses up to 20 cores, as before. Parallel
   replicates use forked processes, so they run serially on Windows; random
   forests and xgboost then use one thread per worker.
-- `max_n` caps the start-value search; it defaults to 200,000 for random
+- With `method = "mlpwr"`, `n_reps_total` is raised to 2000 for `"lm"`,
+  `"glm"` and `"coxph"` models with at most 10 signal parameters, where the
+  Gaussian-process search is limited by its budget. A message says so, and
+  `auto_n_reps_total = FALSE` keeps the value supplied.
+- `max_n` is the largest sample size the search may try, for every engine.
+  With `method = "curve"` it caps the whole search (unless `max_sample_size`
+  is given); with the mlpwr and bisection engines it caps the start-value
+  search, which sets their search range. It defaults to 200,000 for random
   forests and xgboost and 1,000,000 otherwise.
 
 ## Breaking changes
