@@ -44,11 +44,22 @@ A list of class `"pmsims"`. The most useful components are:
 
   The model fitted to each simulated dataset.
 
-- `mlpwr_ds`:
+- `status`:
 
-  The sampled designs and simulated performance values behind the fitted
-  curve, used by
+  `"ok"` when the search found `min_n` and a check at `min_n` confirmed
+  it; see
+  [`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+  for other values.
+
+- `data`:
+
+  The simulated performance values at each sample size, used by
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html).
+
+- `diagnostics`:
+
+  Details of the search, including the fitted learning curve and the
+  interval for `min_n` (`diagnostics$curve`).
 
 - `summaries`:
 
@@ -64,13 +75,13 @@ data-generating configuration (for example `outcome_prevalence`,
 [`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md)
 for the full set.
 
-An object of class `pmsims` of length 36.
+An object of class `pmsims` of length 43.
 
-An object of class `pmsims` of length 35.
+An object of class `pmsims` of length 42.
 
-An object of class `pmsims` of length 37.
+An object of class `pmsims` of length 44.
 
-An object of class `pmsims` of length 24.
+An object of class `pmsims` of length 31.
 
 ## Source
 
@@ -182,17 +193,17 @@ binary_example
 #> 
 #> ──────────────────────────────────── Results ───────────────────────────────────
 #> 
-#>   Minimum sample size       985
+#>   Minimum sample size       1,000
 #> 
-#>   Performance at N = 985
-#>     Calibration slope       0.849    (target ≥ 0.850)
-#>     C-statistic             0.794
+#>   Performance at N = 1,000
+#>     Calibration slope       0.850    (target ≥ 0.850)
+#>     C-statistic             0.790
 #> 
-#>   Running time              3 minutes 58 seconds
+#>   Running time              27 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability
 #> across repeated datasets.
 binary_example$min_n
-#> [1] 985
+#> [1] 1000
 ```

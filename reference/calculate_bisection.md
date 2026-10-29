@@ -23,7 +23,9 @@ calculate_bisection(
   parallel = FALSE,
   cores = 20,
   verbose = FALSE,
-  budget = TRUE
+  budget = TRUE,
+  evaluator = NULL,
+  max_n = 1e+06
 )
 ```
 
@@ -107,8 +109,9 @@ calculate_bisection(
 
 - parallel:
 
-  Logical; if `TRUE` the per-sample-size simulations run in parallel via
-  `foreach`.
+  Logical; if `TRUE` the replicates at each sample size run in parallel
+  (forked processes; serial on Windows). Results do not depend on the
+  number of cores.
 
 - cores:
 
@@ -122,6 +125,16 @@ calculate_bisection(
 
   Logical; if `TRUE` the algorithm halts once the evaluation budget is
   exhausted instead of using `tol`.
+
+- evaluator:
+
+  Optional evaluator from `new_evaluator()`, shared by every stage of
+  the search. Created from the data, model and metric functions when
+  `NULL`.
+
+- max_n:
+
+  Largest sample size the adaptive start-value search may try.
 
 ## Value
 

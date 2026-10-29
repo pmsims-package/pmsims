@@ -22,9 +22,13 @@ simulate_custom(
   max_sample_size = NULL,
   n_reps_total = 1000,
   n_reps_per = 20,
-  method = "mlpwr",
+  method = "curve",
   progress = TRUE,
   verbose = FALSE,
+  verify_reps = 100,
+  max_n = NULL,
+  cores = 1L,
+  live_plot = FALSE,
   ...
 )
 ```
@@ -101,18 +105,48 @@ simulate_custom(
 
 - method:
 
-  Character string specifying the search engine. Defaults to `"mlpwr"`.
+  Character string specifying the search engine: `"curve"` (default;
+  fits a learning curve to all replicates and searches where it crosses
+  the target, see Details), `"mlpwr"` (adaptive start values, then
+  mlpwr's Gaussian-process search), `"bisection"` or `"mlpwr-bs"`.
 
 - progress:
 
-  Logical flag controlling whether the `mlpwr` progress bar is shown for
-  `mlpwr`-based methods.
+  Logical flag controlling whether a progress bar is shown: the curve
+  engine's own, or mlpwr's for the `mlpwr`-based methods.
 
 - verbose:
 
   Logical flag controlling engine-specific diagnostic output when
   supported. For the bisection engine, setting `verbose = TRUE` stores
   the iteration history on the returned object.
+
+- verify_reps:
+
+  Integer number of fresh replicates simulated at the returned sample
+  size to check that it meets the target (see `status`). Set to `0` to
+  skip the check.
+
+- max_n:
+
+  Largest sample size the search may try. If performance there is still
+  clearly below the target, the search stops with status
+  `"not_bracketed"`. Defaults to 200,000 for random forests and xgboost
+  (one batch of replicates at a million rows would take hours) and
+  1,000,000 otherwise.
+
+- cores:
+
+  Number of cores for running the replicates of each batch in parallel
+  (Unix-like systems only). Results are the same for any number of
+  cores, because each replicate has its own random-number stream.
+
+- live_plot:
+
+  Logical; with `method = "curve"`, redraw the learning curve after each
+  batch of replicates so the search can be watched as it runs
+  (interactive sessions with a graphics device only; it does not change
+  the results).
 
 - ...:
 
@@ -121,7 +155,72 @@ simulate_custom(
 ## Value
 
 An object of class `"pmsims"` containing the estimated minimum sample
-size.
+size `min_n` (numeric; `NA` when no sample size could be found) and a
+`status`:
+
+- `"ok"`:
+
+  The search found `min_n`, and simulating it again confirmed the target
+  is met (or the check was skipped).
+
+- `"not_verified"`:
+
+  Simulating `min_n` again gave performance clearly below the target, so
+  `min_n` is likely too small.
+
+- `"not_bracketed"`:
+
+  No sample size up to `max_n` met the target, or the search returned no
+  sample size.
+
+- `"unreachable"`:
+
+  With `method = "curve"`: the learning curve levels off below the
+  target, so no sample size reaches it.
+
+- `"replicates_failed"`:
+
+  At least half the simulation replicates failed to fit or score the
+  model, so no sample size was estimated. With `method = "curve"`, also
+  when 20% or more failed at every sample size tried, so no learning
+  curve could be fitted.
+
+`status_message` explains a status other than `"ok"`, `verification`
+holds the check at `min_n`, and `diagnostics` records the search bounds,
+whether `min_n` lies on one of them, mlpwr's warnings, Gaussian-process
+restarts and failed replicates.
+
+## Details
+
+With `method = "curve"`, every replicate is kept and a monotone learning
+curve \\C(n) = a - b n^{-c}\\ is fitted to the criterion at each sample
+size evaluated (weighted by a smoothed model of the replicate spread;
+the ceiling \\a\\ is capped at the metric's maximum). A pilot doubles
+(or halves) from a heuristic start until the criterion is seen on both
+sides of the target; each further batch of `n_reps_per` replicates is
+placed where the fitted curve crosses the target. The search range is
+therefore never fixed. The answer is where the final fitted curve
+crosses the target. A target is declared unreachable if a bootstrap
+upper bound for the curve's ceiling \\a\\ is below it; the search also
+stops (status `"not_bracketed"`) when the crossing is very likely beyond
+`max_n`. These stops extrapolate the fitted curve and should be read as
+heuristics.
+
+The answer is a median-unbiased estimate of where the criterion reaches
+the target. The interval in `diagnostics$curve$n_ci` reflects Monte
+Carlo error given the learning-curve shape, not uncertainty about the
+shape; a shape-free check (`diagnostics$crosscheck_n`) is reported
+alongside, and flagged when it differs by more than 10%. The
+verification of the answer has limited power for skewed metrics such as
+CSSE: passing it does not show that the target is met.
+
+## Random numbers
+
+Each simulation replicate runs on its own random-number stream, derived
+from a single draw from the session's RNG. Results are therefore
+reproducible with [`set.seed()`](https://rdrr.io/r/base/Random.html),
+and a replicate's data do not depend on how many random numbers other
+parts of the search consumed.
 
 ## See also
 
@@ -167,7 +266,8 @@ est <- simulate_custom(
   progress = FALSE
 )
 #> ℹ Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
-#> ℹ Estimating second stage... (Gaussian process algorithm)
+#> ℹ Estimating the learning curve... (pilot)
+#> ℹ Refining the learning curve near the target...
 est
 #>                     ┌────────────────────────────────────────┐
 #>                     │ pmsims: Sample size simulation summary │
@@ -184,18 +284,18 @@ est
 #> 
 #> ──────────────────────────────────── Results ───────────────────────────────────
 #> 
-#>   Minimum sample size      91
+#>   Minimum sample size      100
 #> 
-#>   Performance at N = 91
-#>     Calibration slope      0.899    (target ≥ 0.900)
+#>   Performance at N = 100
+#>     Calibration slope      0.901    (target ≥ 0.900)
 #> 
-#>   Running time             26 seconds
+#>   Running time             18 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability
 #> across repeated datasets.
 est$min_n
-#> [1] 91
+#> [1] 100
 plot(est)
 
 # }

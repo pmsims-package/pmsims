@@ -2,10 +2,11 @@
 
 Compute the minimum sample size required to develop a prediction model
 with a **continuous** outcome. This wraps the same simulation engine as
-[`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md),
-combining bisection search with Gaussian-process learning-curve
-modelling. From user inputs (maximum achievable performance, target
-performance, etc.) it constructs a data-generating function,
+[`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md):
+by default a learning curve fitted to every simulated replicate
+(`method = "curve"`), or the Gaussian-process search with
+`method = "mlpwr"`. From user inputs (maximum achievable performance,
+target performance, etc.) it constructs a data-generating function,
 model-fitting function, and metric function, then searches for the
 smallest \\n\\ meeting the chosen criterion.
 
@@ -23,6 +24,7 @@ simulate_continuous(
   target_performance,
   n_reps_total = 1000,
   mean_or_assurance = "assurance",
+  auto_n_reps_total = TRUE,
   ...
 )
 ```
@@ -65,9 +67,10 @@ simulate_continuous(
 
   Character string naming the performance metric used to assess the
   sample size; defaults to `"calibration_slope"`. Metric identifiers use
-  one canonical form throughout the package, such as
-  `"calibration_slope"`, `"calibration_in_the_large"`, `"auc"`, `"r2"`,
-  `"cindex"`, and `"csse"`.
+  one canonical form throughout the package: `"calibration_slope"`,
+  `"auc"`, `"r2"`, `"cindex"` and `"csse"`. Metrics where smaller is
+  better, such as `"calibration_in_the_large"`, cannot be used as search
+  targets.
 
   `"calibration_slope"` is the slope from regressing the observed
   outcome on the model's linear predictor in held-out data; 1 indicates
@@ -105,6 +108,16 @@ simulate_continuous(
   the minimum \\n\\ is defined by the mean-based criterion or the
   assurance-based criterion (with the assurance level \\\delta\\
   controlled by the engine's defaults or additional arguments in `...`).
+
+- auto_n_reps_total:
+
+  Logical. When `TRUE` (default) and `method = "mlpwr"`, `n_reps_total`
+  is raised to 2000 for designs with at most 10 signal parameters fitted
+  with `"lm"`, `"glm"` or `"coxph"`, where the Gaussian-process search
+  is limited by simulation budget rather than by the design. It has no
+  effect with the default `method = "curve"`. The rule only ever
+  increases the budget, and reports the change with a message. Set
+  `FALSE` to use `n_reps_total` exactly as supplied.
 
 - ...:
 
@@ -154,7 +167,12 @@ optional list fine-tuning the predictors:
 - `correlation`:
 
   Numeric in \\\[-1, 1\]\\. Pairwise correlation among the candidate
-  predictors. Default `0.3`.
+  predictors, induced through a Gaussian copula. Default `0.3`. This is
+  the correlation of the underlying normal variables: for `"normal"`
+  predictors it is also the observed correlation, but for other
+  distributions the observed correlation is lower. For example, binary
+  predictors with prevalence 0.3 correlate at about 0.18 when
+  `correlation = 0.3`.
 
 - `predictor_distribution`:
 
@@ -194,11 +212,14 @@ est <- simulate_continuous(
   min_sample_size = 50,
   max_sample_size = 1000,
   n_reps_total = 1000,
+  auto_n_reps_total = FALSE,
   test_n = 30000,
   progress = FALSE
 )
 #> ℹ Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
-#> ℹ Estimating second stage... (Gaussian process algorithm)
+#> ℹ Estimating the learning curve... (pilot)
+#> ℹ Refining the learning curve near the target...
+#> ! The target is close to the best performance this model can reach: doubling the sample size from the answer gains less than the Monte Carlo error, so the sample size is poorly determined.
 est
 #>                     ┌────────────────────────────────────────┐
 #>                     │ pmsims: Sample size simulation summary │
@@ -224,19 +245,19 @@ est
 #> 
 #> ──────────────────────────────────── Results ───────────────────────────────────
 #> 
-#>   Minimum sample size      84
+#>   Minimum sample size      103
 #> 
-#>   Performance at N = 84
+#>   Performance at N = 103
 #>     Calibration slope      0.900    (target ≥ 0.900)
-#>     R²                     0.447
+#>     R²                     0.483
 #> 
-#>   Running time             31 seconds
+#>   Running time             11 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability
 #> across repeated datasets.
 est$min_n
-#> [1] 84
+#> [1] 103
 plot(est)
 
 # }

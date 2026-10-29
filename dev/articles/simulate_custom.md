@@ -170,9 +170,12 @@ The metric function must take three positional arguments:
 The metric function must return a single numeric value representing
 model performance on the test data. Here we return the negative Brier
 score, because by default `pmsims` assumes that higher values indicate
-better performance. If your custom metric may fail for some datasets,
-you can optionally set `attr(my_metric, "value_on_error")` to define the
-fallback value returned for failed simulation runs.
+better performance. The `"metric"` attribute names what the function
+returns, so it is `"negative_brier_score"`: `pmsims` stops with an error
+for metrics it knows are better when smaller, such as `"brier_score"`.
+If your custom metric may fail for some datasets, you can optionally set
+`attr(my_metric, "value_on_error")` to define the fallback value
+returned for failed simulation runs.
 
 ``` r
 
@@ -191,7 +194,7 @@ my_metric <- function(test_data, fitted_model, model_name) {
   brier_score <- DescTools::BrierScore(y_test, pred = predictions)
   return(-brier_score)
 }
-attr(my_metric, "metric") <- "brier_score"
+attr(my_metric, "metric") <- "negative_brier_score"
 attr(my_metric, "value_on_error") <- -1
 
 test_data <- my_data_generator(n = 500)
@@ -304,17 +307,17 @@ result[c("min_n", "perf_n", "target_performance")]
 ```
 
     ## $min_n
-    ## [1] 81
+    ## [1] 65
     ## 
     ## $perf_n
-    ## logical(0)
+    ## [1] -0.04695195
     ## 
     ## $target_performance
     ## [1] -0.05029851
 
 ### Interpretation
 
-The results show a minimum sample size of 81. This is calculated using
+The results show a minimum sample size of 65. This is calculated using
 the mean criterion: the average negative Brier score across repeated
 training samples meets the selected target.
 

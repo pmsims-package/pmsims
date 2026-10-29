@@ -1,5 +1,108 @@
 # Changelog
 
+## pmsims 1.1.0
+
+### New search engine
+
+- A learning-curve engine, `method = "curve"`, is the default in
+  [`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+  and the `simulate_*()` wrappers; the previous engine is available as
+  `method = "mlpwr"`. It fits a monotone learning curve to every
+  replicate simulated so far and puts each new batch where the curve
+  crosses the target, so there is no fixed search range. The answer is a
+  median-unbiased estimate with an interval (`diagnostics$curve$n_ci`),
+  checked against a shape-free fit (`diagnostics$crosscheck_n`); targets
+  close to the best achievable performance are flagged. Targets that
+  cannot be reached stop with status `"unreachable"` and a message
+  saying what is achievable; when 20% or more of replicates fail at
+  every sample size tried, so that no curve can be fitted, it stops with
+  status `"replicates_failed"`.
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) shows the
+  learning curve, the target and the answer for `method = "curve"`;
+  `live_plot = TRUE` redraws it during the search.
+- `cores` runs the replicates of each batch in parallel; results are the
+  same for any number of cores.
+- Faster calibration slopes, AUC, concordance, linear predictors and
+  correlated predictors: a binary glm search takes about two thirds of
+  the time, a Cox search about a quarter. Results are unchanged.
+
+### Search
+
+- Every stage of the search (start values, the mlpwr and bisection
+  searches, verification and the secondary metric) now evaluates
+  replicates the same way: a model trained on fresh data and scored on a
+  fresh test set. The start-value stage previously scored every
+  replicate against one test set, so it could bracket the wrong range.
+- Each replicate has its own random-number stream, so results are
+  reproducible with [`set.seed()`](https://rdrr.io/r/base/Random.html),
+  identical in serial and parallel, and unaffected by how much of the
+  search came before.
+- Results are checked before they are returned: the answer is simulated
+  again with fresh replicates (`verify_reps`) and the result reports a
+  `status` (`"ok"`, `"not_verified"`, `"not_bracketed"`). `min_n` is
+  `NA` when no answer was found.
+- The mlpwr search restarts when its Gaussian-process surrogate fails,
+  instead of erroring.
+- The start-value search tries `max_n` itself as its last rung (it could
+  stop at about half of it).
+- When at least half the simulation replicates fail to fit or score the
+  model, the result has status `"replicates_failed"` and no sample size.
+- For calibration slope targets with penalised and machine-learning
+  models (searched on the CSSE scale internally), status messages give
+  calibration slopes.
+- `parallel = TRUE` without `cores` uses up to 20 cores, as before.
+  Parallel replicates use forked processes, so they run serially on
+  Windows; random forests and xgboost then use one thread per worker.
+- With `method = "mlpwr"`, `n_reps_total` is raised to 2000 for `"lm"`,
+  `"glm"` and `"coxph"` models with at most 10 signal parameters, where
+  the Gaussian-process search is limited by its budget. A message says
+  so, and `auto_n_reps_total = FALSE` keeps the value supplied.
+- `max_n` is the largest sample size the search may try, for every
+  engine. With `method = "curve"` it caps the whole search (unless
+  `max_sample_size` is given); with the mlpwr and bisection engines it
+  caps the start-value search, which sets their search range. It
+  defaults to 200,000 for random forests and xgboost and 1,000,000
+  otherwise.
+
+### Breaking changes
+
+- `min_n` and `perf_n` are `NA` when no sample size is found (they were
+  a character message); see `status` and `status_message`.
+- The `simulate_*()` wrappers no longer suppress warnings: a result that
+  is not `"ok"` raises a warning with its `status_message`, and mlpwr’s
+  own warnings are reported.
+- `metric_2_at_n` is the mean over 10 replicates at `min_n` (it was
+  one).
+- Custom metric functions without a `metric` attribute count failed
+  replicates as 0.5 (with a message); set
+  `attr(metric_function, "value_on_error")` to choose another value.
+
+### Bug fixes
+
+- Metric values that are not finite (for example, the calibration slope
+  of a lasso that selects no predictors) count as failed replicates.
+
+- Metrics where smaller is better (`calibration_in_the_large`,
+  `brier_score`, `ibs`) are rejected: they were searched in the wrong
+  direction.
+
+- `survival_auc`’s concordance fallback returned 1 - C.
+
+- ranger and xgboost thread counts: at least one thread, following
+  option `pmsims.threads`; xgboost previously used every core.
+
+- Correlated predictors now have the requested pairwise correlation.
+  Results for scenarios with a non-zero `correlation` (the default is
+  0.3) will change.
+
+### Performance
+
+- Correlated predictors are now drawn directly: equicorrelated normals
+  are transformed to the chosen distribution by its quantile function,
+  replacing the rank-and-sort copula. This is 3-7 times faster for most
+  distributions and dominated runtime for linear models (for example,
+  about 85% of a continuous `lm` run with 80 predictors).
+
 ## pmsims 1.0.0
 
 CRAN release: 2026-09-17

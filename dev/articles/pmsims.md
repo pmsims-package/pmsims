@@ -35,18 +35,27 @@ outcomes, respectively:
 - [`simulate_continuous()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_continuous.md)
 - [`simulate_survival()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_survival.md)
 
-All three functions share the same basic structure. The table below
-lists the key inputs.
+All three take the same core inputs:
 
-Select wrapper
+| Argument | Default | Description |
+|----|----|----|
+| `signal_parameters` | required | Number of predictors associated with the outcome |
+| `noise_parameters` | `0` | Number of predictors unrelated to the outcome |
+| `complexity` | `1` | Signal structure: `1` linear, `2` adds quadratic terms, `3` adds an interaction, `4` the Friedman function |
+| `data_control` | `NULL` | Correlation, distribution and nonlinear strength of the predictors (see [`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md)) |
+| `model` | `"glm"`, `"lm"` or `"coxph"` | Model fitted to each simulated dataset (the penalised and machine-learning options are experimental) |
+| `metric` | `"calibration_slope"` | Performance metric: `"calibration_slope"`, `"auc"`, `"r2"`, `"cindex"` or `"csse"` |
+| `target_performance` | required | Minimum acceptable performance |
+| `n_reps_total` | `1000` | Total number of simulation replicates |
+| `mean_or_assurance` | `"assurance"` | Criterion used to choose the sample size |
 
-Binary
+The remaining inputs depend on the outcome:
 
-Continuous
-
-Survival
-
-[TABLE]
+| Function | Outcome-specific inputs | Models |
+|----|----|----|
+| [`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md) | `maximum_achievable_cstatistic`, `outcome_prevalence` | `"glm"`, `"lasso"`, `"ridge"`, `"rf"`, `"xgboost"` |
+| [`simulate_continuous()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_continuous.md) | `maximum_achievable_rsquared` | `"lm"`, `"lasso"`, `"ridge"`, `"rf"`, `"xgboost"` |
+| [`simulate_survival()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_survival.md) | `maximum_achievable_cindex`, `censoring_rate`, `baseline_hazard` (optional; default `1`) | `"coxph"`, `"lasso"`, `"ridge"`, `"rf"`, `"xgboost"` |
 
 > Notes:
 >
@@ -123,13 +132,13 @@ binary_example
     #> 
     #> ──────────────────────────────────── Results ───────────────────────────────────
     #> 
-    #>   Minimum sample size       985
+    #>   Minimum sample size       1,000
     #> 
-    #>   Performance at N = 985
-    #>     Calibration slope       0.849    (target ≥ 0.850)
-    #>     C-statistic             0.794
+    #>   Performance at N = 1,000
+    #>     Calibration slope       0.850    (target ≥ 0.850)
+    #>     C-statistic             0.790
     #> 
-    #>   Running time              3 minutes 58 seconds
+    #>   Running time              27 seconds
     #> 
     #> ────────────────────────────────────────────────────────────────────────────────
     #> Assurance mode selects N so that the target is achieved with high probability
@@ -148,8 +157,37 @@ Plot the estimated learning curve and identified sample size:
 plot(binary_example)
 ```
 
-![Plot showing learning curve for binary
-outcome](pmsims_files/figure-html/unnamed-chunk-3-1.png)
+The animation below shows the same search as it ran. With
+`live_plot = TRUE`, the plot is redrawn after each batch of 20
+replicates. The final frame is what `plot(binary_example)` draws: the
+20th percentile of the calibration slope at each simulated sample size
+(point size shows the number of replicates, with ±2 standard errors),
+the fitted learning curve, the target (dashed line), the minimum sample
+size (solid line) with its interval (shaded), and a shape-free
+cross-check (dotted line).
+
+![Animation of the learning-curve search for the binary example. Each
+frame adds a batch of replicates; points accumulate around the target,
+the fitted curve settles, and the estimate converges on a minimum sample
+size of 1,000 (interval 972 to 1,061).](images/live_plot.gif)
+
+## How the search works
+
+By default (`method = "curve"`), `pmsims` fits a learning curve, \\C(n)
+= a - b n^{-c}\\, to the criterion at every sample size simulated so
+far. A pilot doubles or halves \\n\\ until the criterion has been seen
+on both sides of the target. Each further batch is placed where the
+fitted curve crosses the target, and the answer is where the final curve
+crosses it. The answer is then simulated again with fresh replicates to
+check that it meets the target.
+
+Every result has a `status`. `"ok"` means a sample size was found and
+the check confirmed it. Otherwise `min_n` may be `NA`, and
+`status_message` explains why (for example, `"unreachable"` when the
+curve levels off below the target). The previous Gaussian-process engine
+is available with `method = "mlpwr"`; see
+[`?simulate_custom`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+for details of both engines.
 
 ## Continuous-outcome example
 
@@ -195,13 +233,13 @@ continuous_example
     #> 
     #> ──────────────────────────────────── Results ───────────────────────────────────
     #> 
-    #>   Minimum sample size      685
+    #>   Minimum sample size      673
     #> 
-    #>   Performance at N = 685
+    #>   Performance at N = 673
     #>     Calibration slope      0.950    (target ≥ 0.950)
-    #>     R²                     0.488
+    #>     R²                     0.491
     #> 
-    #>   Running time             2 minutes 36 seconds
+    #>   Running time             16 seconds
     #> 
     #> ────────────────────────────────────────────────────────────────────────────────
     #> Assurance mode selects N so that the target is achieved with high probability

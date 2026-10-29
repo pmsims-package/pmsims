@@ -22,6 +22,10 @@ calculate_mlpwr(
   model_function,
   metric_function,
   value_on_error,
+  evaluator = NULL,
+  max_n = 1e+06,
+  parallel = FALSE,
+  cores = 1L,
   ...
 )
 ```
@@ -113,6 +117,23 @@ calculate_mlpwr(
 
   Numeric fallback value used if model fitting or metric calculation
   fails.
+
+- evaluator:
+
+  Optional evaluator from `new_evaluator()`, shared by every stage of
+  the search. Created from the data, model and metric functions when
+  `NULL`.
+
+- max_n:
+
+  Largest sample size the adaptive start-value search may try.
+
+- parallel, cores:
+
+  Run the replicates of each batch in parallel (see
+  [`calculate_bisection()`](https://pmsims-package.github.io/pmsims/dev/reference/calculate_bisection.md));
+  with mlpwr, replicates are requested one at a time, so this mainly
+  affects the adaptive stage and verification.
 
 - ...:
 
