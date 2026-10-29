@@ -462,3 +462,17 @@ test_that("the live plot shows CSSE on the slope scale only as plot() does", {
   expect_identical(last$metric, "csse")
   expect_identical(last$target_performance, -0.01)
 })
+
+test_that("the curve plot's x-axis has labels across narrow ranges", {
+  # The ggplot2 default gives no label above 1,000 for this range.
+  expect_identical(log_axis_breaks(c(654, 1884)), c(800, 1000, 1200, 1500))
+  expect_identical(
+    log_axis_breaks(c(800, 2e5)),
+    c(1000, 3000, 10000, 30000, 1e5)
+  )
+  for (r in list(c(60, 140), c(255, 1469), c(39, 1368), c(10, 1e6))) {
+    b <- log_axis_breaks(r)
+    expect_gte(length(b), 3L)
+    expect_true(all(b >= r[1] & b <= r[2]))
+  }
+})

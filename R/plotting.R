@@ -340,6 +340,8 @@ plot_learning_curve <- function(
       )
     }
 
+  x_breaks <- log_axis_breaks(range(ns))
+
   p <- ggplot2::ggplot(obs, ggplot2::aes(x = .data$n, y = .data$y)) +
     ggplot2::geom_hline(
       yintercept = target,
@@ -375,7 +377,7 @@ plot_learning_curve <- function(
       shape = 21,
       fill = "white"
     ) +
-    ggplot2::scale_x_log10(labels = function(b) {
+    ggplot2::scale_x_log10(breaks = x_breaks, labels = function(b) {
       format(b, big.mark = ",", scientific = FALSE)
     }) +
     ggplot2::scale_size_area(max_size = 4, name = "Replicates") +
@@ -404,4 +406,29 @@ plot_learning_curve <- function(
   }
   print(p)
   invisible(p)
+}
+
+# Breaks for the log-scale sample-size axis. ggplot2's default (1, 2 and 5
+# times powers of ten) leaves few labels when a search spans a narrow range
+# (none above 1,000 for 660 to 1,700), so finer sets of round numbers are tried
+# in turn until at least five fall inside the range. Each set is spread
+# roughly evenly on the log scale.
+log_axis_breaks <- function(limits) {
+  steps <- list(
+    1,
+    c(1, 3),
+    c(1, 2, 5),
+    c(1, 2, 3, 5),
+    c(1, 1.5, 2, 3, 5, 7),
+    c(1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8)
+  )
+  powers <- 10^(floor(log10(limits[1])):ceiling(log10(limits[2])))
+  for (s in steps) {
+    b <- sort(unique(as.vector(outer(s, powers))))
+    b <- b[b >= limits[1] & b <= limits[2]]
+    if (length(b) >= 5L) {
+      return(b)
+    }
+  }
+  if (length(b) >= 3L) b else pretty(limits)
 }
