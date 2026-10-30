@@ -62,14 +62,16 @@ The question is: **how many hospitals do we need?**
 We generate data from a logistic random-intercept model. For patient
 \\i\\ in cluster \\j\\,
 
-\\ \operatorname{logit} P(y\_{ij} = 1) = \beta_0 + \mathbf{x}\_{ij}^\top
-\boldsymbol\beta + u_j, \qquad u_j \sim N(0, \sigma_u^2), \qquad
-\mathbf{x}\_{ij} \sim N(\mathbf{0}, \mathbf{I}). \\
+\\ \operatorname{logit} P(y\_{ij} = 1) = \beta_0 + \sum\_{k=1}^{p}
+\beta_k x\_{ijk} + u_j, \qquad u_j \sim N(0, \sigma_u^2), \qquad
+x\_{ijk} \sim N(0, 1), \\
+
+with the \\p\\ predictors independent of each other and of \\u_j\\.
 
 The generator should be set up in terms that are meaningful when
 planning a study (ICC, prevalence and C-statistic), not in terms of
-\\\beta_0\\, \\\boldsymbol\beta\\ and \\\sigma_u\\. These quantities
-interact, so each one has to be matched to its target:
+\\\beta_0\\, \\\beta_1, \ldots, \beta_p\\ and \\\sigma_u\\. These
+quantities interact, so each one has to be matched to its target:
 
 **ICC.** On the latent (logistic) scale, the residual variance is
 \\\pi^2/3\\, so
@@ -79,13 +81,13 @@ interact, so each one has to be matched to its target:
 \cdot \frac{\pi^2}{3}. \\
 
 This is the ICC conditional on the predictors, because \\u_j\\ is
-independent of \\\mathbf{x}\_{ij}\\.
+independent of the predictors.
 
 **Within-cluster C-statistic.** This measures how well the linear
-predictor \\\eta = \mathbf{x}^\top\boldsymbol\beta\\ ranks patients
-*within* a cluster. It depends on the standard deviation of \\\eta\\,
-but also on \\\beta_0\\ and \\\sigma_u\\, since a cluster’s event rate
-changes how many event and non-event pairs it contributes.
+predictor \\\eta = \sum_k \beta_k x_k\\ ranks patients *within* a
+cluster. It depends on the standard deviation of \\\eta\\, but also on
+\\\beta_0\\ and \\\sigma_u\\, since a cluster’s event rate changes how
+many event and non-event pairs it contributes.
 
 **Prevalence.** The marginal prevalence averages
 \\\operatorname{logit}^{-1} (\beta_0 + \eta + u)\\ over both \\\eta\\
