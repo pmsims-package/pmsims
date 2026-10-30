@@ -32,6 +32,8 @@ navbar:
       menu:
         - text: Custom simulation workflows
           href: articles/simulate_custom.html
+        - text: Sample size for clustered data
+          href: articles/clustered_data.html
     reference:
       text: Reference
       href: reference/index.html
