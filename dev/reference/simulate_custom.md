@@ -289,7 +289,7 @@ est
 #>   Performance at N = 100
 #>     Calibration slope      0.901    (target ≥ 0.900)
 #> 
-#>   Running time             14 seconds
+#>   Running time             18 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability

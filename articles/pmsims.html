@@ -80,7 +80,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Getting started with pmsims</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/vignettes/pmsims.Rmd" class="external-link"><code>vignettes/pmsims.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/vignettes/pmsims.Rmd" class="external-link"><code>vignettes/pmsims.Rmd</code></a></small>
       <div class="d-none name"><code>pmsims.Rmd</code></div>
     </div>
 
@@ -106,9 +106,37 @@ calibration slope, AUC); and</li>
 <li>Trace a <strong>learning curve</strong> of performance as the
 training size increases.</li>
 </ul>
-<p align="center">
-<img src="images/workflow.png" alt="A diagram showing the pmsims workflow, consisting of the data generator, model function, metrics function, which are passed to the simulation engine." width="100%"></p>
-<p>The recommended design objective is <strong>assurance</strong>: the
+<figure class="pmsims-workflow-figure"><svg class="pmsims-workflow" viewbox="0 0 860 290" role="img" aria-label="The pmsims workflow: the user's inputs define a data function, model function and metric function. The simulation engine uses these to fit a learning curve and returns the minimum sample size, min_n."><style>
+    .pmsims-workflow {
+      --wf-card: var(--bs-tertiary-bg, #f8f9fa);
+      --wf-border: var(--bs-border-color, #dee2e6);
+      --wf-text: var(--bs-body-color, #373a3c);
+      --wf-muted: var(--bs-secondary-color, #6c757d);
+      --wf-line: #8a959e;
+      --wf-teal: #067f8d;          /* site link colour; white text passes AA */
+      --wf-data: #04adbf;          /* site primary */
+      --wf-model: #4682b4;         /* steelblue, as in plot() */
+      --wf-metric: #e08a1e;        /* darkorange family, as in plot() */
+      --wf-panel: #fff;
+      --wf-curve: #4682b4;
+      width: 100%; height: auto; display: block;
+      font-family: "Source Sans Pro", "Source Sans 3", system-ui, sans-serif;
+    }
+    [data-bs-theme="dark"] .pmsims-workflow {
+      --wf-line: #8f9aa3;
+      --wf-teal: #0b8f9e;
+      --wf-panel: #1b1f23;
+      --wf-curve: #79aee0;
+    }
+    .pmsims-workflow .wf-box { fill: var(--wf-card); stroke: var(--wf-border); stroke-width: 1; }
+    .pmsims-workflow .wf-label { font-size: 20px; font-weight: 600; fill: var(--wf-text); text-anchor: middle; }
+    .pmsims-workflow .wf-code { font-family: "Source Code Pro", ui-monospace, monospace; font-size: 13px;
+                             fill: var(--wf-muted); text-anchor: middle; }
+    .pmsims-workflow .wf-tint { fill: color-mix(in srgb, var(--accent) 16%, var(--bs-body-bg, #fff));
+                             stroke: var(--accent); stroke-width: 1.5; }
+    .pmsims-workflow .wf-wire { fill: none; stroke: var(--wf-line); stroke-width: 2; stroke-linejoin: round; }
+  </style>
+<defs><marker id="pmsims-wf-head" viewbox="0 0 10 10" refx="10" refy="5" markerwidth="5" markerheight="5" markerunits="strokeWidth" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--wf-line)"></path></marker></defs><!-- User inputs --><rect class="wf-box" x="8" y="111" width="146" height="68" rx="8" stroke-dasharray="5 4"></rect><text class="wf-label" x="81" y="142">User inputs</text><text class="wf-code" x="81" y="164">simulate_*()</text><!-- Wires: inputs to components --><path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M154,145 H182 V50 H209"></path><path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M154,145 H209"></path><path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M154,145 H182 V240 H209"></path><!-- Components: neutral card, coloured accent bar, function argument below --><g><rect class="wf-box wf-tint" style="--accent: var(--wf-data)" x="210" y="16" width="214" height="68" rx="8"></rect><text class="wf-label" x="318" y="46">Data generator</text><text class="wf-code" x="318" y="68">data_function</text></g><g><rect class="wf-box wf-tint" style="--accent: var(--wf-model)" x="210" y="111" width="214" height="68" rx="8"></rect><text class="wf-label" x="318" y="141">Prediction model</text><text class="wf-code" x="318" y="163">model_function</text></g><g><rect class="wf-box wf-tint" style="--accent: var(--wf-metric)" x="210" y="206" width="214" height="68" rx="8"></rect><text class="wf-label" x="318" y="236">Metrics</text><text class="wf-code" x="318" y="258">metric_function</text></g><!-- Wires: components to engine --><path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M424,50 H452 V122 H483"></path><path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M424,145 H483"></path><path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M424,240 H452 V168 H483"></path><!-- Simulation engine: header band in site teal, panel styled like plot() --><g><rect class="wf-box" x="484" y="40" width="226" height="210" rx="8"></rect><path d="M484,48 a8,8 0 0 1 8,-8 h210 a8,8 0 0 1 8,8 v28 h-226z" fill="var(--wf-teal)"></path><text class="wf-label" x="597" y="65" style="fill:#fff">Simulation engine</text><rect x="498" y="90" width="198" height="146" rx="3" fill="var(--wf-panel)" stroke="var(--wf-border)"></rect><!-- interval around min_n --><rect x="584" y="91" width="30" height="144" fill="var(--wf-curve)" opacity=".14"></rect><!-- target --><line x1="499" y1="146" x2="695" y2="146" stroke="var(--wf-muted)" stroke-width="1.5" stroke-dasharray="5 4"></line><!-- min_n --><line x1="598" y1="91" x2="598" y2="235" stroke="var(--wf-curve)" stroke-width="1.5"></line><!-- curve --><path d="M510,222 C560,174 600,139 684,120" fill="none" stroke="var(--wf-curve)" stroke-width="2.5" stroke-linecap="round"></path><!-- replicates (point size = number of replicates) --><g fill="var(--wf-panel)" stroke="var(--wf-text)" stroke-width="1.3"><circle cx="516" cy="214" r="2.5"></circle><circle cx="542" cy="199" r="3"></circle><circle cx="572" cy="166" r="3.5"></circle><circle cx="596" cy="149" r="5"></circle><circle cx="612" cy="139" r="4.5"></circle><circle cx="654" cy="124" r="3"></circle></g></g><!-- Output --><path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M710,145 H755"></path><rect x="756" y="122" width="96" height="46" rx="23" fill="var(--wf-teal)"></rect><text x="804" y="152" text-anchor="middle" fill="#fff" font-size="24" font-weight="600" font-style="italic">N<tspan dy="-7" font-size="16">*</tspan></text><text class="wf-code" x="804" y="192">min_n</text></svg></figure><p>The recommended design objective is <strong>assurance</strong>: the
 <strong>smallest</strong> <span class="math inline">\(n\)</span> such
 that a high proportion of repeated studies (e.g., 80%) meet the target
 performance. In pmsims, this is implemented via the <strong>20th
