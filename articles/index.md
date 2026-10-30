@@ -2,6 +2,8 @@
 
 ### All vignettes
 
+- [Sample size for clustered
+  data](https://pmsims-package.github.io/pmsims/articles/clustered_data.md):
 - [Getting started with
   pmsims](https://pmsims-package.github.io/pmsims/articles/pmsims.md):
 - [pmsims 0.5.0: Initial

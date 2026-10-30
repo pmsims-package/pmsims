@@ -164,11 +164,6 @@ the fitted learning curve, the target (dashed line), the minimum sample
 size (solid line) with its interval (shaded), and a shape-free
 cross-check (dotted line).
 
-![Animation of the learning-curve search for the binary example. Each
-frame adds a batch of replicates; points accumulate around the target,
-the fitted curve settles, and the estimate converges on a minimum sample
-size of 1,000 (interval 972 to 1,061).](images/live_plot.gif)
-
 ## How the search works
 
 By default (`method = "curve"`), `pmsims` fits a learning curve, \\C(n)
