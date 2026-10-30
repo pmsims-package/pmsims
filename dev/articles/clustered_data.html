@@ -82,7 +82,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Sample size for clustered data</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/vignettes/articles/clustered_data.Rmd" class="external-link"><code>vignettes/articles/clustered_data.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/vignettes/articles/clustered_data.Rmd" class="external-link"><code>vignettes/articles/clustered_data.Rmd</code></a></small>
       <div class="d-none name"><code>clustered_data.Rmd</code></div>
     </div>
 
@@ -155,13 +155,15 @@ noise.</li>
 <p>We generate data from a logistic random-intercept model. For patient
 <span class="math inline">\(i\)</span> in cluster <span class="math inline">\(j\)</span>,</p>
 <p><span class="math display">\[
-\operatorname{logit} P(y_{ij} = 1) = \beta_0 + \mathbf{x}_{ij}^\top
-\boldsymbol\beta + u_j, \qquad u_j \sim N(0, \sigma_u^2), \qquad
-\mathbf{x}_{ij} \sim N(\mathbf{0}, \mathbf{I}).
+\operatorname{logit} P(y_{ij} = 1) = \beta_0 + \sum_{k=1}^{p} \beta_k
+x_{ijk}
++ u_j, \qquad u_j \sim N(0, \sigma_u^2), \qquad x_{ijk} \sim N(0, 1),
 \]</span></p>
+<p>with the <span class="math inline">\(p\)</span> predictors
+independent of each other and of <span class="math inline">\(u_j\)</span>.</p>
 <p>The generator should be set up in terms that are meaningful when
 planning a study (ICC, prevalence and C-statistic), not in terms of
-<span class="math inline">\(\beta_0\)</span>, <span class="math inline">\(\boldsymbol\beta\)</span> and <span class="math inline">\(\sigma_u\)</span>. These quantities interact, so
+<span class="math inline">\(\beta_0\)</span>, <span class="math inline">\(\beta_1, \ldots, \beta_p\)</span> and <span class="math inline">\(\sigma_u\)</span>. These quantities interact, so
 each one has to be matched to its target:</p>
 <p><strong>ICC.</strong> On the latent (logistic) scale, the residual
 variance is <span class="math inline">\(\pi^2/3\)</span>, so</p>
@@ -170,11 +172,12 @@ variance is <span class="math inline">\(\pi^2/3\)</span>, so</p>
 \quad\Longrightarrow\quad
 \sigma_u^2 = \frac{\text{ICC}}{1 - \text{ICC}} \cdot \frac{\pi^2}{3}.
 \]</span></p>
-<p>This is the ICC conditional on the predictors, because <span class="math inline">\(u_j\)</span> is independent of <span class="math inline">\(\mathbf{x}_{ij}\)</span>.</p>
+<p>This is the ICC conditional on the predictors, because <span class="math inline">\(u_j\)</span> is independent of the predictors.</p>
 <p><strong>Within-cluster C-statistic.</strong> This measures how well
-the linear predictor <span class="math inline">\(\eta =
-\mathbf{x}^\top\boldsymbol\beta\)</span> ranks patients <em>within</em>
-a cluster. It depends on the standard deviation of <span class="math inline">\(\eta\)</span>, but also on <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\sigma_u\)</span>, since a cluster’s event rate
+the linear predictor <span class="math inline">\(\eta = \sum_k \beta_k
+x_k\)</span> ranks patients <em>within</em> a cluster. It depends on the
+standard deviation of <span class="math inline">\(\eta\)</span>, but
+also on <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\sigma_u\)</span>, since a cluster’s event rate
 changes how many event and non-event pairs it contributes.</p>
 <p><strong>Prevalence.</strong> The marginal prevalence averages <span class="math inline">\(\operatorname{logit}^{-1}
 (\beta_0 + \eta + u)\)</span> over both <span class="math inline">\(\eta\)</span> and <span class="math inline">\(u\)</span>, so it depends on all three parameters
