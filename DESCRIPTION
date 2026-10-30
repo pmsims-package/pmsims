@@ -80,4 +80,5 @@ LazyDataCompression: xz
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
+Config/Needs/website: glmmTMB
 Config/roxygen2/version: 8.0.0
