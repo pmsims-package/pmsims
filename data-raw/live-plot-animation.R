@@ -1,9 +1,12 @@
-# Generates vignettes/images/live_plot.gif, the animation of the learning-curve
+# Generates vignettes/images/live_plot.mp4, the animation of the learning-curve
 # search shown in vignettes/pmsims.Rmd.
 #
 # The search is the binary_example call in data-raw/precomputed-examples.R, run
 # with live_plot = TRUE. Each redraw is written to a PNG, and the frames are
-# joined into a GIF with ffmpeg, which must be installed. The last frame is
+# joined into an H.264 video with ffmpeg, which must be installed. A video is
+# used rather than a GIF because a GIF has at most 256 colours, which leaves
+# text and lines ragged; the frames are drawn at twice the width of the
+# vignette's text column so they stay sharp on high-resolution screens. The last frame is
 # plot() of the finished result, held for four seconds. live_plot does not
 # change the results, so the animation ends at binary_example$min_n.
 #
@@ -13,7 +16,7 @@ if (!requireNamespace("pkgload", quietly = TRUE)) {
   stop("Install pkgload first, e.g. with install.packages('pkgload').")
 }
 if (!nzchar(Sys.which("ffmpeg"))) {
-  stop("ffmpeg is needed to assemble the GIF.")
+  stop("ffmpeg is needed to assemble the video.")
 }
 
 pkgload::load_all(".", export_all = FALSE, helpers = FALSE, quiet = TRUE)
@@ -25,9 +28,9 @@ dir.create(frames)
 options(pmsims.live_plot_force = TRUE)
 grDevices::png(
   file.path(frames, "frame%03d.png"),
-  width = 1200,
-  height = 800,
-  res = 150
+  width = 1600,
+  height = 1066,
+  res = 200
 )
 set.seed(123)
 result <- simulate_binary(
@@ -47,7 +50,7 @@ result <- simulate_binary(
 grDevices::dev.off()
 
 final <- file.path(frames, "final.png")
-grDevices::png(final, width = 1200, height = 800, res = 150)
+grDevices::png(final, width = 1600, height = 1066, res = 200)
 print(plot(result))
 grDevices::dev.off()
 
@@ -69,14 +72,12 @@ status <- system2(
     "-loglevel error -y -f concat -safe 0",
     "-i",
     shQuote(concat),
-    "-vf",
-    shQuote(paste0(
-      "scale=800:-1:flags=lanczos,split[a][b];",
-      "[a]palettegen=max_colors=64:stats_mode=full[p];",
-      "[b][p]paletteuse=dither=none"
-    )),
-    "-loop 0",
-    shQuote("vignettes/images/live_plot.gif")
+    # A constant 10 frames per second holds each frame for its duration.
+    # yuv420p and faststart let every browser play the video, and start
+    # playing before it has fully downloaded.
+    "-r 10 -c:v libx264 -preset slow -crf 18 -tune animation",
+    "-pix_fmt yuv420p -movflags +faststart",
+    shQuote("vignettes/images/live_plot.mp4")
   )
 )
 if (status != 0) {

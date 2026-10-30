@@ -247,7 +247,7 @@ the target (dashed line), the minimum sample size (solid line) with its
 interval (shaded), and a shape-free cross-check (dotted line).
 
 <p align="center">
-  <img src="images/live_plot.gif" alt="Animation of the learning-curve search for the binary example. Each frame adds a batch of replicates; points accumulate around the target, the fitted curve settles, and the estimate converges on a minimum sample size of 1,000 (interval 972 to 1,061)." width="100%">
+  <video src="images/live_plot.mp4" autoplay loop muted playsinline width="100%" aria-label="Animation of the learning-curve search for the binary example. Each frame adds a batch of replicates; points accumulate around the target, the fitted curve settles, and the estimate converges on a minimum sample size of 1,000 (interval 972 to 1,061)."></video>
 </p>
 
 ## How the search works
