@@ -649,6 +649,36 @@ calculate_curve <- function(
     gain < 2 * sqrt(p$se[top]^2 + p$se[prev]^2)
   }
 
+  # Stop before simulating expensive samples (beyond the cost guard's size)
+  # when the curve has stalled within Monte Carlo error of the target: no
+  # significant gain over the last doubling at a precisely estimated top
+  # point, which is not clearly above the target. Returns NULL to continue.
+  stall_check <- function(pts, nxt) {
+    if (nxt <= max(32 * first_n, 5e4)) {
+      return(NULL)
+    }
+    pts <- confirm_top(pts)
+    top <- which.max(pts$n)
+    if (!top_is_flat(pts) || pts$est[top] - 2 * pts$se[top] >= target) {
+      return(NULL)
+    }
+    list(
+      reason = "near_ceiling",
+      status = stop_status(
+        pts,
+        "not_bracketed",
+        NULL,
+        paste(
+          " Performance barely changes with sample size here: over the last",
+          "doubling it gained less than its Monte Carlo error, so the target",
+          "is close to the best this model reaches and the sample size is",
+          "poorly determined. The search stopped rather than simulate ever",
+          "larger samples."
+        )
+      )
+    )
+  }
+
   # ---- pilot ------------------------------------------------------------------
   cli::cli_alert_info("Estimating the learning curve... (pilot)")
   t_pilot <- Sys.time()
@@ -678,6 +708,14 @@ calculate_curve <- function(
     above <- any(pts$est >= target)
     below <- any(pts$est < target)
     if (above && below) {
+      # A single 20-replicate point can meet the target by chance: confirm
+      # the smallest one that does before leaving the pilot.
+      first_above <- min(pts$n[pts$est >= target])
+      i <- match(first_above, pts$n)
+      if (pts$reps[i] < reps_precise && used < n_reps_total) {
+        add(first_above, reps_precise - pts$reps[i])
+        next
+      }
       break
     }
     if (used >= pilot_budget) {
@@ -697,7 +735,7 @@ calculate_curve <- function(
       } else {
         2 * top
       }
-      stop_here <- reach_check(pts, f, nxt)
+      stop_here <- reach_check(pts, f, nxt) %||% stall_check(pts, nxt)
       if (!is.null(stop_here)) {
         status <- stop_here$status
         pilot_reason <- stop_here$reason
@@ -777,7 +815,24 @@ calculate_curve <- function(
     }
     near <- pred
     step <- step + 1L
-    add(pred * factors[(step - 1L) %% length(factors) + 1L], 2L * n_reps_per)
+    nxt <- pred * factors[(step - 1L) %% length(factors) + 1L]
+    if (nxt > max(pts$n)) {
+      stalled <- stall_check(pts, nxt)
+      if (!is.null(stalled)) {
+        pts <- summarise_points()
+        return(curve_output(
+          store,
+          pts,
+          fit_points(pts),
+          NA_real_,
+          stalled$status,
+          stalled$reason,
+          NULL,
+          used
+        ))
+      }
+    }
+    add(nxt, 2L * n_reps_per)
   }
 
   # ---- answer ---------------------------------------------------------------

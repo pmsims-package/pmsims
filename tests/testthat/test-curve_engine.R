@@ -199,6 +199,17 @@ test_that("a target just above the ceiling stops by max_n", {
   expect_lte(res$diagnostics$bounds[2], 2e5)
 })
 
+test_that("a near-flat curve that meets the target only far out stops, not chases", {
+  # Ceiling just above -0.01: the target is met only near n = 280,000.
+  sc <- csse_curve(bias = 0.095)
+  for (seed in 1:3) {
+    res <- run_curve(sc, -0.01, seed = seed, start_n = 500)
+    expect_identical(res$status, "not_bracketed")
+    expect_identical(res$diagnostics$adaptive_stop_reason, "near_ceiling")
+    expect_lte(res$diagnostics$bounds[2], 2e5)
+  }
+})
+
 test_that("failed replicates are told apart from legitimate fallback-valued ones", {
   data_function <- function(n) data.frame(n = n, z = stats::rnorm(1))
   model_function <- function(d) d
