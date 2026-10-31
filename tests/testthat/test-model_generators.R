@@ -139,3 +139,66 @@ test_that("print.cv.ranger_tune prints a compact summary", {
   expect_match(output, "tuneRanger results", fixed = TRUE)
   expect_match(output, "Recommended parameters", fixed = TRUE)
 })
+
+ridge_floor_data <- function(n, seed, intercept = -2.8) {
+  set.seed(seed)
+  x <- matrix(stats::rnorm(n * 5), n, 5)
+  y <- stats::rbinom(n, 1, stats::plogis(intercept + x %*% rep(0.5, 5)))
+  list(x = x, y = as.numeric(y))
+}
+
+test_that("cv_glmnet_ridge matches cv.glmnet when lambda.min is interior", {
+  skip_if_not_installed("glmnet")
+  d <- ridge_floor_data(60, 1, intercept = 0)
+  set.seed(2)
+  ref <- glmnet::cv.glmnet(d$x, d$y, alpha = 0, family = "binomial")
+  skip_if(ref$lambda.min == min(ref$lambda), "fixture floors the default path")
+  set.seed(2)
+  fit <- cv_glmnet_ridge(d$x, d$y, family = "binomial")
+  expect_identical(fit$lambda, ref$lambda)
+  expect_identical(fit$lambda.min, ref$lambda.min)
+  expect_equal(stats::coef(fit), stats::coef(ref))
+})
+
+test_that("cv_glmnet_ridge extends the path when CV picks its smallest lambda", {
+  skip_if_not_installed("glmnet")
+  d <- ridge_floor_data(5000, 3)
+  set.seed(4)
+  ref <- glmnet::cv.glmnet(d$x, d$y, alpha = 0, family = "binomial")
+  expect_equal(ref$lambda.min, min(ref$lambda))
+  set.seed(4)
+  fit <- cv_glmnet_ridge(d$x, d$y, family = "binomial")
+  expect_lt(fit$lambda.min, ref$lambda.min)
+  expect_gt(fit$lambda.min, min(fit$lambda))
+  expect_equal(max(fit$lambda), max(ref$lambda))
+  expect_lt(min(fit$lambda), 1e-8 * max(fit$lambda))
+  # Less shrinkage: the ridge coefficients move towards the unpenalised fit.
+  b_glm <- stats::coef(stats::glm.fit(cbind(1, d$x), d$y, family = binomial()))
+  b_ref <- as.numeric(stats::coef(ref, s = "lambda.min"))
+  b_fit <- as.numeric(stats::coef(fit, s = "lambda.min"))
+  expect_lt(sum((b_fit - b_glm)[-1]^2), sum((b_ref - b_glm)[-1]^2))
+})
+
+test_that("ridge generators fit for every outcome type", {
+  skip_if_not_installed("glmnet")
+  d <- ridge_floor_data(400, 5)
+  binary <- data.frame(y = d$y, d$x)
+  expect_s3_class(
+    default_model_generators("binary", "ridge")(binary),
+    "cv.glmnet"
+  )
+  continuous <- data.frame(y = drop(d$x %*% rep(0.3, 5)) + stats::rnorm(400), d$x)
+  expect_s3_class(
+    default_model_generators("continuous", "ridge")(continuous),
+    "cv.glmnet"
+  )
+  survival <- data.frame(
+    time = stats::rexp(400, exp(drop(d$x %*% rep(0.3, 5)))),
+    event = stats::rbinom(400, 1, 0.7),
+    d$x
+  )
+  expect_s3_class(
+    default_model_generators("survival", "ridge")(survival),
+    "cv.glmnet"
+  )
+})

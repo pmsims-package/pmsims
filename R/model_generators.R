@@ -62,6 +62,31 @@ xgb_threaded_params <- function(params) {
   }
   params
 }
+
+# ---------------------------------------------------------------------------
+# Ridge via cv.glmnet. glmnet's default alpha = 0 path ends at a lambda that
+# does not fall with n, so CV can pick its end and leave the fit over-shrunk at
+# any n; then refit on the same folds with a longer, explicit path. Folds are
+# drawn as cv.glmnet draws them, so other fits are unchanged.
+cv_glmnet_ridge <- function(x, y, family, nfolds = 10L, min_ratio = 1e-9) {
+  foldid <- sample(rep(seq(nfolds), length = nrow(x)))
+  fit <- glmnet::cv.glmnet(x, y, alpha = 0, family = family, foldid = foldid)
+  lam <- fit$lambda
+  if (fit$lambda.min > min(lam) || length(lam) < 2L) {
+    return(fit)
+  }
+  step <- log(lam[1L]) - log(lam[2L])
+  n_lam <- ceiling(-log(min_ratio) / step) + 1L
+  path <- exp(log(lam[1L]) - step * seq(0, n_lam - 1L))
+  glmnet::cv.glmnet(
+    x,
+    y,
+    alpha = 0,
+    family = family,
+    foldid = foldid,
+    lambda = path
+  )
+}
 # ---------------------------------------------------------------------------
 
 default_models <- list(
@@ -88,12 +113,7 @@ default_models <- list(
       d <- as.matrix(d)
       x <- d[, -1, drop = FALSE]
       y <- d[, 1]
-      glmnet::cv.glmnet(
-        x,
-        y,
-        alpha = 0, # L2 penalty (ridge)
-        family = "binomial"
-      )
+      cv_glmnet_ridge(x, y, family = "binomial")
     },
     rf = function(d) {
       require_optional_packages(
@@ -177,12 +197,7 @@ default_models <- list(
       dmat <- as.matrix(d)
       x <- dmat[, -1, drop = FALSE]
       y <- dmat[, 1]
-      glmnet::cv.glmnet(
-        x,
-        y,
-        alpha = 0, # L2 penalty (ridge)
-        family = "gaussian"
-      )
+      cv_glmnet_ridge(x, y, family = "gaussian")
     },
     rf = function(d) {
       require_optional_packages(
@@ -266,7 +281,7 @@ default_models <- list(
         drop = FALSE
       ])
       y <- survival::Surv(d$time, d$event)
-      glmnet::cv.glmnet(x, y, alpha = 0, family = "cox") # L2 (ridge)
+      cv_glmnet_ridge(x, y, family = "cox")
     },
     rf = function(d) {
       require_optional_packages(
