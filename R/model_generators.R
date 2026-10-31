@@ -66,9 +66,22 @@ xgb_threaded_params <- function(params) {
 # ---------------------------------------------------------------------------
 # Ridge via cv.glmnet. glmnet's default alpha = 0 path ends at a lambda that
 # does not fall with n, so CV can pick its end and leave the fit over-shrunk at
-# any n; then refit on the same folds with a longer, explicit path. Folds are
-# drawn as cv.glmnet draws them, so other fits are unchanged.
-cv_glmnet_ridge <- function(x, y, family, nfolds = 10L, min_ratio = 1e-9) {
+# any n. Then continue the path below its end, on the same folds and grid
+# spacing, one block (a factor of `block` in lambda) at a time, while each
+# block lowers the CV error, down to min_ratio x lambda_max. The fit returned
+# is the block holding the lowest CV error, so its lambda.min is the choice.
+# Far below the default path the CV curve is flat and noisy; the block after
+# the best one is always fitted, so a dip inside one block does not end the
+# search early. Folds are drawn as cv.glmnet draws them, so fits whose
+# lambda.min is inside the default path are unchanged.
+cv_glmnet_ridge <- function(
+  x,
+  y,
+  family,
+  nfolds = 10L,
+  min_ratio = 1e-9,
+  block = 10
+) {
   foldid <- sample(rep(seq(nfolds), length = nrow(x)))
   fit <- glmnet::cv.glmnet(x, y, alpha = 0, family = family, foldid = foldid)
   lam <- fit$lambda
@@ -76,16 +89,30 @@ cv_glmnet_ridge <- function(x, y, family, nfolds = 10L, min_ratio = 1e-9) {
     return(fit)
   }
   step <- log(lam[1L]) - log(lam[2L])
-  n_lam <- ceiling(-log(min_ratio) / step) + 1L
-  path <- exp(log(lam[1L]) - step * seq(0, n_lam - 1L))
-  glmnet::cv.glmnet(
-    x,
-    y,
-    alpha = 0,
-    family = family,
-    foldid = foldid,
-    lambda = path
-  )
+  floor_log <- log(lam[1L] * min_ratio)
+  per_block <- ceiling(log(block) / step)
+  start_log <- log(min(lam))
+  best <- NULL
+  repeat {
+    path_log <- start_log - step * seq(0, per_block)
+    path_log <- path_log[path_log >= floor_log - 1e-8]
+    if (length(path_log) < 2L) {
+      return(best %||% fit)
+    }
+    nxt <- glmnet::cv.glmnet(
+      x,
+      y,
+      alpha = 0,
+      family = family,
+      foldid = foldid,
+      lambda = exp(path_log)
+    )
+    if (!is.null(best) && min(nxt$cvm) >= min(best$cvm)) {
+      return(best)
+    }
+    best <- nxt
+    start_log <- min(path_log)
+  }
 }
 # ---------------------------------------------------------------------------
 

@@ -170,13 +170,42 @@ test_that("cv_glmnet_ridge extends the path when CV picks its smallest lambda", 
   fit <- cv_glmnet_ridge(d$x, d$y, family = "binomial")
   expect_lt(fit$lambda.min, ref$lambda.min)
   expect_gt(fit$lambda.min, min(fit$lambda))
-  expect_equal(max(fit$lambda), max(ref$lambda))
-  expect_lt(min(fit$lambda), 1e-8 * max(fit$lambda))
+  # The refit covers only the continuation below the default path's end, on
+  # the same grid spacing.
+  expect_equal(max(fit$lambda), min(ref$lambda))
+  step_ref <- log(ref$lambda[1]) - log(ref$lambda[2])
+  expect_equal(log(fit$lambda[1]) - log(fit$lambda[2]), step_ref)
   # Less shrinkage: the ridge coefficients move towards the unpenalised fit.
   b_glm <- stats::coef(stats::glm.fit(cbind(1, d$x), d$y, family = binomial()))
   b_ref <- as.numeric(stats::coef(ref, s = "lambda.min"))
   b_fit <- as.numeric(stats::coef(fit, s = "lambda.min"))
   expect_lt(sum((b_fit - b_glm)[-1]^2), sum((b_ref - b_glm)[-1]^2))
+})
+
+test_that("cv_glmnet_ridge extends block by block and stops at min_ratio", {
+  skip_if_not_installed("glmnet")
+  d <- ridge_floor_data(5000, 3)
+  set.seed(4)
+  ref <- glmnet::cv.glmnet(d$x, d$y, alpha = 0, family = "binomial")
+  set.seed(4)
+  one <- cv_glmnet_ridge(d$x, d$y, family = "binomial")
+  # Tiny blocks: several refits, the same choice of lambda in the end.
+  set.seed(4)
+  small <- cv_glmnet_ridge(d$x, d$y, family = "binomial", block = 1.3)
+  expect_lt(length(small$lambda), length(one$lambda))
+  expect_gt(small$lambda.min, min(small$lambda))
+  expect_equal(small$lambda.min, one$lambda.min, tolerance = 1e-6)
+  # A floor just below the default path's end: one short block, never past it.
+  floor_ratio <- 0.5 * min(ref$lambda) / max(ref$lambda)
+  set.seed(4)
+  capped <- cv_glmnet_ridge(
+    d$x,
+    d$y,
+    family = "binomial",
+    min_ratio = floor_ratio
+  )
+  expect_gte(min(capped$lambda), floor_ratio * max(ref$lambda) * (1 - 1e-6))
+  expect_equal(max(capped$lambda), min(ref$lambda))
 })
 
 test_that("ridge generators fit for every outcome type", {
@@ -187,7 +216,10 @@ test_that("ridge generators fit for every outcome type", {
     default_model_generators("binary", "ridge")(binary),
     "cv.glmnet"
   )
-  continuous <- data.frame(y = drop(d$x %*% rep(0.3, 5)) + stats::rnorm(400), d$x)
+  continuous <- data.frame(
+    y = drop(d$x %*% rep(0.3, 5)) + stats::rnorm(400),
+    d$x
+  )
   expect_s3_class(
     default_model_generators("continuous", "ridge")(continuous),
     "cv.glmnet"
