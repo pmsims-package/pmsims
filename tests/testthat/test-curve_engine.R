@@ -263,6 +263,13 @@ test_that("the ridge p5 replicates (seed 1101) give no answer, and stop cheaply"
     )))
     expect_identical(res$status, "not_bracketed")
     expect_lte(res$diagnostics$bounds[2], 1e5)
+    if (identical(res$diagnostics$adaptive_stop_reason, "near_ceiling")) {
+      # The message says what the last doubling showed, on the slope scale.
+      expect_match(
+        res$status_message,
+        "From n = [0-9,]+ to n = [0-9,]+, the calibration slope.s distance from 1 went from [0-9.]+ to [0-9.]+"
+      )
+    }
   }
 })
 

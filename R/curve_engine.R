@@ -634,20 +634,29 @@ calculate_curve <- function(
   # over the last doubling. Used by every stopping rule: a rule that
   # extrapolates far beyond a few points (e.g. "beyond max_n" after reaching
   # only n = 1,024) is otherwise easily fooled.
-  top_is_flat <- function(pts) {
+  # The last doubling: the largest usable point and the largest one at no
+  # more than about half its n, with the gain between them and whether that
+  # gain is within two standard errors (flat). NULL when there are too few
+  # points, or too narrow a range, to judge.
+  last_doubling <- function(pts) {
     p <- pts[pts$usable, ]
     if (nrow(p) < 5L || max(p$n) / min(p$n) < 16) {
-      return(FALSE)
+      return(NULL)
     }
     top <- which.max(p$n)
     prev <- which(p$n <= p$n[top] / 1.9)
     if (!length(prev)) {
-      return(FALSE)
+      return(NULL)
     }
     prev <- prev[which.max(p$n[prev])]
     gain <- p$est[top] - p$est[prev]
-    gain < 2 * sqrt(p$se[top]^2 + p$se[prev]^2)
+    list(
+      n = p$n[c(prev, top)],
+      est = p$est[c(prev, top)],
+      flat = gain < 2 * sqrt(p$se[top]^2 + p$se[prev]^2)
+    )
   }
+  top_is_flat <- function(pts) isTRUE(last_doubling(pts)$flat)
 
   # Stop before simulating expensive samples (beyond the cost guard's size)
   # when the curve has stalled within Monte Carlo error of the target: no
@@ -659,8 +668,18 @@ calculate_curve <- function(
     }
     pts <- confirm_top(pts)
     top <- which.max(pts$n)
-    if (!top_is_flat(pts) || pts$est[top] - 2 * pts$se[top] >= target) {
+    d <- last_doubling(pts)
+    if (!isTRUE(d$flat) || pts$est[top] - 2 * pts$se[top] >= target) {
       return(NULL)
+    }
+    fmt_n <- function(n) format(round(n), big.mark = ",", scientific = FALSE)
+    # The quantity is named once, then given as bare numbers.
+    what <- if (is_csse) "the calibration slope's distance from 1" else "it"
+    num <- function(v) {
+      format(signif(
+        if (is_csse) sqrt(max(0, -v)) else v,
+        if (is_csse) 3 else 4
+      ))
     }
     list(
       reason = "near_ceiling",
@@ -668,12 +687,20 @@ calculate_curve <- function(
         pts,
         "not_bracketed",
         NULL,
-        paste(
-          " Performance barely changes with sample size here: over the last",
-          "doubling it gained less than its Monte Carlo error, so the target",
-          "is close to the best this model reaches and the sample size is",
-          "poorly determined. The search stopped rather than simulate ever",
-          "larger samples."
+        sprintf(
+          paste(
+            " From n = %s to n = %s, %s went from %s to %s, a change smaller",
+            "than its Monte Carlo error. Performance has levelled off close to",
+            "the target, near the best this model reaches, so the sample size",
+            "is poorly determined, and the search stopped rather than simulate",
+            "ever larger samples. Consider a less strict target, or a model or",
+            "setting that can perform better."
+          ),
+          fmt_n(d$n[1]),
+          fmt_n(d$n[2]),
+          what,
+          num(d$est[1]),
+          num(d$est[2])
         )
       )
     )
