@@ -955,7 +955,13 @@ calculate_curve <- function(
 # - poorly_determined: the interval for the answer spans more than 2x;
 # - crosscheck: the crossing of a monotone (isotonic) fit to the observed
 #   points, which does not assume the learning-curve shape; flagged when it
-#   differs from the answer by more than 10%.
+#   differs from the answer by more than 10%;
+# - shape_at_bound: "lower" or "upper" when the fitted c sits at an end of
+#   curve_c_grid, else NA. Recorded, not warned about: at the upper end
+#   (fast-rising curves) the answer is interpolated and fine, and the lower end
+#   (the slowest rise allowed; the ridge p5 runaway sat there) also occurs on
+#   ordinary curves whose answers are fine. A shape at the lower end together
+#   with near_ceiling or crosscheck_disagrees is the case to look at.
 answer_flags <- function(fit, pts, n_star, ci, reps, target) {
   gain <- curve_value(fit, 2 * n_star) - curve_value(fit, n_star)
   p <- pts[pts$usable, ]
@@ -972,8 +978,23 @@ answer_flags <- function(fit, pts, n_star, ci, reps, target) {
     gain_per_doubling = gain,
     crosscheck_n = iso_n,
     crosscheck_disagrees = is.finite(iso_n) &&
-      abs(log(iso_n / n_star)) > log(1.1)
+      abs(log(iso_n / n_star)) > log(1.1),
+    shape_at_bound = curve_shape_at_bound(fit)
   )
+}
+
+# "lower" / "upper" when a fitted curve's c is at an end of curve_c_grid.
+curve_shape_at_bound <- function(fit) {
+  if (is.null(fit) || !is.finite(fit$c)) {
+    return(NA_character_)
+  }
+  if (fit$c <= curve_c_grid[1L] * (1 + 1e-9)) {
+    return("lower")
+  }
+  if (fit$c >= curve_c_grid[length(curve_c_grid)] * (1 - 1e-9)) {
+    return("upper")
+  }
+  NA_character_
 }
 
 # Where a weighted isotonic (non-decreasing) fit of the observed criterion
