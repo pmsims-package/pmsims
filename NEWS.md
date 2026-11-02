@@ -1,19 +1,5 @@
 # pmsims 1.1.0
 
-## Bug fixes
-
-- Complexity 2 and 3 data no longer depend on how many rows are drawn. The
-  nonlinear component was residualised and scaled within each simulated
-  dataset, so training and test sets of different sizes came from different
-  outcome models. It now uses fixed population constants for each predictor
-  configuration. Results for complexity 2 and 3 change.
-- The binary AUC no longer reverses a model that ranks the outcome the wrong
-  way round: such a model now scores below 0.5 instead of 1 minus its AUC.
-  This lowers performance at small sample sizes, so results for binary AUC
-  targets change.
-- The binary AUC no longer returns `NA` on test sets of more than about
-  90,000 rows (integer overflow).
-
 ## New search engine
 
 - A learning-curve engine, `method = "curve"`, is the default in
@@ -32,6 +18,10 @@
   `method = "curve"`; `live_plot = TRUE` redraws it during the search.
 - `cores` runs the replicates of each batch in parallel; results are the same
   for any number of cores.
+- With `method = "curve"`, when performance levels off within Monte Carlo
+  error of the target, the search stops with status `"not_bracketed"` and a
+  message giving the performance at both ends of the last doubling, rather
+  than simulating ever larger samples.
 - Faster calibration slopes, AUC, concordance, linear predictors and
   correlated predictors: a binary glm search takes about two thirds of the
   time, a Cox search about a quarter. Results are unchanged.
@@ -89,13 +79,26 @@
 - Metric values that are not finite (for example, the calibration slope of a
   lasso that selects no predictors) count as failed replicates.
 - Metrics where smaller is better (`calibration_in_the_large`, `brier_score`,
-  `ibs`) are rejected: they were searched in the wrong direction.
-- `survival_auc`'s concordance fallback returned 1 - C.
+  `ibs`) are rejected, since the search assumes larger values are better.
+- `survival_auc`'s concordance fallback now returns C (it returned 1 - C).
 - ranger and xgboost thread counts: at least one thread, following option
   `pmsims.threads`; xgboost previously used every core.
-
 - Correlated predictors now have the requested pairwise correlation. Results
   for scenarios with a non-zero `correlation` (the default is 0.3) will change.
+- Complexity 2 and 3 data no longer depend on how many rows are drawn. The
+  nonlinear component now uses fixed constants for each predictor
+  configuration, estimated once from a large reference sample, so training
+  and test sets follow the same outcome model. Results for complexity 2 and 3
+  change.
+- The binary AUC is computed with cases expected to score higher than
+  controls, so a model that ranks the outcome the wrong way round scores below
+  0.5. AUC estimates at small sample sizes are lower, so results for binary
+  AUC targets change.
+- The binary AUC no longer returns `NA` on test sets of more than about
+  90,000 rows (integer overflow).
+- `ridge` continues its lambda path below glmnet's default end when
+  cross-validation selects the smallest lambda, so its calibration improves
+  with sample size. Results for `ridge` change, most at large sample sizes.
 
 ## Performance
 
