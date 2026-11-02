@@ -634,19 +634,76 @@ calculate_curve <- function(
   # over the last doubling. Used by every stopping rule: a rule that
   # extrapolates far beyond a few points (e.g. "beyond max_n" after reaching
   # only n = 1,024) is otherwise easily fooled.
-  top_is_flat <- function(pts) {
+  # The last doubling: the largest usable point and the largest one at no
+  # more than about half its n, with the gain between them and whether that
+  # gain is within two standard errors (flat). NULL when there are too few
+  # points, or too narrow a range, to judge.
+  last_doubling <- function(pts) {
     p <- pts[pts$usable, ]
     if (nrow(p) < 5L || max(p$n) / min(p$n) < 16) {
-      return(FALSE)
+      return(NULL)
     }
     top <- which.max(p$n)
     prev <- which(p$n <= p$n[top] / 1.9)
     if (!length(prev)) {
-      return(FALSE)
+      return(NULL)
     }
     prev <- prev[which.max(p$n[prev])]
     gain <- p$est[top] - p$est[prev]
-    gain < 2 * sqrt(p$se[top]^2 + p$se[prev]^2)
+    list(
+      n = p$n[c(prev, top)],
+      est = p$est[c(prev, top)],
+      flat = gain < 2 * sqrt(p$se[top]^2 + p$se[prev]^2)
+    )
+  }
+  top_is_flat <- function(pts) isTRUE(last_doubling(pts)$flat)
+
+  # Stop before simulating expensive samples (beyond the cost guard's size)
+  # when the curve has stalled within Monte Carlo error of the target: no
+  # significant gain over the last doubling at a precisely estimated top
+  # point, which is not clearly above the target. Returns NULL to continue.
+  stall_check <- function(pts, nxt) {
+    if (nxt <= max(32 * first_n, 5e4)) {
+      return(NULL)
+    }
+    pts <- confirm_top(pts)
+    top <- which.max(pts$n)
+    d <- last_doubling(pts)
+    if (!isTRUE(d$flat) || pts$est[top] - 2 * pts$se[top] >= target) {
+      return(NULL)
+    }
+    fmt_n <- function(n) format(round(n), big.mark = ",", scientific = FALSE)
+    # The quantity is named once, then given as bare numbers.
+    what <- if (is_csse) "the calibration slope's distance from 1" else "it"
+    num <- function(v) {
+      format(signif(
+        if (is_csse) sqrt(max(0, -v)) else v,
+        if (is_csse) 3 else 4
+      ))
+    }
+    list(
+      reason = "near_ceiling",
+      status = stop_status(
+        pts,
+        "not_bracketed",
+        NULL,
+        sprintf(
+          paste(
+            " From n = %s to n = %s, %s went from %s to %s, a change smaller",
+            "than its Monte Carlo error. Performance has levelled off close to",
+            "the target, near the best this model reaches, so the sample size",
+            "is poorly determined, and the search stopped rather than simulate",
+            "ever larger samples. Consider a less strict target, or a model or",
+            "setting that can perform better."
+          ),
+          fmt_n(d$n[1]),
+          fmt_n(d$n[2]),
+          what,
+          num(d$est[1]),
+          num(d$est[2])
+        )
+      )
+    )
   }
 
   # ---- pilot ------------------------------------------------------------------
@@ -678,6 +735,14 @@ calculate_curve <- function(
     above <- any(pts$est >= target)
     below <- any(pts$est < target)
     if (above && below) {
+      # A single 20-replicate point can meet the target by chance: confirm
+      # the smallest one that does before leaving the pilot.
+      first_above <- min(pts$n[pts$est >= target])
+      i <- match(first_above, pts$n)
+      if (pts$reps[i] < reps_precise && used < n_reps_total) {
+        add(first_above, reps_precise - pts$reps[i])
+        next
+      }
       break
     }
     if (used >= pilot_budget) {
@@ -697,7 +762,7 @@ calculate_curve <- function(
       } else {
         2 * top
       }
-      stop_here <- reach_check(pts, f, nxt)
+      stop_here <- reach_check(pts, f, nxt) %||% stall_check(pts, nxt)
       if (!is.null(stop_here)) {
         status <- stop_here$status
         pilot_reason <- stop_here$reason
@@ -777,7 +842,24 @@ calculate_curve <- function(
     }
     near <- pred
     step <- step + 1L
-    add(pred * factors[(step - 1L) %% length(factors) + 1L], 2L * n_reps_per)
+    nxt <- pred * factors[(step - 1L) %% length(factors) + 1L]
+    if (nxt > max(pts$n)) {
+      stalled <- stall_check(pts, nxt)
+      if (!is.null(stalled)) {
+        pts <- summarise_points()
+        return(curve_output(
+          store,
+          pts,
+          fit_points(pts),
+          NA_real_,
+          stalled$status,
+          stalled$reason,
+          NULL,
+          used
+        ))
+      }
+    }
+    add(nxt, 2L * n_reps_per)
   }
 
   # ---- answer ---------------------------------------------------------------
@@ -900,7 +982,13 @@ calculate_curve <- function(
 # - poorly_determined: the interval for the answer spans more than 2x;
 # - crosscheck: the crossing of a monotone (isotonic) fit to the observed
 #   points, which does not assume the learning-curve shape; flagged when it
-#   differs from the answer by more than 10%.
+#   differs from the answer by more than 10%;
+# - shape_at_bound: "lower" or "upper" when the fitted c sits at an end of
+#   curve_c_grid, else NA. Recorded, not warned about: at the upper end
+#   (fast-rising curves) the answer is interpolated and fine, and the lower end
+#   (the slowest rise allowed; the ridge p5 runaway sat there) also occurs on
+#   ordinary curves whose answers are fine. A shape at the lower end together
+#   with near_ceiling or crosscheck_disagrees is the case to look at.
 answer_flags <- function(fit, pts, n_star, ci, reps, target) {
   gain <- curve_value(fit, 2 * n_star) - curve_value(fit, n_star)
   p <- pts[pts$usable, ]
@@ -917,8 +1005,23 @@ answer_flags <- function(fit, pts, n_star, ci, reps, target) {
     gain_per_doubling = gain,
     crosscheck_n = iso_n,
     crosscheck_disagrees = is.finite(iso_n) &&
-      abs(log(iso_n / n_star)) > log(1.1)
+      abs(log(iso_n / n_star)) > log(1.1),
+    shape_at_bound = curve_shape_at_bound(fit)
   )
+}
+
+# "lower" / "upper" when a fitted curve's c is at an end of curve_c_grid.
+curve_shape_at_bound <- function(fit) {
+  if (is.null(fit) || !is.finite(fit$c)) {
+    return(NA_character_)
+  }
+  if (fit$c <= curve_c_grid[1L] * (1 + 1e-9)) {
+    return("lower")
+  }
+  if (fit$c >= curve_c_grid[length(curve_c_grid)] * (1 - 1e-9)) {
+    return("upper")
+  }
+  NA_character_
 }
 
 # Where a weighted isotonic (non-decreasing) fit of the observed criterion
