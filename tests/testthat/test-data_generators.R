@@ -215,3 +215,72 @@ test_that("correlated binary predictors match the Gaussian copula", {
     expect_equal(mean(off_diag), phi_theory(prev), tolerance = 0.03)
   }
 })
+
+
+test_that("C2/C3 rows follow one model whatever the batch size", {
+  set.seed(3)
+  X <- generate_predictors(5000, 6, 0, complexity = 3, correlation = 0.3)
+  lp <- function(X, cx) {
+    generate_linear_predictor(
+      X,
+      6,
+      0,
+      0,
+      1,
+      cx,
+      0.4,
+      predictor_type = "continuous",
+      binary_prevalence = 0,
+      correlation = 0.3,
+      distribution = "normal"
+    )
+  }
+  for (cx in 2:3) {
+    expect_equal(lp(X[1:40, ], cx), lp(X, cx)[1:40])
+  }
+})
+
+test_that("C2/C3 need the settings the predictors were drawn with", {
+  X <- generate_predictors(50, 4, 0, complexity = 2)
+  expect_error(
+    generate_linear_predictor(X, 4, 0, 0, 1, 2, 0.2, correlation = 0.3),
+    "predictor_type, binary_prevalence, distribution"
+  )
+  expect_length(generate_linear_predictor(X, 4, 0, 0, 1, 1), 50)
+})
+
+test_that("the C2/C3 component has share f and is orthogonal to x", {
+  set.seed(4)
+  X <- generate_predictors(2e5, 5, 0, complexity = 3, correlation = 0.3)
+  lp <- generate_linear_predictor(
+    X,
+    5,
+    0,
+    0,
+    1,
+    3,
+    0.3,
+    predictor_type = "continuous",
+    binary_prevalence = 0,
+    correlation = 0.3,
+    distribution = "normal"
+  )
+  nl <- lp - rowSums(X)
+  expect_equal(var(nl) / (var(rowSums(X)) + var(nl)), 0.3, tolerance = 0.02)
+  expect_lt(summary(stats::lm(nl ~ X))$r.squared, 1e-3)
+})
+
+test_that("the C2/C3 reference draw leaves the random stream untouched", {
+  set.seed(9)
+  a <- runif(3)
+  set.seed(9)
+  ref <- nonlinear_reference(
+    4,
+    2,
+    predictor_type = "continuous",
+    binary_prevalence = 0,
+    correlation = 0.1,
+    distribution = "normal"
+  )
+  expect_identical(runif(3), a)
+})

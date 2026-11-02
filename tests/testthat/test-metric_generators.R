@@ -308,3 +308,24 @@ test_that("survival_cindex returns NaN when prediction fails", {
 
   expect_true(is.nan(survival_cindex(data, fit = NULL, model = "coxph")))
 })
+
+
+test_that("binary AUC is oriented: reversed scores fall below 0.5", {
+  set.seed(11)
+  y <- rbinom(400, 1, 0.4)
+  score <- y + rnorm(400, sd = 0.5)
+  auc_fwd <- rank_auc(y, score)
+  auc_rev <- rank_auc(y, -score)
+  expect_gt(auc_fwd, 0.5)
+  expect_lt(auc_rev, 0.5)
+  expect_equal(auc_rev, 1 - auc_fwd)
+  expect_equal(rank_auc(y, rep(1, 400)), 0.5)
+  pauc <- pROC::auc(y, -score, levels = c(0, 1), direction = "<", quiet = TRUE)
+  expect_equal(auc_rev, as.numeric(pauc))
+})
+
+test_that("rank_auc() does not overflow on large test sets", {
+  set.seed(2)
+  y <- rbinom(120000, 1, 0.4)
+  expect_true(is.finite(rank_auc(y, y + rnorm(120000))))
+})
