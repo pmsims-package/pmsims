@@ -158,10 +158,14 @@ test_that("rank_auc() matches pROC::auc()", {
   set.seed(11)
   y <- rbinom(1000, 1, 0.3)
   s <- rnorm(1000) + y
-  pauc <- function(y, s) pROC::auc(y, s, quiet = TRUE)[1]
+  # Fixed orientation (controls below cases), as binary_auc_metric() uses.
+  pauc <- function(y, s) {
+    pROC::auc(y, s, levels = c(0, 1), direction = "<", quiet = TRUE)[1]
+  }
   expect_equal(rank_auc(y, s), pauc(y, s), tolerance = 1e-14)
   expect_equal(rank_auc(y, round(s)), pauc(y, round(s)), tolerance = 1e-14)
-  expect_equal(rank_auc(y, -s), pauc(y, -s), tolerance = 1e-14) # direction
+  expect_equal(rank_auc(y, -s), pauc(y, -s), tolerance = 1e-14) # reversed
+  expect_lt(rank_auc(y, -s), 0.5)
   expect_null(rank_auc(rep(1, 10), rnorm(10))) # one class
   y[2] <- NA
   expect_null(rank_auc(y, s))

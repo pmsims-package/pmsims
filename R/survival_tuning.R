@@ -125,7 +125,11 @@ survival_tuning <- function(
     intercept = 0,
     beta_signal = 1,
     complexity = complexity,
-    nonlinear_strength = nonlinear_strength
+    nonlinear_strength = nonlinear_strength,
+    predictor_type = predictor_type,
+    binary_prevalence = binary_prevalence,
+    correlation = correlation,
+    distribution = distribution
   )
   var_lp_unit <- stats::var(lp_unit)
   if (!is.finite(var_lp_unit) || var_lp_unit <= 0) {
@@ -213,7 +217,11 @@ survival_tuning <- function(
     intercept = 0,
     beta_signal = beta_opt,
     complexity = complexity,
-    nonlinear_strength = nonlinear_strength
+    nonlinear_strength = nonlinear_strength,
+    predictor_type = predictor_type,
+    binary_prevalence = binary_prevalence,
+    correlation = correlation,
+    distribution = distribution
   )
   event_rate <- mean(val$event)
   cindex <- survival::concordancefit(
