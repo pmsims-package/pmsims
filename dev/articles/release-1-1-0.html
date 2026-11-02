@@ -82,7 +82,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>pmsims 1.1.0: A learning-curve search engine</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/vignettes/release-1-1-0.Rmd" class="external-link"><code>vignettes/release-1-1-0.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/vignettes/release-1-1-0.Rmd" class="external-link"><code>vignettes/release-1-1-0.Rmd</code></a></small>
       <div class="d-none name"><code>release-1-1-0.Rmd</code></div>
     </div>
 
@@ -154,7 +154,8 @@ below the target</td>
 </tr>
 <tr class="odd">
 <td><code>"not_bracketed"</code></td>
-<td>No sample size up to <code>max_n</code> met the target</td>
+<td>No sample size up to <code>max_n</code> met the target, or
+performance levelled off close to the target</td>
 </tr>
 <tr class="even">
 <td><code>"unreachable"</code></td>
@@ -186,6 +187,13 @@ replicates.</li>
 <code>"ibs"</code>) can no longer be used as search targets.</li>
 <li>The concordance fallback in <code>survival_auc</code> has been
 corrected.</li>
+<li>Complexity 2 and 3 data follow the same outcome model whatever the
+number of rows drawn.</li>
+<li>The binary AUC is computed with a fixed direction, so it can fall
+below 0.5.</li>
+<li>
+<code>ridge</code> continues its lambda path when cross-validation
+selects the smallest lambda.</li>
 </ul>
 </div>
 <div class="section level2">
