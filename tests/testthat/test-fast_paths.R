@@ -158,7 +158,6 @@ test_that("rank_auc() matches pROC::auc()", {
   set.seed(11)
   y <- rbinom(1000, 1, 0.3)
   s <- rnorm(1000) + y
-  # Fixed orientation (controls below cases), as binary_auc_metric() uses.
   pauc <- function(y, s) {
     pROC::auc(y, s, levels = c(0, 1), direction = "<", quiet = TRUE)[1]
   }
