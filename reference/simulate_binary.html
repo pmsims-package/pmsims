@@ -66,7 +66,7 @@ meets the chosen performance criterion."><meta property="og:image" content="http
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Minimum sample size for binary-outcome prediction models</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/R/simulate_wrappers.R" class="external-link"><code>R/simulate_wrappers.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/R/simulate_wrappers.R" class="external-link"><code>R/simulate_wrappers.R</code></a></small>
       <div class="d-none name"><code>simulate_binary.Rd</code></div>
     </div>
 
@@ -290,6 +290,7 @@ itself.</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Estimating the learning curve... (pilot)</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Refining the learning curve near the target...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> A shape-free check (a monotone fit to the simulated points) puts the answer at 655, more than 10% from the learning-curve answer.</span>
 <span class="r-in"><span><span class="va">est</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                     ┌────────────────────────────────────────┐</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                     │<span style="font-weight: bold;"> pmsims: Sample size simulation summary </span>│</span>
@@ -316,19 +317,19 @@ itself.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────── Results ───────────────────────────────────</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="font-weight: bold;">Minimum sample size</span>       <span style="color: #0000BB; font-weight: bold;">451</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="font-weight: bold;">Minimum sample size</span>       <span style="color: #0000BB; font-weight: bold;">587</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="font-weight: bold;">Performance at N = 451</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="font-weight: bold;">Performance at N = 587</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Calibration slope       0.900    <span style="color: #555555;">(target ≥ 0.900)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     C-statistic             0.797</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     C-statistic             0.796</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #555555;">Running time</span>              <span style="color: #555555;">19 seconds</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #555555;">Running time</span>              <span style="color: #555555;">20 seconds</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────────────────────</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #555555; font-style: italic;">Assurance mode selects N so that the target is achieved with high probability</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #555555; font-style: italic;">across repeated datasets.</span></span>
 <span class="r-in"><span><span class="va">est</span><span class="op">$</span><span class="va">min_n</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 451</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 587</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">est</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="simulate_binary-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

@@ -268,6 +268,7 @@ est <- simulate_custom(
 #> ℹ Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
 #> ℹ Estimating the learning curve... (pilot)
 #> ℹ Refining the learning curve near the target...
+#> ! A shape-free check (a monotone fit to the simulated points) puts the answer at 92, more than 10% from the learning-curve answer.
 est
 #>                     ┌────────────────────────────────────────┐
 #>                     │ pmsims: Sample size simulation summary │
@@ -284,18 +285,18 @@ est
 #> 
 #> ──────────────────────────────────── Results ───────────────────────────────────
 #> 
-#>   Minimum sample size      100
+#>   Minimum sample size      103
 #> 
-#>   Performance at N = 100
-#>     Calibration slope      0.901    (target ≥ 0.900)
+#>   Performance at N = 103
+#>     Calibration slope      0.900    (target ≥ 0.900)
 #> 
-#>   Running time             14 seconds
+#>   Running time             13 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability
 #> across repeated datasets.
 est$min_n
-#> [1] 100
+#> [1] 103
 plot(est)
 
 # }
