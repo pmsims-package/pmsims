@@ -383,7 +383,8 @@ binary_auc_metric <- function(data, fit, model) {
   y_hat <- as.numeric(predict_custom(x, y, fit, model, type = "response"))
   auc <- rank_auc(y, y_hat)
   if (is.null(auc)) {
-    auc <- pROC::auc(y, y_hat, quiet = TRUE)[1]
+    # Same orientation as rank_auc(): controls (0) below cases (1).
+    auc <- pROC::auc(y, y_hat, levels = c(0, 1), direction = "<", quiet = TRUE)[1]
   }
   auc
 }
@@ -391,9 +392,10 @@ binary_auc_metric <- function(data, fit, model) {
 # pROC::auc(y, score) for a 0/1 outcome, from the Mann-Whitney rank formula:
 # the probability that a random case scores above a random control, ties
 # counting one half (average ranks), which is the area under the empirical
-# ROC curve. Like pROC's default direction = "auto", the direction is chosen
-# by comparing the median scores of controls and cases, so the result is
-# 1 minus that probability when controls score higher. Returns NULL, so that
+# ROC curve. The direction is fixed (pROC's direction = "<"): a score that
+# ranks the outcome the wrong way round gives an AUC below 0.5. (Before this fix
+# the direction was chosen from the data, like pROC's "auto", which reported
+# a reversed model as better than chance.) Returns NULL, so that
 # the caller uses pROC, unless the outcome is numeric 0/1 (no missing values)
 # with both classes present and all scores are finite.
 rank_auc <- function(y, score) {
@@ -407,8 +409,11 @@ rank_auc <- function(y, score) {
     return(NULL)
   }
   r <- rank(score)
-  auc <- (sum(r[case]) - n_case * (n_case + 1) / 2) / (n_case * n_control)
-  if (stats::median(score[!case]) > stats::median(score[case])) 1 - auc else auc
+  # Oriented: higher predicted risk should mean y = 1. A model that ranks
+  # the outcome the wrong way round scores below 0.5; it is not flipped.
+  # as.numeric(): the product of the class counts overflows an integer above
+  # about 2^31 (e.g. a 100,000-row test set at prevalence 0.4).
+  (sum(r[case]) - n_case * (n_case + 1) / 2) / (as.numeric(n_case) * n_control)
 }
 
 binary_calib_slope <- function(data, fit, model) {

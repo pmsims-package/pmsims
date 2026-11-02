@@ -215,3 +215,20 @@ test_that("correlated binary predictors match the Gaussian copula", {
     expect_equal(mean(off_diag), phi_theory(prev), tolerance = 0.03)
   }
 })
+
+
+test_that("C2/C3 rows follow one model whatever the batch size", {
+  set.seed(3)
+  X <- generate_predictors(5000, 6, 0, complexity = 3, correlation = 0.3)
+  for (cx in 2:3) {
+    big <- generate_linear_predictor(X, 6, 0, 0, 1, cx, 0.4, correlation = 0.3)
+    small <- generate_linear_predictor(X[1:40, ], 6, 0, 0, 1, cx, 0.4, correlation = 0.3)
+    expect_equal(small, big[1:40])
+  }
+})
+
+test_that("the C2/C3 reference draw leaves the random stream untouched", {
+  set.seed(9); a <- runif(3)
+  set.seed(9); invisible(nonlinear_reference(4, 2, correlation = 0.1)); b <- runif(3)
+  expect_identical(a, b)
+})
