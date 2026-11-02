@@ -199,6 +199,119 @@ test_that("a target just above the ceiling stops by max_n", {
   expect_lte(res$diagnostics$bounds[2], 2e5)
 })
 
+test_that("a near-flat curve that meets the target only far out stops, not chases", {
+  # Ceiling just above -0.01: the target is met only near n = 280,000.
+  sc <- csse_curve(bias = 0.095)
+  for (seed in 1:3) {
+    res <- run_curve(sc, -0.01, seed = seed, start_n = 500)
+    expect_identical(res$status, "not_bracketed")
+    expect_identical(res$diagnostics$adaptive_stop_reason, "near_ceiling")
+    expect_lte(res$diagnostics$bounds[2], 2e5)
+  }
+})
+
+test_that("a CSSE curve whose ceiling is the target, or just short of it, stops early", {
+  # bias 0.1: the criterion approaches the target from below and never meets
+  # it; bias 0.103: the ceiling is 0.003 short in |slope - 1|. Either way the
+  # search must stop with a status, well before max_n, not chase the target.
+  for (bias in c(0.1, 0.103)) {
+    for (seed in 1:3) {
+      res <- run_curve(
+        csse_curve(bias = bias),
+        -0.01,
+        seed = seed,
+        start_n = 500
+      )
+      expect_true(res$status %in% c("unreachable", "not_bracketed"))
+      expect_lte(res$diagnostics$bounds[2], 1e5)
+    }
+  }
+})
+
+test_that("the ridge p5 replicates (seed 1101) give no answer, and stop cheaply", {
+  # Replicate values stored from core-bin-ridge-p5 on ed6f1be, seed 1101, where
+  # the criterion sits within Monte Carlo error of the target from n = 28,000
+  # on. That run returned 76,091 after simulating up to 125,810. Values are
+  # drawn from the stored sample size nearest on the log scale. Before the
+  # near-ceiling stop, seeds 1 and 4 here returned answers (20,538 and, after
+  # simulating up to 150,528, 68,953); the others end below the target either
+  # way.
+  fx <- readRDS(test_path("fixtures", "ridge_p5_s1101_csse.rds"))
+  data_function <- function(n) data.frame(n = n)
+  model_function <- function(d) d
+  attr(model_function, "model") <- "ridge"
+  metric_function <- function(test_data, fit, model) {
+    i <- which.min(abs(log(fx$n / fit$n)))
+    sample(fx$values[[i]], 1L)
+  }
+  attr(metric_function, "metric") <- "csse"
+  for (seed in 1:6) {
+    set.seed(seed)
+    res <- suppressWarnings(suppressMessages(simulate_custom(
+      data_function,
+      model_function,
+      metric_function,
+      target_performance = fx$target,
+      mean_or_assurance = "assurance",
+      test_n = 1,
+      n_reps_total = 1000,
+      n_reps_per = 20,
+      progress = FALSE,
+      verify_reps = 50,
+      method = "curve",
+      start_n = 588
+    )))
+    expect_identical(res$status, "not_bracketed")
+    expect_lte(res$diagnostics$bounds[2], 1e5)
+    if (identical(res$diagnostics$adaptive_stop_reason, "near_ceiling")) {
+      # The message says what the last doubling showed, on the slope scale.
+      expect_match(
+        res$status_message,
+        "From n = [0-9,]+ to n = [0-9,]+, the calibration slope.s distance from 1 went from [0-9.]+ to [0-9.]+"
+      )
+    }
+  }
+})
+
+test_that("a pilot point that meets the target by chance is confirmed first", {
+  # The first 20 replicates at n0 (well below the answer) meet the target by
+  # construction; later ones follow the curve. The pilot must top n0 up and
+  # carry on, not treat it as bracketing the target.
+  sc <- synthetic_curve()
+  truth <- synthetic_answer(0.85)
+  n0 <- round(truth / 4)
+  for (seed in 1:2) {
+    calls_at_n0 <- 0L
+    lucky <- sc$metric_function
+    sc$metric_function <- function(test_data, fit, model) {
+      if (round(fit$n) == n0) {
+        calls_at_n0 <<- calls_at_n0 + 1L
+        if (calls_at_n0 <= 20L) {
+          return(0.99)
+        }
+      }
+      lucky(test_data, fit, model)
+    }
+    attr(sc$metric_function, "metric") <- "auc"
+    res <- run_curve(sc, 0.85, seed = seed, start_n = n0)
+    expect_gte(calls_at_n0, 80L)
+    expect_true(res$status %in% c("ok", "not_verified"))
+    expect_lt(abs(log(res$min_n / truth)), log(1.3))
+    sc$metric_function <- lucky
+  }
+})
+
+test_that("a fitted shape at the end of the c grid is recorded", {
+  grid <- curve_c_grid
+  expect_identical(curve_shape_at_bound(list(c = grid[1])), "lower")
+  expect_identical(curve_shape_at_bound(list(c = grid[length(grid)])), "upper")
+  expect_identical(curve_shape_at_bound(list(c = grid[10])), NA_character_)
+  expect_identical(curve_shape_at_bound(NULL), NA_character_)
+  res <- run_curve(synthetic_curve(), 0.85, seed = 1)
+  expect_true(is.character(res$diagnostics$shape_at_bound))
+  expect_length(res$diagnostics$shape_at_bound, 1L)
+})
+
 test_that("failed replicates are told apart from legitimate fallback-valued ones", {
   data_function <- function(n) data.frame(n = n, z = stats::rnorm(1))
   model_function <- function(d) d

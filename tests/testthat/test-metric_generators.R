@@ -320,10 +320,8 @@ test_that("binary AUC is oriented: reversed scores fall below 0.5", {
   expect_lt(auc_rev, 0.5)
   expect_equal(auc_rev, 1 - auc_fwd)
   expect_equal(rank_auc(y, rep(1, 400)), 0.5)
-  expect_equal(
-    auc_rev,
-    as.numeric(pROC::auc(y, -score, levels = c(0, 1), direction = "<", quiet = TRUE))
-  )
+  pauc <- pROC::auc(y, -score, levels = c(0, 1), direction = "<", quiet = TRUE)
+  expect_equal(auc_rev, as.numeric(pauc))
 })
 
 test_that("rank_auc() does not overflow on large test sets", {

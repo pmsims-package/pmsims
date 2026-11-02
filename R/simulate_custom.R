@@ -654,6 +654,7 @@ check_result <- function(
       gain_per_doubling = search$gain_per_doubling %||% NA_real_,
       crosscheck_n = search$crosscheck_n %||% NA_real_,
       crosscheck_disagrees = isTRUE(search$crosscheck_disagrees),
+      shape_at_bound = search$shape_at_bound %||% NA_character_,
       replicates = failures,
       failed_replicates = sum(failures$failed),
       total_replicates = sum(failures$reps)
