@@ -48,17 +48,11 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.0" id="pmsims-110">pmsims 1.1.0<a class="anchor" aria-label="anchor" href="#pmsims-110"></a></h2>
-<div class="section level3">
-<h3 id="bug-fixes-1-1-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-1-0"></a></h3>
-<ul><li>Complexity 2 and 3 data no longer depend on how many rows are drawn. The nonlinear component was residualised and scaled within each simulated dataset, so training and test sets of different sizes came from different outcome models. It now uses fixed population constants for each predictor configuration. Results for complexity 2 and 3 change.</li>
-<li>The binary AUC no longer reverses a model that ranks the outcome the wrong way round: such a model now scores below 0.5 instead of 1 minus its AUC. This lowers performance at small sample sizes, so results for binary AUC targets change.</li>
-<li>The binary AUC no longer returns <code>NA</code> on test sets of more than about 90,000 rows (integer overflow).</li>
-</ul></div>
 <div class="section level3">
 <h3 id="new-search-engine-1-1-0">New search engine<a class="anchor" aria-label="anchor" href="#new-search-engine-1-1-0"></a></h3>
 <ul><li>A learning-curve engine, <code>method = "curve"</code>, is the default in <code><a href="../reference/simulate_custom.html">simulate_custom()</a></code> and the <code>simulate_*()</code> wrappers; the previous engine is available as <code>method = "mlpwr"</code>. It fits a monotone learning curve to every replicate simulated so far and puts each new batch where the curve crosses the target, so there is no fixed search range. The answer is a median-unbiased estimate with an interval (<code>diagnostics$curve$n_ci</code>), checked against a shape-free fit (<code>diagnostics$crosscheck_n</code>); targets close to the best achievable performance are flagged. Targets that cannot be reached stop with status <code>"unreachable"</code> and a message saying what is achievable; when 20% or more of replicates fail at every sample size tried, so that no curve can be fitted, it stops with status <code>"replicates_failed"</code>.</li>
@@ -66,6 +60,7 @@
 <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> shows the learning curve, the target and the answer for <code>method = "curve"</code>; <code>live_plot = TRUE</code> redraws it during the search.</li>
 <li>
 <code>cores</code> runs the replicates of each batch in parallel; results are the same for any number of cores.</li>
+<li>With <code>method = "curve"</code>, when performance levels off within Monte Carlo error of the target, the search stops with status <code>"not_bracketed"</code> and a message giving the performance at both ends of the last doubling, rather than simulating ever larger samples.</li>
 <li>Faster calibration slopes, AUC, concordance, linear predictors and correlated predictors: a binary glm search takes about two thirds of the time, a Cox search about a quarter. Results are unchanged.</li>
 </ul></div>
 <div class="section level3">
@@ -93,12 +88,18 @@
 <li>Custom metric functions without a <code>metric</code> attribute count failed replicates as 0.5 (with a message); set <code>attr(metric_function, "value_on_error")</code> to choose another value.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-1-1-0-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-1-0-1"></a></h3>
-<ul><li><p>Metric values that are not finite (for example, the calibration slope of a lasso that selects no predictors) count as failed replicates.</p></li>
-<li><p>Metrics where smaller is better (<code>calibration_in_the_large</code>, <code>brier_score</code>, <code>ibs</code>) are rejected: they were searched in the wrong direction.</p></li>
-<li><p><code>survival_auc</code>’s concordance fallback returned 1 - C.</p></li>
-<li><p>ranger and xgboost thread counts: at least one thread, following option <code>pmsims.threads</code>; xgboost previously used every core.</p></li>
-<li><p>Correlated predictors now have the requested pairwise correlation. Results for scenarios with a non-zero <code>correlation</code> (the default is 0.3) will change.</p></li>
+<h3 id="bug-fixes-1-1-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-1-0"></a></h3>
+<ul><li>Metric values that are not finite (for example, the calibration slope of a lasso that selects no predictors) count as failed replicates.</li>
+<li>Metrics where smaller is better (<code>calibration_in_the_large</code>, <code>brier_score</code>, <code>ibs</code>) are rejected, since the search assumes larger values are better.</li>
+<li>
+<code>survival_auc</code>’s concordance fallback now returns C (it returned 1 - C).</li>
+<li>ranger and xgboost thread counts: at least one thread, following option <code>pmsims.threads</code>; xgboost previously used every core.</li>
+<li>Correlated predictors now have the requested pairwise correlation. Results for scenarios with a non-zero <code>correlation</code> (the default is 0.3) will change.</li>
+<li>Complexity 2 and 3 data no longer depend on how many rows are drawn. The nonlinear component now uses fixed constants for each predictor configuration, estimated once from a large reference sample, so training and test sets follow the same outcome model. Results for complexity 2 and 3 change.</li>
+<li>The binary AUC is computed with cases expected to score higher than controls, so a model that ranks the outcome the wrong way round scores below 0.5. AUC estimates at small sample sizes are lower, so results for binary AUC targets change.</li>
+<li>The binary AUC no longer returns <code>NA</code> on test sets of more than about 90,000 rows (integer overflow).</li>
+<li>
+<code>ridge</code> continues its lambda path below glmnet’s default end when cross-validation selects the smallest lambda, so its calibration improves with sample size. Results for <code>ridge</code> change, most at large sample sizes.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="performance-1-1-0">Performance<a class="anchor" aria-label="anchor" href="#performance-1-1-0"></a></h3>
