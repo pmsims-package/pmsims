@@ -48,11 +48,17 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.0" id="pmsims-110">pmsims 1.1.0<a class="anchor" aria-label="anchor" href="#pmsims-110"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-1-1-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-1-0"></a></h3>
+<ul><li>Complexity 2 and 3 data no longer depend on how many rows are drawn. The nonlinear component was residualised and scaled within each simulated dataset, so training and test sets of different sizes came from different outcome models. It now uses fixed population constants for each predictor configuration. Results for complexity 2 and 3 change.</li>
+<li>The binary AUC no longer reverses a model that ranks the outcome the wrong way round: such a model now scores below 0.5 instead of 1 minus its AUC. This lowers performance at small sample sizes, so results for binary AUC targets change.</li>
+<li>The binary AUC no longer returns <code>NA</code> on test sets of more than about 90,000 rows (integer overflow).</li>
+</ul></div>
 <div class="section level3">
 <h3 id="new-search-engine-1-1-0">New search engine<a class="anchor" aria-label="anchor" href="#new-search-engine-1-1-0"></a></h3>
 <ul><li>A learning-curve engine, <code>method = "curve"</code>, is the default in <code><a href="../reference/simulate_custom.html">simulate_custom()</a></code> and the <code>simulate_*()</code> wrappers; the previous engine is available as <code>method = "mlpwr"</code>. It fits a monotone learning curve to every replicate simulated so far and puts each new batch where the curve crosses the target, so there is no fixed search range. The answer is a median-unbiased estimate with an interval (<code>diagnostics$curve$n_ci</code>), checked against a shape-free fit (<code>diagnostics$crosscheck_n</code>); targets close to the best achievable performance are flagged. Targets that cannot be reached stop with status <code>"unreachable"</code> and a message saying what is achievable; when 20% or more of replicates fail at every sample size tried, so that no curve can be fitted, it stops with status <code>"replicates_failed"</code>.</li>
@@ -87,7 +93,7 @@
 <li>Custom metric functions without a <code>metric</code> attribute count failed replicates as 0.5 (with a message); set <code>attr(metric_function, "value_on_error")</code> to choose another value.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-1-1-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-1-0"></a></h3>
+<h3 id="bug-fixes-1-1-0-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-1-0-1"></a></h3>
 <ul><li><p>Metric values that are not finite (for example, the calibration slope of a lasso that selects no predictors) count as failed replicates.</p></li>
 <li><p>Metrics where smaller is better (<code>calibration_in_the_large</code>, <code>brier_score</code>, <code>ibs</code>) are rejected: they were searched in the wrong direction.</p></li>
 <li><p><code>survival_auc</code>’s concordance fallback returned 1 - C.</p></li>

@@ -2,6 +2,21 @@
 
 ## pmsims 1.1.0
 
+### Bug fixes
+
+- Complexity 2 and 3 data no longer depend on how many rows are drawn.
+  The nonlinear component was residualised and scaled within each
+  simulated dataset, so training and test sets of different sizes came
+  from different outcome models. It now uses fixed population constants
+  for each predictor configuration. Results for complexity 2 and 3
+  change.
+- The binary AUC no longer reverses a model that ranks the outcome the
+  wrong way round: such a model now scores below 0.5 instead of 1 minus
+  its AUC. This lowers performance at small sample sizes, so results for
+  binary AUC targets change.
+- The binary AUC no longer returns `NA` on test sets of more than about
+  90,000 rows (integer overflow).
+
 ### New search engine
 
 - A learning-curve engine, `method = "curve"`, is the default in

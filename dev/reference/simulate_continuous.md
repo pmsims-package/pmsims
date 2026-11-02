@@ -220,6 +220,7 @@ est <- simulate_continuous(
 #> ℹ Estimating the learning curve... (pilot)
 #> ℹ Refining the learning curve near the target...
 #> ! The target is close to the best performance this model can reach: doubling the sample size from the answer gains less than the Monte Carlo error, so the sample size is poorly determined.
+#> ! A shape-free check (a monotone fit to the simulated points) puts the answer at 79, more than 10% from the learning-curve answer.
 est
 #>                     ┌────────────────────────────────────────┐
 #>                     │ pmsims: Sample size simulation summary │
@@ -245,19 +246,19 @@ est
 #> 
 #> ──────────────────────────────────── Results ───────────────────────────────────
 #> 
-#>   Minimum sample size      103
+#>   Minimum sample size      95
 #> 
-#>   Performance at N = 103
+#>   Performance at N = 95
 #>     Calibration slope      0.900    (target ≥ 0.900)
-#>     R²                     0.483
+#>     R²                     0.482
 #> 
-#>   Running time             9 seconds
+#>   Running time             11 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability
 #> across repeated datasets.
 est$min_n
-#> [1] 103
+#> [1] 95
 plot(est)
 
 # }

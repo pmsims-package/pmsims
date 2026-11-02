@@ -233,6 +233,7 @@ est <- simulate_survival(
 #> ℹ Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
 #> ℹ Estimating the learning curve... (pilot)
 #> ℹ Refining the learning curve near the target...
+#> ! The target is close to the best performance this model can reach: doubling the sample size from the answer gains less than the Monte Carlo error, so the sample size is poorly determined.
 est
 #>                     ┌────────────────────────────────────────┐
 #>                     │ pmsims: Sample size simulation summary │
@@ -260,19 +261,19 @@ est
 #> 
 #> ──────────────────────────────────── Results ───────────────────────────────────
 #> 
-#>   Minimum sample size      178
+#>   Minimum sample size      195
 #> 
-#>   Performance at N = 178
+#>   Performance at N = 195
 #>     Calibration slope      0.900    (target ≥ 0.900)
-#>     C-index                0.701
+#>     C-index                0.700
 #> 
-#>   Running time             48 seconds
+#>   Running time             58 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability
 #> across repeated datasets.
 est$min_n
-#> [1] 178
+#> [1] 195
 plot(est)
 
 # }

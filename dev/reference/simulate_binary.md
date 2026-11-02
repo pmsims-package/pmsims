@@ -228,6 +228,7 @@ est <- simulate_binary(
 #> ℹ Using user-specified min_sample_size and max_sample_size. Adaptive starting values will not be used.
 #> ℹ Estimating the learning curve... (pilot)
 #> ℹ Refining the learning curve near the target...
+#> ! A shape-free check (a monotone fit to the simulated points) puts the answer at 655, more than 10% from the learning-curve answer.
 est
 #>                     ┌────────────────────────────────────────┐
 #>                     │ pmsims: Sample size simulation summary │
@@ -254,19 +255,19 @@ est
 #> 
 #> ──────────────────────────────────── Results ───────────────────────────────────
 #> 
-#>   Minimum sample size       451
+#>   Minimum sample size       587
 #> 
-#>   Performance at N = 451
+#>   Performance at N = 587
 #>     Calibration slope       0.900    (target ≥ 0.900)
-#>     C-statistic             0.797
+#>     C-statistic             0.796
 #> 
-#>   Running time              19 seconds
+#>   Running time              22 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability
 #> across repeated datasets.
 est$min_n
-#> [1] 451
+#> [1] 587
 plot(est)
 
 # }
