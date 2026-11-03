@@ -297,8 +297,8 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
     }
     # For linear predictor / risk score.
     # NOTE: with objective = "survival:cox", xgboost returns predictions on the
-    # HAZARD-RATIO scale, i.e. preds = exp(lp). The log-hazard linear predictor
-    # required for a valid Cox calibration slope is therefore log(preds).
+    # HAZARD-RATIO scale, i.e. preds = exp(lp). The log-hazard linear predictor,
+    # used for the predicted survival in the calibration slope, is log(preds).
     # Ranking metrics (C-index, AUC) are unaffected because log is monotone.
     if (type == "lp") {
       return(log(pmax(as.numeric(preds), .Machine$double.eps)))
@@ -537,14 +537,20 @@ survival_cindex <- function(data, fit, model) {
   return(cf$concordance)
 }
 
-# Horizon-based calibration slope for survival models.
-# Random survival forests (ranger) do NOT produce a proportional-hazards linear
-# predictor. Their ensemble-mortality score log(sum_t H(t)) is a fine RANKING
-# statistic (used by C-index / AUC) but is not on a log-hazard scale where the
-# calibrated slope is 1: under non-proportional hazards it is an arbitrary,
-# time-grid-weighted aggregate. rf is therefore routed to a horizon-based
-# calibration slope using the predicted log cumulative hazard, log H_i(t*).
+# Calibration slope for survival models, used by metric = "calibration_slope"
+# and (through survival_csse()) by metric = "csse".
+#   coxph / lasso / ridge : the Cox calibration slope, coxph(Surv ~ lp), from
+#     survival_calib_slope_PH(). It does not depend on a time point.
+#   rf / ranger / xgboost : the slope at a fixed time point t* (the median event
+#     time), using the predicted log cumulative hazard, log H_i(t*). Random
+#     survival forests have no proportional-hazards linear predictor: their
+#     ensemble-mortality score log(sum_t H(t)) ranks subjects (C-index, AUC) but
+#     is not on a log-hazard scale where the calibrated slope is 1. xgboost uses
+#     the same time point as rf so that the two are comparable.
 survival_calib_slope <- function(data, fit, model, eval_time = NULL) {
+  if (model %in% c("coxph", "lasso", "ridge")) {
+    return(survival_calib_slope_PH(data = data, fit = fit, model = model))
+  }
   data <- data[base::order(data$time), ]
 
   # ONE fixed horizon for all models. In a simulation, set this from the DGP
@@ -575,304 +581,25 @@ survival_calib_slope <- function(data, fit, model, eval_time = NULL) {
   )
 }
 
-# Alternative calibration slope using PH linear predictors when available.
-survival_calib_slope_PH <- function(data, fit, model, eval_time = NULL) {
+# Cox calibration slope, coxph(Surv ~ lp), for the proportional-hazards models.
+survival_calib_slope_PH <- function(data, fit, model) {
   x <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
-
-  if (model %in% c("coxph", "lasso", "ridge", "xgboost")) {
-    # Genuine PH log-hazard linear predictor (xgboost after log() in predict_custom).
-    # Horizon-invariant => classic Cox calibration slope; identical to old behaviour.
-    eta <- try(predict_custom(x, NULL, fit, model, type = "lp"), silent = TRUE)
-    if (inherits(eta, "try-error")) {
-      return(NaN)
-    }
-    eta <- as.numeric(eta)
-  } else if (model %in% c("rf", "ranger")) {
-    # No PH lp. Use predicted log cumulative hazard at a fixed horizon:
-    #   eta = log(-log S(t*)) = log H(t*)  -> same log-hazard scale as above.
-    if (is.null(eval_time)) {
-      ev <- data$time[data$event == 1]
-      eval_time <- if (length(ev)) {
-        stats::median(ev)
-      } else {
-        stats::median(data$time)
-      }
-    }
-    S <- predicted_survival_at_time(data, fit, model, eval_time)
-    if (is.null(S) || all(is.na(S))) {
-      return(NaN)
-    }
-    S <- pmin(pmax(S, .Machine$double.eps), 1 - .Machine$double.eps)
-    eta <- log(-log(S))
-  } else {
+  eta <- try(predict_custom(x, NULL, fit, model, type = "lp"), silent = TRUE)
+  if (inherits(eta, "try-error") || is.null(eta)) {
     return(NaN)
   }
-
-  cox_calibration_slope(data$time, data$event, eta)
+  cox_calibration_slope(data$time, data$event, as.numeric(eta))
 }
 
-
-# Calibration-slope squared error. Dispatches on model family: proportional-
-# hazards models go through survival_calib_slope_PH(), the ML learners (xgboost,
-# rf/ranger) through the horizon-based survival_calib_slope().
+# Calibration-slope squared error, from the same slope as
+# metric = "calibration_slope" (see survival_calib_slope()).
 survival_csse <- function(data, fit, model) {
-  ph_models <- c("coxph", "lasso", "ridge")
-  ml_models <- c("xgboost", "rf", "ranger")
-
-  if (model %in% ph_models) {
-    slope <- survival_calib_slope_PH(
-      data = data,
-      fit = fit,
-      model = model
-    )
-  } else if (model %in% ml_models) {
-    slope <- survival_calib_slope(
-      data = data,
-      fit = fit,
-      model = model
-    )
-  } else {
-    stop("Unsupported model: ", model)
-  }
-
+  slope <- survival_calib_slope(data = data, fit = fit, model = model)
   if (!is.finite(slope)) {
     return(NaN)
   }
-
   -(1 - slope)^2
 }
-
-#' Cox calibration slope at a landmark horizon
-#'
-#' Predicted survival at \code{eval_time} is obtained exactly as in the
-#' reference script -- via \code{survfit()} for every proportional-hazards
-#' model, and read off the ensemble matrix for the two forests -- then mapped to
-#' the complementary log-log scale and used as the sole covariate in a Cox model
-#' fitted to the validation outcome. The coefficient is the calibration slope.
-#'
-#' Baselines come from the TRAINING data (the model's own \code{survfit}
-#' baseline for \code{coxph}; \code{x}/\code{y} at \code{lambda.min} for
-#' \code{glmnet}; a training-fitted \code{coxph} on the xgboost linear predictor).
-#'
-#' @param data       Validation data with columns \code{time}, \code{event} and
-#'                   the predictors.
-#' @param fit        Fitted model object.
-#' @param model      Model string, as passed by the engines. Used only for
-#'                   messages and for the glmnet lambda; dispatch is on class.
-#' @param eval_time  Landmark horizon. Defaults to \code{median(data$time)}, as
-#'                   in the script.
-#' @param train_data Training data, same columns as \code{data}. REQUIRED for
-#'                   ridge, lasso and xgboost, which cannot reconstruct their
-#'                   baseline hazard from the fit object alone. Ignored for
-#'                   coxph, ranger and rfsrc.
-#' @param eps        Clamp applied to predicted survival before the cloglog
-#'                   transform.
-#'
-#' @return A single numeric calibration slope (1 = calibrated), or \code{NaN}.
-#' @keywords internal
-survival_calib_slope_cox <- function(
-  data,
-  fit,
-  model,
-  eval_time = NULL,
-  train_data = NULL,
-  eps = 1e-6
-) {
-  if (is.null(eval_time)) {
-    eval_time <- stats::median(data$time)
-  }
-  # if (!is.finite(eval_time) || eval_time <= 0) return(NaN)
-
-  pred_names <- setdiff(names(data), c("time", "event", "id"))
-  x_df <- data[, pred_names, drop = FALSE]
-  S <- NULL
-
-  # Restore Surv() in the formula environment: pmsims fits its models inside
-  # functions whose environment does not carry it, and survfit()/model.frame()
-  # need to re-evaluate the response. Same workaround as predict_custom().
-  .fix_env <- function(f) {
-    e <- new.env(parent = environment(stats::formula(f)))
-    e$Surv <- survival::Surv
-    environment(f$formula) <- e
-    attr(f$terms, ".Environment") <- e
-    f
-  }
-
-  # Survival probability at eval_time from a survfit object, one value per row
-  # of newdata. extend = TRUE so a horizon beyond the last event time returns
-  # the final estimate rather than being dropped.
-  .surv_at <- function(sf) {
-    s <- try(summary(sf, times = eval_time, extend = TRUE)$surv, silent = TRUE)
-    if (inherits(s, "try-error")) {
-      return(NULL)
-    }
-    as.numeric(s)
-  }
-
-  # --- Cox --------------------------------------------------------------
-  if (inherits(fit, "coxph")) {
-    sf <- try(survival::survfit(.fix_env(fit), newdata = x_df), silent = TRUE)
-    if (inherits(sf, "try-error")) {
-      return(NaN)
-    }
-    S <- .surv_at(sf)
-
-    # --- Ridge / Lasso ----------------------------------------------------
-  } else if (inherits(fit, "cv.glmnet") || inherits(fit, "glmnet")) {
-    if (is.null(train_data)) {
-      warning(
-        "survival_calibration_slope_cox: '",
-        model,
-        "' needs train_data ",
-        "(glmnet fits do not retain x/y, so survfit() cannot recover the ",
-        "baseline hazard). Returning NaN.",
-        call. = FALSE
-      )
-      return(NaN)
-    }
-    gfit <- if (inherits(fit, "cv.glmnet")) fit$glmnet.fit else fit
-    s_val <- if (inherits(fit, "cv.glmnet")) fit$lambda.min else min(fit$lambda)
-
-    x_train <- as.matrix(train_data[, pred_names, drop = FALSE])
-    x_test <- as.matrix(x_df)
-    y_train <- survival::Surv(train_data$time, train_data$event)
-
-    sf <- try(
-      survival::survfit(
-        gfit,
-        s = s_val,
-        x = x_train,
-        y = y_train,
-        newx = x_test
-      ),
-      silent = TRUE
-    )
-    if (inherits(sf, "try-error")) {
-      return(NaN)
-    }
-    S <- .surv_at(sf)
-
-    # --- XGBoost ----------------------------------------------------------
-  } else if (inherits(fit, "xgb.Booster")) {
-    if (is.null(train_data)) {
-      warning(
-        "survival_calibration_slope_cox: 'xgboost' needs train_data to ",
-        "fit the baseline hazard on the linear predictor. Returning NaN.",
-        call. = FALSE
-      )
-      return(NaN)
-    }
-    x_train <- as.matrix(train_data[, pred_names, drop = FALSE])
-    x_test <- as.matrix(x_df)
-
-    # survival:cox predictions are exp(lp); outputmargin = TRUE gives the
-    # log-hazard linear predictor, which is what coxph expects as a covariate.
-    lp_train <- try(
-      stats::predict(fit, newdata = x_train, outputmargin = TRUE),
-      silent = TRUE
-    )
-    lp_test <- try(
-      stats::predict(fit, newdata = x_test, outputmargin = TRUE),
-      silent = TRUE
-    )
-    if (inherits(lp_train, "try-error") || inherits(lp_test, "try-error")) {
-      return(NaN)
-    }
-
-    tr_lp <- data.frame(
-      time = train_data$time,
-      event = train_data$event,
-      xgb_lp = as.numeric(lp_train)
-    )
-    te_lp <- data.frame(xgb_lp = as.numeric(lp_test))
-
-    base_fit <- try(
-      survival::coxph(
-        survival::Surv(time, event) ~ xgb_lp,
-        data = tr_lp,
-        x = TRUE,
-        y = TRUE
-      ),
-      silent = TRUE
-    )
-    if (inherits(base_fit, "try-error")) {
-      return(NaN)
-    }
-
-    sf <- try(survival::survfit(base_fit, newdata = te_lp), silent = TRUE)
-    if (inherits(sf, "try-error")) {
-      return(NaN)
-    }
-    S <- .surv_at(sf)
-
-    # --- ranger -----------------------------------------------------------
-  } else if (inherits(fit, "ranger")) {
-    pr <- try(stats::predict(fit, data = x_df), silent = TRUE)
-    if (inherits(pr, "try-error") || is.null(pr$survival)) {
-      return(NaN)
-    }
-    grid <- pr$unique.death.times
-    if (is.null(grid)) {
-      grid <- fit$unique.death.times
-    }
-    if (is.null(grid) || length(grid) != ncol(pr$survival)) {
-      return(NaN)
-    }
-    S <- as.numeric(pr$survival[, which.min(abs(grid - eval_time))])
-
-    # --- rfsrc ------------------------------------------------------------
-  } else if (inherits(fit, "rfsrc")) {
-    pr <- try(stats::predict(fit, newdata = x_df), silent = TRUE)
-    if (inherits(pr, "try-error") || is.null(pr$survival)) {
-      return(NaN)
-    }
-    grid <- pr$time.interest
-    if (is.null(grid)) {
-      grid <- fit$time.interest
-    }
-    if (is.null(grid) || length(grid) != ncol(pr$survival)) {
-      return(NaN)
-    }
-    S <- as.numeric(pr$survival[, which.min(abs(grid - eval_time))])
-  } else {
-    warning(
-      "survival_calibration_slope_cox: unsupported fit of class ",
-      paste(class(fit), collapse = "/"),
-      ". Returning NaN.",
-      call. = FALSE
-    )
-    return(NaN)
-  }
-
-  if (is.null(S) || length(S) != nrow(data) || !all(is.finite(S))) {
-    return(NaN)
-  }
-
-  cll <- log(-log(pmin(pmax(S, eps), 1 - eps)))
-  if (!all(is.finite(cll)) || stats::sd(cll) < 1e-10) {
-    return(NaN)
-  }
-
-  d <- data.frame(time = data$time, event = data$event, cll = cll)
-  if (sum(d$event == 1) < 2) {
-    return(NaN)
-  }
-
-  slope_fit <- try(
-    survival::coxph(survival::Surv(time, event) ~ cll, data = d),
-    silent = TRUE
-  )
-  if (inherits(slope_fit, "try-error")) {
-    return(NaN)
-  }
-
-  slope <- as.numeric(stats::coef(slope_fit)[1])
-  if (!is.finite(slope)) {
-    return(NaN)
-  }
-  slope
-}
-
 
 # Predicted survival probability S_i(t*) at a horizon, for any supported model.
 #   rf/ranger : taken directly from the predicted survival matrix.
@@ -1054,7 +781,6 @@ survival_calib_slope_free <- function(data, fit, model, eval_time = NULL) {
 }
 
 survival_auc <- function(data, fit, model) {
-  y_surv <- survival::Surv(data$time, data$event)
   x <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
 
   # get linear predictor / risk score where possible
@@ -1063,44 +789,31 @@ survival_auc <- function(data, fit, model) {
     return(NaN)
   }
 
-  # y_hat is a risk score (higher = earlier event), so its concordance with
-  # survival time is reversed, as in survival_cindex(). Without the sign flip
-  # this fallback returned 1 - C.
-  concordance <- try(
-    survival::concordancefit(
-      y_surv,
-      -1 * as.numeric(y_hat),
-      std.err = FALSE
-    ),
-    silent = TRUE
-  )
-  if (inherits(concordance, "try-error") || is.null(concordance)) {
+  # Cumulative/dynamic AUC just before the last event time, i.e. at the end of
+  # follow-up for the simulated data, where all censoring is administrative.
+  t_max <- max(data$time[data$event == 1])
+  ipcw_auc_at_time(data, as.numeric(y_hat), t_max * 0.9999999)
+}
+
+# Cumulative/dynamic AUC at time t with inverse-probability-of-censoring
+# weights, as timeROC::timeROC(weighting = "marginal") computes it: cases had
+# the event by t (weight 1 / G(T_i-)), controls are still at risk after t
+# (weight 1 / G(t)), and those censored before t are left out. Higher marker
+# values mean higher risk, and ties count one half. Controls share one weight,
+# so the AUC is the case-weighted mean of the proportion of controls each case
+# outranks.
+ipcw_auc_at_time <- function(data, marker, eval_time) {
+  iw <- ipcw_binary_at_time(data, eval_time)
+  case <- iw$y == 1
+  control <- data$time > eval_time
+  if (!any(case) || !any(control) || !all(is.finite(marker))) {
     return(NaN)
   }
-
-  t_max <- max(data[data$event == 1, "time"])
-  auc_survival <- try(
-    timeROC::timeROC(
-      T = data$time,
-      delta = data$event,
-      marker = as.numeric(y_hat),
-      times = t_max * 0.9999999,
-      cause = 1,
-      weighting = "marginal"
-    )$AUC,
-    silent = TRUE
-  )
-
-  if (inherits(auc_survival, "try-error") || length(auc_survival) == 0) {
-    return(as.numeric(concordance$concordance))
-  }
-
-  auc_survival <- auc_survival[!is.na(auc_survival)]
-  if (length(auc_survival) == 0) {
-    return(as.numeric(concordance$concordance))
-  }
-
-  return(as.numeric(utils::tail(auc_survival, 1)))
+  controls <- sort(marker[control])
+  below <- findInterval(marker[case], controls, left.open = TRUE)
+  at_or_below <- findInterval(marker[case], controls)
+  outranked <- (below + 0.5 * (at_or_below - below)) / length(controls)
+  sum(iw$w[case] * outranked) / sum(iw$w[case])
 }
 
 #### Random-forest point prediction and out-of-bag recalibration ####
