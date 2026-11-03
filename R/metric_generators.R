@@ -297,8 +297,8 @@ predict_custom <- function(x, y = NULL, fit, model, type = "response") {
     }
     # For linear predictor / risk score.
     # NOTE: with objective = "survival:cox", xgboost returns predictions on the
-    # HAZARD-RATIO scale, i.e. preds = exp(lp). The log-hazard linear predictor
-    # required for a valid Cox calibration slope is therefore log(preds).
+    # HAZARD-RATIO scale, i.e. preds = exp(lp). The log-hazard linear predictor,
+    # used for the predicted survival in the calibration slope, is log(preds).
     # Ranking metrics (C-index, AUC) are unaffected because log is monotone.
     if (type == "lp") {
       return(log(pmax(as.numeric(preds), .Machine$double.eps)))
@@ -537,14 +537,20 @@ survival_cindex <- function(data, fit, model) {
   return(cf$concordance)
 }
 
-# Horizon-based calibration slope for survival models.
-# Random survival forests (ranger) do NOT produce a proportional-hazards linear
-# predictor. Their ensemble-mortality score log(sum_t H(t)) is a fine RANKING
-# statistic (used by C-index / AUC) but is not on a log-hazard scale where the
-# calibrated slope is 1: under non-proportional hazards it is an arbitrary,
-# time-grid-weighted aggregate. rf is therefore routed to a horizon-based
-# calibration slope using the predicted log cumulative hazard, log H_i(t*).
+# Calibration slope for survival models, used by metric = "calibration_slope"
+# and (through survival_csse()) by metric = "csse".
+#   coxph / lasso / ridge : the Cox calibration slope, coxph(Surv ~ lp), from
+#     survival_calib_slope_PH(). It does not depend on a time point.
+#   rf / ranger / xgboost : the slope at a fixed time point t* (the median event
+#     time), using the predicted log cumulative hazard, log H_i(t*). Random
+#     survival forests have no proportional-hazards linear predictor: their
+#     ensemble-mortality score log(sum_t H(t)) ranks subjects (C-index, AUC) but
+#     is not on a log-hazard scale where the calibrated slope is 1. xgboost uses
+#     the same time point as rf so that the two are comparable.
 survival_calib_slope <- function(data, fit, model, eval_time = NULL) {
+  if (model %in% c("coxph", "lasso", "ridge")) {
+    return(survival_calib_slope_PH(data = data, fit = fit, model = model))
+  }
   data <- data[base::order(data$time), ]
 
   # ONE fixed horizon for all models. In a simulation, set this from the DGP
@@ -575,70 +581,23 @@ survival_calib_slope <- function(data, fit, model, eval_time = NULL) {
   )
 }
 
-# Alternative calibration slope using PH linear predictors when available.
-survival_calib_slope_PH <- function(data, fit, model, eval_time = NULL) {
+# Cox calibration slope, coxph(Surv ~ lp), for the proportional-hazards models.
+survival_calib_slope_PH <- function(data, fit, model) {
   x <- data[, !(names(data) %in% c("time", "event", "id")), drop = FALSE]
-
-  if (model %in% c("coxph", "lasso", "ridge", "xgboost")) {
-    # Genuine PH log-hazard linear predictor (xgboost after log() in predict_custom).
-    # Horizon-invariant => classic Cox calibration slope; identical to old behaviour.
-    eta <- try(predict_custom(x, NULL, fit, model, type = "lp"), silent = TRUE)
-    if (inherits(eta, "try-error")) {
-      return(NaN)
-    }
-    eta <- as.numeric(eta)
-  } else if (model %in% c("rf", "ranger")) {
-    # No PH lp. Use predicted log cumulative hazard at a fixed horizon:
-    #   eta = log(-log S(t*)) = log H(t*)  -> same log-hazard scale as above.
-    if (is.null(eval_time)) {
-      ev <- data$time[data$event == 1]
-      eval_time <- if (length(ev)) {
-        stats::median(ev)
-      } else {
-        stats::median(data$time)
-      }
-    }
-    S <- predicted_survival_at_time(data, fit, model, eval_time)
-    if (is.null(S) || all(is.na(S))) {
-      return(NaN)
-    }
-    S <- pmin(pmax(S, .Machine$double.eps), 1 - .Machine$double.eps)
-    eta <- log(-log(S))
-  } else {
+  eta <- try(predict_custom(x, NULL, fit, model, type = "lp"), silent = TRUE)
+  if (inherits(eta, "try-error") || is.null(eta)) {
     return(NaN)
   }
-
-  cox_calibration_slope(data$time, data$event, eta)
+  cox_calibration_slope(data$time, data$event, as.numeric(eta))
 }
 
-
-# Calibration-slope squared error. Dispatches on model family: proportional-
-# hazards models go through survival_calib_slope_PH(), the ML learners (xgboost,
-# rf/ranger) through the horizon-based survival_calib_slope().
+# Calibration-slope squared error, from the same slope as
+# metric = "calibration_slope" (see survival_calib_slope()).
 survival_csse <- function(data, fit, model) {
-  ph_models <- c("coxph", "lasso", "ridge")
-  ml_models <- c("xgboost", "rf", "ranger")
-
-  if (model %in% ph_models) {
-    slope <- survival_calib_slope_PH(
-      data = data,
-      fit = fit,
-      model = model
-    )
-  } else if (model %in% ml_models) {
-    slope <- survival_calib_slope(
-      data = data,
-      fit = fit,
-      model = model
-    )
-  } else {
-    stop("Unsupported model: ", model)
-  }
-
+  slope <- survival_calib_slope(data = data, fit = fit, model = model)
   if (!is.finite(slope)) {
     return(NaN)
   }
-
   -(1 - slope)^2
 }
 
