@@ -103,6 +103,11 @@
 - `ridge` continues its lambda path below glmnet's default end when
   cross-validation selects the smallest lambda, so its calibration improves
   with sample size. Results for `ridge` change, most at large sample sizes.
+- For survival outcomes, `coxph` uses the Cox calibration slope,
+  `coxph(Surv ~ lp)`, with `metric = "calibration_slope"`, as it already did
+  with `metric = "csse"` and as `lasso` and `ridge` do. `rf` and `xgboost` use
+  the calibration slope at the median event time. Results for `coxph`
+  calibration slope targets change.
 
 ## Performance
 

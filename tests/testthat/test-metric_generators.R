@@ -376,3 +376,20 @@ test_that("rank_auc() does not overflow on large test sets", {
   y <- rbinom(120000, 1, 0.4)
   expect_true(is.finite(rank_auc(y, y + rnorm(120000))))
 })
+
+test_that("survival calibration slope depends on the model, not the metric name", {
+  inputs <- make_survival_inputs("calibration_slope")
+  set.seed(2027)
+  train <- inputs$data_function(400)
+  test <- inputs$data_function(2000)
+  fit <- inputs$model_function(train)
+
+  # coxph: the Cox slope, coxph(Surv ~ lp), under both metric names.
+  x <- test[, !(names(test) %in% c("time", "event", "id")), drop = FALSE]
+  lp <- as.numeric(predict_custom(x, NULL, fit, "coxph", type = "lp"))
+  cox_slope <- unname(stats::coef(survival::coxph(
+    survival::Surv(test$time, test$event) ~ lp
+  )))
+  expect_equal(survival_calib_slope(test, fit, "coxph"), cox_slope)
+  expect_equal(survival_csse(test, fit, "coxph"), -(1 - cox_slope)^2)
+})
