@@ -176,14 +176,10 @@ default_models <- list(
         eta = 0.05,
         max_depth = 4L,
         subsample = 0.8,
-        min_child_weight = 1L
+        min_child_weight = 15L
       )
     ) {
       # expects first column y (0/1), remaining columns predictors.
-      # min_child_weight is left at the xgboost default. Under the logistic
-      # loss each row adds at most 0.25 to a node's weight, so a value of 15
-      # stops any tree splitting below roughly n = 150 (more at low
-      # prevalence), leaving a model that predicts the base rate.
       # nrounds is selected automatically via xgb.cv (early stopping) so that
       # model complexity adapts to sample size — the analogue of cv.glmnet's
       # lambda selection.  Fixed nrounds = 100 caused severe over-fitting at

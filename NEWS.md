@@ -100,10 +100,6 @@
 - `ridge` continues its lambda path below glmnet's default end when
   cross-validation selects the smallest lambda, so its calibration improves
   with sample size. Results for `ridge` change, most at large sample sizes.
-- Binary `xgboost` uses `min_child_weight = 1` (the xgboost default). With
-  15, no tree could split below roughly 150 rows (more at low prevalence), so
-  the model predicted the base rate. Results for binary `xgboost` change at
-  small sample sizes.
 
 ## Performance
 
