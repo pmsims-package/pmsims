@@ -58,7 +58,6 @@ Imports:
     pROC,
     stats,
     survival (>= 3.5-0),
-    timeROC,
     utils
 Suggests:
     covr,
@@ -72,6 +71,7 @@ Suggests:
     rmarkdown,
     synthpop,
     testthat (>= 3.0.0),
+    timeROC,
     tuneRanger,
     xgboost
 Encoding: UTF-8

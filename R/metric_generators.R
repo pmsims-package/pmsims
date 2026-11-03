@@ -832,28 +832,29 @@ survival_auc <- function(data, fit, model) {
 
   # Cumulative/dynamic AUC just before the last event time, i.e. at the end of
   # follow-up for the simulated data, where all censoring is administrative.
-  # If timeROC fails the result is NaN, as for the other metrics.
-  t_max <- max(data[data$event == 1, "time"])
-  auc_survival <- try(
-    timeROC::timeROC(
-      T = data$time,
-      delta = data$event,
-      marker = as.numeric(y_hat),
-      times = t_max * 0.9999999,
-      cause = 1,
-      weighting = "marginal"
-    )$AUC,
-    silent = TRUE
-  )
+  t_max <- max(data$time[data$event == 1])
+  ipcw_auc_at_time(data, as.numeric(y_hat), t_max * 0.9999999)
+}
 
-  if (inherits(auc_survival, "try-error")) {
+# Cumulative/dynamic AUC at time t with inverse-probability-of-censoring
+# weights, as timeROC::timeROC(weighting = "marginal") computes it: cases had
+# the event by t (weight 1 / G(T_i-)), controls are still at risk after t
+# (weight 1 / G(t)), and those censored before t are left out. Higher marker
+# values mean higher risk, and ties count one half. Controls share one weight,
+# so the AUC is the case-weighted mean of the proportion of controls each case
+# outranks.
+ipcw_auc_at_time <- function(data, marker, eval_time) {
+  iw <- ipcw_binary_at_time(data, eval_time)
+  case <- iw$y == 1
+  control <- data$time > eval_time
+  if (!any(case) || !any(control) || !all(is.finite(marker))) {
     return(NaN)
   }
-  auc_survival <- auc_survival[!is.na(auc_survival)]
-  if (length(auc_survival) == 0) {
-    return(NaN)
-  }
-  as.numeric(utils::tail(auc_survival, 1))
+  controls <- sort(marker[control])
+  below <- findInterval(marker[case], controls, left.open = TRUE)
+  at_or_below <- findInterval(marker[case], controls)
+  outranked <- (below + 0.5 * (at_or_below - below)) / length(controls)
+  sum(iw$w[case] * outranked) / sum(iw$w[case])
 }
 
 #### Random-forest point prediction and out-of-bag recalibration ####
