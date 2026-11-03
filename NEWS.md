@@ -80,7 +80,8 @@
   lasso that selects no predictors) count as failed replicates.
 - Metrics where smaller is better (`calibration_in_the_large`, `brier_score`,
   `ibs`) are rejected, since the search assumes larger values are better.
-- `survival_auc`'s concordance fallback now returns C (it returned 1 - C).
+- `survival_auc` returns `NaN` when `timeROC` fails, rather than the
+  concordance index.
 - ranger and xgboost thread counts: at least one thread, following option
   `pmsims.threads`; xgboost previously used every core.
 - Correlated predictors now have the requested pairwise correlation. Results
@@ -99,6 +100,10 @@
 - `ridge` continues its lambda path below glmnet's default end when
   cross-validation selects the smallest lambda, so its calibration improves
   with sample size. Results for `ridge` change, most at large sample sizes.
+- Binary `xgboost` uses `min_child_weight = 1` (the xgboost default). With
+  15, no tree could split below roughly 150 rows (more at low prevalence), so
+  the model predicted the base rate. Results for binary `xgboost` change at
+  small sample sizes.
 
 ## Performance
 
