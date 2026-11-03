@@ -244,27 +244,74 @@ test_that("survival metrics cover finite and fallback paths", {
     model = "coxph"
   )))
 
-  # y_hat is a risk score, so concordance with survival time is reversed; the
-  # fallback must agree with survival_cindex() (it used to return 1 - C).
-  concordance <- survival::concordancefit(
-    survival::Surv(data$time, data$event),
-    -y_hat
-  )$concordance
+  expect_true(is.finite(survival_auc(data, fit = NULL, model = "coxph")))
+})
 
-  local_mocked_bindings(
-    timeROC = function(...) stop("boom"),
-    .package = "timeROC"
+test_that("ipcw_auc_at_time() matches timeROC", {
+  skip_if_not_installed("timeROC")
+  # timeROC calls Surv() unqualified, so survival must be attached for it.
+  if (!"package:survival" %in% search()) {
+    suppressPackageStartupMessages(attachNamespace("survival"))
+    on.exit(detach("package:survival"), add = TRUE)
+  }
+  set.seed(31)
+  n <- 2000
+  lp <- rnorm(n)
+  event_time <- rexp(n, 0.1 * exp(lp))
+  censor_time <- runif(n, 0, 30)
+  data <- data.frame(
+    time = pmin(event_time, censor_time),
+    event = as.numeric(event_time <= censor_time)
   )
-  expect_equal(
-    survival_auc(data, fit = NULL, model = "coxph"),
-    as.numeric(concordance),
-    tolerance = 1e-8
+  markers <- list(
+    lp + rnorm(n, sd = 0.5),
+    round(lp), # tied markers
+    -lp # reversed
   )
-  expect_equal(
-    survival_auc(data, fit = NULL, model = "coxph"),
-    survival_cindex(data, fit = NULL, model = "coxph"),
-    tolerance = 1e-8
-  )
+  reference <- function(data, marker, t) {
+    unname(timeROC::timeROC(
+      T = data$time,
+      delta = data$event,
+      marker = marker,
+      times = t,
+      cause = 1,
+      weighting = "marginal"
+    )$AUC[2])
+  }
+  # timeROC counts cases as time < t and pmsims as time <= t, so the time
+  # points are chosen to fall between observed times.
+  times <- c(2.05, 7.33, 15.17)
+  for (marker in markers) {
+    for (t in times) {
+      expect_equal(
+        ipcw_auc_at_time(data, marker, t),
+        reference(data, marker, t),
+        tolerance = 1e-12
+      )
+    }
+  }
+  # With tied times the censoring Kaplan-Meier estimates differ slightly
+  # (survival here, prodlim in timeROC).
+  data$time <- round(data$time, 1)
+  for (marker in markers) {
+    for (t in times) {
+      expect_equal(
+        ipcw_auc_at_time(data, marker, t),
+        reference(data, marker, t),
+        tolerance = 1e-3
+      )
+    }
+  }
+})
+
+test_that("ipcw_auc_at_time() handles direction and degenerate cases", {
+  data <- data.frame(time = c(1, 2, 3, 4, 5, 6), event = c(1, 1, 0, 1, 0, 0))
+  risk <- c(6, 5, 4, 3, 2, 1)
+  expect_equal(ipcw_auc_at_time(data, risk, 4.5), 1)
+  expect_equal(ipcw_auc_at_time(data, -risk, 4.5), 0)
+  expect_equal(ipcw_auc_at_time(data, rep(1, 6), 4.5), 0.5)
+  expect_true(is.nan(ipcw_auc_at_time(data, risk, 0.5))) # no cases
+  expect_true(is.nan(ipcw_auc_at_time(data, risk, 6))) # no controls
 })
 
 test_that("survival_auc returns a finite probability-scale value", {

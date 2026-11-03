@@ -78,7 +78,7 @@ from those given by 1.0.0. These include:
 - Replicates whose metric is not finite count as failed replicates.
 - Metrics where smaller is better (`"calibration_in_the_large"`,
   `"brier_score"`, `"ibs"`) can no longer be used as search targets.
-- The concordance fallback in `survival_auc` has been corrected.
+- `survival_auc` computes the time-dependent AUC directly, without `timeROC`.
 - Complexity 2 and 3 data follow the same outcome model whatever the number of
   rows drawn.
 - The binary AUC is computed with a fixed direction, so it can fall below 0.5.

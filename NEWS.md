@@ -80,7 +80,11 @@
   lasso that selects no predictors) count as failed replicates.
 - Metrics where smaller is better (`calibration_in_the_large`, `brier_score`,
   `ibs`) are rejected, since the search assumes larger values are better.
-- `survival_auc`'s concordance fallback now returns C (it returned 1 - C).
+- `survival_auc` computes the time-dependent AUC (cumulative/dynamic, with
+  inverse-probability-of-censoring weights) itself rather than through
+  `timeROC`, which needs the survival package attached and otherwise left
+  `survival_auc` returning the concordance index. Results for survival AUC
+  targets change. `timeROC` is now in Suggests.
 - ranger and xgboost thread counts: at least one thread, following option
   `pmsims.threads`; xgboost previously used every core.
 - Correlated predictors now have the requested pairwise correlation. Results
