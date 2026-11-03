@@ -48,7 +48,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
@@ -92,7 +92,7 @@
 <ul><li>Metric values that are not finite (for example, the calibration slope of a lasso that selects no predictors) count as failed replicates.</li>
 <li>Metrics where smaller is better (<code>calibration_in_the_large</code>, <code>brier_score</code>, <code>ibs</code>) are rejected, since the search assumes larger values are better.</li>
 <li>
-<code>survival_auc</code>’s concordance fallback now returns C (it returned 1 - C).</li>
+<code>survival_auc</code> computes the time-dependent AUC (cumulative/dynamic, with inverse-probability-of-censoring weights) itself rather than through <code>timeROC</code>, which needs the survival package attached and otherwise left <code>survival_auc</code> returning the concordance index. Results for survival AUC targets change. <code>timeROC</code> is now in Suggests.</li>
 <li>ranger and xgboost thread counts: at least one thread, following option <code>pmsims.threads</code>; xgboost previously used every core.</li>
 <li>Correlated predictors now have the requested pairwise correlation. Results for scenarios with a non-zero <code>correlation</code> (the default is 0.3) will change.</li>
 <li>Complexity 2 and 3 data no longer depend on how many rows are drawn. The nonlinear component now uses fixed constants for each predictor configuration, estimated once from a large reference sample, so training and test sets follow the same outcome model. Results for complexity 2 and 3 change.</li>
@@ -100,6 +100,7 @@
 <li>The binary AUC no longer returns <code>NA</code> on test sets of more than about 90,000 rows (integer overflow).</li>
 <li>
 <code>ridge</code> continues its lambda path below glmnet’s default end when cross-validation selects the smallest lambda, so its calibration improves with sample size. Results for <code>ridge</code> change, most at large sample sizes.</li>
+<li>For survival outcomes, <code>coxph</code> uses the Cox calibration slope, <code>coxph(Surv ~ lp)</code>, with <code>metric = "calibration_slope"</code>, as it already did with <code>metric = "csse"</code> and as <code>lasso</code> and <code>ridge</code> do. <code>rf</code> and <code>xgboost</code> use the calibration slope at the median event time. Results for <code>coxph</code> calibration slope targets change.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="performance-1-1-0">Performance<a class="anchor" aria-label="anchor" href="#performance-1-1-0"></a></h3>

@@ -261,19 +261,19 @@ est
 #> 
 #> ──────────────────────────────────── Results ───────────────────────────────────
 #> 
-#>   Minimum sample size      195
+#>   Minimum sample size      170
 #> 
-#>   Performance at N = 195
+#>   Performance at N = 170
 #>     Calibration slope      0.900    (target ≥ 0.900)
-#>     C-index                0.700
+#>     C-index                0.702
 #> 
-#>   Running time             41 seconds
+#>   Running time             17 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability
 #> across repeated datasets.
 est$min_n
-#> [1] 195
+#> [1] 170
 plot(est)
 
 # }
