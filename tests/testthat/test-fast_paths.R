@@ -144,16 +144,6 @@ test_that("censoring_km() matches survfit()", {
   expect_equal(km$surv, sf$surv, tolerance = 1e-12)
 })
 
-test_that("cox_calibration_slope() is identical to coxph()", {
-  for (d in list(make_surv(2000, 9), make_surv(2000, 10, round_to = 1))) {
-    x <- d$lp + rnorm(length(d$lp), 0, 0.5)
-    expect_identical(
-      cox_calibration_slope(d$time, d$event, x),
-      unname(stats::coef(survival::coxph(survival::Surv(d$time, d$event) ~ x)))
-    )
-  }
-})
-
 test_that("rank_auc() matches pROC::auc()", {
   set.seed(11)
   y <- rbinom(1000, 1, 0.3)
@@ -272,28 +262,4 @@ test_that("running-sum copula equals the matrix product", {
     slow <- matrix(rnorm(500 * p), 500, p) %*% chol(R)
     expect_equal(fast, slow, tolerance = 1e-13)
   }
-})
-
-test_that("cox_calibration_slope() matches coxph() with no events or a missing event", {
-  set.seed(4)
-  n <- 200
-  x <- rnorm(n)
-  time <- rexp(n, exp(0.5 * x))
-  reference <- function(time, event, x) {
-    cf <- suppressWarnings(stats::coef(survival::coxph(
-      survival::Surv(time, event) ~ x
-    )))
-    if (is.null(cf)) NaN else as.numeric(cf)
-  }
-  no_events <- rep(0, n)
-  expect_identical(
-    suppressWarnings(cox_calibration_slope(time, no_events, x)),
-    reference(time, no_events, x)
-  )
-  event <- rbinom(n, 1, 0.6)
-  event[3] <- NA
-  expect_equal(
-    suppressWarnings(cox_calibration_slope(time, event, x)),
-    reference(time, event, x)
-  )
 })
