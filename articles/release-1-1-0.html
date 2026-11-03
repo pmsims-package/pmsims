@@ -81,7 +81,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>pmsims 1.1.0: A learning-curve search engine</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/vignettes/release-1-1-0.Rmd" class="external-link"><code>vignettes/release-1-1-0.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/vignettes/release-1-1-0.Rmd" class="external-link"><code>vignettes/release-1-1-0.Rmd</code></a></small>
       <div class="d-none name"><code>release-1-1-0.Rmd</code></div>
     </div>
 
@@ -184,8 +184,9 @@ replicates.</li>
 <li>Metrics where smaller is better
 (<code>"calibration_in_the_large"</code>, <code>"brier_score"</code>,
 <code>"ibs"</code>) can no longer be used as search targets.</li>
-<li>The concordance fallback in <code>survival_auc</code> has been
-corrected.</li>
+<li>
+<code>survival_auc</code> computes the time-dependent AUC directly,
+without <code>timeROC</code>.</li>
 <li>Complexity 2 and 3 data follow the same outcome model whatever the
 number of rows drawn.</li>
 <li>The binary AUC is computed with a fixed direction, so it can fall
@@ -193,6 +194,9 @@ below 0.5.</li>
 <li>
 <code>ridge</code> continues its lambda path when cross-validation
 selects the smallest lambda.</li>
+<li>
+<code>coxph</code> uses the Cox calibration slope with
+<code>metric = "calibration_slope"</code>.</li>
 </ul>
 </div>
 <div class="section level2">
