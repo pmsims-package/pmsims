@@ -10,8 +10,6 @@
 ### Defining the data generator
 #For this example we will use the **benchtm** R-package. This package was created to allow the simualtion of data from randomised trials when hetrogeneous treatment effects are present. 
 
-#I believe the prop = "X2" option when generating the treatment variable trt introduces confounding by X2.
-
 my_data_generator <- function(n) {
   
   # 1. Generate X distribution
@@ -25,19 +23,15 @@ my_data_generator <- function(n) {
   # Process X data
   x_data_numeric <- model.matrix(~., data = x_data)[,-1] |> data.frame()
   
-  # 2. Generate Treatment
-  trt <- tryCatch({
-    benchtm::generate_trt(n = nrow(x_data_numeric), type = "random", X = x_data_numeric, prop = "X2")
-  }, error = function(e) {
-    stop(sprintf("Error in generate_trt at n = %d: %s", n, e$message), call. = FALSE)
-  })
+  # 2. Generate Treatment: randomised 1:1
+  trt <- benchtm::generate_trt(n = nrow(x_data_numeric), p_trt = 0.5)
   
   # 3. Generate Outcome (Y)
   y_data <- tryCatch({
     benchtm::generate_y(
       x_data_numeric, 
       trt = trt,
-      prog = "0.5*((X1Y=='Y')+X3)",
+      prog = "0.5*(X1Y+X3)", # X1Y is a 0/1 dummy here
       pred = "X3>0", # this defines how treatment effect heterogeneity is introduced.
       b0 = 0, 
       b1 = 1,

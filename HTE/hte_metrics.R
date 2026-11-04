@@ -101,12 +101,6 @@ metric_calibration_for_benefit_grf <- function(test_data, fitted_model, model_na
 attr(metric_calibration_for_benefit_grf, "value_on_error") <- 0.5
 
 
-# 4. C-statistic for Benefit
-metric_c_statistic_for_benefit_HTEeval <- function(test_data, fitted_model, model_name) {
-  # to define
-}
-attr(metric_c_statistic_for_benefit_HTEeval, "value_on_error") <- 0.5
-
 metric_calibration_slope_blp <- function(test_data, fitted_model, model_name) {
   test_df <- as.data.frame(test_data)
   y <- test_df[[1]]
@@ -133,3 +127,89 @@ metric_calibration_slope_blp <- function(test_data, fitted_model, model_name) {
   -(1 - slope)^2
 }
 attr(metric_calibration_slope_blp, "value_on_error") <- -1
+
+# =============================================================================
+# Metrics using the true effects. Simulation only: these need the generator to
+# set attr(data, "tau"). simulate_custom() swaps errors for value_on_error, so
+# a missing tau shows up as a flat metric: run HTE/check_hte_components.R first.
+# =============================================================================
+
+true_effect <- function(test_data) {
+  tau <- attr(test_data, "tau", exact = TRUE)
+  if (is.null(tau)) stop("test_data has no \"tau\" attribute.")
+  tau
+}
+
+# RMSE of the predicted effect (root PEHE), negated as pmsims needs higher = better
+metric_rmse_tau <- function(test_data, fitted_model, model_name) {
+  tau_hat <- as.numeric(fitted_model$predict(test_data))
+  -sqrt(mean((true_effect(test_data) - tau_hat)^2))
+}
+attr(metric_rmse_tau, "value_on_error") <- -10
+
+# Rank correlation with the true effects. Undefined if true effects are constant.
+# Ties in the true effects cap this below 1.
+metric_spearman_tau <- function(test_data, fitted_model, model_name) {
+  tau <- true_effect(test_data)
+  tau_hat <- as.numeric(fitted_model$predict(test_data))
+  if (stats::var(tau) < 1e-12) stop("True effects are constant.")
+  if (stats::var(tau_hat) < 1e-12) return(0) # a constant prediction ranks nobody
+  stats::cor(tau, tau_hat, method = "spearman")
+}
+attr(metric_spearman_tau, "value_on_error") <- 0
+
+# Regret of treating when predicted effect > threshold, compared with treating
+# by the true effect. Negated, so 0 is best. Assumes a higher Y is better.
+metric_regret <- function(test_data, fitted_model, model_name, threshold = 0) {
+  net <- true_effect(test_data) - threshold
+  tau_hat <- as.numeric(fitted_model$predict(test_data))
+  -(mean(pmax(net, 0)) - mean(net * (tau_hat > threshold)))
+}
+attr(metric_regret, "value_on_error") <- -10
+
+# =============================================================================
+# Ranking metrics: work on observed randomised data
+# =============================================================================
+
+# AIPW scores from a linear outcome model with treatment interactions, fitted on
+# the test data. Treatment probability is the observed share, so this assumes
+# randomisation.
+aipw_scores <- function(test_data) {
+  test_df <- as.data.frame(test_data)
+  y <- test_df[[1]]
+  w <- as.numeric(as.character(test_df[[2]]))
+  
+  X_df <- test_df[, 3:ncol(test_df), drop = FALSE]
+  X_df <- X_df[, vapply(X_df, function(v) length(unique(v)) > 1, logical(1)), drop = FALSE]
+  X <- stats::model.matrix(~ ., data = X_df)
+  X_main <- X[, -1, drop = FALSE]
+  
+  beta <- stats::lm.fit(cbind(X, w, w * X_main), y)$coefficients
+  beta[is.na(beta)] <- 0
+  mu_0 <- as.vector(cbind(X, 0, 0 * X_main) %*% beta)
+  mu_1 <- as.vector(cbind(X, 1, X_main) %*% beta)
+  
+  p <- mean(w)
+  mu_1 - mu_0 + w * (y - mu_1) / p - (1 - w) * (y - mu_0) / (1 - p)
+}
+
+# Point estimate only: R = 2 is the fewest bootstrap reps grf allows, and the SE
+# isn't used. Depends on the amount of heterogeneity, so check its large-sample
+# value before setting a target.
+rate_estimate <- function(test_data, fitted_model, target) {
+  tau_hat <- as.numeric(fitted_model$predict(test_data))
+  if (stats::var(tau_hat) < 1e-12) return(0) # a constant prediction ranks nobody
+  grf::rank_average_treatment_effect.fit(
+    aipw_scores(test_data), tau_hat, target = target, R = 2
+  )$estimate
+}
+
+metric_qini <- function(test_data, fitted_model, model_name) {
+  rate_estimate(test_data, fitted_model, "QINI")
+}
+attr(metric_qini, "value_on_error") <- 0
+
+metric_autoc <- function(test_data, fitted_model, model_name) {
+  rate_estimate(test_data, fitted_model, "AUTOC")
+}
+attr(metric_autoc, "value_on_error") <- 0

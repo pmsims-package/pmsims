@@ -5,6 +5,10 @@ library(grf)
 library(evalHTE)
 library(tictoc)
 options(scipen = 6)
+# Run from the repository root
+source("HTE/hte_data_generators.R")
+source("HTE/hte_models.R")
+source("HTE/hte_metrics.R")
 # =============================================================================
 # 1. Component Registries (Data Generators, Models, Metrics)
 # =============================================================================
@@ -12,7 +16,7 @@ options(scipen = 6)
 # List of Data Generators
 data_generators_list <- list(
   "hte_gen1" = hte_gen1,
-  "hte_gen3" = hte_gen3_sun_scen4
+  "hte_gen3" = make_hte_gen3_sun_scen4(benchtm::generate_X_syn(100000))
 )
 
 # List of Model Fitting Functions
@@ -37,16 +41,11 @@ metrics_list <- list(
     target = 0.8,
     mean_or_assurance = "mean"
   ),
-  "calibration_for_benifit (binned)" = list(
-    fn = metric_binned_calibration_slope,
+  "calibration_slope_blp" = list(
+    fn = metric_calibration_slope_blp,
     target = -0.1^2,
     mean_or_assurance = "assurance"
 
-  ),
-  "C_Stat_Benefit" = list(
-    fn = metric_c_statistic_for_benefit_HTEeval,
-    target = 0.6,
-    mean_or_assurance = "assurance"
   )
 )
 
@@ -117,7 +116,7 @@ run_evaluation <- function(n_train, n_test = 5000, verbose = TRUE) {
 }
 
 process_results <- function(results) {
-  idx <- results$Metric == "calibration_for_benifit (binned)"
+  idx <- results$Metric == "calibration_slope_blp"
   results[idx, "Score"] <- 1 - sqrt(-results[idx, "Score"])
   results$Score <- round(results$Score, 4)
   results

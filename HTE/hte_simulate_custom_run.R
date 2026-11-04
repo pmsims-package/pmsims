@@ -6,6 +6,10 @@ library(evalHTE)
 library(tictoc)
 library(future)
 library(future.apply)
+# Run from the repository root
+source("HTE/hte_data_generators.R")
+source("HTE/hte_models.R")
+source("HTE/hte_metrics.R")
 
 # =============================================================================
 # 1. Component Registries (Data Generators, Models, Metrics)
@@ -13,7 +17,7 @@ library(future.apply)
 
 # List of Data Generators
 data_generators_list <- list(
-  "hte_gen4" = hte_gen4
+  "hte_gen2" = hte_gen2
 )
 
 # List of Model Fitting Functions
@@ -37,7 +41,7 @@ metrics_list <- list(
     target = 0.8,
     mean_or_assurance = "mean"
   ),
-  "calibration_for_benifit (binned)" = list(
+  "calibration_slope_blp" = list(
     fn = metric_calibration_slope_blp,
     target = -(0.1^2),
     mean_or_assurance = "assurance"
