@@ -52,8 +52,10 @@ Bernoulli(\code{binary_prevalence}); \code{binary_prevalence} must be in
 all predictors when \code{predictor_type = "binary"}. Default = 0.}
 
 \item{correlation}{Scalar in \eqn{[-1, 1]}. Common pairwise correlation
-applied via a Gaussian copula (equicorrelation, rank-based Cholesky).
-Default = 0.3. Set to 0 for independence.}
+applied via a Gaussian copula: \code{correlation} is the correlation of
+the underlying normal variables, which equals the Pearson correlation of
+the predictors only when they are normal. Default = 0.3. Set to 0 for
+independence.}
 
 \item{distribution}{Distribution family for \emph{all} continuous
 predictors. Default = \code{"normal"}. For complexity 4, if left at

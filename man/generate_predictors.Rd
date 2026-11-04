@@ -39,7 +39,8 @@ default).}
 Named n x p numeric matrix (column names: x1, x2, ...).
 }
 \description{
-Draws all predictors from a single global distribution family, then
-optionally applies an equicorrelation structure via a Gaussian copula.
+Draws all predictors from a single global distribution family. With a
+non-zero \code{correlation}, they are drawn through a Gaussian copula with a
+common pairwise correlation.
 }
 \keyword{internal}

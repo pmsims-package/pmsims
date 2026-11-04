@@ -17,6 +17,7 @@ simulate_survival(
   target_performance,
   n_reps_total = 1000,
   mean_or_assurance = "assurance",
+  auto_n_reps_total = TRUE,
   ...
 )
 }
@@ -51,8 +52,9 @@ survival forest), or \code{"xgboost"} (gradient boosting with a Cox objective).}
 
 \item{metric}{Character string naming the performance metric used to assess
 the sample size; defaults to \code{"calibration_slope"}. Metric identifiers use
-one canonical form throughout the package, such as \code{"calibration_slope"},
-\code{"calibration_in_the_large"}, \code{"auc"}, \code{"r2"}, \code{"cindex"}, and \code{"csse"}.
+one canonical form throughout the package: \code{"calibration_slope"},
+\code{"auc"}, \code{"r2"}, \code{"cindex"} and \code{"csse"}. Metrics where smaller is better,
+such as \code{"calibration_in_the_large"}, cannot be used as search targets.
 
 \code{"calibration_slope"} is the slope from regressing the observed outcome on
 the model's linear predictor in held-out data; 1 indicates perfect
@@ -85,6 +87,14 @@ Controls whether the minimum \eqn{n} is defined by the mean-based criterion
 or the assurance-based criterion (with the assurance level \eqn{\delta}
 controlled by the engine's defaults or additional arguments in \code{...}).}
 
+\item{auto_n_reps_total}{Logical. When \code{TRUE} (default) and
+\code{method = "mlpwr"}, \code{n_reps_total} is raised to 2000 for designs with at
+most 10 signal parameters fitted with \code{"lm"}, \code{"glm"} or \code{"coxph"}, where
+the Gaussian-process search is limited by simulation budget rather than
+by the design. It has no effect with the default \code{method = "curve"}. The rule only ever increases the budget,
+and reports the change with a message. Set \code{FALSE} to use \code{n_reps_total}
+exactly as supplied.}
+
 \item{...}{Additional options passed to \code{\link[=simulate_custom]{simulate_custom()}} (e.g., assurance
 level \eqn{\delta}, per-iteration settings).}
 }
@@ -96,9 +106,10 @@ evaluations, and summary metrics).
 \description{
 Compute the minimum sample size required to develop a prediction model with a
 \strong{time-to-event (survival)} outcome. As with the other wrappers, this uses a
-simulation-based learning-curve approach with Gaussian-process surrogate
-modelling to locate the smallest \eqn{n} meeting the chosen performance
-criterion.
+simulation-based learning curve, fitted by default to every simulated
+replicate (\code{method = "curve"}; \code{method = "mlpwr"} uses a Gaussian-process
+surrogate instead), to locate the smallest \eqn{n} meeting the chosen
+performance criterion.
 }
 \section{Criteria}{
 
@@ -131,7 +142,12 @@ variance carried by the nonlinear, linearly-inaccessible component.
 Applies to complexity 2 and 3 only; ignored (with a warning) for 1 and 4.
 If omitted, the generator's per-complexity default is used.}
 \item{\code{correlation}}{Numeric in \eqn{[-1, 1]}. Pairwise correlation among the
-candidate predictors. Default \code{0.3}.}
+candidate predictors, induced through a Gaussian copula. Default \code{0.3}.
+This is the correlation of the underlying normal variables: for
+\code{"normal"} predictors it is also the observed correlation, but for other
+distributions the observed correlation is lower. For example, binary
+predictors with prevalence 0.3 correlate at about 0.18 when
+\code{correlation = 0.3}.}
 \item{\code{predictor_distribution}}{One of \code{"normal"}, \code{"uniform"}, \code{"binary"},
 \code{"exponential"}, \code{"lognormal"}, \code{"t"}, \code{"laplace"}. \code{"binary"} selects
 0/1 predictors and requires \code{binary_predictor_prevalence}; any other
@@ -162,6 +178,7 @@ est <- simulate_survival(
   min_sample_size = 25,
   max_sample_size = 500,
   n_reps_total = 1000,
+  auto_n_reps_total = FALSE,
   test_n = 30000,
   progress = FALSE
 )

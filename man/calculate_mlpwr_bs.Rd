@@ -20,6 +20,10 @@ calculate_mlpwr_bs(
   model_function,
   metric_function,
   value_on_error,
+  evaluator = NULL,
+  max_n = 1e+06,
+  parallel = FALSE,
+  cores = 1L,
   ...
 )
 }
@@ -75,6 +79,16 @@ single numeric fallback value to be returned if model fitting or metric
 evaluation fails during a simulation run.}
 
 \item{value_on_error}{Numeric fallback value used if model fitting or metric calculation fails.}
+
+\item{evaluator}{Optional evaluator from \code{new_evaluator()}, shared by every
+stage of the search. Created from the data, model and metric functions
+when \code{NULL}.}
+
+\item{max_n}{Largest sample size the adaptive start-value search may try.}
+
+\item{parallel, cores}{Run the replicates of each batch in parallel (see
+\code{\link[=calculate_bisection]{calculate_bisection()}}); with mlpwr, replicates are requested one at a
+time, so this mainly affects the adaptive stage and verification.}
 
 \item{...}{Additional options passed to \code{\link[mlpwr:find.design]{mlpwr::find.design()}}.}
 }

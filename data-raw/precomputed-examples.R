@@ -12,6 +12,7 @@
 # smaller models with executable searches; see their examples separately.
 #
 # Re-run with:  Rscript data-raw/precomputed-examples.R
+# Then re-run data-raw/live-plot-animation.R, which animates the binary search.
 
 if (!requireNamespace("pkgload", quietly = TRUE)) {
   stop("Install pkgload first, e.g. with install.packages('pkgload').")

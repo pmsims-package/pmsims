@@ -36,9 +36,105 @@ formulae, pmsims uses **simulation** to:
 -   Trace a **learning curve** of performance as the training size
     increases.
 
-<p align="center">
-  <img src="images/workflow.png" alt="A diagram showing the pmsims workflow, consisting of the data generator, model function, metrics function, which are passed to the simulation engine." width="100%">
-</p>
+```{=html}
+<figure class="pmsims-workflow-figure">
+<svg class="pmsims-workflow" viewBox="0 0 860 290" role="img"
+     aria-label="The pmsims workflow: the user's inputs define a data function, model function and metric function. The simulation engine uses these to fit a learning curve and returns the minimum sample size, min_n.">
+  <style>
+    .pmsims-workflow {
+      --wf-card: var(--bs-tertiary-bg, #f8f9fa);
+      --wf-border: var(--bs-border-color, #dee2e6);
+      --wf-text: var(--bs-body-color, #373a3c);
+      --wf-muted: var(--bs-secondary-color, #6c757d);
+      --wf-line: #8a959e;
+      --wf-teal: #067f8d;          /* site link colour; white text passes AA */
+      --wf-data: #04adbf;          /* site primary */
+      --wf-model: #4682b4;         /* steelblue, as in plot() */
+      --wf-metric: #e08a1e;        /* darkorange family, as in plot() */
+      --wf-panel: #fff;
+      --wf-curve: #4682b4;
+      width: 100%; height: auto; display: block;
+      font-family: "Source Sans Pro", "Source Sans 3", system-ui, sans-serif;
+    }
+    [data-bs-theme="dark"] .pmsims-workflow {
+      --wf-line: #8f9aa3;
+      --wf-teal: #0b8f9e;
+      --wf-panel: #1b1f23;
+      --wf-curve: #79aee0;
+    }
+    .pmsims-workflow .wf-box { fill: var(--wf-card); stroke: var(--wf-border); stroke-width: 1; }
+    .pmsims-workflow .wf-label { font-size: 20px; font-weight: 600; fill: var(--wf-text); text-anchor: middle; }
+    .pmsims-workflow .wf-code { font-family: "Source Code Pro", ui-monospace, monospace; font-size: 13px;
+                             fill: var(--wf-muted); text-anchor: middle; }
+    .pmsims-workflow .wf-tint { fill: color-mix(in srgb, var(--accent) 16%, var(--bs-body-bg, #fff));
+                             stroke: var(--accent); stroke-width: 1.5; }
+    .pmsims-workflow .wf-wire { fill: none; stroke: var(--wf-line); stroke-width: 2; stroke-linejoin: round; }
+  </style>
+  <defs>
+    <marker id="pmsims-wf-head" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="5" markerHeight="5" markerUnits="strokeWidth" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--wf-line)"/>
+    </marker>
+  </defs>
+  <!-- User inputs -->
+  <rect class="wf-box" x="8" y="111" width="146" height="68" rx="8" stroke-dasharray="5 4"/>
+  <text class="wf-label" x="81" y="142">User inputs</text>
+  <text class="wf-code"  x="81" y="164">simulate_*()</text>
+  <!-- Wires: inputs to components -->
+  <path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M154,145 H182 V50 H209"/>
+  <path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M154,145 H209"/>
+  <path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M154,145 H182 V240 H209"/>
+  <!-- Components: neutral card, coloured accent bar, function argument below -->
+  <g>
+    <rect class="wf-box wf-tint" style="--accent: var(--wf-data)" x="210" y="16" width="214" height="68" rx="8"/>
+    <text class="wf-label" x="318" y="46">Data generator</text>
+    <text class="wf-code"  x="318" y="68">data_function</text>
+  </g>
+  <g>
+    <rect class="wf-box wf-tint" style="--accent: var(--wf-model)" x="210" y="111" width="214" height="68" rx="8"/>
+    <text class="wf-label" x="318" y="141">Prediction model</text>
+    <text class="wf-code"  x="318" y="163">model_function</text>
+  </g>
+  <g>
+    <rect class="wf-box wf-tint" style="--accent: var(--wf-metric)" x="210" y="206" width="214" height="68" rx="8"/>
+    <text class="wf-label" x="318" y="236">Metrics</text>
+    <text class="wf-code"  x="318" y="258">metric_function</text>
+  </g>
+  <!-- Wires: components to engine -->
+  <path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M424,50 H452 V122 H483"/>
+  <path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M424,145 H483"/>
+  <path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M424,240 H452 V168 H483"/>
+  <!-- Simulation engine: header band in site teal, panel styled like plot() -->
+  <g>
+    <rect class="wf-box" x="484" y="40" width="226" height="210" rx="8"/>
+    <path d="M484,48 a8,8 0 0 1 8,-8 h210 a8,8 0 0 1 8,8 v28 h-226z" fill="var(--wf-teal)"/>
+    <text class="wf-label" x="597" y="65" style="fill:#fff">Simulation engine</text>
+    <rect x="498" y="90" width="198" height="146" rx="3" fill="var(--wf-panel)" stroke="var(--wf-border)"/>
+    <!-- interval around min_n -->
+    <rect x="584" y="91" width="30" height="144" fill="var(--wf-curve)" opacity=".14"/>
+    <!-- target -->
+    <line x1="499" y1="146" x2="695" y2="146" stroke="var(--wf-muted)" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <!-- min_n -->
+    <line x1="598" y1="91" x2="598" y2="235" stroke="var(--wf-curve)" stroke-width="1.5"/>
+    <!-- curve -->
+    <path d="M510,222 C560,174 600,139 684,120" fill="none" stroke="var(--wf-curve)" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- replicates (point size = number of replicates) -->
+    <g fill="var(--wf-panel)" stroke="var(--wf-text)" stroke-width="1.3">
+      <circle cx="516" cy="214" r="2.5"/>
+      <circle cx="542" cy="199" r="3"/>
+      <circle cx="572" cy="166" r="3.5"/>
+      <circle cx="596" cy="149" r="5"/>
+      <circle cx="612" cy="139" r="4.5"/>
+      <circle cx="654" cy="124" r="3"/>
+    </g>
+  </g>
+  <!-- Output -->
+  <path class="wf-wire" marker-end="url(#pmsims-wf-head)" d="M710,145 H755"/>
+  <rect x="756" y="122" width="96" height="46" rx="23" fill="var(--wf-teal)"/>
+  <text x="804" y="152" text-anchor="middle" fill="#fff" font-size="24" font-weight="600" font-style="italic">N<tspan dy="-7" font-size="16">*</tspan></text>
+  <text class="wf-code" x="804" y="192">min_n</text>
+</svg>
+</figure>
+```
 
 The recommended design objective is **assurance**: the **smallest** $n$
 such that a high proportion of repeated studies (e.g., 80%) meet the
@@ -54,357 +150,27 @@ outcomes, respectively:
 - `simulate_continuous()`
 - `simulate_survival()`
 
-All three functions share the same basic structure. The table below
-lists the key inputs.
+All three take the same core inputs:
 
-```{=html}
-<style>
-/* Compact, readable argument table */
-.arg-filter {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 0 14px 0;
-  flex-wrap: wrap;
-}
-.arg-filter__label {
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-.arg-filter__tabs {
-  display: inline-flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.arg-filter__tab {
-  appearance: none;
-  border: 1px solid #d8d8e0;
-  background: #fff;
-  color: #444;
-  border-radius: 999px;
-  padding: 6px 12px;
-  font-size: 0.92rem;
-  line-height: 1.2;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-.arg-filter__tab:hover {
-  border-color: #bfc6d4;
-  background: #f7f9fc;
-}
-.arg-filter__tab.is-active {
-  background: #1f4b99;
-  border-color: #1f4b99;
-  color: #fff;
-}
-.arg-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: auto;
-  font-size: 0.95rem;
-}
-.arg-table th, .arg-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #eee;
-  vertical-align: top;
-}
-.arg-table thead th {
-  text-align: left;
-  border-bottom: 2px solid #ddd;
-  position: sticky; top: 0; background: #fff;
-}
-.arg-table tbody tr:nth-child(even) { background: #fafafa; }
-.arg-table code { font-size: 0.95em; }
+| Argument | Default | Description |
+|------|------|--------------|
+| `signal_parameters` | required | Number of predictors associated with the outcome |
+| `noise_parameters` | `0` | Number of predictors unrelated to the outcome |
+| `complexity` | `1` | Signal structure: `1` linear, `2` adds quadratic terms, `3` adds an interaction, `4` the Friedman function |
+| `data_control` | `NULL` | Correlation, distribution and nonlinear strength of the predictors (see `simulate_binary()`) |
+| `model` | `"glm"`, `"lm"` or `"coxph"` | Model fitted to each simulated dataset (the penalised and machine-learning options are experimental) |
+| `metric` | `"calibration_slope"` | Performance metric: `"calibration_slope"`, `"auc"`, `"r2"`, `"cindex"` or `"csse"` |
+| `target_performance` | required | Minimum acceptable performance |
+| `n_reps_total` | `1000` | Total number of simulation replicates |
+| `mean_or_assurance` | `"assurance"` | Criterion used to choose the sample size |
 
-/* Metadata badges below each description */
-.meta { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
-.badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  line-height: 1.4;
-  border: 1px solid transparent;
-  white-space: nowrap;
-}
-.badge--scope   { background:#f2f2f7; border-color:#e6e6ee; color:#444; }
-.badge--default { background:#eef6ff; border-color:#d6eaff; color:#1b5dab; }
-.badge--req     { background:#fdecea; border-color:#f7d6d2; color:#b73b2b; font-weight:600; }
+The remaining inputs depend on the outcome:
 
-/* On narrow screens, let the description breathe */
-@media (max-width: 820px){
-  .arg-table th:nth-child(1){ width: 36%; }
-}
-</style>
-
-<div class="arg-filter">
-  <div class="arg-filter__label">Select wrapper</div>
-  <div class="arg-filter__tabs" role="tablist" aria-label="Select outcome type">
-    <button class="arg-filter__tab is-active" type="button" data-outcome="binary" role="tab" aria-selected="true">
-      Binary
-    </button>
-    <button class="arg-filter__tab" type="button" data-outcome="continuous" role="tab" aria-selected="false">
-      Continuous
-    </button>
-    <button class="arg-filter__tab" type="button" data-outcome="survival" role="tab" aria-selected="false">
-      Survival
-    </button>
-  </div>
-</div>
-
-<table class="arg-table">
-  <thead>
-    <tr>
-      <th>Argument</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-
-    <tr class="arg-row" data-applies="all">
-      <td><strong><code>signal_parameters</code></strong></td>
-      <td>
-        <em>(int)</em> Number of <strong>true signal</strong> predictors associated with the outcome.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: all</span>
-          <span class="badge badge--default">Default: —</span>
-          <span class="badge badge--req">Required</span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="all">
-      <td><code>noise_parameters</code></td>
-      <td>
-        <em>(int)</em> Number of <strong>noise</strong> predictors unrelated to the outcome.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: all</span>
-          <span class="badge badge--default">Default: <code>0</code></span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="all">
-      <td><code>complexity</code></td>
-      <td>
-        <em>(int 1–4)</em> Signal structure of the data-generating mechanism:
-        <code>1</code> purely linear, <code>2</code> linear + quadratic,
-        <code>3</code> linear + quadratic + interaction, <code>4</code> the Friedman function.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: all</span>
-          <span class="badge badge--default">Default: <code>1</code></span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="all">
-      <td><code>data_control</code></td>
-      <td>
-        <em>(list)</em> Optional list fine-tuning the predictors:
-        <ul>
-          <li><code>nonlinear_strength</code> <em>(num [0, 1))</em> — fraction of the
-            signal variance carried by the nonlinear, linearly-inaccessible component.
-            Complexity 2 and 3 only; ignored with a warning for 1 and 4.</li>
-          <li><code>correlation</code> <em>(num [-1, 1])</em> — pairwise correlation
-            among candidate predictors. Default <code>0.3</code>.</li>
-          <li><code>predictor_distribution</code> <em>(chr)</em> — one of
-            <code>"normal"</code>, <code>"uniform"</code>, <code>"binary"</code>,
-            <code>"exponential"</code>, <code>"lognormal"</code>, <code>"t"</code>,
-            <code>"laplace"</code>. Default <code>"normal"</code>.</li>
-          <li><code>binary_predictor_prevalence</code> <em>(num (0, 1))</em> — required
-            when <code>predictor_distribution = "binary"</code>, ignored otherwise.
-            Binary predictors are incompatible with complexity 2/3.</li>
-        </ul>
-        <div class="meta">
-          <span class="badge badge--scope">Applies: all</span>
-          <span class="badge badge--default">Default: <code>NULL</code></span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="binary">
-      <td><strong><code>outcome_prevalence</code></strong></td>
-      <td>
-        <em>(num 0–1)</em> Target prevalence of the binary outcome.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: binary only</span>
-          <span class="badge badge--default">Default: —</span>
-          <span class="badge badge--req">Required</span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="binary">
-      <td><strong><code>maximum_achievable_cstatistic</code></strong></td>
-      <td>
-        <em>(num 0–1)</em> Maximum achievable <strong>C-statistic</strong> with effectively unlimited data.
-        This calibrates the data generator and is not the minimum acceptable threshold.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: binary only</span>
-          <span class="badge badge--default">Default: —</span>
-          <span class="badge badge--req">Required</span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="continuous">
-      <td><strong><code>maximum_achievable_rsquared</code></strong></td>
-      <td>
-        <em>(num 0–1)</em> Maximum achievable R<sup>2</sup> with effectively unlimited data.
-        This calibrates the data generator and is not the minimum acceptable threshold.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: continuous only</span>
-          <span class="badge badge--default">Default: —</span>
-          <span class="badge badge--req">Required</span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="survival">
-      <td><strong><code>maximum_achievable_cindex</code></strong></td>
-      <td>
-        <em>(num 0–1)</em> Maximum achievable <strong>concordance index</strong> with effectively unlimited data.
-        This calibrates the data generator and is not the minimum acceptable threshold.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: survival only</span>
-          <span class="badge badge--default">Default: —</span>
-          <span class="badge badge--req">Required</span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="survival">
-      <td><code>baseline_hazard</code></td>
-      <td>
-        <em>(num &gt; 0)</em> Baseline hazard used by the survival data-generating mechanism.
-        Larger values imply shorter event times, all else equal.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: survival only</span>
-          <span class="badge badge--default">Default: <code>1</code></span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="survival">
-      <td><strong><code>censoring_rate</code></strong></td>
-      <td>
-        <em>(num 0–1)</em> Proportion of individuals expected to be censored in the simulated survival datasets.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: survival only</span>
-          <span class="badge badge--default">Default: —</span>
-          <span class="badge badge--req">Required</span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="all">
-      <td><code>model</code></td>
-      <td>
-        <em>(chr)</em> Model used for fitting: <code>"glm"</code> / <code>"lm"</code> /
-        <code>"coxph"</code> depending on the outcome, or one of the experimental
-        machine-learning options <code>"lasso"</code>, <code>"ridge"</code>,
-        <code>"rf"</code>, <code>"xgboost"</code>.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: all</span>
-          <span class="badge badge--default">Default: <code>"glm"</code> / <code>"lm"</code> / <code>"coxph"</code></span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="all">
-      <td><code>metric</code></td>
-      <td>
-        <em>(chr)</em> <strong>Performance metric</strong> used to estimate the minimum
-        required sample size. Metric identifiers take one canonical form throughout the
-        package: <code>"calibration_slope"</code>, <code>"calibration_in_the_large"</code>,
-        <code>"auc"</code>, <code>"r2"</code>, <code>"cindex"</code>, and
-        <code>"csse"</code> (calibration slope squared error).
-        <div class="meta">
-          <span class="badge badge--scope">Applies: all</span>
-          <span class="badge badge--default">Default: <code>"calibration_slope"</code></span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="all">
-      <td><strong><code>target_performance</code></strong></td>
-      <td>
-        <em>(num)</em> <strong>Minimum acceptable performance</strong> in the units of the chosen metric (e.g. calibration slope ≥ 0.9),
-        used as the threshold for selecting the required sample size.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: all</span>
-          <span class="badge badge--default">Default: —</span>
-          <span class="badge badge--req">Required</span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="all">
-      <td><strong><code>n_reps_total</code></strong></td>
-      <td>
-        <em>(int)</em> Total number of simulation replications.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: all</span>
-          <span class="badge badge--default">Default: <code>1000</code></span>
-          <span class="badge badge--req">Required</span>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="arg-row" data-applies="all">
-      <td><code>mean_or_assurance</code></td>
-      <td>
-        <em>(chr)</em> Criterion for summarising results; <code>"assurance"</code> recommended.
-        <div class="meta">
-          <span class="badge badge--scope">Applies: all</span>
-          <span class="badge badge--default">Default: <code>"assurance"</code></span>
-        </div>
-      </td>
-    </tr>
-
-  </tbody>
-</table>
-
-<script>
-(function() {
-  function applyOutcomeFilter(value) {
-    document.querySelectorAll(".arg-row").forEach(function(row) {
-      var applies = row.getAttribute("data-applies");
-      row.hidden = !(applies === "all" || applies === value);
-    });
-  }
-
-  function setActiveTab(activeTab) {
-    document.querySelectorAll(".arg-filter__tab").forEach(function(tab) {
-      var isActive = tab === activeTab;
-      tab.classList.toggle("is-active", isActive);
-      tab.setAttribute("aria-selected", isActive ? "true" : "false");
-    });
-  }
-
-  function initOutcomeFilter() {
-    var tabs = document.querySelectorAll(".arg-filter__tab");
-    if (!tabs.length) return;
-
-    tabs.forEach(function(tab) {
-      tab.addEventListener("click", function() {
-        setActiveTab(tab);
-        applyOutcomeFilter(tab.getAttribute("data-outcome"));
-      });
-    });
-
-    setActiveTab(tabs[0]);
-    applyOutcomeFilter(tabs[0].getAttribute("data-outcome"));
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initOutcomeFilter);
-  } else {
-    initOutcomeFilter();
-  }
-})();
-</script>
-```
+| Function | Outcome-specific inputs | Models |
+|------|--------------|----------|
+| `simulate_binary()` | `maximum_achievable_cstatistic`, `outcome_prevalence` | `"glm"`, `"lasso"`, `"ridge"`, `"rf"`, `"xgboost"` |
+| `simulate_continuous()` | `maximum_achievable_rsquared` | `"lm"`, `"lasso"`, `"ridge"`, `"rf"`, `"xgboost"` |
+| `simulate_survival()` | `maximum_achievable_cindex`, `censoring_rate`, `baseline_hazard` (optional; default `1`) | `"coxph"`, `"lasso"`, `"ridge"`, `"rf"`, `"xgboost"` |
 
 > Notes:
 >
@@ -467,9 +233,38 @@ quantities recorded on an internal search scale --- is available through
 
 Plot the estimated learning curve and identified sample size:
 
-```{r, fig.alt="Plot showing learning curve for binary outcome"}
+```{r}
+#| eval: false
 plot(binary_example)
 ```
+
+The animation below shows the same search as it ran. With
+`live_plot = TRUE`, the plot is redrawn after each batch of 20 replicates.
+The final frame is what `plot(binary_example)` draws: the 20th percentile of
+the calibration slope at each simulated sample size (point size shows the
+number of replicates, with ±2 standard errors), the fitted learning curve,
+the target (dashed line), the minimum sample size (solid line) with its
+interval (shaded), and a shape-free cross-check (dotted line).
+
+<p align="center">
+  <video src="images/live_plot.mp4" autoplay loop muted playsinline width="100%" aria-label="Animation of the learning-curve search for the binary example. Each frame adds a batch of replicates; points accumulate around the target, the fitted curve settles, and the estimate converges on a minimum sample size of 1,000 (interval 972 to 1,061)."></video>
+</p>
+
+## How the search works
+
+By default (`method = "curve"`), `pmsims` fits a learning curve,
+$C(n) = a - b n^{-c}$, to the criterion at every sample size simulated so
+far. A pilot doubles or halves $n$ until the criterion has been seen on both
+sides of the target. Each further batch is placed where the fitted curve
+crosses the target, and the answer is where the final curve crosses it. The
+answer is then simulated again with fresh replicates to check that it meets
+the target.
+
+Every result has a `status`. `"ok"` means a sample size was found and the
+check confirmed it. Otherwise `min_n` may be `NA`, and `status_message`
+explains why (for example, `"unreachable"` when the curve levels off below
+the target). The previous Gaussian-process engine is available with
+`method = "mlpwr"`; see `?simulate_custom` for details of both engines.
 
 ## Continuous-outcome example
 

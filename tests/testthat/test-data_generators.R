@@ -149,3 +149,138 @@ test_that("default_data_generators", {
   expect_equal(ncol(data), 11)
   expect_equal(attr(f, "outcome"), "continuous")
 })
+
+test_that("generate_predictors induces a common pairwise correlation", {
+  set.seed(1)
+  families <- c("normal", "uniform", "exponential", "lognormal", "t", "laplace")
+  for (dist in families) {
+    X <- generate_predictors(
+      20000,
+      n_signal_parameters = 20,
+      noise_parameters = 0,
+      correlation = 0.3,
+      distribution = dist
+    )
+    expect_true(all(is.finite(X)))
+    # Rank correlation of a Gaussian copula does not depend on the margins:
+    # (6 / pi) * asin(rho / 2).
+    off_diag <- stats::cor(X, method = "spearman")[upper.tri(diag(20))]
+    expect_equal(mean(off_diag), (6 / pi) * asin(0.3 / 2), tolerance = 0.03)
+    # Every pair, not just the average, should sit near the target.
+    expect_lt(max(abs(off_diag - mean(off_diag))), 0.05)
+  }
+
+  X <- generate_predictors(20000, 20, 0, correlation = 0.3)
+  off_diag <- stats::cor(X)[upper.tri(diag(20))]
+  expect_equal(mean(off_diag), 0.3, tolerance = 0.02)
+})
+
+test_that("correlated predictors keep their marginal distributions", {
+  set.seed(1)
+  draw <- function(...) {
+    generate_predictors(20000, 10, 0, correlation = 0.3, ...)
+  }
+  expect_equal(mean(draw(distribution = "exponential")), 1, tolerance = 0.03)
+  expect_equal(mean(draw(distribution = "uniform")), 0.5, tolerance = 0.02)
+  expect_equal(stats::sd(as.vector(draw())), 1, tolerance = 0.02)
+})
+
+test_that("correlated binary predictors match the Gaussian copula", {
+  set.seed(1)
+  rho <- 0.3
+  # Phi coefficient implied by a latent correlation rho at prevalence p.
+  phi_theory <- function(p) {
+    c <- stats::qnorm(1 - p)
+    p11 <- stats::integrate(
+      function(z) {
+        stats::dnorm(z) * stats::pnorm((rho * z - c) / sqrt(1 - rho^2))
+      },
+      c,
+      Inf
+    )$value
+    (p11 - p^2) / (p * (1 - p))
+  }
+  for (prev in c(0.1, 0.3, 0.5)) {
+    X <- generate_predictors(
+      30000,
+      n_signal_parameters = 10,
+      noise_parameters = 0,
+      predictor_type = "binary",
+      binary_prevalence = prev,
+      correlation = rho
+    )
+    expect_setequal(unique(as.vector(X)), c(0, 1))
+    expect_equal(mean(X), prev, tolerance = 0.03)
+    off_diag <- stats::cor(X)[upper.tri(diag(10))]
+    expect_equal(mean(off_diag), phi_theory(prev), tolerance = 0.03)
+  }
+})
+
+
+test_that("C2/C3 rows follow one model whatever the batch size", {
+  set.seed(3)
+  X <- generate_predictors(5000, 6, 0, complexity = 3, correlation = 0.3)
+  lp <- function(X, cx) {
+    generate_linear_predictor(
+      X,
+      6,
+      0,
+      0,
+      1,
+      cx,
+      0.4,
+      predictor_type = "continuous",
+      binary_prevalence = 0,
+      correlation = 0.3,
+      distribution = "normal"
+    )
+  }
+  for (cx in 2:3) {
+    expect_equal(lp(X[1:40, ], cx), lp(X, cx)[1:40])
+  }
+})
+
+test_that("C2/C3 need the settings the predictors were drawn with", {
+  X <- generate_predictors(50, 4, 0, complexity = 2)
+  expect_error(
+    generate_linear_predictor(X, 4, 0, 0, 1, 2, 0.2, correlation = 0.3),
+    "predictor_type, binary_prevalence, distribution"
+  )
+  expect_length(generate_linear_predictor(X, 4, 0, 0, 1, 1), 50)
+})
+
+test_that("the C2/C3 component has share f and is orthogonal to x", {
+  set.seed(4)
+  X <- generate_predictors(2e5, 5, 0, complexity = 3, correlation = 0.3)
+  lp <- generate_linear_predictor(
+    X,
+    5,
+    0,
+    0,
+    1,
+    3,
+    0.3,
+    predictor_type = "continuous",
+    binary_prevalence = 0,
+    correlation = 0.3,
+    distribution = "normal"
+  )
+  nl <- lp - rowSums(X)
+  expect_equal(var(nl) / (var(rowSums(X)) + var(nl)), 0.3, tolerance = 0.02)
+  expect_lt(summary(stats::lm(nl ~ X))$r.squared, 1e-3)
+})
+
+test_that("the C2/C3 reference draw leaves the random stream untouched", {
+  set.seed(9)
+  a <- runif(3)
+  set.seed(9)
+  ref <- nonlinear_reference(
+    4,
+    2,
+    predictor_type = "continuous",
+    binary_prevalence = 0,
+    correlation = 0.1,
+    distribution = "normal"
+  )
+  expect_identical(runif(3), a)
+})

@@ -1,6 +1,6 @@
 Package: pmsims
 Title: Simulation-Based Sample Size Tools for Prediction Models
-Version: 1.0.0
+Version: 1.1.0
 Authors@R:
     c(
       person(given = "Ewan",
@@ -54,16 +54,14 @@ Imports:
     ggplot2,
     lifecycle,
     mlpwr,
+    parallel,
     pROC,
     stats,
-    survival,
-    timeROC,
+    survival (>= 3.5-0),
     utils
 Suggests:
     covr,
     DescTools,
-    doParallel,
-    foreach,
     glmnet,
     knitr,
     mlbench,
@@ -73,6 +71,7 @@ Suggests:
     rmarkdown,
     synthpop,
     testthat (>= 3.0.0),
+    timeROC,
     tuneRanger,
     xgboost
 Encoding: UTF-8
@@ -81,4 +80,5 @@ LazyDataCompression: xz
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
+Config/Needs/website: glmmTMB
 Config/roxygen2/version: 8.0.0

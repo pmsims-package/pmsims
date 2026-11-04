@@ -10,6 +10,8 @@ validate_metric_constraints <- function(
     )
   }
 
+  check_metric_direction(metric)
+
   metric_label <- switch(
     metric,
     auc = "AUC",

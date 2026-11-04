@@ -52,12 +52,12 @@
 #                         Supplied as a variance fraction f and converted
 #                         internally to the nonlinear-to-linear SD ratio
 #                           kappa = sqrt(f / (1 - f))
-#                         so the realised nonlinear variance fraction equals f
-#                         exactly (the linear and nonlinear pieces are
-#                         orthogonal by construction). Larger f hides more of the
-#                         signal from a linear-in-X model, making C2/C3 harder for
-#                         AUC / C-index and requiring more sample size. C1 and C4
-#                         ignore this argument.
+#                         so the nonlinear variance fraction in the population
+#                         is f, up to the error in the reference estimates
+#                         (see generate_linear_predictor()). Larger f hides
+#                         more of the signal from a linear-in-X model, making
+#                         C2/C3 harder for AUC / C-index and requiring more
+#                         sample size. C1 and C4 ignore this argument.
 #
 # Supported distribution families (continuous predictors):
 #   "normal"      : mean = 0, sd = 1
@@ -89,10 +89,10 @@ COMPLEXITY_DIST_DEFAULTS <- c(
 # Nonlinear strength per complexity for C2/C3: the FRACTION of signal variance
 # carried by the nonlinear (linearly-inaccessible) component. 0 = pure linear.
 # Internally converted to the nonlinear-to-linear SD ratio kappa = sqrt(f/(1-f))
-# so the realised nonlinear variance fraction equals f exactly. Larger f hides
-# more signal from a linear-in-X model => harder for AUC / C-index and more
-# sample size required. C1 and C4 ignore this (C1 is pure linear; C4 uses the
-# canonical Friedman form).
+# so the nonlinear variance fraction in the population is f, up to the error in
+# the reference estimates. Larger f hides more signal from a linear-in-X model
+# => harder for AUC / C-index and more sample size required. C1 and C4 ignore
+# this (C1 is pure linear; C4 uses the canonical Friedman form).
 COMPLEXITY_NONLINEAR_STRENGTH_DEFAULTS <- c(
   "1" = 0.0,
   "2" = 0.2,
@@ -162,8 +162,10 @@ default_data_generators <- function(opts) {
 #' @param binary_prevalence  Scalar in (0, 1]. Bernoulli probability applied to
 #'   all predictors when \code{predictor_type = "binary"}. Default = 0.
 #' @param correlation        Scalar in \eqn{[-1, 1]}. Common pairwise correlation
-#'   applied via a Gaussian copula (equicorrelation, rank-based Cholesky).
-#'   Default = 0.3. Set to 0 for independence.
+#'   applied via a Gaussian copula: \code{correlation} is the correlation of
+#'   the underlying normal variables, which equals the Pearson correlation of
+#'   the predictors only when they are normal. Default = 0.3. Set to 0 for
+#'   independence.
 #' @param distribution       Distribution family for \emph{all} continuous
 #'   predictors. Default = \code{"normal"}. For complexity 4, if left at
 #'   \code{"normal"} the framework uses \code{"uniform"} (Friedman canonical).
@@ -207,7 +209,11 @@ generate_continuous_data <- function(
     intercept,
     beta_signal,
     complexity,
-    nonlinear_strength
+    nonlinear_strength,
+    predictor_type = predictor_type,
+    binary_prevalence = binary_prevalence,
+    correlation = correlation,
+    distribution = distribution
   )
   y <- stats::rnorm(n, lp, 1)
   return(as.data.frame(cbind(y, X)))
@@ -253,7 +259,11 @@ generate_binary_data <- function(
     intercept = mu_lp,
     beta_signal,
     complexity,
-    nonlinear_strength
+    nonlinear_strength,
+    predictor_type = predictor_type,
+    binary_prevalence = binary_prevalence,
+    correlation = correlation,
+    distribution = distribution
   )
   y <- stats::rbinom(n, 1, stats::plogis(lp))
   return(as.data.frame(cbind(y, X)))
@@ -300,7 +310,11 @@ generate_survival_data <- function(
     intercept,
     beta_signal,
     complexity,
-    nonlinear_strength
+    nonlinear_strength,
+    predictor_type = predictor_type,
+    binary_prevalence = binary_prevalence,
+    correlation = correlation,
+    distribution = distribution
   )
 
   event_time <- stats::rexp(n, rate = baseline_hazard * exp(lp))
@@ -432,20 +446,70 @@ resolve_family <- function(
 }
 
 # -----------------------------------------------------------------------------
-# apply_correlation
+# normal_to_family
 #
-# Induces a common pairwise correlation rho across all p columns via a
-# Gaussian copula (equicorrelation matrix, rank-based Cholesky). The marginal
-# distribution of every column is preserved exactly.
+# Transforms a matrix of standard normal values Z, column by column, to the
+# chosen family using the quantile transform F^{-1}(pnorm(Z)). The families and
+# their parameters match draw_predictors(). Where the family allows, the
+# transform is computed from the normal tail probabilities directly so that it
+# stays finite and precise for extreme Z (pnorm(z) rounds to 1 for z > 8.3).
 # -----------------------------------------------------------------------------
-apply_correlation <- function(X, rho) {
-  n <- nrow(X)
-  p <- ncol(X)
+normal_to_family <- function(Z, family, binary_prevalence = 0) {
+  vals <- switch(
+    family,
 
-  if (rho == 0) {
-    return(X)
-  }
+    normal = Z,
 
+    uniform = stats::pnorm(Z),
+
+    # -log(1 - pnorm(Z)), via the upper tail.
+    exponential = -stats::pnorm(Z, lower.tail = FALSE, log.p = TRUE),
+
+    lognormal = exp(Z),
+
+    # Symmetric, so work from the lower tail of -|Z| and restore the sign.
+    t = -sign(Z) * stats::qt(stats::pnorm(-abs(Z)), df = 5),
+
+    # Standard Laplace quantile, again from the lower tail of -|Z|.
+    laplace = -sign(Z) *
+      (log(2) + stats::pnorm(-abs(Z), log.p = TRUE)),
+
+    # 1 when pnorm(Z) > 1 - prevalence, i.e. Z > qnorm(1 - prevalence).
+    binary = (Z > stats::qnorm(1 - binary_prevalence)) * 1,
+
+    stop(sprintf(
+      paste0(
+        'Unknown distribution "%s". ',
+        'Supported: "normal", "uniform", "exponential", ',
+        '"lognormal", "t", "laplace".'
+      ),
+      family
+    ))
+  )
+
+  matrix(vals, nrow = nrow(Z), ncol = ncol(Z))
+}
+
+# -----------------------------------------------------------------------------
+# draw_correlated_predictors
+#
+# Draws an n x p matrix from the chosen family with a common pairwise
+# correlation rho, via a Gaussian copula: equicorrelated standard normals
+# (Z %*% chol(R)) are transformed to the family with normal_to_family(). The
+# marginal distribution of every column is exactly the family's.
+#
+# rho is the correlation of the underlying normals. For normal predictors it is
+# also the Pearson correlation of the result. For other families the Pearson
+# correlation is lower (e.g. about 0.18 for binary predictors with prevalence
+# 0.3 when rho = 0.3), while the rank dependence is the same for every family.
+# -----------------------------------------------------------------------------
+draw_correlated_predictors <- function(
+  n,
+  p,
+  family,
+  rho,
+  binary_prevalence = 0
+) {
   min_rho <- if (p > 1) -1 / (p - 1) else -1
   if (rho < min_rho) {
     warning(sprintf(
@@ -471,22 +535,25 @@ apply_correlation <- function(X, rho) {
     ))
   }
 
-  L <- chol(cor_mat)
-  U <- apply(X, 2, function(col) rank(col, ties.method = "average") / (n + 1))
-  Z_corr <- stats::qnorm(U) %*% t(L)
-
-  X_corr <- X
+  # Rows of Z %*% U, with U = chol(R) upper triangular, have covariance
+  # t(U) %*% U = R. For an equicorrelation matrix each row of U is constant to
+  # the right of the diagonal (U[i, j] = U[i, p] for j > i), so column j of
+  # Z %*% U is a running sum over the earlier columns of Z plus U[j, j] times
+  # its own: O(n p) work instead of the matrix product's O(n p^2), which for
+  # 80 predictors was most of the time spent drawing a 30,000-row test set.
+  # The terms are added in the same order as in the matrix product, but
+  # chol() can return rows that differ in the last bit, so the result is
+  # equal to the matrix product to rounding error (bit-identical when the
+  # rows are exactly constant, as for up to about 10 predictors).
+  U <- chol(cor_mat)
+  Z <- matrix(stats::rnorm(n * p), nrow = n, ncol = p)
+  running <- numeric(n)
   for (j in seq_len(p)) {
-    orig_sorted <- sort(X[, j])
-    new_ranks_int <- pmax(
-      1L,
-      pmin(n, round(rank(Z_corr[, j], ties.method = "average")))
-    )
-    X_corr[, j] <- orig_sorted[new_ranks_int]
+    z_j <- Z[, j]
+    Z[, j] <- running + U[j, j] * z_j
+    running <- running + U[j, p] * z_j # not needed after the last column
   }
-
-  colnames(X_corr) <- colnames(X)
-  return(X_corr)
+  normal_to_family(Z, family, binary_prevalence)
 }
 
 # =============================================================================
@@ -495,8 +562,9 @@ apply_correlation <- function(X, rho) {
 
 #' Generate the n x p predictor matrix
 #'
-#' Draws all predictors from a single global distribution family, then
-#' optionally applies an equicorrelation structure via a Gaussian copula.
+#' Draws all predictors from a single global distribution family. With a
+#' non-zero \code{correlation}, they are drawn through a Gaussian copula with a
+#' common pairwise correlation.
 #'
 #' @param n                Sample size.
 #' @param n_signal_parameters Number of signal predictors.
@@ -560,12 +628,11 @@ generate_predictors <- function(
   )
 
   # ---- draw all predictors from the global family ----------------------------
-  X <- draw_predictors(n, p, family, binary_prevalence)
-  colnames(X) <- col_names
-
-  # ---- apply equicorrelation if requested ------------------------------------
-  if (correlation != 0) {
-    X <- apply_correlation(X, correlation)
+  # With a non-zero correlation, draw through the Gaussian copula instead.
+  X <- if (correlation == 0) {
+    draw_predictors(n, p, family, binary_prevalence)
+  } else {
+    draw_correlated_predictors(n, p, family, correlation, binary_prevalence)
   }
 
   colnames(X) <- col_names
@@ -589,6 +656,11 @@ generate_predictors <- function(
 #' @param nonlinear_strength Fraction of signal variance carried by the
 #'   nonlinear component (C2/C3 only), in [0, 1). \code{NULL} uses the
 #'   complexity-level default in \code{COMPLEXITY_NONLINEAR_STRENGTH_DEFAULTS}.
+#' @param predictor_type,binary_prevalence,correlation,distribution The
+#'   settings \code{X} was drawn with (see \code{\link{generate_predictors}}).
+#'   Required for complexity 2 and 3, where they select the reference
+#'   estimates for the nonlinear component; they must match how \code{X} was
+#'   drawn, or the component is no longer orthogonal to the linear terms.
 #'
 #' @details
 #' \strong{Why variance fraction rather than an R^2 split.}
@@ -607,13 +679,21 @@ generate_predictors <- function(
 #' where \eqn{L = \sum_j x_j} is the linear score (identical to complexity 1)
 #' and \eqn{\tilde N} is the nonlinear aggregate (\eqn{\sum_j x_j^2} for C2;
 #' plus \eqn{\sum_{j<k} x_j x_k} for C3) \emph{residualised against the full
-#' design} \eqn{[1, x_1, \ldots, x_S]} and standardised to unit SD. Because
-#' \eqn{L} and \eqn{\tilde N} are orthogonal, the nonlinear variance fraction is
+#' design} \eqn{[1, x_1, \ldots, x_S]} and standardised to unit SD. The
+#' projection coefficients and both SDs are estimated once per predictor
+#' configuration from a 500,000-row reference draw (see
+#' \code{nonlinear_reference()}), so every row is generated by the same model
+#' whatever the number of rows drawn. Because \eqn{L} and \eqn{\tilde N} are
+#' orthogonal in the population (up to the error in these estimates), the
+#' nonlinear variance fraction is
 #' \deqn{f = \frac{\kappa^2}{1 + \kappa^2},\qquad\text{equivalently}\qquad
 #'       \kappa = \sqrt{\frac{f}{1 - f}}.}
 #' The user supplies \code{nonlinear_strength} = \eqn{f} (e.g. 0.2 = 20% of the
-#' signal variance is nonlinear) and \eqn{\kappa} is computed internally so the
-#' realised fraction equals \eqn{f} exactly.
+#' signal variance is nonlinear) and \eqn{\kappa} is computed internally. The
+#' population fraction is \eqn{f} up to the error in the reference draw:
+#' within 0.002 for normal, uniform, Laplace and exponential predictors, but
+#' only within about 0.02 for t and lognormal predictors, whose squares are
+#' heavy-tailed.
 #'
 #' Because the bracket is fixed given X, \code{lp} is linear in
 #' \code{beta_signal}, so the tuning routines (which scale \code{beta_signal} to
@@ -648,7 +728,11 @@ generate_linear_predictor <- function(
   intercept,
   beta_signal,
   complexity,
-  nonlinear_strength = NULL
+  nonlinear_strength = NULL,
+  predictor_type,
+  binary_prevalence,
+  correlation,
+  distribution
 ) {
   n <- nrow(X)
   lp <- rep(intercept, n)
@@ -696,36 +780,132 @@ generate_linear_predictor <- function(
     return(lp + eff_beta * lin)
   }
 
-  if (complexity == 2) {
-    Nraw <- rowSums(Xs^2)
-  } else if (complexity == 3) {
-    if (S < 2) {
-      warning("Complexity 3 needs >= 2 signal predictors. Falling back to C2.")
-      return(generate_linear_predictor(
-        X,
-        n_signal_parameters,
-        noise_parameters,
-        intercept,
-        beta_signal,
-        2,
-        nonlinear_strength
-      ))
-    }
-    inter <- rowSums(vapply(
-      seq_len(S - 1),
-      function(j) Xs[, j] * rowSums(Xs[, (j + 1):S, drop = FALSE]),
-      numeric(n)
-    ))
-    Nraw <- rowSums(Xs^2) + inter
-  } else {
+  if (!complexity %in% c(2, 3)) {
     stop("complexity must be 1, 2, 3 or 4.")
   }
+  if (complexity == 3 && S < 2) {
+    warning("Complexity 3 needs >= 2 signal predictors. Falling back to C2.")
+  }
+  settings <- c(
+    "predictor_type",
+    "binary_prevalence",
+    "correlation",
+    "distribution"
+  )
+  not_given <- settings[c(
+    missing(predictor_type),
+    missing(binary_prevalence),
+    missing(correlation),
+    missing(distribution)
+  )]
+  if (length(not_given) > 0) {
+    stop(
+      "Complexity 2 and 3 need the settings X was drawn with; missing: ",
+      paste(not_given, collapse = ", "),
+      "."
+    )
+  }
 
-  # Residualise the nonlinear aggregate against the FULL design [1, x1..xS] so
-  # that no linear-in-X learner can access it, then standardise to unit SD.
-  N_ortho <- stats::residuals(stats::lm(Nraw ~ Xs))
-  sd_N <- stats::sd(N_ortho)
-  if (!is.finite(sd_N) || sd_N <= 0) {
+  # Residualise the nonlinear aggregate against [1, x1..xS] and scale it with
+  # reference estimates (projection coefficients, SD of the residual and SD
+  # of the linear part) for this predictor configuration, so that the model
+  # for a row does not depend on how many rows are drawn with it.
+  ref <- nonlinear_reference(
+    n_signal_parameters = S,
+    complexity = complexity,
+    predictor_type = predictor_type,
+    binary_prevalence = binary_prevalence,
+    correlation = correlation,
+    distribution = distribution
+  )
+  N_ortho <- nonlinear_raw(Xs, complexity) -
+    drop(cbind(1, Xs) %*% ref$gamma)
+  N_std <- N_ortho / ref$sd_N
+
+  # lp = intercept + eff_beta * ( L + kappa * SD(L) * N_std )
+  # Linear part identical to C1; nonlinear variance fraction is f in the
+  # population, up to the error in the reference estimates. Linearity in
+  # beta_signal lets oracle-metric tuning scale it.
+  lp + eff_beta * (lin + kappa * ref$sd_lin * N_std)
+}
+
+
+# -----------------------------------------------------------------------------
+# Nonlinear aggregate for complexity 2 (sum of squares) and 3 (squares plus
+# all pairwise interactions) of the signal predictors.
+# -----------------------------------------------------------------------------
+nonlinear_raw <- function(Xs, complexity) {
+  S <- ncol(Xs)
+  if (complexity == 2 || S < 2) {
+    return(rowSums(Xs^2))
+  }
+  inter <- rowSums(vapply(
+    seq_len(S - 1),
+    function(j) Xs[, j] * rowSums(Xs[, (j + 1):S, drop = FALSE]),
+    numeric(nrow(Xs))
+  ))
+  rowSums(Xs^2) + inter
+}
+
+# -----------------------------------------------------------------------------
+# Reference estimates for the C2/C3 nonlinear component, for one predictor
+# configuration: the coefficients projecting the nonlinear aggregate on
+# [1, x1..xS], the SD of the projection residual, and the SD of the linear
+# part sum(x). Estimated once from a reference draw of `n_ref` rows with a
+# fixed seed (the caller's random-number stream is left untouched) and cached
+# for the session, so they are identical in every call.
+# -----------------------------------------------------------------------------
+.nonlinear_cache <- new.env(parent = emptyenv())
+
+nonlinear_reference <- function(
+  n_signal_parameters,
+  complexity,
+  predictor_type,
+  binary_prevalence,
+  correlation,
+  distribution,
+  n_ref = 500000L
+) {
+  key <- paste(
+    n_signal_parameters,
+    complexity,
+    predictor_type,
+    binary_prevalence,
+    correlation,
+    distribution,
+    n_ref,
+    sep = "|"
+  )
+  hit <- .nonlinear_cache[[key]]
+  if (!is.null(hit)) {
+    return(hit)
+  }
+  ref <- with_rng_restored({
+    set.seed(20250601L, kind = "Mersenne-Twister", normal.kind = "Inversion")
+    Xr <- generate_predictors(
+      n = n_ref,
+      n_signal_parameters = n_signal_parameters,
+      noise_parameters = 0,
+      complexity = complexity,
+      predictor_type = predictor_type,
+      binary_prevalence = binary_prevalence,
+      correlation = correlation,
+      distribution = distribution
+    )
+    Nraw <- nonlinear_raw(Xr, complexity)
+    design <- cbind(1, Xr)
+    fit <- stats::lm.fit(design, Nraw)
+    gamma <- fit$coefficients
+    gamma[is.na(gamma)] <- 0
+    list(
+      gamma = unname(gamma),
+      sd_N = stats::sd(fit$residuals),
+      sd_lin = stats::sd(rowSums(Xr)),
+      sd_raw = stats::sd(Nraw)
+    )
+  })
+  # Degenerate when (almost) all of the aggregate is linear in x.
+  if (!is.finite(ref$sd_N) || ref$sd_N <= 1e-8 * ref$sd_raw) {
     stop(
       "Nonlinear component is degenerate -- e.g. binary predictors under ",
       "complexity 2/3, where x^2 = x collapses the quadratic term. Use ",
@@ -733,10 +913,6 @@ generate_linear_predictor <- function(
       "predictors)."
     )
   }
-  N_std <- N_ortho / sd_N
-
-  # lp = intercept + eff_beta * ( L + kappa * SD(L) * N_std )
-  # Linear part identical to C1; nonlinear variance fraction equals f exactly.
-  # Linearity in beta_signal lets oracle-metric tuning scale it directly.
-  lp + eff_beta * (lin + kappa * stats::sd(lin) * N_std)
+  assign(key, ref, envir = .nonlinear_cache)
+  ref
 }

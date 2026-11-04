@@ -114,8 +114,18 @@ adaptive_startvalues <- function(
 
 #' Calculate adaptive start bounds
 #'
-#' Derive lower and upper sample-size bounds by repeatedly simulating model
-#' performance from an initial sample size.
+#' Derive lower and upper sample-size bounds by simulating model performance
+#' over a geometric ladder of sample sizes.
+#'
+#' The bounds this function returns are *search bounds* for the second stage,
+#' not estimates in their own right. They are therefore placed at sample sizes
+#' whose performance is separated from `target_performance` by several Monte
+#' Carlo standard errors, rather than at the first sample size whose noisy
+#' estimate happens to cross the target. This is what keeps the bounds stable:
+#' with `n_reps_per` replications the standard error of a calibration-slope
+#' summary is typically 0.02-0.03, so a bare `estimate >= target` comparison at
+#' a sample size near the crossing point is close to a coin flip, and because
+#' the ladder is geometric one mis-call moves both bounds by a factor of two.
 #'
 #' @param data_function Function taking a sample size and returning a simulated
 #'   training dataset.
@@ -124,17 +134,36 @@ adaptive_startvalues <- function(
 #' @param metric_function Function evaluating the fitted model on test data.
 #' @param value_on_error Numeric fallback used when fitting or evaluation fails.
 #' @param start_n Positive integer initial sample size.
-#' @param test_n Positive integer size of the fixed test dataset.
+#' @param test_n Positive integer size of the test set drawn for each
+#'   replicate.
 #' @param n_reps_per Positive integer simulations performed at each sample size.
 #' @param n_reps_total Positive integer total simulation budget.
 #' @param target_performance Numeric performance threshold used to define the
 #'   search bounds.
-#' @param threshold Numeric tolerance around `target_performance`.
-#' @param mean_or_assurance Character string selecting the mean or 20th-percentile
-#'   performance summary.
+#' @param threshold Numeric minimum half-width of the band around
+#'   `target_performance` within which a sample size is treated as too close to
+#'   call. The band actually used is
+#'   `max(threshold, conf_z * se)`, where `se` is the Monte Carlo standard error
+#'   of the performance summary at that sample size.
+#' @param mean_or_assurance Character string selecting the mean or
+#'   20th-percentile performance summary.
 #' @param plateau_k Positive integer number of recent iterations used to detect
 #'   a performance plateau.
-#' @param plateau_tol Numeric maximum change treated as a plateau.
+#' @param plateau_tol Numeric minimum change treated as a plateau. As with
+#'   `threshold`, the tolerance actually used is the larger of `plateau_tol` and
+#'   twice the Monte Carlo standard error, so that Monte Carlo noise is not
+#'   mistaken for a real gain (or a real gain for a plateau).
+#' @param conf_z Numeric number of standard errors a sample size must be away
+#'   from `target_performance` before it is used as a bound.
+#' @param max_reps_per Optional positive integer cap on the replications spent
+#'   at a single sample size. When a sample size is too close to call, the
+#'   search buys more replications there (doubling up to this cap) instead of
+#'   deciding on a noisy estimate. Defaults to `4 * n_reps_per`.
+#' @param winsorise Logical; whether to winsorise replicate metric values at
+#'   the median plus or minus five median absolute deviations before
+#'   summarising. This bounds the influence of the occasional separated or
+#'   near-degenerate fit, which for ratio-type metrics such as the calibration
+#'   slope can otherwise move the mean substantially.
 #' @param large_perf_check Logical; whether to probe a large sample size before
 #'   beginning the adaptive search.
 #' @param large_n Optional positive integer sample size for the preliminary
@@ -147,11 +176,16 @@ adaptive_startvalues <- function(
 #'   parallel backend.
 #' @param cores Positive integer number of parallel workers.
 #' @param verbose Logical; whether to report search progress.
-#'
-#' @noRd
+#' @param max_n Largest sample size the search may try. Reaching it stops the
+#'   search with `stop_reason = "max_n_reached"`.
+#' @param evaluator Optional evaluator from `new_evaluator()`. When `NULL`, one
+#'   is created from the data, model and metric functions.
 #'
 #' @return A list containing lower and upper sample-size bounds, the associated
-#'   performance summaries, and the search trace.
+#'   performance summaries, and the search trace. Each element of `track` also
+#'   carries the Monte Carlo standard error `se`, the number of replications
+#'   `reps` spent, and the classification `call` (`"below"`, `"above"` or `"uncertain"`).
+#' @noRd
 calculate_adaptive_bounds <- function(
   data_function,
   model_function,
@@ -166,67 +200,57 @@ calculate_adaptive_bounds <- function(
   mean_or_assurance = "mean",
   plateau_k = 3,
   plateau_tol = 0.005,
+  conf_z = 2,
+  max_reps_per = NULL,
+  winsorise = TRUE,
   # Optional large-sample pre-check. When enabled, the search first evaluates
   # performance at large_n. If the target is more than large_n_tol above that
-  # estimate, it stops and reports the target as unreachable. Otherwise, the
-  # result determines the initial search bound and direction.
+  # estimate, it stops and reports the target as unreachable.
   #
   # Disabled by default because the preliminary large-sample fit did not work
-  # reliably for some machine-learning models. The default search starts at
-  # start_n and detects an unreachable target when recent gains plateau.
-  large_perf_check = FALSE, # Probe performance at a large sample size first.
-  large_n = NULL, # Sample size used for the optional probe.
-  large_n_tol = 0.05, # Gap beyond which the target is considered unreachable.
+  # reliably for some machine-learning models.
+  large_perf_check = FALSE,
+  large_n = NULL,
+  large_n_tol = 0.05,
   c_statistic = NULL,
   parallel = FALSE,
   cores = 20,
-  verbose = FALSE
+  verbose = FALSE,
+  max_n = 1e6,
+  evaluator = NULL
 ) {
-  max_iter <- floor(n_reps_total / n_reps_per)
-  test_data <- data_function(test_n)
+  vcat <- function(...) if (verbose) message(sprintf(...))
 
-  single_run <- function(n) {
-    tryCatch(
-      {
-        dat <- data_function(n)
-        fit <- model_function(dat)
-        metric_function(test_data, fit, attr(model_function, "model"))
-      },
-      error = function(e) value_on_error
+  # Replicates come from the shared evaluator (R/simulation_core.R), so this
+  # stage scores models exactly as the main search does -- a fresh test set
+  # per replicate -- and each replicate runs on its own keyed random stream.
+  if (is.null(evaluator)) {
+    evaluator <- new_evaluator(
+      data_function = data_function,
+      model_function = model_function,
+      metric_function = metric_function,
+      test_n = test_n,
+      value_on_error = value_on_error,
+      parallel = parallel,
+      cores = cores
     )
   }
 
-  summary_at_n <- function(n) {
-    if (parallel) {
-      require_optional_packages(
-        c("doParallel", "foreach"),
-        "parallel adaptive-bound calculations"
-      )
+  max_iter <- floor(n_reps_total / n_reps_per)
+  max_reps_per <- if (is.null(max_reps_per)) {
+    4L * as.integer(n_reps_per)
+  } else {
+    max(as.integer(max_reps_per), as.integer(n_reps_per))
+  }
 
-      cl <- parallel::makeCluster(cores)
-      doParallel::registerDoParallel(cl)
-      on.exit(parallel::stopCluster(cl), add = TRUE)
-      vals <- foreach::`%dopar%`(
-        foreach::foreach(i = seq_len(n_reps_per), .combine = c),
-        {
-          single_run(n)
-        }
-      )
-    } else {
-      vals <- vapply(
-        seq_len(n_reps_per),
-        function(i) single_run(n),
-        FUN.VALUE = numeric(1)
-      )
-    }
+  draw_reps <- function(n, reps) evaluator$batch(n, reps, "adaptive")
 
-    perf_summary <- if (mean_or_assurance == "mean") {
-      mean(vals, na.rm = TRUE)
-    } else {
-      as.numeric(stats::quantile(vals, probs = 0.20, na.rm = TRUE))
-    }
+  # -- Summary with its Monte Carlo standard error --------------------------
+  summarise_vals <- function(vals, n) {
+    ok <- vals[is.finite(vals)]
+    m <- length(ok)
 
-    if (length(perf_summary) != 1L || !is.finite(perf_summary)) {
+    if (m == 0L) {
       stop(
         sprintf(
           paste(
@@ -239,226 +263,247 @@ calculate_adaptive_bounds <- function(
       )
     }
 
-    list(y_summary = perf_summary, y = vals)
-  }
-
-  has_plateaued <- function(track, k, tol) {
-    if (length(track) < k + 1) {
-      return(FALSE)
+    if (isTRUE(winsorise) && m >= 5L) {
+      centre <- stats::median(ok)
+      spread <- stats::mad(ok)
+      if (is.finite(spread) && spread > 0) {
+        ok <- pmin(pmax(ok, centre - 5 * spread), centre + 5 * spread)
+      }
     }
-    recent <- utils::tail(track, k + 1)
-    perfs <- sapply(recent, `[[`, "performance")
-    gains <- diff(perfs)
-    all(abs(gains) < tol)
+
+    if (mean_or_assurance == "mean") {
+      est <- mean(ok)
+      se <- if (m > 1L) stats::sd(ok) / sqrt(m) else 0
+    } else {
+      est <- as.numeric(stats::quantile(ok, probs = 0.20, type = 7))
+      # The 20th percentile has no closed-form standard error here; bootstrap it.
+      se <- if (m > 1L) {
+        stats::sd(replicate(
+          200L,
+          stats::quantile(sample(ok, m, replace = TRUE), probs = 0.20, type = 7)
+        ))
+      } else {
+        0
+      }
+    }
+
+    if (length(est) != 1L || !is.finite(est)) {
+      stop(
+        sprintf(
+          paste(
+            "Adaptive start value search produced a non-finite",
+            "performance summary at n = %d"
+          ),
+          n
+        ),
+        call. = FALSE
+      )
+    }
+
+    list(
+      n = n,
+      est = est,
+      se = if (is.finite(se)) se else 0,
+      reps = length(vals),
+      vals = vals
+    )
   }
 
-  vmsg <- function(...) if (verbose) message(sprintf(...))
+  # Replicate values are cached per sample size so that refining a sample size
+  # adds replications rather than discarding the ones already paid for.
+  cache <- new.env(parent = emptyenv())
+  budget <- n_reps_total
 
-  # Initialise the search state.
-  iter <- 0L
+  cache_key <- function(n) format(n, scientific = FALSE)
+
+  cached_vals <- function(n) {
+    have <- cache[[cache_key(n)]]
+    if (is.null(have)) numeric(0) else have
+  }
+
+  evaluate_at <- function(n, reps) {
+    have <- cached_vals(n)
+    if (length(have) < reps) {
+      have <- c(have, draw_reps(n, reps - length(have)))
+      cache[[cache_key(n)]] <- have
+    }
+    summarise_vals(have[seq_len(min(reps, length(have)))], n)
+  }
+
+  classify <- function(s) {
+    band <- max(threshold, conf_z * s$se)
+    if (s$est > target_performance + band) {
+      "above"
+    } else if (s$est < target_performance - band) {
+      "below"
+    } else {
+      "uncertain"
+    }
+  }
+
+  # Evaluate a sample size, buying more replications while the call is too
+  # close to make confidently and the budget allows.
+  assess <- function(n) {
+    reps <- as.integer(n_reps_per)
+    repeat {
+      before <- length(cached_vals(n))
+      s <- evaluate_at(n, reps)
+      budget <<- budget - (length(cached_vals(n)) - before)
+      s$call <- classify(s)
+      if (s$call != "uncertain" || reps >= max_reps_per || budget < reps) {
+        break
+      }
+      reps <- min(max_reps_per, reps * 2L)
+    }
+    s
+  }
+
   track <- list()
-  stop_reason <- "budget_exhausted"
-  lower_n <- NA_real_
-  lower_perf <- NA_real_
-  upper_n <- NA_real_
-  upper_perf <- NA_real_
-  max_achievable_perf <- NA_real_ # Reported when the target is unreachable.
+  push <- function(s) {
+    track[[length(track) + 1L]] <<- list(
+      n = s$n,
+      performance = s$est,
+      se = s$se,
+      reps = s$reps,
+      call = s$call,
+      raw = s$vals
+    )
+    vcat(
+      "n = %s | perf = %.4f (se %.4f) | %s",
+      format(s$n),
+      s$est,
+      s$se,
+      s$call
+    )
+  }
 
-  # Optionally check reachability at a large sample size before searching.
-  # This is not used by default.
+  have_call <- function(what) {
+    any(vapply(track, function(z) identical(z$call, what), logical(1)))
+  }
+
+  stop_reason <- "budget_exhausted"
+  max_achievable_perf <- NA_real_
+
+  # -- Optional large-sample pre-check --------------------------------------
   if (isTRUE(large_perf_check)) {
     if (is.null(large_n)) {
-      # Default: use the largest n we could reach by doubling from start_n
-      # within the iteration budget (leaves room for at least one probe).
-      large_n <- start_n * 2L^max(1L, max_iter - 1L)
+      large_n <- start_n * 2^max(1L, max_iter - 1L)
     }
+    s <- assess(large_n)
+    push(s)
 
-    vmsg("Large-n pre-check at n = %d", large_n)
-
-    res_large <- summary_at_n(large_n)
-    perf_large <- res_large$y_summary
-    iter <- iter + 1L
-    track[[iter]] <- list(
-      n = large_n,
-      performance = perf_large,
-      raw = res_large$y
-    )
-
-    vmsg(
-      "Iter %d | n = %d (large-n probe) | perf = %.4f",
-      iter,
-      large_n,
-      perf_large
-    )
-
-    gap <- target_performance - perf_large
-
-    if (gap > large_n_tol) {
-      # Target is unreachable even at the large sample size — truncate.
-      stop_reason <- "target_unreachable"
-      max_achievable_perf <- perf_large
-      upper_n <- large_n
-      upper_perf <- perf_large
-      lower_n <- large_n
-      lower_perf <- perf_large
-
-      vmsg(
-        paste0(
-          "Performance at large n (%.4f) is still %.4f below target (%.4f); ",
-          "gap exceeds large_n_tol (%.4f). Truncating."
-        ),
-        perf_large,
-        gap,
-        target_performance,
-        large_n_tol
-      )
-
+    if (target_performance - s$est > large_n_tol) {
       return(list(
-        min_sample_size = as.numeric(lower_n),
-        min_sample_size_perf = lower_perf,
-        max_sample_size = as.numeric(upper_n),
-        max_sample_size_perf = upper_perf,
-        max_achievable_perf = max_achievable_perf,
-        stop_reason = stop_reason,
-        iterations = iter,
+        min_sample_size = as.numeric(large_n),
+        min_sample_size_perf = s$est,
+        max_sample_size = as.numeric(large_n),
+        max_sample_size_perf = s$est,
+        max_achievable_perf = s$est,
+        stop_reason = "target_unreachable",
+        iterations = length(track),
+        reps_used = n_reps_total - budget,
         max_iter = max_iter,
         track = track
       ))
     }
-
-    # Target appears reachable — seed the bracket from the large-n probe
-    # and search downward toward the smallest n that still hits the target.
-    if (perf_large >= target_performance - threshold) {
-      upper_n <- large_n
-      upper_perf <- perf_large
-      direction <- "down"
-      n_current <- large_n
-      vmsg(
-        "Large-n probe meets target. Searching downward from n = %d.",
-        large_n
-      )
-    } else {
-      # Within tolerance of being reachable but not yet at target:
-      # use large_n as a lower bound and continue searching upward.
-      lower_n <- large_n
-      lower_perf <- perf_large
-      direction <- "up"
-      n_current <- large_n
-      vmsg(
-        "Large-n probe close to target. Searching upward from n = %d.",
-        large_n
-      )
-    }
+    n_up <- n_down <- as.numeric(large_n)
   } else {
-    # Start from the configured sample size when no pre-check is requested.
-    iter <- iter + 1L
-    res <- summary_at_n(start_n)
-    perf <- res$y_summary
-    track[[iter]] <- list(n = start_n, performance = perf, raw = res$y)
-
-    vmsg("Iter %d | n = %d | perf = %.4f", iter, start_n, perf)
-
-    if (perf < target_performance) {
-      direction <- "up"
-      lower_n <- start_n
-      lower_perf <- perf
-    } else {
-      direction <- "down"
-      upper_n <- start_n
-      upper_perf <- perf
-    }
-
-    n_current <- start_n
+    s <- assess(start_n)
+    push(s)
+    n_up <- n_down <- as.numeric(start_n)
   }
 
-  # -----------------------------------------------------------------------
-  # Main loop
-  # -----------------------------------------------------------------------
-  while (iter < max_iter) {
-    iter <- iter + 1L
-
-    n_new <- if (direction == "up") {
-      n_current * 2L
+  # -- Ladder ---------------------------------------------------------------
+  # Walk outwards until BOTH a confidently-below and a confidently-above sample
+  # size are in hand. Sample sizes that are too close to call belong to neither
+  # and so end up inside the returned bracket, which is the conservative
+  # direction: a bracket that is one rung too wide costs the second stage a
+  # little time, whereas one that excludes the crossing point cannot be
+  # recovered from.
+  while (budget >= n_reps_per && length(track) < max_iter) {
+    if (!have_call("above")) {
+      n_up <- n_up * 2
+      if (!is.finite(n_up)) {
+        stop_reason <- "no_movement"
+        break
+      }
+      # Doubling is unbounded otherwise: with an unreachable target it runs
+      # until the time or memory limit. The last rung is max_n itself.
+      if (n_up / 2 >= max_n) {
+        stop_reason <- "max_n_reached"
+        break
+      }
+      n_up <- min(n_up, max_n)
+      push(assess(n_up))
+    } else if (!have_call("below")) {
+      n_next <- max(1, floor(n_down / 2))
+      if (n_next == n_down) {
+        stop_reason <- "no_movement"
+        break
+      }
+      n_down <- n_next
+      push(assess(n_down))
     } else {
-      max(1L, n_current %/% 2L)
-    }
-
-    if (n_new == n_current) {
-      stop_reason <- "no_movement"
-      vmsg("No movement in n. Stopping.")
+      stop_reason <- "target_bracketed"
       break
     }
 
-    res <- summary_at_n(n_new)
-    perf <- res$y_summary
-    track[[iter]] <- list(n = n_new, performance = perf, raw = res$y)
-
-    vmsg("Iter %d | n = %d | perf = %.4f", iter, n_new, perf)
-
-    # -- Update brackets -----------------------------------------------------
-    if (direction == "up") {
-      if (perf >= target_performance - threshold) {
-        upper_n <- n_new
-        upper_perf <- perf
-        stop_reason <- "target_reached"
-        vmsg("Target reached. Upper bracket = %d", upper_n)
+    # -- Plateau check, judged against the noise level ----------------------
+    # A slowly rising but reachable curve can also look flat here (the gain
+    # from one doubling is often within the Monte Carlo error), which leaves
+    # the answer above the bracket; the verification of the returned sample
+    # size then flags it "not_verified". Doubling on to max_n instead makes
+    # unreachable and near-ceiling targets run for hours or out of memory.
+    if (length(track) >= plateau_k + 1L && !have_call("above")) {
+      by_n <- track[order(vapply(track, `[[`, numeric(1), "n"))]
+      recent <- utils::tail(by_n, plateau_k + 1L)
+      gains <- diff(vapply(recent, `[[`, numeric(1), "performance"))
+      noise <- max(
+        plateau_tol,
+        2 * max(vapply(recent, `[[`, numeric(1), "se"), na.rm = TRUE)
+      )
+      if (all(abs(gains) < noise)) {
+        stop_reason <- "plateau"
+        max_achievable_perf <- max(
+          vapply(track, `[[`, numeric(1), "performance"),
+          na.rm = TRUE
+        )
         break
-      } else {
-        lower_n <- n_new
-        lower_perf <- perf
-      }
-    } else {
-      if (perf <= target_performance + threshold) {
-        lower_n <- n_new
-        lower_perf <- perf
-        stop_reason <- "target_reached"
-        vmsg("Target reached. Lower bracket = %d", lower_n)
-        break
-      } else {
-        upper_n <- n_new
-        upper_perf <- perf
       }
     }
+  }
 
-    # -- Plateau check -------------------------------------------------------
-    if (has_plateaued(track, k = plateau_k, tol = plateau_tol)) {
-      vmsg(
-        paste(
-          "Performance plateaued over last %d iterations",
-          "(all gains < %.4f). Target unreachable. Stopping."
-        ),
-        plateau_k,
-        plateau_tol
-      )
-      stop_reason <- "plateau"
+  # -- Bounds, derived from the whole trace ---------------------------------
+  # Taken from the sorted trace rather than from whatever the loop state
+  # happened to be when it broke, so the result does not depend on the path
+  # taken to get there.
+  ns <- vapply(track, `[[`, numeric(1), "n")
+  perfs <- vapply(track, `[[`, numeric(1), "performance")
+  calls <- vapply(track, `[[`, character(1), "call")
 
-      last <- track[[iter]]
-      previous <- track[[iter - 1L]]
+  below_ns <- ns[calls == "below"]
+  above_ns <- ns[calls == "above"]
 
-      upper_n <- last$n
-      upper_perf <- last$performance
-      lower_n <- previous$n
-      lower_perf <- previous$performance
+  lower_n <- if (length(below_ns)) max(below_ns) else max(1, min(ns) / 2)
+  upper_n <- if (length(above_ns)) min(above_ns) else min(max(ns) * 2, max_n)
+  if (!(lower_n < upper_n)) {
+    lower_n <- max(1, upper_n / 2)
+  }
 
-      # Also record the best performance seen so the caller knows the ceiling
-      max_achievable_perf <- max(
-        sapply(track, `[[`, "performance"),
-        na.rm = TRUE
-      )
-      break
-    }
-
-    n_current <- n_new
+  perf_at <- function(x) {
+    i <- which(ns == x)
+    if (length(i)) perfs[i[1]] else NA_real_
   }
 
   list(
-    min_sample_size = as.numeric(lower_n),
-    min_sample_size_perf = lower_perf,
-    max_sample_size = as.numeric(upper_n),
-    max_sample_size_perf = upper_perf,
+    min_sample_size = as.numeric(round(lower_n)),
+    min_sample_size_perf = perf_at(lower_n),
+    max_sample_size = as.numeric(round(upper_n)),
+    max_sample_size_perf = perf_at(upper_n),
     max_achievable_perf = max_achievable_perf,
     stop_reason = stop_reason,
-    iterations = iter,
+    iterations = length(track),
+    reps_used = n_reps_total - budget,
     max_iter = max_iter,
     track = track
   )
@@ -493,6 +538,14 @@ compute_start_sample_sizes <- function(
   # Infer the number of predictors from the generator formals.
   npar <- formals(data_function)$n_signal_parameters +
     formals(data_function)$noise_parameters
+  # Custom data functions need not have these arguments; count the columns of
+  # a small sample instead (outcome columns excluded). The RNG is restored, so
+  # this does not change the simulations that follow.
+  if (!is.numeric(npar) || length(npar) != 1L || !is.finite(npar)) {
+    sample_data <- with_rng_restored(data_function(20))
+    outcome_cols <- intersect(names(sample_data), c("y", "time", "event"))
+    npar <- max(1L, ncol(sample_data) - max(1L, length(outcome_cols)))
+  }
   default_start_value <- max(10L, 10L * npar)
 
   # 2. Inspect data_function formals to infer outcome type

@@ -21,12 +21,17 @@ drawing anything.}
 }
 \value{
 Invisibly returns the \code{ggplot} object when \code{plot = TRUE}. When
-\code{plot = FALSE}, returns a list with two data frames: \code{observed_data}
-(simulated points) and \code{predicted_data} (Gaussian-process predictions).
+\code{plot = FALSE}, returns a list with two data frames: for the mlpwr
+engines, \code{observed_data} (simulated points) and \code{predicted_data}
+(Gaussian-process predictions); for \code{method = "curve"}, \code{observed_data}
+(the criterion at each simulated sample size, with replicates, standard
+error and a +/- 2 SE interval) and \code{fitted_curve} (the fitted learning
+curve, or \code{NULL} when none was fitted).
 }
 \description{
-Produces a ggplot showing the simulated points and the fitted
-Gaussian-process learning curve stored inside a \code{pmsims} object.
+Produces a ggplot showing the simulated points and the fitted learning
+curve (the learning-curve fit for \code{method = "curve"}, the Gaussian-process
+surrogate for the mlpwr engines) stored inside a \code{pmsims} object.
 Optionally returns the underlying data instead of drawing the plot.
 }
 \keyword{internal}

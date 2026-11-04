@@ -26,6 +26,8 @@
 ^vignettes/release-0-5-0\.html$
 ^vignettes/release-1-0-0\.Rmd$
 ^vignettes/release-1-0-0\.html$
+^vignettes/release-1-1-0\.Rmd$
+^vignettes/release-1-1-0\.html$
 ^vignettes/articles/simulate_custom\.html$
 ^vignettes/images/workflow\.afdesign$
 ^.*\.Rcheck$

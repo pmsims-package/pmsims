@@ -125,7 +125,11 @@ survival_tuning <- function(
     intercept = 0,
     beta_signal = 1,
     complexity = complexity,
-    nonlinear_strength = nonlinear_strength
+    nonlinear_strength = nonlinear_strength,
+    predictor_type = predictor_type,
+    binary_prevalence = binary_prevalence,
+    correlation = correlation,
+    distribution = distribution
   )
   var_lp_unit <- stats::var(lp_unit)
   if (!is.finite(var_lp_unit) || var_lp_unit <= 0) {
@@ -149,9 +153,13 @@ survival_tuning <- function(
     ev <- as.integer(Tt <= cut)
     tm <- pmin(Tt, cut)
     # reverse = TRUE: larger lp = higher hazard = shorter survival
-    survival::concordance(
-      survival::Surv(tm, ev) ~ lp,
-      reverse = TRUE
+    # The concordance only; concordance() would also compute its standard
+    # error. The value is identical.
+    survival::concordancefit(
+      survival::Surv(tm, ev),
+      lp,
+      reverse = TRUE,
+      std.err = FALSE
     )$concordance
   }
 
@@ -209,12 +217,18 @@ survival_tuning <- function(
     intercept = 0,
     beta_signal = beta_opt,
     complexity = complexity,
-    nonlinear_strength = nonlinear_strength
+    nonlinear_strength = nonlinear_strength,
+    predictor_type = predictor_type,
+    binary_prevalence = binary_prevalence,
+    correlation = correlation,
+    distribution = distribution
   )
   event_rate <- mean(val$event)
-  cindex <- survival::concordance(
-    survival::Surv(val$time, val$event) ~ lpv,
-    reverse = TRUE
+  cindex <- survival::concordancefit(
+    survival::Surv(val$time, val$event),
+    lpv,
+    reverse = TRUE,
+    std.err = FALSE
   )$concordance
 
   if (

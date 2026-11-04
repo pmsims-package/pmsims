@@ -29,7 +29,7 @@
   early_stopping_rounds = 20L
 ) {
   cv <- xgboost::xgb.cv(
-    params = params,
+    params = xgb_threaded_params(params),
     data = dtrain,
     nrounds = nrounds_max,
     nfold = nfold,
@@ -46,6 +46,73 @@
     best <- nrounds_max
   }
   as.integer(best)
+}
+
+# ---------------------------------------------------------------------------
+# Internal helper: xgboost parameters with the thread count set.
+#
+# xgboost uses every core unless told otherwise. Inside a simulation that runs
+# replicates in parallel, or on a busy machine, that oversubscribes the CPU so
+# badly that a fit of well under a second can take minutes. Use
+# pmsims_threads(), as for ranger, unless the caller set nthread. The fitted
+# model does not depend on the number of threads.
+xgb_threaded_params <- function(params) {
+  if (is.null(params$nthread)) {
+    params$nthread <- pmsims_threads()
+  }
+  params
+}
+
+# ---------------------------------------------------------------------------
+# Ridge via cv.glmnet. glmnet's default alpha = 0 path ends at a lambda that
+# does not fall with n, so CV can pick its end and leave the fit over-shrunk at
+# any n. Then continue the path below its end, on the same folds and grid
+# spacing, one block (a factor of `block` in lambda) at a time, while each
+# block lowers the CV error, down to min_ratio x lambda_max. The fit returned
+# is the block holding the lowest CV error, so its lambda.min is the choice.
+# Far below the default path the CV curve is flat and noisy; the block after
+# the best one is always fitted, so a dip inside one block does not end the
+# search early. Folds are drawn as cv.glmnet draws them, so fits whose
+# lambda.min is inside the default path are unchanged.
+cv_glmnet_ridge <- function(
+  x,
+  y,
+  family,
+  nfolds = 10L,
+  min_ratio = 1e-9,
+  block = 10
+) {
+  foldid <- sample(rep(seq(nfolds), length = nrow(x)))
+  fit <- glmnet::cv.glmnet(x, y, alpha = 0, family = family, foldid = foldid)
+  lam <- fit$lambda
+  if (fit$lambda.min > min(lam) || length(lam) < 2L) {
+    return(fit)
+  }
+  step <- log(lam[1L]) - log(lam[2L])
+  floor_log <- log(lam[1L] * min_ratio)
+  per_block <- ceiling(log(block) / step)
+  start_log <- log(min(lam))
+  best <- NULL
+  repeat {
+    path_log <- start_log - step * seq(0, per_block)
+    path_log <- path_log[path_log >= floor_log - 1e-8]
+    if (length(path_log) < 2L) {
+      return(best %||% fit)
+    }
+    nxt <- glmnet::cv.glmnet(
+      x,
+      y,
+      alpha = 0,
+      family = family,
+      foldid = foldid,
+      lambda = exp(path_log)
+    )
+    if (!is.null(best) && min(nxt$cvm) >= min(best$cvm)) {
+      return(best)
+    }
+    best <- nxt
+    start_log <- min(path_log)
+  }
 }
 # ---------------------------------------------------------------------------
 
@@ -73,12 +140,7 @@ default_models <- list(
       d <- as.matrix(d)
       x <- d[, -1, drop = FALSE]
       y <- d[, 1]
-      glmnet::cv.glmnet(
-        x,
-        y,
-        alpha = 0, # L2 penalty (ridge)
-        family = "binomial"
-      )
+      cv_glmnet_ridge(x, y, family = "binomial")
     },
     rf = function(d) {
       require_optional_packages(
@@ -87,8 +149,8 @@ default_models <- list(
       )
 
       # expects column 1 = y (0/1) and remaining columns predictors
-      ncores <- parallel::detectCores(logical = FALSE)
-      nthreads <- ncores - 2
+      # At least one thread; see pmsims_threads().
+      nthreads <- pmsims_threads()
 
       x <- d[, -1, drop = FALSE]
       y <- as.factor(d[, 1])
@@ -124,10 +186,14 @@ default_models <- list(
       # small n, collapsing the calibration slope well below 1.
       x <- as.matrix(d[, -1, drop = FALSE])
       y <- as.numeric(d[, 1])
-      dtrain <- xgboost::xgb.DMatrix(data = x, label = y)
+      dtrain <- xgboost::xgb.DMatrix(
+        data = x,
+        label = y,
+        nthread = xgb_threaded_params(params)$nthread
+      )
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
-        params = params,
+        params = xgb_threaded_params(params),
         data = dtrain,
         nrounds = best_nrounds,
         verbose = 0
@@ -158,12 +224,7 @@ default_models <- list(
       dmat <- as.matrix(d)
       x <- dmat[, -1, drop = FALSE]
       y <- dmat[, 1]
-      glmnet::cv.glmnet(
-        x,
-        y,
-        alpha = 0, # L2 penalty (ridge)
-        family = "gaussian"
-      )
+      cv_glmnet_ridge(x, y, family = "gaussian")
     },
     rf = function(d) {
       require_optional_packages(
@@ -172,8 +233,8 @@ default_models <- list(
       )
 
       # expects first column y (numeric), remaining columns predictors
-      ncores <- parallel::detectCores(logical = FALSE)
-      nthreads <- ncores - 2
+      # At least one thread; see pmsims_threads().
+      nthreads <- pmsims_threads()
 
       x <- d[, -1, drop = FALSE]
       y <- d[, 1]
@@ -205,10 +266,14 @@ default_models <- list(
       # on the number of rounds.
       x <- as.matrix(d[, -1, drop = FALSE])
       y <- as.numeric(d[, 1])
-      dtrain <- xgboost::xgb.DMatrix(data = x, label = y)
+      dtrain <- xgboost::xgb.DMatrix(
+        data = x,
+        label = y,
+        nthread = xgb_threaded_params(params)$nthread
+      )
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
-        params = params,
+        params = xgb_threaded_params(params),
         data = dtrain,
         nrounds = best_nrounds,
         verbose = 0
@@ -243,7 +308,7 @@ default_models <- list(
         drop = FALSE
       ])
       y <- survival::Surv(d$time, d$event)
-      glmnet::cv.glmnet(x, y, alpha = 0, family = "cox") # L2 (ridge)
+      cv_glmnet_ridge(x, y, family = "cox")
     },
     rf = function(d) {
       require_optional_packages(
@@ -268,7 +333,7 @@ default_models <- list(
         importance = "none",
         save.memory = TRUE,
         keep.inbag = FALSE,
-        num.threads = 2,
+        num.threads = pmsims_threads(),
         write.forest = TRUE
       )
 
@@ -304,10 +369,14 @@ default_models <- list(
       # label = time / weight = event encoding silently down-weighted censored
       # rows to zero instead of treating them as censored.
       lab <- ifelse(d$event == 1, label_time, -label_time)
-      dtrain <- xgboost::xgb.DMatrix(data = x, label = lab)
+      dtrain <- xgboost::xgb.DMatrix(
+        data = x,
+        label = lab,
+        nthread = xgb_threaded_params(params)$nthread
+      )
       best_nrounds <- .xgb_cv_nrounds(dtrain, params)
       xgboost::xgb.train(
-        params = params,
+        params = xgb_threaded_params(params),
         data = dtrain,
         nrounds = best_nrounds,
         verbose = 0

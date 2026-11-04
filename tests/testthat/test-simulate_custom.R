@@ -308,7 +308,12 @@ test_that("resolve_value_on_error preserves current defaults and supports custom
   invalid_metric <- function(test_data, fitted_model, model_name) 0.8
   attr(invalid_metric, "value_on_error") <- c(0.1, 0.2)
 
+  csse_metric <- function(test_data, fitted_model, model_name) -0.01
+  attr(csse_metric, "metric") <- "csse"
+
   expect_identical(resolve_value_on_error(builtin_metric), 0.5)
+  # CSSE is <= 0 with 0 perfect: a failed fit must score worse than any fit.
+  expect_identical(resolve_value_on_error(csse_metric), -1)
   expect_identical(resolve_value_on_error(custom_metric), -Inf)
   expect_identical(resolve_value_on_error(unknown_metric), 0.5)
   expect_error(
@@ -316,4 +321,24 @@ test_that("resolve_value_on_error preserves current defaults and supports custom
     'attr(metric_function, "value_on_error") must be a single non-missing numeric value.',
     fixed = TRUE
   )
+})
+
+test_that("simulate_custom rejects an invalid number of cores", {
+  data_function <- function(n) data.frame(n = n)
+  model_function <- function(d) d
+  metric_function <- function(test_data, fit, model) 0.9
+  attr(metric_function, "metric") <- "auc"
+  for (cores in list(NA, 0, 1.5, c(1, 2), "2", NULL)) {
+    expect_error(
+      suppressMessages(simulate_custom(
+        data_function,
+        model_function,
+        metric_function,
+        target_performance = 0.8,
+        cores = cores,
+        progress = FALSE
+      )),
+      "single positive whole number"
+    )
+  }
 })

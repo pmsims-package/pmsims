@@ -151,7 +151,11 @@ binary_tuning <- function(
     intercept = 0,
     beta_signal = 1,
     complexity = complexity,
-    nonlinear_strength = nonlinear_strength
+    nonlinear_strength = nonlinear_strength,
+    predictor_type = predictor_type,
+    binary_prevalence = binary_prevalence,
+    correlation = correlation,
+    distribution = distribution
   )
 
   var_lp_unit <- stats::var(lp_unit)
@@ -279,7 +283,11 @@ binary_tuning <- function(
     intercept = mu_lp,
     beta_signal = beta_signal,
     complexity = complexity,
-    nonlinear_strength = nonlinear_strength
+    nonlinear_strength = nonlinear_strength,
+    predictor_type = predictor_type,
+    binary_prevalence = binary_prevalence,
+    correlation = correlation,
+    distribution = distribution
   )
 
   prevalence_achieved <- mean(val$y)

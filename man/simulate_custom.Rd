@@ -16,9 +16,13 @@ simulate_custom(
   max_sample_size = NULL,
   n_reps_total = 1000,
   n_reps_per = 20,
-  method = "mlpwr",
+  method = "curve",
   progress = TRUE,
   verbose = FALSE,
+  verify_reps = 100,
+  max_n = NULL,
+  cores = 1L,
+  live_plot = FALSE,
   ...
 )
 }
@@ -69,20 +73,61 @@ to the search. The search evaluates approximately
 \item{n_reps_per}{Integer number of simulation replications performed at each
 candidate sample size.}
 
-\item{method}{Character string specifying the search engine. Defaults to
-\code{"mlpwr"}.}
+\item{method}{Character string specifying the search engine: \code{"curve"}
+(default; fits a learning curve to all replicates and searches where it
+crosses the target, see Details), \code{"mlpwr"} (adaptive start values, then
+mlpwr's Gaussian-process search), \code{"bisection"} or \code{"mlpwr-bs"}.}
 
-\item{progress}{Logical flag controlling whether the \code{mlpwr} progress bar is
-shown for \code{mlpwr}-based methods.}
+\item{progress}{Logical flag controlling whether a progress bar is shown:
+the curve engine's own, or mlpwr's for the \code{mlpwr}-based methods.}
 
 \item{verbose}{Logical flag controlling engine-specific diagnostic output
 when supported. For the bisection engine, setting \code{verbose = TRUE} stores
 the iteration history on the returned object.}
 
+\item{verify_reps}{Integer number of fresh replicates simulated at the
+returned sample size to check that it meets the target (see \code{status}).
+Set to \code{0} to skip the check.}
+
+\item{max_n}{Largest sample size the search may try. If performance there is
+still clearly below the target, the search stops with status
+\code{"not_bracketed"}. Defaults to 200,000 for random forests and xgboost
+(one batch of replicates at a million rows would take hours) and
+1,000,000 otherwise.}
+
+\item{cores}{Number of cores for running the replicates of each batch in
+parallel (Unix-like systems only). Results are the same for any number of
+cores, because each replicate has its own random-number stream.}
+
+\item{live_plot}{Logical; with \code{method = "curve"}, redraw the learning
+curve after each batch of replicates so the search can be watched as it
+runs (interactive sessions with a graphics device only; it does not
+change the results).}
+
 \item{...}{Additional arguments passed to the selected search engine.}
 }
 \value{
-An object of class \code{"pmsims"} containing the estimated minimum sample size.
+An object of class \code{"pmsims"} containing the estimated minimum
+sample size \code{min_n} (numeric; \code{NA} when no sample size could be found)
+and a \code{status}:
+\describe{
+\item{\code{"ok"}}{The search found \code{min_n}, and simulating it again
+confirmed the target is met (or the check was skipped).}
+\item{\code{"not_verified"}}{Simulating \code{min_n} again gave performance
+clearly below the target, so \code{min_n} is likely too small.}
+\item{\code{"not_bracketed"}}{No sample size up to \code{max_n} met the target,
+or the search returned no sample size.}
+\item{\code{"unreachable"}}{With \code{method = "curve"}: the learning curve
+levels off below the target, so no sample size reaches it.}
+\item{\code{"replicates_failed"}}{At least half the simulation replicates
+failed to fit or score the model, so no sample size was estimated.
+With \code{method = "curve"}, also when 20\% or more failed at every
+sample size tried, so no learning curve could be fitted.}
+}
+\code{status_message} explains a status other than \code{"ok"}, \code{verification}
+holds the check at \code{min_n}, and \code{diagnostics} records the search bounds,
+whether \code{min_n} lies on one of them, mlpwr's warnings, Gaussian-process
+restarts and failed replicates.
 }
 \description{
 Compute the minimum sample size required to achieve a target level of
@@ -92,6 +137,37 @@ data-generating function, a model-fitting function, and a metric function,
 and the chosen search engine estimates the smallest \eqn{n} meeting the
 selected performance criterion.
 }
+\details{
+With \code{method = "curve"}, every replicate is kept and a monotone learning
+curve \eqn{C(n) = a - b n^{-c}} is fitted to the criterion at each sample
+size evaluated (weighted by a smoothed model of the replicate spread; the
+ceiling \eqn{a} is capped at the metric's maximum). A pilot doubles
+(or halves) from a heuristic start until the criterion is seen on both sides
+of the target; each further batch of \code{n_reps_per} replicates is placed where
+the fitted curve crosses the target. The search range is therefore never
+fixed. The answer is where the final fitted curve crosses the target. A
+target is declared unreachable if a bootstrap upper bound for the curve's
+ceiling \eqn{a} is below it; the search also stops (status
+\code{"not_bracketed"}) when the crossing is very likely beyond \code{max_n}. These
+stops extrapolate the fitted curve and should be read as heuristics.
+
+The answer is a median-unbiased estimate of where the criterion reaches the
+target. The
+interval in \code{diagnostics$curve$n_ci} reflects Monte Carlo error given the
+learning-curve shape, not uncertainty about the shape; a shape-free check
+(\code{diagnostics$crosscheck_n}) is reported alongside, and flagged when it
+differs by more than 10\%. The verification of the answer has limited power
+for skewed metrics such as CSSE: passing it does not show that the target
+is met.
+}
+\section{Random numbers}{
+
+Each simulation replicate runs on its own random-number stream, derived from
+a single draw from the session's RNG. Results are therefore reproducible
+with \code{\link[=set.seed]{set.seed()}}, and a replicate's data do not depend on how many random
+numbers other parts of the search consumed.
+}
+
 \examples{
 # Three independent predictors with a population R-squared of 0.5.
 data_fun <- function(n) {

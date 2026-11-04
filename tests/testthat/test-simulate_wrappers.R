@@ -624,3 +624,35 @@ test_that("wrappers record the effective data-generating configuration", {
   # Resolved from the complexity-level default rather than left NULL.
   expect_identical(quadratic$nonlinear_strength, 0.2)
 })
+
+test_that("resolve_n_reps_total raises the mlpwr budget at small p only", {
+  boost <- function(...) {
+    args <- utils::modifyList(
+      list(
+        n_reps_total = 1000,
+        signal_parameters = 5,
+        model = "glm",
+        method = "mlpwr"
+      ),
+      list(...),
+      keep.null = TRUE
+    )
+    suppressMessages(do.call(resolve_n_reps_total, args))
+  }
+
+  expect_message(
+    resolve_n_reps_total(1000, 5, "glm", method = "mlpwr"),
+    "raised from 1000 to 2000"
+  )
+  expect_identical(boost(), 2000)
+
+  # Not for the default curve engine, ML models, larger p or when switched off.
+  expect_identical(boost(method = NULL), 1000)
+  expect_identical(boost(method = "curve"), 1000)
+  expect_identical(boost(model = "lasso"), 1000)
+  expect_identical(boost(signal_parameters = 11), 1000)
+  expect_identical(boost(auto = FALSE), 1000)
+
+  # Only ever increases the budget.
+  expect_identical(boost(n_reps_total = 5000), 5000)
+})
