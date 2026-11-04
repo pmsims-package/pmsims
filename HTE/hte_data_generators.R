@@ -1,15 +1,29 @@
 # HTE data generators.
 #
-# Every generator returns a data frame with Y in column 1, treatment (0/1) in
-# column 2 and covariates after that: the models and metrics rely on this order.
-# True individual effects are in attr(data, "tau"), for metrics that need them.
+# A data generator can be any function(n) that returns n rows of a data frame:
+#   column 1: outcome Y (numeric)
+#   column 2: treatment (0/1), randomised
+#   other columns: baseline covariates (numeric, character or factor)
+# It could be a parametric simulation or a synthetic data model fitted to real
+# data. No other information is needed: models and metrics only use these columns,
+# so the true treatment effects don't need to be known.
 
-# Reorder benchtm output (run with include_truth = TRUE) to the layout above
+check_hte_generator <- function(data_function, n = 1000) {
+  d <- data_function(n)
+  stopifnot(
+    "must return a data frame" = is.data.frame(d),
+    "must return n rows" = nrow(d) == n,
+    "needs at least one covariate" = ncol(d) >= 3,
+    "column 1 must be a numeric outcome" = is.numeric(d[[1]]),
+    "column 2 must be a 0/1 treatment" = setequal(unique(d[[2]]), 0:1),
+    "no missing values allowed" = !anyNA(d)
+  )
+  invisible(TRUE)
+}
+
+# Put benchtm output in the layout above
 as_hte_data <- function(dat) {
-  x_names <- setdiff(names(dat), c("Y", "trt", "trt_effect", "prob_diff"))
-  out <- dat[, c("Y", "trt", x_names)]
-  attr(out, "tau") <- dat$trt_effect
-  out
+  dat[, c("Y", "trt", setdiff(names(dat), c("Y", "trt")))]
 }
 
 hte_gen1 <- function(n) {
@@ -29,11 +43,11 @@ hte_gen1 <- function(n) {
   theta_x <- c(0.5, 0.5) # 
   
   # 4. Construct linear outcome Y
-  tau <- gamma + theta_x[1] * X[, 1] + theta_x[2] * X[, 2]
-  y_main <- beta_0 + as.vector(X %*% beta_x)
+  y_main <- beta_0 + gamma * W + as.vector(X %*% beta_x)
+  y_int  <- W * (theta_x[1] * X[, 1] + theta_x[2] * X[, 2])
   noise  <- stats::rnorm(n, mean = 0, sd = 3)
   
-  Y <- y_main + W * tau + noise
+  Y <- y_main + y_int + noise
   
   # 5. Assemble data frame (Col 1 = Y, Col 2 = W, Cols 3:7 = X1..X5)
   df <- data.frame(
@@ -41,7 +55,6 @@ hte_gen1 <- function(n) {
     W = W,
     X
   )
-  attr(df, "tau") <- tau
   
   return(df)
 }
@@ -73,8 +86,7 @@ hte_gen2 <- function(n) {
       b0 = 0, 
       b1 = 1,
       type = "continuous", 
-      sigma_error = 3,
-      include_truth = TRUE
+      sigma_error = 3
     )
   }, error = function(e) {
     stop(sprintf("Error in generate_y at n = %d: %s", n, e$message), call. = FALSE)
@@ -93,8 +105,7 @@ make_hte_gen3_sun_scen4 <- function(X_pool) {
                       prog = "2.90*(X11-X14)",
                       pred = "(X14 > 0.3)|(X4 == 'Y')",
                       b0 = -0.11770, b1 = 0.4071,
-                      type = "continuous",
-                      include_truth = TRUE)
+                      type = "continuous")
     as_hte_data(dat)
   }
 }

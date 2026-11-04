@@ -5,10 +5,20 @@ source("HTE/hte_models.R")
 source("HTE/hte_metrics.R")
 
 set.seed(2026)
+
+# Stand-in for a synthetic data model fitted to real data, with a rare category.
+# Sampling from a large synthetic pool avoids refitting for every simulated dataset.
+real <- hte_gen2(2000)
+real$site <- sample(c("A", "B", "rare"), nrow(real), TRUE, prob = c(0.6, 0.39, 0.01))
+pool <- synthpop::syn(real, k = 50000, print.flag = FALSE)$syn
+pool$site <- as.character(pool$site)
+synthetic_gen <- function(n) pool[sample(nrow(pool), n, replace = TRUE), ]
+
 generators <- list(
   hte_gen1 = hte_gen1,
   hte_gen2 = hte_gen2,
-  hte_gen3 = make_hte_gen3_sun_scen4(benchtm::generate_X_syn(30000))
+  hte_gen3 = make_hte_gen3_sun_scen4(benchtm::generate_X_syn(30000)),
+  synthetic = synthetic_gen
 )
 models <- list(
   ols = fit_linear_regression,
@@ -18,29 +28,39 @@ models <- list(
 metrics <- list(
   evalhte = metric_test_heterogeneity_evalhte,
   blp = metric_calibration_slope_blp,
-  rmse = metric_rmse_tau,
-  spearman = metric_spearman_tau,
-  regret = metric_regret,
   qini = metric_qini,
-  autoc = metric_autoc
+  autoc = metric_autoc,
+  calib_grouped = metric_calibration_slope_grouped,
+  calib_large = metric_calibration_in_the_large,
+  calib_error = metric_calibration_error_debiased,
+  test_blp = metric_test_blp,
+  test_gates = metric_test_gates,
+  test_qini = metric_test_rate_qini,
+  test_autoc = metric_test_rate_autoc
+)
+# Tests tied to one model: fitted_model is the only input they use
+model_specific <- list(
+  ols = list(test_lr = metric_lr_test_ols),
+  forest = list(test_forest = metric_test_forest_calibration)
 )
 
-# Data: layout, randomisation, and true effects that match the data
+# Data: layout and randomisation
 for (g in names(generators)) {
+  check_hte_generator(generators[[g]])
   d <- generators[[g]](20000)
-  tau <- attr(d, "tau")
   w <- d[[2]]
-  stopifnot(
-    names(d)[1] == "Y",
-    setequal(unique(w), 0:1),
-    length(tau) == nrow(d),
-    abs(mean(w) - 0.5) < 0.02,
-    all(abs(vapply(d[-(1:2)], function(v) cor(as.numeric(factor(v)), w), 0)) < 0.05)
-  )
-  ate <- mean(d[[1]][w == 1]) - mean(d[[1]][w == 0])
-  cat(sprintf("%s: ATE %.2f, mean tau %.2f, SD tau %.2f\n", g, ate, mean(tau), sd(tau)))
-  stopifnot(abs(ate - mean(tau)) < 0.15)
+  balance <- vapply(d[-(1:2)], function(v) cor(as.numeric(factor(v)), w), 0)
+  cat(sprintf("%s: %.1f%% treated, largest covariate correlation %.3f\n",
+              g, 100 * mean(w), max(abs(balance))))
+  stopifnot(abs(mean(w) - 0.5) < 0.03, all(abs(balance) < 0.05))
 }
+
+# A category missing from the training data must not break prediction
+train <- synthetic_gen(1000)
+train <- train[train$site != "rare", ]
+test <- synthetic_gen(1000)
+stopifnot(any(test$site == "rare"))
+for (m in names(models)) stopifnot(length(models[[m]](train)$predict(test)) == nrow(test))
 
 # Every combination returns one finite number, without using value_on_error
 failed <- character(0)
@@ -49,8 +69,9 @@ for (g in names(generators)) {
   test <- generators[[g]](3000)
   for (m in names(models)) {
     fit <- models[[m]](train)
-    for (k in names(metrics)) {
-      value <- tryCatch(metrics[[k]](test, fit, m), error = function(e) conditionMessage(e))
+    to_run <- c(metrics, model_specific[[m]])
+    for (k in names(to_run)) {
+      value <- tryCatch(to_run[[k]](test, fit, m), error = function(e) conditionMessage(e))
       if (!is.numeric(value) || length(value) != 1 || !is.finite(value)) {
         failed <- c(failed, sprintf("%s / %s / %s: %s", g, m, k, format(value)))
       }
@@ -58,11 +79,10 @@ for (g in names(generators)) {
   }
 }
 if (length(failed) > 0) stop("Failed:\n", paste(failed, collapse = "\n"))
-cat("All", length(generators) * length(models) * length(metrics), "combinations returned a number\n")
+cat("All combinations returned a number\n")
 
-# OLS on a correctly specified generator: RMSE near 0 and rank near 1 in a large sample
+# OLS on a correctly specified generator is calibrated in a large sample
 fit <- fit_linear_regression(hte_gen1(100000))
-test <- hte_gen1(5000)
-cat(sprintf("Large n: RMSE %.3f, Spearman %.3f\n",
-            -metric_rmse_tau(test, fit, ""), metric_spearman_tau(test, fit, "")))
-stopifnot(metric_rmse_tau(test, fit, "") > -0.1, metric_spearman_tau(test, fit, "") > 0.98)
+slope_error <- metric_calibration_slope_blp(hte_gen1(30000), fit, "")
+cat(sprintf("Large n: squared calibration slope error %.4f\n", -slope_error))
+stopifnot(slope_error > -0.04)

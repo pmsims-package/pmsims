@@ -129,45 +129,6 @@ metric_calibration_slope_blp <- function(test_data, fitted_model, model_name) {
 attr(metric_calibration_slope_blp, "value_on_error") <- -1
 
 # =============================================================================
-# Metrics using the true effects. Simulation only: these need the generator to
-# set attr(data, "tau"). simulate_custom() swaps errors for value_on_error, so
-# a missing tau shows up as a flat metric: run HTE/check_hte_components.R first.
-# =============================================================================
-
-true_effect <- function(test_data) {
-  tau <- attr(test_data, "tau", exact = TRUE)
-  if (is.null(tau)) stop("test_data has no \"tau\" attribute.")
-  tau
-}
-
-# RMSE of the predicted effect (root PEHE), negated as pmsims needs higher = better
-metric_rmse_tau <- function(test_data, fitted_model, model_name) {
-  tau_hat <- as.numeric(fitted_model$predict(test_data))
-  -sqrt(mean((true_effect(test_data) - tau_hat)^2))
-}
-attr(metric_rmse_tau, "value_on_error") <- -10
-
-# Rank correlation with the true effects. Undefined if true effects are constant.
-# Ties in the true effects cap this below 1.
-metric_spearman_tau <- function(test_data, fitted_model, model_name) {
-  tau <- true_effect(test_data)
-  tau_hat <- as.numeric(fitted_model$predict(test_data))
-  if (stats::var(tau) < 1e-12) stop("True effects are constant.")
-  if (stats::var(tau_hat) < 1e-12) return(0) # a constant prediction ranks nobody
-  stats::cor(tau, tau_hat, method = "spearman")
-}
-attr(metric_spearman_tau, "value_on_error") <- 0
-
-# Regret of treating when predicted effect > threshold, compared with treating
-# by the true effect. Negated, so 0 is best. Assumes a higher Y is better.
-metric_regret <- function(test_data, fitted_model, model_name, threshold = 0) {
-  net <- true_effect(test_data) - threshold
-  tau_hat <- as.numeric(fitted_model$predict(test_data))
-  -(mean(pmax(net, 0)) - mean(net * (tau_hat > threshold)))
-}
-attr(metric_regret, "value_on_error") <- -10
-
-# =============================================================================
 # Ranking metrics: work on observed randomised data
 # =============================================================================
 
@@ -213,3 +174,128 @@ metric_autoc <- function(test_data, fitted_model, model_name) {
   rate_estimate(test_data, fitted_model, "AUTOC")
 }
 attr(metric_autoc, "value_on_error") <- 0
+
+# =============================================================================
+# Calibration for benefit: work on observed randomised data. Observed benefit in
+# each group is the mean AIPW score, which is the arm difference adjusted for
+# covariates. See also metric_calibration_slope_blp above, which needs no groups.
+# Slopes and offsets are returned as -(error)^2 so higher = better on both sides
+# of the ideal value: a target of -0.01 means within 0.1.
+# =============================================================================
+
+benefit_groups <- function(tau_hat, n_groups) {
+  cut(rank(tau_hat, ties.method = "first"), n_groups, labels = FALSE)
+}
+
+# Slope of observed on predicted benefit across groups of predicted benefit
+metric_calibration_slope_grouped <- function(test_data, fitted_model, model_name,
+                                             n_groups = 5) {
+  tau_hat <- as.numeric(fitted_model$predict(test_data))
+  if (stats::var(tau_hat) < 1e-12) {
+    stop("Predicted benefit is constant, so the calibration slope is undefined.")
+  }
+  group <- benefit_groups(tau_hat, n_groups)
+  observed <- tapply(aipw_scores(test_data), group, mean)
+  predicted <- tapply(tau_hat, group, mean)
+  slope <- stats::coef(stats::lm(observed ~ predicted))[["predicted"]]
+  -(1 - slope)^2
+}
+attr(metric_calibration_slope_grouped, "value_on_error") <- -1
+
+# Calibration in the large: mean predicted benefit against the estimated ATE
+metric_calibration_in_the_large <- function(test_data, fitted_model, model_name) {
+  tau_hat <- as.numeric(fitted_model$predict(test_data))
+  -(mean(tau_hat) - mean(aipw_scores(test_data)))^2
+}
+attr(metric_calibration_in_the_large, "value_on_error") <- -1
+
+# Root mean squared gap between predicted and observed benefit across groups,
+# negated. Subtracts each group's sampling variance: without this the error
+# stays well above 0 at any training n, because of noise in the test set. Same
+# idea as ECETH (Xu & Yadlowsky), not their exact estimator.
+metric_calibration_error_debiased <- function(test_data, fitted_model, model_name,
+                                              n_groups = 10) {
+  tau_hat <- as.numeric(fitted_model$predict(test_data))
+  gap <- aipw_scores(test_data) - tau_hat
+  group <- benefit_groups(tau_hat, n_groups)
+  sq_error <- tapply(gap, group, function(x) mean(x)^2 - stats::var(x) / length(x))
+  -sqrt(max(mean(sq_error), 0))
+}
+attr(metric_calibration_error_debiased, "value_on_error") <- -10
+
+# =============================================================================
+# Tests for heterogeneity: each returns 1 if significant, so use the mean
+# criterion and read the target as power. All are one-sided, as is
+# grf::test_calibration: only a positive link with benefit counts.
+#
+# Trial data (the model's own training data; test_n doesn't matter):
+#   metric_lr_test_ols, metric_test_forest_calibration
+# Separate validation data (power depends on test_n):
+#   metric_test_blp, metric_test_gates, metric_test_rate_*,
+#   metric_test_heterogeneity_evalhte, metric_test_heterogeneity_grf
+# =============================================================================
+
+# Causal forest's own calibration test: is the differential forest prediction
+# coefficient > 0? Uses out-of-bag predictions, so only works for causal forests.
+metric_test_forest_calibration <- function(test_data, fitted_model, model_name,
+                                           alpha = 0.05) {
+  if (!inherits(fitted_model, "hte_causal_forest")) {
+    stop("`fitted_model` must be the output of fit_causal_forest().")
+  }
+  calib <- grf::test_calibration(fitted_model$model)
+  as.numeric(calib["differential.forest.prediction", "Pr(>t)"] < alpha)
+}
+attr(metric_test_forest_calibration, "value_on_error") <- 0
+
+# BLP test: is the slope on the centred predicted benefit > 0?
+metric_test_blp <- function(test_data, fitted_model, model_name, alpha = 0.05) {
+  test_df <- as.data.frame(test_data)
+  y <- test_df[[1]]
+  w <- as.numeric(as.character(test_df[[2]]))
+  tau_hat <- as.numeric(fitted_model$predict(test_df))
+  if (stats::var(tau_hat) < 1e-12) return(0) # constant prediction: no test possible
+  
+  X_df <- test_df[, 3:ncol(test_df), drop = FALSE]
+  X_df <- X_df[, vapply(X_df, function(v) length(unique(v)) > 1, logical(1)), drop = FALSE]
+  w_c <- w - mean(w)
+  calib <- w_c * (tau_hat - mean(tau_hat))
+  fit <- stats::lm(y ~ ., data = cbind(X_df, w_c = w_c, calib = calib))
+  
+  t_value <- summary(fit)$coefficients["calib", "t value"]
+  as.numeric(stats::pt(t_value, fit$df.residual, lower.tail = FALSE) < alpha)
+}
+attr(metric_test_blp, "value_on_error") <- 0
+
+# GATES test: is observed benefit higher in the top group than the bottom group?
+metric_test_gates <- function(test_data, fitted_model, model_name,
+                              n_groups = 5, alpha = 0.05) {
+  tau_hat <- as.numeric(fitted_model$predict(test_data))
+  if (stats::var(tau_hat) < 1e-12) return(0) # constant prediction: no test possible
+  group <- benefit_groups(tau_hat, n_groups)
+  scores <- aipw_scores(test_data)
+  test <- stats::t.test(scores[group == n_groups], scores[group == 1], alternative = "greater")
+  as.numeric(test$p.value < alpha)
+}
+attr(metric_test_gates, "value_on_error") <- 0
+
+# RATE test: is the RATE > 0? Bootstraps the SE, so slower than the estimate alone.
+rate_test <- function(test_data, fitted_model, target, alpha, n_boot) {
+  tau_hat <- as.numeric(fitted_model$predict(test_data))
+  if (stats::var(tau_hat) < 1e-12) return(0) # constant prediction: no test possible
+  rate <- grf::rank_average_treatment_effect.fit(
+    aipw_scores(test_data), tau_hat, target = target, R = n_boot
+  )
+  as.numeric(rate$estimate / rate$std.err > stats::qnorm(1 - alpha))
+}
+
+metric_test_rate_qini <- function(test_data, fitted_model, model_name,
+                                  alpha = 0.05, n_boot = 200) {
+  rate_test(test_data, fitted_model, "QINI", alpha, n_boot)
+}
+attr(metric_test_rate_qini, "value_on_error") <- 0
+
+metric_test_rate_autoc <- function(test_data, fitted_model, model_name,
+                                   alpha = 0.05, n_boot = 200) {
+  rate_test(test_data, fitted_model, "AUTOC", alpha, n_boot)
+}
+attr(metric_test_rate_autoc, "value_on_error") <- 0
