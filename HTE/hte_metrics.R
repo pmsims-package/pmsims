@@ -233,6 +233,10 @@ attr(metric_calibration_error_debiased, "value_on_error") <- -10
 # Separate validation data (power depends on test_n):
 #   metric_test_blp, metric_test_gates, metric_test_rate_*,
 #   metric_test_heterogeneity_evalhte, metric_test_heterogeneity_grf
+#
+# Power curves are S-shaped, but the curve engine fits C(n) = a - b n^(-c). If the
+# search starts in the flat part it can wrongly stop as unreachable or not
+# bracketed. Set min_sample_size near the expected answer, or use method = "bisection".
 # =============================================================================
 
 # Causal forest's own calibration test: is the differential forest prediction

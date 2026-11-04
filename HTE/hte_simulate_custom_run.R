@@ -7,6 +7,7 @@ library(tictoc)
 library(future)
 library(future.apply)
 # Run from the repository root
+stopifnot(packageVersion("pmsims") >= "1.1.0") # needs the curve engine: devtools::install() this repo
 source("HTE/hte_data_generators.R")
 source("HTE/hte_models.R")
 source("HTE/hte_metrics.R")
@@ -109,6 +110,7 @@ run_grid_row <- function(i) {
       Target      = met_info$target,
       Estimated_N = est_n,
       Status      = if (!is.null(sim_res)) "Success" else "Failed",
+      Search_Status = if (!is.null(sim_res)) sim_res$status else NA_character_,
       Error       = error_msg,
       Time_Secs   = time_elapsed,
       stringsAsFactors = FALSE

@@ -40,7 +40,7 @@ if (any(no_n)) {
 
 cat("\n=== Full summary ===\n")
 print(summary_df[, c("Row", "Data_Gen", "Model", "Metric", "Target",
-                     "Estimated_N", "Status", "Time_Mins")])
+                     "Estimated_N", "Status", "Search_Status", "Time_Mins")])
 
 # -----------------------------------------------------------------------------
 # 3. Failed runs and their error messages

@@ -143,8 +143,8 @@ result <- pmsims::simulate_custom(
   target_performance = 0.8, # 80% power
   mean_or_assurance = "mean",
   test_n = 100, # set to be low as performance metric doesn't use any test data.
-  min_sample_size = 100, # the default search starts below the number of model terms
-  max_sample_size = 20000,
+  min_sample_size = 1000, # power is flat at small n, which can make the curve engine stop early
+  max_sample_size = 30000,
   n_reps_total = 1000,
 )
 
@@ -207,8 +207,6 @@ result <- pmsims::simulate_custom(
   target_performance  = 0.9, 
   mean_or_assurance = "assurance",
   test_n = 5000, # set low as perf metric can be slow
-  min_sample_size = 100, # the default search starts below the number of model terms
-  max_sample_size = 20000,
   n_reps_total = 1000,
 )
 
@@ -228,8 +226,6 @@ result <- pmsims::simulate_custom(
   target_performance  = 0.9, 
   mean_or_assurance = "assurance",
   test_n = 30000, # set low as perf metric can be slow
-  min_sample_size = 100, # the default search starts below the number of model terms
-  max_sample_size = 20000,
   n_reps_total = 1000,
 )
 
