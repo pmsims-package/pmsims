@@ -70,6 +70,8 @@ differ from those given by 1.0.0. These include:
   `timeROC`.
 - Complexity 2 and 3 data follow the same outcome model whatever the
   number of rows drawn.
+- Complexity 4 (Friedman) requires exactly 5 signal predictors, the
+  number the Friedman function uses.
 - The binary AUC is computed with a fixed direction, so it can fall
   below 0.5.
 - `ridge` continues its lambda path when cross-validation selects the

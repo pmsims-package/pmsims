@@ -103,6 +103,10 @@
   configuration, estimated once from a large reference sample, so
   training and test sets follow the same outcome model. Results for
   complexity 2 and 3 change.
+- Complexity 4 (Friedman) requires exactly 5 signal predictors and stops
+  with an error otherwise. The Friedman function always uses five
+  predictors, so other values requested a simulation that was not the
+  one performed.
 - The binary AUC is computed with cases expected to score higher than
   controls, so a model that ranks the outcome the wrong way round scores
   below 0.5. AUC estimates at small sample sizes are lower, so results
