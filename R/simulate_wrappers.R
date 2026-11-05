@@ -290,8 +290,11 @@ resolve_n_reps_total <- function(
 #' @section Data control:
 #' `complexity` selects the signal structure of the data-generating mechanism:
 #' `1` purely linear, `2` linear + quadratic, `3` linear + quadratic +
-#' interaction, `4` the Friedman function. `data_control` is an optional list
-#' fine-tuning the predictors:
+#' interaction, `4` the Friedman function. The Friedman function uses five
+#' predictors, so complexity 4 requires exactly five signal predictors
+#' (`signal_parameters = 5`) and stops with an error otherwise; any number of
+#' noise predictors can be added. `data_control` is an optional list fine-tuning
+#' the predictors:
 #' \describe{
 #'   \item{`nonlinear_strength`}{Numeric in `[0, 1)`. Fraction of the signal
 #'     variance carried by the nonlinear, linearly-inaccessible component.
@@ -320,7 +323,8 @@ resolve_n_reps_total <- function(
 #' @param noise_parameters Integer. Number of candidate predictors not
 #'   associated with the outcome (noise features). Default is 0.
 #' @param complexity Integer in 1:4 selecting the data-generating signal
-#'   structure (see *Data control*). Default `1`.
+#'   structure (see *Data control*). Default `1`. Complexity 4 requires
+#'   `signal_parameters = 5`.
 #' @param data_control Optional named list controlling the predictors (see
 #'   *Data control*). Default `NULL` (generator defaults).
 #' @param outcome_prevalence Numeric in (0, 1). Target prevalence of the binary
@@ -435,7 +439,7 @@ simulate_binary <- function(
   # Machine learning models search on the CSSE scale internally; see
   # R/csse_internal.R.
   csse_plan <- plan_internal_csse(metric, model, target_performance)
-  validate_complexity(complexity)
+  validate_complexity(complexity, signal_parameters)
   validate_outcome_prevalence(outcome_prevalence)
   dc <- resolve_data_control(data_control, complexity)
 
@@ -618,7 +622,7 @@ simulate_continuous <- function(
   # Machine learning models search on the CSSE scale internally; see
   # R/csse_internal.R.
   csse_plan <- plan_internal_csse(metric, model, target_performance)
-  validate_complexity(complexity)
+  validate_complexity(complexity, signal_parameters)
   dc <- resolve_data_control(data_control, complexity)
 
   # Shared budget rule; see resolve_n_reps_total(). Applied after validation so
@@ -804,7 +808,7 @@ simulate_survival <- function(
   # Machine learning models search on the CSSE scale internally; see
   # R/csse_internal.R.
   csse_plan <- plan_internal_csse(metric, model, target_performance)
-  validate_complexity(complexity)
+  validate_complexity(complexity, signal_parameters)
   dc <- resolve_data_control(data_control, complexity)
 
   # Shared budget rule; see resolve_n_reps_total(). Applied after validation so

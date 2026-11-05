@@ -593,7 +593,7 @@ test_that("wrappers record the effective data-generating configuration", {
   # Friedman signal, which makes the incidental metric_2 glm fit separate. That
   # is an artefact of the mock, not of the configuration being asserted here.
   result <- suppressWarnings(simulate_binary(
-    signal_parameters = 10,
+    signal_parameters = 5,
     noise_parameters = 0,
     complexity = 4,
     outcome_prevalence = 0.2,
@@ -623,6 +623,135 @@ test_that("wrappers record the effective data-generating configuration", {
 
   # Resolved from the complexity-level default rather than left NULL.
   expect_identical(quadratic$nonlinear_strength, 0.2)
+})
+
+friedman_signal_error <- paste(
+  "Friedman (complexity = 4) requires exactly 5 signal predictors.",
+  "Please set the number of signal predictors to 5 and try again."
+)
+
+# Each wrapper with its required arguments filled in. Tuners and the engine are
+# mocked, so the tests below only exercise the input checks.
+friedman_wrapper_calls <- list(
+  binary = function(...) {
+    simulate_binary(
+      ...,
+      outcome_prevalence = 0.2,
+      maximum_achievable_cstatistic = 0.75,
+      target_performance = 0.9,
+      n_reps_total = 40
+    )
+  },
+  continuous = function(...) {
+    simulate_continuous(
+      ...,
+      maximum_achievable_rsquared = 0.5,
+      target_performance = 0.9,
+      n_reps_total = 40
+    )
+  },
+  survival = function(...) {
+    simulate_survival(
+      ...,
+      maximum_achievable_cindex = 0.75,
+      baseline_hazard = 0.01,
+      censoring_rate = 0.3,
+      target_performance = 0.9,
+      n_reps_total = 40
+    )
+  }
+)
+
+local_friedman_mocks <- function(env = parent.frame()) {
+  local_mocked_bindings(
+    binary_tuning = function(...) c(mu_lp = 0, sigma_sq = 1, beta_signal = 0.3),
+    continuous_tuning = function(...) 0.25,
+    survival_tuning = function(...) {
+      c(lambda_opt = 0.1, sigma_sq = 0.2, beta_signal = 0.3)
+    },
+    simulate_custom = mock_simulate_custom,
+    .package = "pmsims",
+    .env = env
+  )
+}
+
+test_that("validate_complexity requires exactly 5 signal predictors at C4", {
+  expect_true(validate_complexity(4, 5))
+  expect_true(validate_complexity(4, 5L))
+
+  rejected <- list(0, 1, 4, 6, 10, 4.5, NA, NA_real_, NULL, c(5, 5), "5")
+  for (signal_parameters in rejected) {
+    expect_error(
+      validate_complexity(4, signal_parameters),
+      friedman_signal_error,
+      fixed = TRUE
+    )
+  }
+})
+
+test_that("validate_complexity does not restrict signal predictors at C1-C3", {
+  for (complexity in 1:3) {
+    for (signal_parameters in c(1, 3, 5, 6, 10)) {
+      expect_true(validate_complexity(complexity, signal_parameters))
+    }
+  }
+})
+
+test_that("wrappers reject C4 without 5 signal predictors before any tuning", {
+  # A tuner or engine call would surface as a different error message.
+  stop_if_called <- function(...) stop("reached the simulation code")
+  local_mocked_bindings(
+    binary_tuning = stop_if_called,
+    continuous_tuning = stop_if_called,
+    survival_tuning = stop_if_called,
+    simulate_custom = stop_if_called,
+    .package = "pmsims"
+  )
+
+  for (wrapper in friedman_wrapper_calls) {
+    for (signal_parameters in c(4, 6, 10)) {
+      expect_error(
+        wrapper(signal_parameters = signal_parameters, complexity = 4),
+        friedman_signal_error,
+        fixed = TRUE
+      )
+    }
+  }
+})
+
+test_that("wrappers accept C4 with 5 signal predictors and any number of noise", {
+  local_friedman_mocks()
+
+  for (wrapper in friedman_wrapper_calls) {
+    for (noise_parameters in c(0, 3, 100)) {
+      # As above, the mocked tuners can make the incidental metric_2 fit warn.
+      result <- suppressWarnings(wrapper(
+        signal_parameters = 5,
+        noise_parameters = noise_parameters,
+        complexity = 4
+      ))
+      expect_s3_class(result, "pmsims")
+      expect_identical(result$signal_parameters, 5)
+      expect_identical(result$noise_parameters, noise_parameters)
+    }
+  }
+})
+
+test_that("wrappers leave signal predictors unrestricted at C1-C3", {
+  local_friedman_mocks()
+
+  for (wrapper in friedman_wrapper_calls) {
+    for (complexity in 1:3) {
+      for (signal_parameters in c(3, 10)) {
+        result <- suppressWarnings(wrapper(
+          signal_parameters = signal_parameters,
+          complexity = complexity
+        ))
+        expect_identical(result$complexity, complexity)
+        expect_identical(result$signal_parameters, signal_parameters)
+      }
+    }
+  }
 })
 
 test_that("resolve_n_reps_total raises the mlpwr budget at small p only", {

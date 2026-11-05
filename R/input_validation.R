@@ -130,16 +130,28 @@ check_pmsims_args <- function(arg, choices, several.ok = FALSE) {
 #' Validate the `complexity` argument
 #'
 #' @param complexity A single value; must be one of 1, 2, 3, 4.
+#' @param signal_parameters Number of signal predictors; must be exactly 5 for
+#'   complexity 4, because the Friedman function uses five predictors.
 #' @return Invisibly `TRUE`; otherwise stops with an informative error.
 #' @keywords internal
 #' @noRd
-validate_complexity <- function(complexity) {
+validate_complexity <- function(complexity, signal_parameters) {
   if (
     length(complexity) != 1L ||
       !is.numeric(complexity) ||
       !(complexity %in% c(1, 2, 3, 4))
   ) {
     stop("`complexity` must be a single value in {1, 2, 3, 4}.", call. = FALSE)
+  }
+  if (
+    complexity == 4 &&
+      !(is.numeric(signal_parameters) && isTRUE(signal_parameters == 5))
+  ) {
+    stop(
+      "Friedman (complexity = 4) requires exactly 5 signal predictors. ",
+      "Please set the number of signal predictors to 5 and try again.",
+      call. = FALSE
+    )
   }
   invisible(TRUE)
 }
