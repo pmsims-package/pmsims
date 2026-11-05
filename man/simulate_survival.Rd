@@ -29,7 +29,8 @@ with the outcome (i.e., true signal features).}
 associated with the outcome (noise features). Default is 0.}
 
 \item{complexity}{Integer in 1:4 selecting the data-generating signal
-structure (see \emph{Data control}). Default \code{1}.}
+structure (see \emph{Data control}). Default \code{1}. Complexity 4 requires
+\code{signal_parameters = 5}.}
 
 \item{data_control}{Optional named list controlling the predictors (see
 \emph{Data control}). Default \code{NULL} (generator defaults).}
@@ -134,8 +135,11 @@ with higher variance typically require larger \eqn{n} to satisfy it.
 
 \code{complexity} selects the signal structure of the data-generating mechanism:
 \code{1} purely linear, \code{2} linear + quadratic, \code{3} linear + quadratic +
-interaction, \code{4} the Friedman function. \code{data_control} is an optional list
-fine-tuning the predictors:
+interaction, \code{4} the Friedman function. The Friedman function uses five
+predictors, so complexity 4 requires exactly five signal predictors
+(\code{signal_parameters = 5}) and stops with an error otherwise; any number of
+noise predictors can be added. \code{data_control} is an optional list fine-tuning
+the predictors:
 \describe{
 \item{\code{nonlinear_strength}}{Numeric in \verb{[0, 1)}. Fraction of the signal
 variance carried by the nonlinear, linearly-inaccessible component.
