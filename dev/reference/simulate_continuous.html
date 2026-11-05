@@ -62,7 +62,7 @@ searches for the smallest \(n\) meeting the chosen criterion."><meta property="o
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Minimum sample size for continuous‐outcome prediction models</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/R/simulate_wrappers.R" class="external-link"><code>R/simulate_wrappers.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/R/simulate_wrappers.R" class="external-link"><code>R/simulate_wrappers.R</code></a></small>
       <div class="d-none name"><code>simulate_continuous.Rd</code></div>
     </div>
 
@@ -111,7 +111,8 @@ associated with the outcome (noise features). Default is 0.</p></dd>
 
 <dt id="arg-complexity">complexity<a class="anchor" aria-label="anchor" href="#arg-complexity"></a></dt>
 <dd><p>Integer in 1:4 selecting the data-generating signal
-structure (see <em>Data control</em>). Default <code>1</code>.</p></dd>
+structure (see <em>Data control</em>). Default <code>1</code>. Complexity 4 requires
+<code>signal_parameters = 5</code>.</p></dd>
 
 
 <dt id="arg-data-control">data_control<a class="anchor" aria-label="anchor" href="#arg-data-control"></a></dt>
@@ -217,8 +218,11 @@ with higher variance typically require larger \(n\) to satisfy it.</p>
 
 <p><code>complexity</code> selects the signal structure of the data-generating mechanism:
 <code>1</code> purely linear, <code>2</code> linear + quadratic, <code>3</code> linear + quadratic +
-interaction, <code>4</code> the Friedman function. <code>data_control</code> is an optional list
-fine-tuning the predictors:</p><dl><dt><code>nonlinear_strength</code></dt>
+interaction, <code>4</code> the Friedman function. The Friedman function uses five
+predictors, so complexity 4 requires exactly five signal predictors
+(<code>signal_parameters = 5</code>) and stops with an error otherwise; any number of
+noise predictors can be added. <code>data_control</code> is an optional list fine-tuning
+the predictors:</p><dl><dt><code>nonlinear_strength</code></dt>
 <dd><p>Numeric in <code>[0, 1)</code>. Fraction of the signal
 variance carried by the nonlinear, linearly-inaccessible component.
 Applies to complexity 2 and 3 only; ignored (with a warning) for 1 and 4.

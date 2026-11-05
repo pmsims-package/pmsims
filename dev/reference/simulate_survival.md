@@ -43,7 +43,8 @@ simulate_survival(
 - complexity:
 
   Integer in 1:4 selecting the data-generating signal structure (see
-  *Data control*). Default `1`.
+  *Data control*). Default `1`. Complexity 4 requires
+  `signal_parameters = 5`.
 
 - data_control:
 
@@ -166,8 +167,11 @@ larger \\n\\ to satisfy it.
 
 `complexity` selects the signal structure of the data-generating
 mechanism: `1` purely linear, `2` linear + quadratic, `3` linear +
-quadratic + interaction, `4` the Friedman function. `data_control` is an
-optional list fine-tuning the predictors:
+quadratic + interaction, `4` the Friedman function. The Friedman
+function uses five predictors, so complexity 4 requires exactly five
+signal predictors (`signal_parameters = 5`) and stops with an error
+otherwise; any number of noise predictors can be added. `data_control`
+is an optional list fine-tuning the predictors:
 
 - `nonlinear_strength`:
 
@@ -267,7 +271,7 @@ est
 #>     Calibration slope      0.900    (target ≥ 0.900)
 #>     C-index                0.702
 #> 
-#>   Running time             26 seconds
+#>   Running time             27 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability

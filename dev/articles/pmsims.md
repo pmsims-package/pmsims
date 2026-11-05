@@ -39,7 +39,7 @@ All three take the same core inputs:
 |----|----|----|
 | `signal_parameters` | required | Number of predictors associated with the outcome |
 | `noise_parameters` | `0` | Number of predictors unrelated to the outcome |
-| `complexity` | `1` | Signal structure: `1` linear, `2` adds quadratic terms, `3` adds an interaction, `4` the Friedman function |
+| `complexity` | `1` | Signal structure: `1` linear, `2` adds quadratic terms, `3` adds an interaction, `4` the Friedman function (requires `signal_parameters = 5`) |
 | `data_control` | `NULL` | Correlation, distribution and nonlinear strength of the predictors (see [`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md)) |
 | `model` | `"glm"`, `"lm"` or `"coxph"` | Model fitted to each simulated dataset (the penalised and machine-learning options are experimental) |
 | `metric` | `"calibration_slope"` | Performance metric: `"calibration_slope"`, `"auc"`, `"r2"`, `"cindex"` or `"csse"` |

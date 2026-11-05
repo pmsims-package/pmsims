@@ -48,7 +48,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/pmsims-package/pmsims/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/pmsims-package/pmsims/blob/dev/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
@@ -96,6 +96,7 @@
 <li>ranger and xgboost thread counts: at least one thread, following option <code>pmsims.threads</code>; xgboost previously used every core.</li>
 <li>Correlated predictors now have the requested pairwise correlation. Results for scenarios with a non-zero <code>correlation</code> (the default is 0.3) will change.</li>
 <li>Complexity 2 and 3 data no longer depend on how many rows are drawn. The nonlinear component now uses fixed constants for each predictor configuration, estimated once from a large reference sample, so training and test sets follow the same outcome model. Results for complexity 2 and 3 change.</li>
+<li>Complexity 4 (Friedman) requires exactly 5 signal predictors and stops with an error otherwise. The Friedman function always uses five predictors, so other values requested a simulation that was not the one performed.</li>
 <li>The binary AUC is computed with cases expected to score higher than controls, so a model that ranks the outcome the wrong way round scores below 0.5. AUC estimates at small sample sizes are lower, so results for binary AUC targets change.</li>
 <li>The binary AUC no longer returns <code>NA</code> on test sets of more than about 90,000 rows (integer overflow).</li>
 <li>
