@@ -13,7 +13,7 @@ Provides a flexible, simulation-based toolkit for exploring how much data are ne
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://pmsims-package.github.io/pmsims/}
+  \item \url{https://docs.pmsims.com/}
   \item \url{https://github.com/pmsims-package/pmsims}
   \item Report bugs at \url{https://github.com/pmsims-package/pmsims/issues}
 }

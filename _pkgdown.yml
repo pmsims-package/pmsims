@@ -1,4 +1,4 @@
-url: https://pmsims-package.github.io/pmsims/
+url: https://docs.pmsims.com/
 
 development:
   mode: auto
@@ -42,14 +42,14 @@ navbar:
       menu:
         - text: Releases
         - text: Version 1.1.0
-          href: https://pmsims-package.github.io/pmsims/articles/release-1-1-0.html
+          href: https://docs.pmsims.com/articles/release-1-1-0.html
         - text: Version 1.0.0
-          href: https://pmsims-package.github.io/pmsims/articles/release-1-0-0.html
+          href: https://docs.pmsims.com/articles/release-1-0-0.html
         - text: Version 0.5.0
-          href: https://pmsims-package.github.io/pmsims/articles/release-0-5-0.html
+          href: https://docs.pmsims.com/articles/release-0-5-0.html
         - text: "--------"
         - text: Changelog
-          href: https://pmsims-package.github.io/pmsims/news/index.html
+          href: https://docs.pmsims.com/news/index.html
 
 home:
   title: "pmsims"

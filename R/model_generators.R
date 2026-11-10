@@ -73,17 +73,26 @@ xgb_threaded_params <- function(params) {
 # Far below the default path the CV curve is flat and noisy; the block after
 # the best one is always fitted, so a dip inside one block does not end the
 # search early. Folds are drawn as cv.glmnet draws them, so fits whose
-# lambda.min is inside the default path are unchanged.
+# lambda.min is inside the default path are unchanged. `...` is passed to every
+# cv.glmnet() call (e.g. cox.ties).
 cv_glmnet_ridge <- function(
   x,
   y,
   family,
   nfolds = 10L,
   min_ratio = 1e-9,
-  block = 10
+  block = 10,
+  ...
 ) {
   foldid <- sample(rep(seq(nfolds), length = nrow(x)))
-  fit <- glmnet::cv.glmnet(x, y, alpha = 0, family = family, foldid = foldid)
+  fit <- glmnet::cv.glmnet(
+    x,
+    y,
+    alpha = 0,
+    family = family,
+    foldid = foldid,
+    ...
+  )
   lam <- fit$lambda
   if (fit$lambda.min > min(lam) || length(lam) < 2L) {
     return(fit)
@@ -105,7 +114,8 @@ cv_glmnet_ridge <- function(
       alpha = 0,
       family = family,
       foldid = foldid,
-      lambda = exp(path_log)
+      lambda = exp(path_log),
+      ...
     )
     if (!is.null(best) && min(nxt$cvm) >= min(best$cvm)) {
       return(best)
@@ -298,7 +308,9 @@ default_models <- list(
         drop = FALSE
       ])
       y <- survival::Surv(d$time, d$event)
-      glmnet::cv.glmnet(x, y, alpha = 1, family = "cox") # L1 (LASSO)
+      # Breslow ties, glmnet's default, set explicitly: glmnet >= 5.0 warns on
+      # every Cox fit without it and plans to change the default to Efron.
+      glmnet::cv.glmnet(x, y, alpha = 1, family = "cox", cox.ties = "breslow") # L1 (LASSO)
     },
     ridge = function(d) {
       # Ridge Cox regression via glmnet (alpha = 0); lambda selected by CV
@@ -308,7 +320,7 @@ default_models <- list(
         drop = FALSE
       ])
       y <- survival::Surv(d$time, d$event)
-      cv_glmnet_ridge(x, y, family = "cox")
+      cv_glmnet_ridge(x, y, family = "cox", cox.ties = "breslow")
     },
     rf = function(d) {
       require_optional_packages(

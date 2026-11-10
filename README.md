@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# pmsims: Simulation-based Sample Size Tools for Prediction Models <a href="https://pmsims-package.github.io/pmsims/"><img src="man/figures/logo.png" align="right" height="138" /></a>
+# pmsims: Simulation-based Sample Size Tools for Prediction Models <a href="https://docs.pmsims.com/"><img src="man/figures/logo.png" align="right" height="138" /></a>
 
 <!-- badges: start -->
 
@@ -34,7 +34,7 @@ site](https://pmsims.com/) for further details.
 
 ## Installation
 
-Install the stable `1.0.0` release from
+Install the stable `1.1.0` release from
 [CRAN](https://CRAN.R-project.org/package=pmsims):
 
 ``` r

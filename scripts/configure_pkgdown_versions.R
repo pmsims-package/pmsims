@@ -33,21 +33,21 @@ config$navbar$components$news <- list(
     list(
       text = "Version 1.1.0",
       href = paste0(
-        "https://pmsims-package.github.io/pmsims/",
+        "https://docs.pmsims.com/",
         "articles/release-1-1-0.html"
       )
     ),
     list(
       text = "Version 1.0.0",
       href = paste0(
-        "https://pmsims-package.github.io/pmsims/",
+        "https://docs.pmsims.com/",
         "articles/release-1-0-0.html"
       )
     ),
     list(
       text = "Version 0.5.0",
       href = paste0(
-        "https://pmsims-package.github.io/pmsims/",
+        "https://docs.pmsims.com/",
         "articles/release-0-5-0.html"
       )
     ),
@@ -56,7 +56,7 @@ config$navbar$components$news <- list(
     ),
     list(
       text = "Changelog",
-      href = "https://pmsims-package.github.io/pmsims/news/index.html"
+      href = "https://docs.pmsims.com/news/index.html"
     )
   )
 )
@@ -71,8 +71,8 @@ if (identical(current_version, "0.5.0")) {
     '<div class="container">',
     '<span>You are viewing archived documentation for ',
     '<strong>pmsims 0.5.0</strong>.</span>',
-    '<a href="https://pmsims-package.github.io/pmsims/">',
-    'View current 1.0.0 documentation</a>',
+    '<a href="https://docs.pmsims.com/">',
+    'View current 1.1.0 documentation</a>',
     '</div>',
     '</aside>'
   )

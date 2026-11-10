@@ -106,6 +106,10 @@
 - `ridge` continues its lambda path below glmnet's default end when
   cross-validation selects the smallest lambda, so its calibration improves
   with sample size. Results for `ridge` change, most at large sample sizes.
+- Survival `lasso` and `ridge` pass `cox.ties = "breslow"` to glmnet. This is
+  glmnet's current default, so results are unchanged, but glmnet 5.0 and later
+  warn on every Cox fit that does not set it, and plan to change the default
+  to Efron. glmnet 5.0 or later is now required.
 - For survival outcomes, `coxph` uses the Cox calibration slope,
   `coxph(Surv ~ lp)`, with `metric = "calibration_slope"`, as it already did
   with `metric = "csse"` and as `lasso` and `ridge` do. `rf` and `xgboost` use

@@ -140,12 +140,12 @@ jobs:
             expected <- c(
               paste0(">", version, "</small>"),
               paste0("title=\"", tooltip, "\""),
-              "https://pmsims-package.github.io/pmsims/articles/release-1-0-0.html",
-              "https://pmsims-package.github.io/pmsims/articles/release-0-5-0.html",
-              "https://pmsims-package.github.io/pmsims/news/index.html\">Changelog</a>"
+              "https://docs.pmsims.com/articles/release-1-0-0.html",
+              "https://docs.pmsims.com/articles/release-0-5-0.html",
+              "https://docs.pmsims.com/news/index.html\">Changelog</a>"
             )
             stopifnot(vapply(expected, grepl, logical(1), x = html, fixed = TRUE))
-            archived_release <- "https://pmsims-package.github.io/pmsims/0.5.0/articles/release-0-5-0.html"
+            archived_release <- "https://docs.pmsims.com/0.5.0/articles/release-0-5-0.html"
             stopifnot(!grepl(archived_release, html, fixed = TRUE))
             old_selector <- paste0(">", Sys.getenv("SITE_LABEL"), "</button>")
             stopifnot(!grepl(old_selector, html, fixed = TRUE))
@@ -154,7 +154,7 @@ jobs:
                 ">0.5.0 (archived)</small>",
                 "title=\"Archived documentation\"",
                 "You are viewing archived documentation for",
-                "https://pmsims-package.github.io/pmsims/\">View current 1.0.0 documentation</a>"
+                "https://docs.pmsims.com/\">View current 1.1.0 documentation</a>"
               )
               stopifnot(vapply(archive_expected, grepl, logical(1), x = html, fixed = TRUE))
             }

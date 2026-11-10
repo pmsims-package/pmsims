@@ -16,7 +16,7 @@ bibentry(
   ),
   year = "2026",
   note = sprintf("R package version %s", meta$Version),
-  url = "https://pmsims-package.github.io/pmsims/"
+  url = "https://docs.pmsims.com/"
 )
 
 bibentry(

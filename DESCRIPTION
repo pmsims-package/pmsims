@@ -45,7 +45,7 @@ Description: Provides a flexible, simulation-based toolkit for exploring how
     <doi:10.1186/s12874-026-02935-9> and Shamsutdinova et al. (2026)
     <doi:10.48550/arXiv.2602.23507>.
 License: GPL (>= 3)
-URL: https://pmsims-package.github.io/pmsims/, https://github.com/pmsims-package/pmsims
+URL: https://docs.pmsims.com/, https://github.com/pmsims-package/pmsims
 BugReports: https://github.com/pmsims-package/pmsims/issues
 Depends:
     R (>= 4.1.0)
@@ -62,7 +62,7 @@ Imports:
 Suggests:
     covr,
     DescTools,
-    glmnet,
+    glmnet (>= 5.0),
     knitr,
     mlbench,
     mlr,
