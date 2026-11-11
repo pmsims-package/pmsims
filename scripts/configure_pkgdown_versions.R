@@ -71,7 +71,9 @@ if (identical(current_version, "0.5.0")) {
     '<div class="container">',
     '<span>You are viewing archived documentation for ',
     '<strong>pmsims 0.5.0</strong>.</span>',
-    '<a href="https://docs.pmsims.com/">',
+    # Marked external up front: the 0.5.0 site's url is the old address, so
+    # pkgdown would otherwise add the class after href.
+    '<a class="external-link" href="https://docs.pmsims.com/">',
     'View current 1.1.0 documentation</a>',
     '</div>',
     '</aside>'
