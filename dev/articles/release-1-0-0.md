@@ -1,7 +1,7 @@
 # pmsims 1.0.0: More flexible data generation
 
 `pmsims` 1.0.0 is the first stable release of the package. The [0.5.0
-release](https://pmsims-package.github.io/pmsims/dev/articles/release-0-5-0.md)
+release](https://docs.pmsims.com/dev/articles/release-0-5-0.md)
 established the simulation-based framework for minimum sample size
 estimation; 1.0.0 focuses on making the simulated data look more like
 the data researchers actually work with, and on making the sample-size
@@ -144,9 +144,8 @@ independent predictors. Sample sizes are therefore not directly
 comparable across versions unless you set `correlation = 0` explicitly.
 
 The [getting-started
-vignette](https://pmsims-package.github.io/pmsims/dev/articles/pmsims.md)
-and the [function
-reference](https://pmsims-package.github.io/pmsims/dev/reference/index.md)
+vignette](https://docs.pmsims.com/dev/articles/pmsims.md) and the
+[function reference](https://docs.pmsims.com/dev/reference/index.md)
 document the current interface in full.
 
 ## Install

@@ -135,7 +135,7 @@ simulate_survival(
 - ...:
 
   Additional options passed to
-  [`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+  [`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md)
   (e.g., assurance level \\\delta\\, per-iteration settings).
 
 ## Value
@@ -206,9 +206,9 @@ is an optional list fine-tuning the predictors:
 
 ## See also
 
-[`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md),
-[`simulate_continuous()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_continuous.md),
-[`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+[`simulate_binary()`](https://docs.pmsims.com/dev/reference/simulate_binary.md),
+[`simulate_continuous()`](https://docs.pmsims.com/dev/reference/simulate_continuous.md),
+[`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md)
 
 ## Examples
 
@@ -271,7 +271,7 @@ est
 #>     Calibration slope      0.900    (target ≥ 0.900)
 #>     C-index                0.702
 #> 
-#>   Running time             26 seconds
+#>   Running time             18 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability

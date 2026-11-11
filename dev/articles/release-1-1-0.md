@@ -30,8 +30,8 @@ criterion at each simulated sample size, the fitted learning curve, the
 target, and the minimum sample size with its interval. With
 `live_plot = TRUE`, the plot is redrawn after each batch of replicates
 during the search. The [getting-started
-vignette](https://pmsims-package.github.io/pmsims/dev/articles/pmsims.md)
-shows an example.
+vignette](https://docs.pmsims.com/dev/articles/pmsims.md) shows an
+example.
 
 The `cores` argument runs the replicates in each batch in parallel (on
 Unix-like systems). Each replicate has its own random-number stream, so
@@ -103,9 +103,8 @@ about a quarter.
   message says so, and `auto_n_reps_total = FALSE` keeps the value
   supplied.
 
-The
-[changelog](https://pmsims-package.github.io/pmsims/dev/news/index.md)
-lists every change.
+The [changelog](https://docs.pmsims.com/dev/news/index.md) lists every
+change.
 
 ## Install
 

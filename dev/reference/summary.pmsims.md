@@ -1,7 +1,7 @@
 # Detailed summary of a `pmsims` result
 
 The same display as
-[`print.pmsims()`](https://pmsims-package.github.io/pmsims/dev/reference/print.pmsims.md),
+[`print.pmsims()`](https://docs.pmsims.com/dev/reference/print.pmsims.md),
 with the implementation-level detail that the default print method
 hides: internal metric identifiers, the engine settings used for the
 search, and any quantities recorded on an internal search scale.

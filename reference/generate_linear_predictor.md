@@ -57,7 +57,7 @@ generate_linear_predictor(
 - predictor_type, binary_prevalence, correlation, distribution:
 
   The settings `X` was drawn with (see
-  [`generate_predictors`](https://pmsims-package.github.io/pmsims/reference/generate_predictors.md)).
+  [`generate_predictors`](https://docs.pmsims.com/reference/generate_predictors.md)).
   Required for complexity 2 and 3, where they select the reference
   estimates for the nonlinear component; they must match how `X` was
   drawn, or the component is no longer orthogonal to the linear terms.

@@ -5,7 +5,7 @@ with a binary outcome. The function wraps a simulation-based search
 that, by default, fits a learning curve to every simulated replicate and
 simulates further where the curve crosses the target
 (`method = "curve"`; see
-[`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md));
+[`simulate_custom()`](https://docs.pmsims.com/reference/simulate_custom.md));
 `method = "mlpwr"` selects the Gaussian-process search of earlier
 versions. From user inputs (outcome prevalence, maximum achievable
 performance, target performance, etc.) it constructs a data-generating
@@ -131,7 +131,7 @@ simulate_binary(
 - ...:
 
   Additional options passed to
-  [`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md)
+  [`simulate_custom()`](https://docs.pmsims.com/reference/simulate_custom.md)
   (e.g., assurance level \\\delta\\, per-iteration settings).
 
 ## Value
@@ -202,9 +202,9 @@ is an optional list fine-tuning the predictors:
 
 ## See also
 
-[`simulate_continuous()`](https://pmsims-package.github.io/pmsims/reference/simulate_continuous.md),
-[`simulate_survival()`](https://pmsims-package.github.io/pmsims/reference/simulate_survival.md),
-[`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md)
+[`simulate_continuous()`](https://docs.pmsims.com/reference/simulate_continuous.md),
+[`simulate_survival()`](https://docs.pmsims.com/reference/simulate_survival.md),
+[`simulate_custom()`](https://docs.pmsims.com/reference/simulate_custom.md)
 
 ## Examples
 
@@ -265,7 +265,7 @@ est
 #>     Calibration slope       0.900    (target ≥ 0.900)
 #>     C-statistic             0.796
 #> 
-#>   Running time              17 seconds
+#>   Running time              14 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability

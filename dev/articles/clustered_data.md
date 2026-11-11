@@ -22,9 +22,9 @@ changes three parts of a sample-size calculation:
     calibrate risk within them.
 
 None of these is built into
-[`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md),
+[`simulate_binary()`](https://docs.pmsims.com/dev/reference/simulate_binary.md),
 but each is one of the three functions passed to
-[`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md).
+[`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md).
 This article builds all three for a binary outcome and then runs the
 sample-size search with the learning-curve engine (`method = "curve"`,
 the default).
@@ -167,7 +167,7 @@ tuned
 
 ### The data function
 
-[`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+[`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md)
 calls the data function with a single argument, `n`. **Here, `n` is the
 number of clusters.** Each cluster contributes `cluster_size` patients,
 so `n` clusters give `n * cluster_size` rows. The search therefore
@@ -474,7 +474,7 @@ would wrongly report the target as unreachable.
 Before the search, it helps to see how the metric behaves with few
 clusters. We do not need a large training sample to estimate the maximum
 achievable performance, as in [Defining custom simulation
-workflows](https://pmsims-package.github.io/pmsims/dev/articles/simulate_custom.md),
+workflows](https://docs.pmsims.com/dev/articles/simulate_custom.md),
 because the model matches the data-generating process: the CSSE
 approaches 0 as the number of clusters grows. This is a further benefit
 of tuning the generator to known targets.

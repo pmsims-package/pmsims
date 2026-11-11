@@ -224,9 +224,9 @@ parts of the search consumed.
 
 ## See also
 
-[`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md),
-[`simulate_continuous()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_continuous.md),
-[`simulate_survival()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_survival.md)
+[`simulate_binary()`](https://docs.pmsims.com/dev/reference/simulate_binary.md),
+[`simulate_continuous()`](https://docs.pmsims.com/dev/reference/simulate_continuous.md),
+[`simulate_survival()`](https://docs.pmsims.com/dev/reference/simulate_survival.md)
 
 ## Examples
 
@@ -290,7 +290,7 @@ est
 #>   Performance at N = 103
 #>     Calibration slope      0.900    (target ≥ 0.900)
 #> 
-#>   Running time             18 seconds
+#>   Running time             11 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability

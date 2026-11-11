@@ -2,7 +2,7 @@
 
 Compute the minimum sample size required to develop a prediction model
 with a **continuous** outcome. This wraps the same simulation engine as
-[`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md):
+[`simulate_binary()`](https://docs.pmsims.com/reference/simulate_binary.md):
 by default a learning curve fitted to every simulated replicate
 (`method = "curve"`), or the Gaussian-process search with
 `method = "mlpwr"`. From user inputs (maximum achievable performance,
@@ -123,7 +123,7 @@ simulate_continuous(
 - ...:
 
   Additional options passed to
-  [`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md)
+  [`simulate_custom()`](https://docs.pmsims.com/reference/simulate_custom.md)
   (e.g., assurance level \\\delta\\, per-iteration settings).
 
 ## Value
@@ -194,9 +194,9 @@ is an optional list fine-tuning the predictors:
 
 ## See also
 
-[`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md),
-[`simulate_survival()`](https://pmsims-package.github.io/pmsims/reference/simulate_survival.md),
-[`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md)
+[`simulate_binary()`](https://docs.pmsims.com/reference/simulate_binary.md),
+[`simulate_survival()`](https://docs.pmsims.com/reference/simulate_survival.md),
+[`simulate_custom()`](https://docs.pmsims.com/reference/simulate_custom.md)
 
 ## Examples
 
@@ -256,7 +256,7 @@ est
 #>     Calibration slope      0.900    (target ≥ 0.900)
 #>     R²                     0.482
 #> 
-#>   Running time             8 seconds
+#>   Running time             7 seconds
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
 #> Assurance mode selects N so that the target is achieved with high probability

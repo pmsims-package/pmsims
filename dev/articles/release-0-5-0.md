@@ -27,11 +27,11 @@ achieves the chosen performance target.
 
 The package provides three main wrapper functions:
 
-- [`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md)
+- [`simulate_binary()`](https://docs.pmsims.com/dev/reference/simulate_binary.md)
   for binary outcomes
-- [`simulate_continuous()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_continuous.md)
+- [`simulate_continuous()`](https://docs.pmsims.com/dev/reference/simulate_continuous.md)
   for continuous outcomes
-- [`simulate_survival()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_survival.md)
+- [`simulate_survival()`](https://docs.pmsims.com/dev/reference/simulate_survival.md)
   for time-to-event outcomes
 
 These wrappers are designed to make the most common use cases
@@ -68,7 +68,7 @@ binary_example <- simulate_binary(
 ## Custom simulation studies
 
 For more specialised study designs, `pmsims` also provides
-[`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md).
+[`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md).
 This lower-level interface allows users to define their own
 data-generating mechanism, model-fitting function, and performance
 metric, while still using the package’s simulation-based sample size
@@ -76,7 +76,7 @@ search framework.
 
 In practice, the wrappers are the right place to start when the default
 outcome types and modelling workflows match the intended study.
-[`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+[`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md)
 is most useful when a project requires a bespoke simulation design or a
 non-standard evaluation metric.
 

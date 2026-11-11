@@ -19,7 +19,7 @@ adaptive_startvalues(
 - output:
 
   List-like object containing `track_bisection`, produced by
-  [`calculate_bisection()`](https://pmsims-package.github.io/pmsims/reference/calculate_bisection.md).
+  [`calculate_bisection()`](https://docs.pmsims.com/reference/calculate_bisection.md).
 
 - aggregate_fun:
 

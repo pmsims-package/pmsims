@@ -60,24 +60,24 @@ binary_tuning(
 - correlation:
 
   Common pairwise predictor correlation. Defaults to the SAME value as
-  [`generate_binary_data()`](https://pmsims-package.github.io/pmsims/reference/generate_binary_data.md)
+  [`generate_binary_data()`](https://docs.pmsims.com/reference/generate_binary_data.md)
   so the two never silently disagree. Whatever you pass here must match
   the generator call.
 
 - distribution:
 
   Global continuous predictor distribution family. Defaults to match
-  [`generate_binary_data()`](https://pmsims-package.github.io/pmsims/reference/generate_binary_data.md).
+  [`generate_binary_data()`](https://docs.pmsims.com/reference/generate_binary_data.md).
 
 - predictor_type:
 
   `"continuous"` (default) or `"binary"`. Defaults to match
-  [`generate_binary_data()`](https://pmsims-package.github.io/pmsims/reference/generate_binary_data.md).
+  [`generate_binary_data()`](https://docs.pmsims.com/reference/generate_binary_data.md).
 
 - binary_prevalence:
 
   Bernoulli probability for binary predictors. Defaults to match
-  [`generate_binary_data()`](https://pmsims-package.github.io/pmsims/reference/generate_binary_data.md).
+  [`generate_binary_data()`](https://docs.pmsims.com/reference/generate_binary_data.md).
 
 - n_sim:
 

@@ -52,17 +52,17 @@ objective_function(
 - data_function:
 
   Data generator passed to
-  [`calculate_metrics_perf()`](https://pmsims-package.github.io/pmsims/reference/calculate_metrics_perf.md).
+  [`calculate_metrics_perf()`](https://docs.pmsims.com/reference/calculate_metrics_perf.md).
 
 - model_function:
 
   Model-fitting function passed to
-  [`calculate_metrics_perf()`](https://pmsims-package.github.io/pmsims/reference/calculate_metrics_perf.md).
+  [`calculate_metrics_perf()`](https://docs.pmsims.com/reference/calculate_metrics_perf.md).
 
 - metric_function:
 
   Metric function passed to
-  [`calculate_metrics_perf()`](https://pmsims-package.github.io/pmsims/reference/calculate_metrics_perf.md).
+  [`calculate_metrics_perf()`](https://docs.pmsims.com/reference/calculate_metrics_perf.md).
 
 ## Value
 

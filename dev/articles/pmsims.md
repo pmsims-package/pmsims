@@ -29,9 +29,9 @@ percentile** of the simulated performance distribution at each \\n\\.
 There are three wrapper functions for binary, continuous, and survival
 outcomes, respectively:
 
-- [`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md)
-- [`simulate_continuous()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_continuous.md)
-- [`simulate_survival()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_survival.md)
+- [`simulate_binary()`](https://docs.pmsims.com/dev/reference/simulate_binary.md)
+- [`simulate_continuous()`](https://docs.pmsims.com/dev/reference/simulate_continuous.md)
+- [`simulate_survival()`](https://docs.pmsims.com/dev/reference/simulate_survival.md)
 
 All three take the same core inputs:
 
@@ -40,7 +40,7 @@ All three take the same core inputs:
 | `signal_parameters` | required | Number of predictors associated with the outcome |
 | `noise_parameters` | `0` | Number of predictors unrelated to the outcome |
 | `complexity` | `1` | Signal structure: `1` linear, `2` adds quadratic terms, `3` adds an interaction, `4` the Friedman function (requires `signal_parameters = 5`) |
-| `data_control` | `NULL` | Correlation, distribution and nonlinear strength of the predictors (see [`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md)) |
+| `data_control` | `NULL` | Correlation, distribution and nonlinear strength of the predictors (see [`simulate_binary()`](https://docs.pmsims.com/dev/reference/simulate_binary.md)) |
 | `model` | `"glm"`, `"lm"` or `"coxph"` | Model fitted to each simulated dataset (the penalised and machine-learning options are experimental) |
 | `metric` | `"calibration_slope"` | Performance metric: `"calibration_slope"`, `"auc"`, `"r2"`, `"cindex"` or `"csse"` |
 | `target_performance` | required | Minimum acceptable performance |
@@ -51,9 +51,9 @@ The remaining inputs depend on the outcome:
 
 | Function | Outcome-specific inputs | Models |
 |----|----|----|
-| [`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md) | `maximum_achievable_cstatistic`, `outcome_prevalence` | `"glm"`, `"lasso"`, `"ridge"`, `"rf"`, `"xgboost"` |
-| [`simulate_continuous()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_continuous.md) | `maximum_achievable_rsquared` | `"lm"`, `"lasso"`, `"ridge"`, `"rf"`, `"xgboost"` |
-| [`simulate_survival()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_survival.md) | `maximum_achievable_cindex`, `censoring_rate`, `baseline_hazard` (optional; default `1`) | `"coxph"`, `"lasso"`, `"ridge"`, `"rf"`, `"xgboost"` |
+| [`simulate_binary()`](https://docs.pmsims.com/dev/reference/simulate_binary.md) | `maximum_achievable_cstatistic`, `outcome_prevalence` | `"glm"`, `"lasso"`, `"ridge"`, `"rf"`, `"xgboost"` |
+| [`simulate_continuous()`](https://docs.pmsims.com/dev/reference/simulate_continuous.md) | `maximum_achievable_rsquared` | `"lm"`, `"lasso"`, `"ridge"`, `"rf"`, `"xgboost"` |
+| [`simulate_survival()`](https://docs.pmsims.com/dev/reference/simulate_survival.md) | `maximum_achievable_cindex`, `censoring_rate`, `baseline_hazard` (optional; default `1`) | `"coxph"`, `"lasso"`, `"ridge"`, `"rf"`, `"xgboost"` |
 
 > Notes:
 >
@@ -179,7 +179,7 @@ the check confirmed it. Otherwise `min_n` may be `NA`, and
 `status_message` explains why (for example, `"unreachable"` when the
 curve levels off below the target). The previous Gaussian-process engine
 is available with `method = "mlpwr"`; see
-[`?simulate_custom`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+[`?simulate_custom`](https://docs.pmsims.com/dev/reference/simulate_custom.md)
 for details of both engines.
 
 ## Continuous-outcome example

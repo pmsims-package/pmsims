@@ -53,6 +53,6 @@ A list containing three elements:
 ## Details
 
 This function calls
-[`default_data_generators()`](https://pmsims-package.github.io/pmsims/reference/default_data_generators.md),
+[`default_data_generators()`](https://docs.pmsims.com/reference/default_data_generators.md),
 `default_model_generators()`, and `default_metric_generator()` to
 construct the appropriate functions based on the supplied inputs.

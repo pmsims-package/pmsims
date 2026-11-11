@@ -2,10 +2,12 @@
 
 ## pmsims 1.1.0
 
+CRAN release: 2026-11-10
+
 ### New search engine
 
 - A learning-curve engine, `method = "curve"`, is the default in
-  [`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+  [`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md)
   and the `simulate_*()` wrappers; the previous engine is available as
   `method = "mlpwr"`. It fits a monotone learning curve to every
   replicate simulated so far and puts each new batch where the curve
@@ -117,6 +119,10 @@
   cross-validation selects the smallest lambda, so its calibration
   improves with sample size. Results for `ridge` change, most at large
   sample sizes.
+- Survival `lasso` and `ridge` pass `cox.ties = "breslow"` to glmnet.
+  This is glmnet’s current default, so results are unchanged, but glmnet
+  5.0 and later warn on every Cox fit that does not set it, and plan to
+  change the default to Efron. glmnet 5.0 or later is now required.
 - For survival outcomes, `coxph` uses the Cox calibration slope,
   `coxph(Surv ~ lp)`, with `metric = "calibration_slope"`, as it already
   did with `metric = "csse"` and as `lasso` and `ridge` do. `rf` and
@@ -176,7 +182,7 @@ CRAN release: 2026-09-17
 - Improved fallback behaviour when model fitting or metric calculation
   fails.
 - Forwarded additional engine arguments consistently through
-  [`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+  [`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md)
   and the wrapper functions.
 - Expanded and standardised the metadata returned by wrapper
   simulations, which now records the full data-generating configuration
@@ -240,15 +246,15 @@ CRAN release: 2026-09-17
   size estimation in prediction model development.
 - The package provides wrapper workflows for binary, continuous, and
   survival outcomes via
-  [`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md),
-  [`simulate_continuous()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_continuous.md),
+  [`simulate_binary()`](https://docs.pmsims.com/dev/reference/simulate_binary.md),
+  [`simulate_continuous()`](https://docs.pmsims.com/dev/reference/simulate_continuous.md),
   and
-  [`simulate_survival()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_survival.md).
+  [`simulate_survival()`](https://docs.pmsims.com/dev/reference/simulate_survival.md).
 - These workflows support both mean-based and assurance-based criteria
   for identifying the smallest sample size that meets a target level of
   predictive performance.
 - A lower-level
-  [`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+  [`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md)
   interface is available for user-defined data generators, model-fitting
   functions, and performance metrics.
 

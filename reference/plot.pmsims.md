@@ -18,11 +18,11 @@ plot(x, metric_label = NULL, plot = TRUE, ...)
 - x:
 
   A `pmsims` object returned by
-  [`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md),
-  [`simulate_continuous()`](https://pmsims-package.github.io/pmsims/reference/simulate_continuous.md),
-  [`simulate_survival()`](https://pmsims-package.github.io/pmsims/reference/simulate_survival.md),
+  [`simulate_binary()`](https://docs.pmsims.com/reference/simulate_binary.md),
+  [`simulate_continuous()`](https://docs.pmsims.com/reference/simulate_continuous.md),
+  [`simulate_survival()`](https://docs.pmsims.com/reference/simulate_survival.md),
   or
-  [`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md).
+  [`simulate_custom()`](https://docs.pmsims.com/reference/simulate_custom.md).
 
 - metric_label:
 

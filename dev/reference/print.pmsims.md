@@ -28,7 +28,7 @@ print(x, ..., max_width = 80, verbose = FALSE)
   Logical. If `TRUE`, add implementation-level detail: internal metric
   identifiers, the engine settings used for the search, and any
   quantities recorded on an internal search scale.
-  [`summary.pmsims()`](https://pmsims-package.github.io/pmsims/dev/reference/summary.pmsims.md)
+  [`summary.pmsims()`](https://docs.pmsims.com/dev/reference/summary.pmsims.md)
   is the same display with `verbose = TRUE` by default.
 
 ## Value

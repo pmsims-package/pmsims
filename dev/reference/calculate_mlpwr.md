@@ -131,7 +131,7 @@ calculate_mlpwr(
 - parallel, cores:
 
   Run the replicates of each batch in parallel (see
-  [`calculate_bisection()`](https://pmsims-package.github.io/pmsims/dev/reference/calculate_bisection.md));
+  [`calculate_bisection()`](https://docs.pmsims.com/dev/reference/calculate_bisection.md));
   with mlpwr, replicates are requested one at a time, so this mainly
   affects the adaptive stage and verification.
 

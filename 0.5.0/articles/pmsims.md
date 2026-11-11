@@ -207,7 +207,7 @@ sessionInfo()
 #> [21] htmlwidgets_1.6.4  tibble_3.3.1       desc_1.4.3         pillar_1.11.1     
 #> [25] bslib_0.12.0       RColorBrewer_1.1-3 rlang_1.3.0        cachem_1.1.0      
 #> [29] xfun_0.62          fs_2.1.0           DiceKriging_1.6.1  sass_0.4.10       
-#> [33] S7_0.2.2           otel_0.2.0         cli_3.6.6          withr_3.0.3       
+#> [33] S7_0.2.2           otel_0.3.0         cli_3.6.6          withr_3.0.3       
 #> [37] magrittr_2.0.5     pkgdown_2.2.1      digest_0.6.39      grid_4.6.2        
 #> [41] lifecycle_1.0.5    mlpwr_1.1.1        vctrs_0.7.3        evaluate_1.0.5    
 #> [45] glue_1.8.1         farver_2.1.2       ragg_1.5.2         survival_3.8-12   

@@ -20,7 +20,7 @@ site](https://pmsims.com/) for further details.
 
 ## Installation
 
-Install the stable `1.0.0` release from
+Install the stable `1.1.0` release from
 [CRAN](https://CRAN.R-project.org/package=pmsims):
 
 ``` r

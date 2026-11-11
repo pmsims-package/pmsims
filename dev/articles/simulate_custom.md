@@ -3,13 +3,13 @@
 ## Motivation
 
 The
-[`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+[`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md)
 function allows users to define their own data generation, model
 fitting, and performance metric functions. This provides flexibility to
 calculate sample sizes for any prediction model, data type or
 performance metric. The `pmsims` built-in sample size functions—such as
-[`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md)—use
-[`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md)
+[`simulate_binary()`](https://docs.pmsims.com/dev/reference/simulate_binary.md)—use
+[`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md)
 under the hood.
 
 For this vignette, we’ll use five packages:
@@ -208,10 +208,10 @@ my_metric(test_data, example_fitted_model, "elastic net regression")
 Before running `pmsims`, it is important to estimate the *maximum
 achievable performance* of your modelling strategy. When using the
 wrapper functions (e.g.
-[`simulate_binary()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_binary.md)),
+[`simulate_binary()`](https://docs.pmsims.com/dev/reference/simulate_binary.md)),
 this is provided directly by the user through arguments such as
 `maximum_achievable_cstatistic`. In
-[`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md),
+[`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md),
 you must estimate the maximum achievable performance yourself using a
 very large training sample. You can then use this estimate to choose
 your `target_performance`.
@@ -278,7 +278,7 @@ mean(small_sample_performance)
 ## Running `simulate_custom()`
 
 We are now ready to run
-[`simulate_custom()`](https://pmsims-package.github.io/pmsims/dev/reference/simulate_custom.md).
+[`simulate_custom()`](https://docs.pmsims.com/dev/reference/simulate_custom.md).
 For illustration, we set the minimum acceptable performance slightly
 below the estimated maximum. There are no universal criteria for
 choosing a Brier-score target, so it is useful to explore how the

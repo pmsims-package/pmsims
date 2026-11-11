@@ -18,7 +18,7 @@ and Shamsutdinova et al. (2026)
 
 Useful links:
 
-- <https://pmsims-package.github.io/pmsims/>
+- <https://docs.pmsims.com/>
 
 - <https://github.com/pmsims-package/pmsims>
 

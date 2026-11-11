@@ -20,7 +20,7 @@ site](https://pmsims.com/) for further details.
 
 ## Installation
 
-Install the stable `1.0.0` release from
+Install the stable `1.1.0` release from
 [CRAN](https://CRAN.R-project.org/package=pmsims):
 
 ``` r
@@ -136,36 +136,36 @@ of the NIHR or the Department of Health and Social Care.*
 
 ## Main functions
 
-- [`simulate_binary()`](https://pmsims-package.github.io/pmsims/reference/simulate_binary.md)
+- [`simulate_binary()`](https://docs.pmsims.com/reference/simulate_binary.md)
   : Minimum sample size for binary-outcome prediction models
-- [`simulate_continuous()`](https://pmsims-package.github.io/pmsims/reference/simulate_continuous.md)
+- [`simulate_continuous()`](https://docs.pmsims.com/reference/simulate_continuous.md)
   : Minimum sample size for continuous‐outcome prediction models
-- [`simulate_survival()`](https://pmsims-package.github.io/pmsims/reference/simulate_survival.md)
+- [`simulate_survival()`](https://docs.pmsims.com/reference/simulate_survival.md)
   : Minimum sample size for survival‐outcome prediction models
-- [`simulate_custom()`](https://pmsims-package.github.io/pmsims/reference/simulate_custom.md)
+- [`simulate_custom()`](https://docs.pmsims.com/reference/simulate_custom.md)
   : Minimum sample size for custom simulation workflows
 
 ## Example results
 
-- [`binary_example`](https://pmsims-package.github.io/pmsims/reference/precomputed.md)
-  [`continuous_example`](https://pmsims-package.github.io/pmsims/reference/precomputed.md)
-  [`survival_example`](https://pmsims-package.github.io/pmsims/reference/precomputed.md)
-  [`custom_example`](https://pmsims-package.github.io/pmsims/reference/precomputed.md)
-  : Precomputed sample-size simulations
+- [`binary_example`](https://docs.pmsims.com/reference/precomputed.md)
+  [`continuous_example`](https://docs.pmsims.com/reference/precomputed.md)
+  [`survival_example`](https://docs.pmsims.com/reference/precomputed.md)
+  [`custom_example`](https://docs.pmsims.com/reference/precomputed.md) :
+  Precomputed sample-size simulations
 
 # Articles
 
 ### All vignettes
 
 - [Sample size for clustered
-  data](https://pmsims-package.github.io/pmsims/articles/clustered_data.md):
+  data](https://docs.pmsims.com/articles/clustered_data.md):
 - [Getting started with
-  pmsims](https://pmsims-package.github.io/pmsims/articles/pmsims.md):
+  pmsims](https://docs.pmsims.com/articles/pmsims.md):
 - [pmsims 0.5.0: Initial
-  release](https://pmsims-package.github.io/pmsims/articles/release-0-5-0.md):
+  release](https://docs.pmsims.com/articles/release-0-5-0.md):
 - [pmsims 1.0.0: More flexible data
-  generation](https://pmsims-package.github.io/pmsims/articles/release-1-0-0.md):
+  generation](https://docs.pmsims.com/articles/release-1-0-0.md):
 - [pmsims 1.1.0: A learning-curve search
-  engine](https://pmsims-package.github.io/pmsims/articles/release-1-1-0.md):
+  engine](https://docs.pmsims.com/articles/release-1-1-0.md):
 - [Defining custom simulation
-  workflows](https://pmsims-package.github.io/pmsims/articles/simulate_custom.md):
+  workflows](https://docs.pmsims.com/articles/simulate_custom.md):
