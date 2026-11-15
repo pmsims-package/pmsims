@@ -1,5 +1,17 @@
 # Changelog
 
+## pmsims 1.1.1
+
+- On systems where xgboost is built with gcc 16’s C++ library (such as
+  CRAN’s Fedora checks), xgboost results with `subsample` below 1 (the
+  default is 0.8) can differ slightly with the number of threads:
+  between `cores = 1` and `cores > 1`, and with option `pmsims.threads`.
+  xgboost’s parallel row sampling assumes a fixed number of random draws
+  per row, which that library does not guarantee. Results on other
+  systems are unchanged. The test of thread-invariance now uses
+  `subsample = 1`, which fixes the check error on CRAN’s Fedora
+  machines.
+
 ## pmsims 1.1.0
 
 CRAN release: 2026-11-10

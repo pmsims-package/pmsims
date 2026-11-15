@@ -25,13 +25,13 @@ Source:
 
 Carr E, Forbes G, Olaniran R, Shamsutdinova D, Stahl D, Markham S,
 Zimmer F (2026). *pmsims: Simulation-based Sample Size Tools for
-Prediction Models*. R package version 1.1.0, <https://docs.pmsims.com/>.
+Prediction Models*. R package version 1.1.1, <https://docs.pmsims.com/>.
 
     @Manual{,
       title = {pmsims: Simulation-based Sample Size Tools for Prediction Models},
       author = {Ewan Carr and Gordon Forbes and Ridwan Olaniran and Diana Shamsutdinova and Daniel Stahl and Sarah Markham and Felix Zimmer},
       year = {2026},
-      note = {R package version 1.1.0},
+      note = {R package version 1.1.1},
       url = {https://docs.pmsims.com/},
     }
 

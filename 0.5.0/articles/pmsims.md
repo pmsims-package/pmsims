@@ -202,7 +202,7 @@ sessionInfo()
 #>  [1] Matrix_1.7-6       gtable_0.3.6       jsonlite_2.0.0     dplyr_1.2.1       
 #>  [5] compiler_4.6.2     crayon_1.5.3       tidyselect_1.2.1   jquerylib_0.1.4   
 #>  [9] splines_4.6.2      systemfonts_1.3.2  scales_1.4.0       textshaping_1.0.5 
-#> [13] yaml_2.3.12        fastmap_1.2.0      lattice_0.23-1     ggplot2_4.0.3     
+#> [13] yaml_2.3.12        fastmap_1.2.0      lattice_0.23-1     ggplot2_4.0.4     
 #> [17] R6_2.6.1           labeling_0.4.3     generics_0.1.4     knitr_1.52        
 #> [21] htmlwidgets_1.6.4  tibble_3.3.1       desc_1.4.3         pillar_1.11.1     
 #> [25] bslib_0.12.0       RColorBrewer_1.1-3 rlang_1.3.0        cachem_1.1.0      
