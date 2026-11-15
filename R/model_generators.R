@@ -54,8 +54,10 @@
 # xgboost uses every core unless told otherwise. Inside a simulation that runs
 # replicates in parallel, or on a busy machine, that oversubscribes the CPU so
 # badly that a fit of well under a second can take minutes. Use
-# pmsims_threads(), as for ranger, unless the caller set nthread. The fitted
-# model does not depend on the number of threads.
+# pmsims_threads(), as for ranger, unless the caller set nthread. With
+# subsample < 1 (the default is 0.8), the fitted model can depend on the number
+# of threads: xgboost's parallel row sampling assumes one random draw per row,
+# which gcc 16's libstdc++ does not guarantee.
 xgb_threaded_params <- function(params) {
   if (is.null(params$nthread)) {
     params$nthread <- pmsims_threads()

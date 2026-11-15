@@ -252,11 +252,16 @@ test_that("forest and xgboost predictions do not depend on threads", {
     stats::predict(f, x, num.threads = k)$predictions
   })
   expect_identical(rf[[1]], rf[[2]])
+  # Without row subsampling: xgboost's parallel row sampling is not
+  # reproducible across thread counts with gcc 16's libstdc++.
+  fit_xgb <- default_models$binary$xgboost
+  params <- eval(formals(fit_xgb)$params)
+  params$subsample <- 1
   xgb <- lapply(1:2, function(k) {
     old <- options(pmsims.threads = k)
     on.exit(options(old))
     set.seed(3)
-    f <- default_models$binary$xgboost(data.frame(y = y, x))
+    f <- fit_xgb(data.frame(y = y, x), params = params)
     predict_custom(data.frame(x), NULL, f, "xgboost")
   })
   expect_identical(xgb[[1]], xgb[[2]])
